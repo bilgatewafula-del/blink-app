@@ -62,13 +62,6 @@ const PostCard = ({ post, currentUser, onRefresh }) => {
   const isOwner = author?.id === currentUser?.id;
 
   useEffect(() => {
-    checkLiked();
-    checkSaved();
-    checkFollowing();
-    checkReposted();
-  }, []);
-
-  useEffect(() => {
     const handleClickOutside = (e) => {
       if (optionsRef.current && !optionsRef.current.contains(e.target)) {
         setShowOptions(false);
@@ -79,18 +72,43 @@ const PostCard = ({ post, currentUser, onRefresh }) => {
   }, []);
 
   const checkLiked = async () => {
-    const { data } = await supabase
-      .from('likes').select('reaction_type')
-      .eq('post_id', post.id).eq('user_id', currentUser.id).single();
-    if (data) { setLiked(true); setReaction(data.reaction_type); }
-  };
+  if (!currentUser?.id || !post?.id) return;
 
-  const checkSaved = async () => {
-    const { data } = await supabase
-      .from('saved_posts').select('id')
-      .eq('post_id', post.id).eq('user_id', currentUser.id).single();
-    if (data) setSaved(true);
-  };
+  const { data, error } = await supabase
+    .from('likes')
+    .select('reaction_type')
+    .eq('post_id', post.id)
+    .eq('user_id', currentUser.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error('checkLiked:', error);
+    return;
+  }
+
+  if (data) {
+    setLiked(true);
+    setReaction(data.reaction_type);
+  }
+};
+
+ const checkSaved = async () => {
+  if (!currentUser?.id || !post?.id) return;
+
+  const { data, error } = await supabase
+    .from('saved_posts')
+    .select('id')
+    .eq('post_id', post.id)
+    .eq('user_id', currentUser.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error('checkSaved:', error);
+    return;
+  }
+
+  if (data) setSaved(true);
+};
   
 // Add this function after checkSaved
 const fetchTopLikers = async () => {
@@ -111,20 +129,41 @@ useEffect(() => {
   fetchTopLikers();
 }, []);
 
-  const checkFollowing = async () => {
-    if (isOwner) return;
-    const { data } = await supabase
-      .from('follows').select('id')
-      .eq('follower_id', currentUser.id).eq('following_id', author?.id).single();
-    if (data) setIsFollowing(true);
-  };
+const checkFollowing = async () => {
+  if (isOwner || !currentUser?.id || !author?.id) return;
 
-  const checkReposted = async () => {
-    const { data } = await supabase
-      .from('posts').select('id')
-      .eq('user_id', currentUser.id).eq('quoted_post_id', post.id).single();
-    if (data) setReposted(true);
-  };
+  const { data, error } = await supabase
+    .from('follows')
+    .select('id')
+    .eq('follower_id', currentUser.id)
+    .eq('following_id', author.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error('checkFollowing:', error);
+    return;
+  }
+
+  if (data) setIsFollowing(true);
+};
+
+const checkReposted = async () => {
+  if (!currentUser?.id || !post?.id) return;
+
+  const { data, error } = await supabase
+    .from('posts')
+    .select('id')
+    .eq('user_id', currentUser.id)
+    .eq('quoted_post_id', post.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error('checkReposted:', error);
+    return;
+  }
+
+  if (data) setReposted(true);
+};
 
   const handleReaction = async (type) => {
     setShowReactions(false);
