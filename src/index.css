@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #0A1628;
+  color: white;
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: contain;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track { background: #0A1628; }
+::-webkit-scrollbar-thumb { background: #1E6FFF; border-radius: 4px; }
+
+/* Page slide in */
+@keyframes pageSlideIn {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Fade in */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fade-in 0.25s ease-out; }
+
+/* Slide up */
+@keyframes slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.slide-up { animation: slide-up 0.3s ease-out; }
+
+/* Like pop */
+@keyframes like-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+.like-pop { animation: like-pop 0.3s ease-out; }
+
+/* Double tap heart burst */
+@keyframes heart-burst {
+  0% { transform: scale(0) translate(-50%, -50%); opacity: 1; }
+  50% { transform: scale(1.4) translate(-50%, -50%); opacity: 1; }
+  100% { transform: scale(1.8) translate(-50%, -50%); opacity: 0; }
+}
+.heart-burst {
+  animation: heart-burst 0.6s ease-out forwards;
+  position: absolute;
+  pointer-events: none;
+  font-size: 80px;
+  left: 50%;
+  top: 50%;
+  z-index: 50;
+}
+
+/* Pull to refresh spinner */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.ptr-spinner {
+  animation: spin 0.8s linear infinite;
+}
+
+/* Story ring pulse */
+@keyframes story-ring-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(30, 111, 255, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(30, 111, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(30, 111, 255, 0); }
+}
+.story-ring-pulse {
+  animation: story-ring-pulse 2s infinite;
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Swipe back indicator */
+@keyframes swipe-hint {
+  0% { opacity: 0; transform: translateX(-10px); }
+  50% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(-10px); }
+}
