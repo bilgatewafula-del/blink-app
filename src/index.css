@@ -96,3 +96,7 @@ body {
   50% { opacity: 1; transform: translateX(0); }
   100% { opacity: 0; transform: translateX(-10px); }
 }
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}

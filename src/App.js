@@ -31,6 +31,7 @@ import Verification from './pages/verification/Verification';
 import News from './pages/news/News';
 import Help from './pages/help/Help';
 import About from './pages/about/About';
+import BLinkAI from './pages/ai/BLinkAI';
 import BottomNav from './components/BottomNav';
 
 const PageWrapper = ({ children }) => {
@@ -101,6 +102,7 @@ const AppRoutes = () => {
             <Route path="/news" element={<ProtectedRoute><PageWrapper><News /></PageWrapper></ProtectedRoute>} />
             <Route path="/help" element={<ProtectedRoute><PageWrapper><Help /></PageWrapper></ProtectedRoute>} />
             <Route path="/about" element={<ProtectedRoute><PageWrapper><About /></PageWrapper></ProtectedRoute>} />
+            <Route path="/ai" element={<ProtectedRoute><BLinkAI /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
 

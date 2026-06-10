@@ -5,7 +5,7 @@ import {
   X, Settings, Bookmark, Wallet, BadgeCheck,
   BarChart2, HelpCircle, Info, LogOut,
   Newspaper, User, Bell, ChevronRight,
-  Home, Search, PlusSquare, MessageCircle
+  Home, Search, PlusSquare, MessageCircle, Sparkles 
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { formatNumber } from '../utils/formatNumber';
@@ -54,16 +54,25 @@ const Drawer = ({ isOpen, onClose }) => {
     { icon: User, label: 'My Profile', path: '/profile', color: 'text-[#2ECC71]', bg: 'bg-[#2ECC71]/15' },
   ];
 
-  const moreItems = [
-    { icon: Bookmark, label: 'Saved Posts', path: '/profile', color: 'text-[#FFD700]', bg: 'bg-[#FFD700]/15' },
-    { icon: BarChart2, label: 'Business Center', path: '/business', color: 'text-[#FF6B35]', bg: 'bg-[#FF6B35]/15' },
-    { icon: Wallet, label: 'Wallet', path: '/wallet', color: 'text-[#2ECC71]', bg: 'bg-[#2ECC71]/15' },
-    { icon: BadgeCheck, label: 'Verification', path: '/verification', color: 'text-[#1E6FFF]', bg: 'bg-[#1E6FFF]/15' },
-    { icon: Newspaper, label: 'News', path: '/news', color: 'text-red-400', bg: 'bg-red-400/15' },
-    { icon: Settings, label: 'Settings', path: '/settings', color: 'text-[#6B7280]', bg: 'bg-white/10' },
-    { icon: HelpCircle, label: 'Help Center', path: '/help', color: 'text-[#00D4C8]', bg: 'bg-[#00D4C8]/15' },
-    { icon: Info, label: 'About B-Link', path: '/about', color: 'text-[#6B7280]', bg: 'bg-white/10' },
-  ];
+const moreItems = [
+  {
+    icon: Sparkles,
+    label: 'B-Link AI',
+    path: '/ai',
+    color: 'text-transparent',
+    bg: 'bg-gradient-to-br from-[#1E6FFF]/20 to-[#7B2FFF]/20',
+    gradient: true,
+  },
+
+  { icon: Bookmark, label: 'Saved Posts', path: '/profile', color: 'text-[#FFD700]', bg: 'bg-[#FFD700]/15' },
+  { icon: BarChart2, label: 'Business Center', path: '/business', color: 'text-[#FF6B35]', bg: 'bg-[#FF6B35]/15' },
+  { icon: Wallet, label: 'Wallet', path: '/wallet', color: 'text-[#2ECC71]', bg: 'bg-[#2ECC71]/15' },
+  { icon: BadgeCheck, label: 'Verification', path: '/verification', color: 'text-[#1E6FFF]', bg: 'bg-[#1E6FFF]/15' },
+  { icon: Newspaper, label: 'News', path: '/news', color: 'text-red-400', bg: 'bg-red-400/15' },
+  { icon: Settings, label: 'Settings', path: '/settings', color: 'text-[#6B7280]', bg: 'bg-white/10' },
+  { icon: HelpCircle, label: 'Help Center', path: '/help', color: 'text-[#00D4C8]', bg: 'bg-[#00D4C8]/15' },
+  { icon: Info, label: 'About B-Link', path: '/about', color: 'text-[#6B7280]', bg: 'bg-white/10' },
+];
 
   return (
     <>
@@ -169,19 +178,29 @@ const Drawer = ({ isOpen, onClose }) => {
           {/* More section */}
           <div className="px-3 mt-2">
             <p className="text-[#6B7280] text-[10px] font-bold uppercase tracking-widest px-2 py-2">More</p>
-            {moreItems.map(({ icon: Icon, label, path, color, bg }) => (
-              <button
-                key={path + label}
-                onClick={() => handleNavigate(path)}
-                className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl mb-0.5 hover:bg-white/5 transition-all group"
-              >
-                <div className={'w-9 h-9 rounded-xl ' + bg + ' flex items-center justify-center flex-shrink-0'}>
-                  <Icon size={18} className={color} />
-                </div>
-                <span className="text-white/80 text-sm font-medium flex-1 text-left">{label}</span>
-                <ChevronRight size={14} className="text-white/20 group-hover:text-white/40 transition-colors" />
-              </button>
-            ))}
+         {moreItems.map(({ icon: Icon, label, path, color, bg, gradient }) => (
+  <button
+    key={path + label}
+    onClick={() => handleNavigate(path)}
+    className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl mb-0.5 hover:bg-white/5 transition-all group"
+  >
+    <div className={'w-9 h-9 rounded-xl ' + bg + ' flex items-center justify-center flex-shrink-0'}>
+      {gradient
+        ? <Sparkles size={18} className="text-[#1E6FFF]" />
+        : <Icon size={18} className={color} />
+      }
+    </div>
+
+    <span className="text-white/80 text-sm font-medium flex-1 text-left">
+      {label}
+    </span>
+
+    <ChevronRight
+      size={14}
+      className="text-white/20 group-hover:text-white/40 transition-colors"
+    />
+  </button>
+))}
           </div>
         </div>
 

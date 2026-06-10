@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Home, Search, PlusSquare, MessageCircle, User } from 'lucide-react';
+import { Home, Search, PlusSquare, MessageCircle, User, Sparkles} from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -71,11 +71,23 @@ const BottomNav = () => {
     }
     setUnreadChats(total);
   };
+return (
+  <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-none">
+    <div className="w-full max-w-[620px] pointer-events-auto relative">
 
-  return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-none">
-      <div className="w-full max-w-[620px] pointer-events-auto">
-        {/* Glass bar */}
+      {/* B-Link AI floating button */}
+      <div className="absolute -top-16 right-4">
+        <button
+          onClick={() => navigate('/ai')}
+          className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1E6FFF] via-[#7B2FFF] to-[#00D4C8] flex items-center justify-center shadow-xl shadow-[#1E6FFF]/40 active:scale-95 transition-all border-2 border-white/20"
+          title="B-Link AI"
+        >
+          <Sparkles size={20} className="text-white" />
+        </button>
+      </div>
+
+      {/* Glass bar */}
+      <div className="bg-[#0d1f3c]/95 backdrop-blur-md border-t border-white/10 h-16 flex items-center justify-around px-2 shadow-2xl shadow-black/50"></div>
         <div className="bg-[#0d1f3c]/95 backdrop-blur-md border-t border-white/10 h-16 flex items-center justify-around px-2 shadow-2xl shadow-black/50">
           {tabs.map(({ icon: Icon, label, path, color }) => {
             const isActive = location.pathname === path ||
