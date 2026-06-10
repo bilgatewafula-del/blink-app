@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Home, Search, PlusSquare, MessageCircle, User, Sparkles} from 'lucide-react';
+import { Home, Search, Zap, MessageCircle, User, Sparkles } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 const tabs = [
   { icon: Home, label: 'Home', path: '/', color: 'text-[#1E6FFF]' },
   { icon: Search, label: 'Discover', path: '/discover', color: 'text-[#7B2FFF]' },
-  { icon: PlusSquare, label: 'Create', path: '/create', color: 'text-[#00D4C8]' },
+  { icon: Zap, label: 'Vibes', path: '/vibes', color: 'text-[#FF6B35]' },
   { icon: MessageCircle, label: 'Chats', path: '/chats', color: 'text-[#00B4D8]' },
   { icon: User, label: 'Profile', path: '/profile', color: 'text-[#2ECC71]' },
 ];
@@ -87,12 +87,11 @@ return (
       </div>
 
       {/* Glass bar */}
-      <div className="bg-[#0d1f3c]/95 backdrop-blur-md border-t border-white/10 h-16 flex items-center justify-around px-2 shadow-2xl shadow-black/50"></div>
         <div className="bg-[#0d1f3c]/95 backdrop-blur-md border-t border-white/10 h-16 flex items-center justify-around px-2 shadow-2xl shadow-black/50">
           {tabs.map(({ icon: Icon, label, path, color }) => {
             const isActive = location.pathname === path ||
               (path === '/chats' && location.pathname.startsWith('/chats'));
-            const isCreate = label === 'Create';
+            const isVibes = label === 'Vibes';
             const isChats = path === '/chats';
 
             return (
@@ -101,12 +100,11 @@ return (
                 onClick={() => navigate(path)}
                 className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full group relative"
               >
-                {isCreate ? (
-                  /* Create button — special style */
-                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#1E6FFF] to-[#00D4C8] flex items-center justify-center shadow-lg shadow-[#1E6FFF]/40 active:scale-95 transition-transform">
-                    <Icon size={22} className="text-white" />
-                  </div>
-                ) : (
+                {isVibes ? (
+  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#FFD700] flex items-center justify-center shadow-lg shadow-[#FF6B35]/40 active:scale-95 transition-transform">
+    <Icon size={22} className="text-white" />
+  </div>
+) : (
                   <>
                     <div className="relative">
                       <Icon
