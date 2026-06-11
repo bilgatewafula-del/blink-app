@@ -1161,23 +1161,26 @@ const ChatRoom = () => {
         </div>
       )}
 
-      {/* ── INPUT BAR — FULLY FIXED ── */}
+  {/* ── INPUT BAR — ALWAYS VISIBLE ── */}
       <div
-        className="flex-shrink-0 bg-[#0d1f3c] border-t border-white/10"
-        style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+        className="flex-shrink-0 bg-[#0d1f3c] border-t border-white/10 w-full"
+        style={{
+          paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
+          minHeight: '64px',
+        }}
       >
-        <div className="flex items-end gap-2 px-3 pt-2.5 pb-1">
+        <div className="flex items-end gap-2 px-3 pt-2.5 pb-1 w-full">
 
           {/* Emoji button */}
           <button
             type="button"
             onMouseDown={(e) => {
-              e.preventDefault(); // prevent losing focus from textarea
+              e.preventDefault();
               setShowEmoji((v) => !v);
             }}
             className={
-              'w-9 h-9 flex items-center justify-center rounded-full transition-all flex-shrink-0 ' +
-              (showEmoji ? 'bg-[#1E6FFF]/20 text-[#1E6FFF]' : 'text-[#6B7280] hover:text-[#FFD700]')
+              'w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full transition-all ' +
+              (showEmoji ? 'bg-[#1E6FFF]/20 text-[#1E6FFF]' : 'text-[#6B7280]')
             }
           >
             <Smile size={21} />
@@ -1188,7 +1191,7 @@ const ChatRoom = () => {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="w-9 h-9 flex items-center justify-center text-[#6B7280] hover:text-[#1E6FFF] transition-colors rounded-full flex-shrink-0"
+            className="w-9 h-9 flex-shrink-0 flex items-center justify-center text-[#6B7280] rounded-full"
           >
             {uploading
               ? <div className="w-4 h-4 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" />
@@ -1204,17 +1207,18 @@ const ChatRoom = () => {
           />
 
           {/* Text input */}
-          <div className="flex-1 min-w-0 bg-white/8 border border-white/15 rounded-2xl px-3 py-2.5 focus-within:border-[#1E6FFF]/50 transition-colors" style={{ background: 'rgba(255,255,255,0.06)' }}>
+          <div
+            className="flex-1 min-w-0 rounded-2xl px-3 py-2.5 border border-white/15 focus-within:border-[#1E6FFF]/50 transition-colors"
+            style={{ background: 'rgba(255,255,255,0.07)' }}
+          >
             <textarea
               ref={inputRef}
               value={message}
               onChange={(e) => {
                 setMessage(e.target.value);
                 handleTypingBroadcast();
-                // Auto resize height
                 e.target.style.height = 'auto';
-                const newHeight = Math.min(e.target.scrollHeight, 120);
-                e.target.style.height = newHeight + 'px';
+                e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -1222,7 +1226,6 @@ const ChatRoom = () => {
                   handleSend();
                 }
               }}
-              onFocus={() => setShowEmoji(false)}
               placeholder={editingMsg ? 'Edit message...' : 'Message...'}
               rows={1}
               className="w-full bg-transparent text-white placeholder-[#6B7280] text-sm focus:outline-none resize-none leading-relaxed block"
@@ -1232,29 +1235,28 @@ const ChatRoom = () => {
                 height: '22px',
                 overflowY: 'auto',
                 scrollbarWidth: 'none',
-                WebkitScrollbar: 'none',
               }}
             />
           </div>
 
-          {/* Schedule button */}
+          {/* Schedule */}
           <button
             type="button"
             onClick={() => setShowScheduler(!showScheduler)}
             className={
-              'w-9 h-9 flex items-center justify-center rounded-full transition-all flex-shrink-0 ' +
-              (showScheduler ? 'bg-[#7B2FFF]/20 text-[#7B2FFF]' : 'text-[#6B7280] hover:text-[#7B2FFF]')
+              'w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full transition-all ' +
+              (showScheduler ? 'bg-[#7B2FFF]/20 text-[#7B2FFF]' : 'text-[#6B7280]')
             }
           >
             <Clock size={19} />
           </button>
 
-          {/* Send button */}
+          {/* Send */}
           <button
             type="button"
             onClick={handleSend}
             disabled={sending || (!message.trim() && !uploading)}
-            className="w-10 h-10 bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] rounded-full flex items-center justify-center disabled:opacity-40 active:scale-90 transition-all shadow-lg shadow-[#1E6FFF]/30 flex-shrink-0"
+            className="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] rounded-full flex items-center justify-center disabled:opacity-40 active:scale-90 transition-all shadow-lg shadow-[#1E6FFF]/30"
           >
             {sending
               ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -1267,4 +1269,4 @@ const ChatRoom = () => {
   );
 };
 
-export default ChatRoom;
+export default ChatRoom;    

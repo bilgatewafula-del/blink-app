@@ -239,15 +239,19 @@ const VibesFeed = () => {
         </div>
       )}
 
-      {/* Upload button */}
-      {!showComments && (
-        <button
-          onClick={() => navigate('/vibes/upload')}
-          className="absolute bottom-24 right-4 z-20 w-12 h-12 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FFD700] flex items-center justify-center shadow-xl shadow-[#FF6B35]/40 active:scale-95 transition-all border-2 border-white/30"
-        >
-          <Plus size={22} className="text-white" />
-        </button>
-      )}
+   {/* Upload button — positioned so it doesn't block the music record icon */}
+{!showComments && (
+  <button
+    onClick={() => navigate('/vibes/upload')}
+    className="absolute z-20 w-12 h-12 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FFD700] flex items-center justify-center shadow-xl shadow-[#FF6B35]/40 active:scale-95 transition-all border-2 border-white/30"
+    style={{
+      right: '16px',
+      bottom: 'max(200px, calc(190px + env(safe-area-inset-bottom)))',
+    }}
+  >
+    <Plus size={22} className="text-white" />
+  </button>
+)}
 
       {/* Swipe hint (first load) */}
       {vibes.length > 1 && activeIndex === 0 && !showComments && (
