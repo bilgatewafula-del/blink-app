@@ -1,674 +1,431 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import { uploadToCloudinary } from '../../lib/cloudinary';
 import { sendNotification } from '../../hooks/useNotifications';
 import {
-  ArrowLeft, Send, Image, Smile, MoreVertical,
+  ArrowLeft, Send, ImageIcon, Smile, MoreVertical,
   Phone, Video, Check, CheckCheck, Trash2, Reply,
   X, Star, Forward, Copy, Edit3, Clock, Search,
   ChevronDown, Info, Volume2, VolumeX, Shield,
-  Mic, MicOff, Download, Pin, Eye
+  Download, Pin
 } from 'lucide-react';
 import Avatar from '../../components/Avatar';
 import { formatTime } from '../../utils/formatTime';
 
-const EMOJI_CATEGORIES = [
-  {
-    label: '😀', emojis: [
-      '😀','😃','😄','😁','😆','😅','🤣','😂','🙂','😉','😊','😇','🥰','😍','🤩','😘',
-      '😗','😚','😙','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐',
-      '😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢',
-      '🤮','🤧','🥵','🥶','🥴','😵','🤯','🤠','🥳','😎','🤓','🧐','😕','😟','🙁','😮',
-      '😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓',
-      '😩','😫','🥱','😤','😡','😠','🤬','😈','👿','💀','💩','🤡','👹','👺',
-    ]
-  },
-  {
-    label: '👋', emojis: [
-      '👋','🤚','🖐️','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆',
-      '🖕','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','💪',
-      '🦾','✍️','💅','🤳','🦵','🦶','👂','🦻','👃','👀','👁️','👅','🦷','🦴',
-    ]
-  },
-  {
-    label: '❤️', emojis: [
-      '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖',
-      '💘','💝','💟','♥️','💌','💋','💯','💢','💥','💫','💦','💨','💬','💭','💤',
-    ]
-  },
-  {
-    label: '🎉', emojis: [
-      '🎉','🎊','🎈','🎁','🎀','🏆','🥇','🥈','🥉','🏅','🎵','🎶','🎼','🎤',
-      '🎧','🎷','🎸','🎹','🎺','🎻','🥁','🎮','🎲','🎯','🎳','🎪','🎭','🎨','🎬',
-    ]
-  },
-  {
-    label: '🍕', emojis: [
-      '🍕','🍔','🍟','🌭','🌮','🌯','🥙','🍳','🥘','🍲','🍜','🍝','🍣','🍱','🍛','🍚',
-      '🍙','🍘','🍥','🧁','🎂','🍰','🍩','🍪','🍫','🍬','🍭','🍮','🍯','☕',
-      '🧋','🍵','🧃','🥤','🍺','🍻','🥂','🍷','🧊',
-    ]
-  },
-  {
-    label: '🐶', emojis: [
-      '🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔',
-      '🐧','🐦','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🦋','🐌','🐞','🐜',
-    ]
-  },
-  {
-    label: '🌍', emojis: [
-      '🌍','🌎','🌏','🌐','🗺️','🧭','🏔️','⛰️','🌋','🏕️','🏖️','🏜️','🏝️','🏟️','🏛️',
-      '🏠','🏡','🏢','🏥','🏦','🏨','🏪','🏫','🏰','🗼','🗽','⛪','🕌','🌁','🌃','🏙️',
-    ]
-  },
-  {
-    label: '🇰🇪', emojis: [
-      '🇰🇪','🇳🇬','🇬🇭','🇿🇦','🇹🇿','🇺🇬','🇪🇹','🇷🇼','🇬🇧','🇺🇸','🇨🇦','🇦🇺','🇮🇳',
-      '🇩🇪','🇫🇷','🇮🇹','🇪🇸','🇧🇷','🇲🇽','🇦🇷','🇨🇴','🇪🇬','🇲🇦','🇸🇳','🇨🇲','🇦🇴',
-    ]
-  },
+const EMOJI_CATS = [
+  { label: '😀', emojis: ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','😉','😊','😇','🥰','😍','🤩','😘','😗','😚','😙','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🤧','🥵','🥶','🥴','😵','🤯','🤠','🥳','😎','🤓','🧐','😕','😟','🙁','😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿','💀','💩','🤡','👹','👺'] },
+  { label: '👋', emojis: ['👋','🤚','🖐️','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','💪','🦾','✍️','💅','🤳','🦵','🦶','👂','🦻','👃','👀','👁️','👅','🦷','🦴'] },
+  { label: '❤️', emojis: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','♥️','💌','💋','💯','💢','💥','💫','💦','💨','💬','💭','💤'] },
+  { label: '🎉', emojis: ['🎉','🎊','🎈','🎁','🎀','🏆','🥇','🥈','🥉','🏅','🎵','🎶','🎼','🎤','🎧','🎷','🎸','🎹','🎺','🎻','🥁','🎮','🎲','🎯','🎳','🎪','🎭','🎨','🎬'] },
+  { label: '🍕', emojis: ['🍕','🍔','🍟','🌭','🌮','🌯','🥙','🍳','🥘','🍲','🍜','🍝','🍣','🍱','🍛','🍚','🍙','🍘','🧁','🎂','🍰','🍩','🍪','🍫','🍬','🍭','☕','🧋','🍵','🧃','🥤','🍺','🍻','🥂','🍷'] },
+  { label: '🐶', emojis: ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🦋','🐌','🐞','🐜','🐙','🦑','🐬','🐳','🦈'] },
+  { label: '🌍', emojis: ['🌍','🌎','🌏','🌐','🗺️','🏔️','⛰️','🌋','🏕️','🏖️','🏜️','🏝️','🏠','🏡','🏢','🏥','🏦','🏨','🏪','🏫','🏰','🗼','🗽','⛪','🕌','🌁','🌃','🏙️','🌄','🌅','🌆'] },
+  { label: '🇰🇪', emojis: ['🇰🇪','🇳🇬','🇬🇭','🇿🇦','🇹🇿','🇺🇬','🇪🇹','🇷🇼','🇬🇧','🇺🇸','🇨🇦','🇦🇺','🇮🇳','🇩🇪','🇫🇷','🇮🇹','🇪🇸','🇧🇷','🇲🇽','🇦🇷','🇨🇴','🇪🇬','🇲🇦','🇸🇳','🇨🇲','🇦🇴'] },
 ];
 
-const QUICK_REACTIONS = ['❤️', '😂', '😮', '😢', '😡', '👍', '🔥', '👏'];
+const QUICK_REACTIONS = ['❤️','😂','😮','😢','😡','👍','🔥','👏'];
 
-// Message status component with real colors
-const MessageStatus = ({ msg, isMine }) => {
+const MsgStatus = ({ msg, isMine }) => {
   if (!isMine) return null;
-  if (msg.seen_at) {
-    return (
-      <span title={'Seen ' + formatTime(msg.seen_at)}>
-        <CheckCheck size={14} className="text-[#1E6FFF]" style={{ filter: 'drop-shadow(0 0 3px #1E6FFF)' }} />
-      </span>
-    );
-  }
-  if (msg.delivered_at) {
-    return (
-      <span title="Delivered">
-        <CheckCheck size={14} className="text-[#6B7280]" />
-      </span>
-    );
-  }
-  return (
-    <span title="Sent">
-      <Check size={14} className="text-[#6B7280]" />
-    </span>
-  );
+  if (msg.seen_at) return <CheckCheck size={13} style={{ color: '#1E6FFF', filter: 'drop-shadow(0 0 3px #1E6FFF)' }} />;
+  if (msg.delivered_at) return <CheckCheck size={13} style={{ color: '#6B7280' }} />;
+  return <Check size={13} style={{ color: '#6B7280' }} />;
 };
 
-// Online status component
-const OnlineStatus = ({ user: otherUser, isTyping }) => {
+const OnlineStatus = ({ otherUser, isTyping }) => {
   if (!otherUser) return null;
-  if (isTyping) {
-    return (
-      <div className="flex items-center gap-1">
-        <div className="flex gap-0.5">
-          {[0,1,2].map((i) => (
-            <div key={i} className="w-1 h-1 rounded-full bg-[#2ECC71]"
-              style={{ animation: 'bounce 1.2s infinite', animationDelay: i * 0.2 + 's' }} />
-          ))}
-        </div>
-        <span className="text-[#2ECC71] text-xs">typing...</span>
-      </div>
-    );
-  }
-  if (otherUser.is_online) {
-    return <p className="text-[#2ECC71] text-xs flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#2ECC71] inline-block" />Online</p>;
-  }
+  if (isTyping) return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+      {[0,1,2].map((i) => (
+        <div key={i} style={{
+          width: '4px', height: '4px', borderRadius: '50%', background: '#2ECC71',
+          animation: 'bounce 1.2s infinite', animationDelay: i * 0.2 + 's',
+        }} />
+      ))}
+      <span style={{ color: '#2ECC71', fontSize: '11px' }}>typing...</span>
+    </div>
+  );
+  if (otherUser.is_online) return (
+    <span style={{ color: '#2ECC71', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#2ECC71', display: 'inline-block' }} />
+      Online
+    </span>
+  );
   if (otherUser.last_seen) {
     const diff = Date.now() - new Date(otherUser.last_seen).getTime();
     const mins = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
-    let lastSeenText = '';
-    if (mins < 1) lastSeenText = 'Last seen just now';
-    else if (mins < 60) lastSeenText = 'Last seen ' + mins + 'm ago';
-    else if (hours < 24) lastSeenText = 'Last seen ' + hours + 'h ago';
-    else lastSeenText = 'Last seen ' + days + 'd ago';
-    return <p className="text-[#6B7280] text-xs">{lastSeenText}</p>;
+    let t = 'Last seen ';
+    if (mins < 1) t += 'just now';
+    else if (mins < 60) t += mins + 'm ago';
+    else if (hours < 24) t += hours + 'h ago';
+    else t += days + 'd ago';
+    return <span style={{ color: '#6B7280', fontSize: '11px' }}>{t}</span>;
   }
-  return <p className="text-[#6B7280] text-xs">Offline</p>;
+  return <span style={{ color: '#6B7280', fontSize: '11px' }}>Offline</span>;
 };
 
-const ChatRoom = () => {
+export default function ChatRoom() {
   const { id } = useParams();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+
   const messagesEndRef = useRef();
   const inputRef = useRef();
-  const fileInputRef = useRef();
-  const swipeStartX = useRef(null);
-  const swipeStartY = useRef(null);
-  const presenceChannel = useRef(null);
-  const typingChannel = useRef(null);
+  const fileRef = useRef();
+  const typingBroadcast = useRef();
   const typingTimer = useRef();
 
   const [messages, setMessages] = useState([]);
-  const [message, setMessage] = useState('');
+  const [msg, setMsg] = useState('');
   const [sending, setSending] = useState(false);
   const [otherUser, setOtherUser] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
-  const [emojiCategoryIdx, setEmojiCategoryIdx] = useState(0);
+  const [emojiCat, setEmojiCat] = useState(0);
   const [emojiSearch, setEmojiSearch] = useState('');
   const [replyTo, setReplyTo] = useState(null);
-  const [editingMsg, setEditingMsg] = useState(null);
-  const [isOtherTyping, setIsOtherTyping] = useState(false);
-  const [showMsgMenu, setShowMsgMenu] = useState(null);
-  const [showQuickReact, setShowQuickReact] = useState(null);
-  const [swipingMsg, setSwipingMsg] = useState(null);
+  const [editing, setEditing] = useState(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [msgMenu, setMsgMenu] = useState(null);
+  const [quickReact, setQuickReact] = useState(null);
+  const [swipeMsg, setSwipeMsg] = useState(null);
   const [searchMode, setSearchMode] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQ, setSearchQ] = useState('');
   const [starredOnly, setStarredOnly] = useState(false);
-  const [showChatInfo, setShowChatInfo] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [showScheduler, setShowScheduler] = useState(false);
-  const [scheduledTime, setScheduledTime] = useState('');
+  const [chatMenu, setChatMenu] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [scheduler, setScheduler] = useState(false);
+  const [schedTime, setSchedTime] = useState('');
   const [pinnedMsg, setPinnedMsg] = useState(null);
-  const [showPinnedMsg, setShowPinnedMsg] = useState(true);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [wallpaper, setWallpaper] = useState(null);
+  const swipeX = useRef(null);
+  const swipeY = useRef(null);
 
+  // ── Init ──────────────────────────────────────────────────────────
   useEffect(() => {
-    fetchChatInfo();
-    fetchMessages();
-    markMessagesRead();
-    updateOnlineStatus(true);
-    fetchPinnedMessage();
-
+    initChat();
     return () => {
-      updateOnlineStatus(false);
-      if (presenceChannel.current) supabase.removeChannel(presenceChannel.current);
-      if (typingChannel.current) supabase.removeChannel(typingChannel.current);
+      supabase.from('users').update({ is_online: false, last_seen: new Date().toISOString() }).eq('id', user.id);
     };
   }, [id]);
 
-  // Real-time message subscription
-  useEffect(() => {
-    const channel = supabase
-      .channel('room:' + id)
-      .on('postgres_changes', {
-        event: 'INSERT', schema: 'public', table: 'messages',
-        filter: 'chat_id=eq.' + id,
-      }, async (payload) => {
-        const { data } = await supabase
-          .from('messages')
-          .select('*, sender:sender_id(id, username, display_name, avatar_url)')
-          .eq('id', payload.new.id).maybeSingle();
-        if (data) {
-          setMessages((prev) => {
-            if (prev.find((m) => m.id === data.id)) return prev;
-            return [...prev, data];
-          });
-          // Mark as delivered immediately
-          if (data.sender_id !== user.id) {
-            await supabase.from('messages')
-              .update({ delivered_at: new Date().toISOString() })
-              .eq('id', data.id)
-              .is('delivered_at', null);
-            // Mark as seen if chat is open
-            await supabase.from('messages')
-              .update({ seen_at: new Date().toISOString() })
-              .eq('id', data.id);
-          }
-        }
-        scrollToBottom();
-      })
-      .on('postgres_changes', {
-        event: 'UPDATE', schema: 'public', table: 'messages',
-        filter: 'chat_id=eq.' + id,
-      }, (payload) => {
-        setMessages((prev) =>
-          prev.map((m) => m.id === payload.new.id ? { ...m, ...payload.new } : m)
-        );
-      })
-      .subscribe();
-    return () => supabase.removeChannel(channel);
-  }, [id, user.id]);
-
-  // Presence — track other user online status
-  useEffect(() => {
-    if (!otherUser) return;
-    const channel = supabase
-      .channel('presence:' + otherUser.id)
-      .on('postgres_changes', {
-        event: 'UPDATE', schema: 'public', table: 'users',
-        filter: 'id=eq.' + otherUser.id,
-      }, (payload) => {
-        setOtherUser((prev) => ({ ...prev, ...payload.new }));
-      })
-      .subscribe();
-    presenceChannel.current = channel;
-    return () => supabase.removeChannel(channel);
-  }, [otherUser?.id]);
-
-  // Typing indicator via Supabase broadcast
-  useEffect(() => {
-    const channel = supabase.channel('typing:' + id)
-      .on('broadcast', { event: 'typing' }, (payload) => {
-        if (payload.payload.user_id !== user.id) {
-          setIsOtherTyping(true);
-          clearTimeout(typingTimer.current);
-          typingTimer.current = setTimeout(() => setIsOtherTyping(false), 3000);
-        }
-      })
-      .subscribe();
-    typingChannel.current = channel;
-    return () => supabase.removeChannel(channel);
-  }, [id, user.id]);
-
-  useEffect(() => { scrollToBottom(); }, [messages]);
-
-  const updateOnlineStatus = async (online) => {
-    await supabase.from('users').update({
-      is_online: online,
-      last_seen: new Date().toISOString(),
-    }).eq('id', user.id);
+  const initChat = async () => {
+    await supabase.from('users').update({ is_online: true, last_seen: new Date().toISOString() }).eq('id', user.id);
+    await fetchChatInfo();
+    await fetchMessages();
+    await markRead();
+    await fetchPinned();
   };
 
+  // ── Real-time ─────────────────────────────────────────────────────
+  useEffect(() => {
+    const ch = supabase.channel('chat:' + id)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: 'chat_id=eq.' + id },
+        async (p) => {
+          const { data } = await supabase.from('messages')
+            .select('*, sender:sender_id(id,username,display_name,avatar_url)')
+            .eq('id', p.new.id).maybeSingle();
+          if (data) {
+            setMessages((prev) => prev.find((m) => m.id === data.id) ? prev : [...prev, data]);
+            if (data.sender_id !== user.id) {
+              await supabase.from('messages').update({ delivered_at: new Date().toISOString(), seen_at: new Date().toISOString() }).eq('id', data.id);
+            }
+          }
+          scrollBot();
+        })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: 'chat_id=eq.' + id },
+        (p) => setMessages((prev) => prev.map((m) => m.id === p.new.id ? { ...m, ...p.new } : m)))
+      .subscribe();
+
+    // Typing channel
+    const tc = supabase.channel('typing:' + id)
+      .on('broadcast', { event: 'typing' }, (p) => {
+        if (p.payload?.uid !== user.id) {
+          setIsTyping(true);
+          clearTimeout(typingTimer.current);
+          typingTimer.current = setTimeout(() => setIsTyping(false), 3000);
+        }
+      }).subscribe();
+    typingBroadcast.current = tc;
+
+    // Other user presence
+    return () => { supabase.removeChannel(ch); supabase.removeChannel(tc); };
+  }, [id, user.id]);
+
+  // Other user presence updates
+  useEffect(() => {
+    if (!otherUser?.id) return;
+    const ch = supabase.channel('presence:' + otherUser.id)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users', filter: 'id=eq.' + otherUser.id },
+        (p) => setOtherUser((prev) => ({ ...prev, ...p.new })))
+      .subscribe();
+    return () => supabase.removeChannel(ch);
+  }, [otherUser?.id]);
+
+  useEffect(() => { scrollBot(); }, [messages, isTyping]);
+
+  // ── Fetch ─────────────────────────────────────────────────────────
   const fetchChatInfo = async () => {
-    const { data: chat } = await supabase
-      .from('chats').select('*').eq('id', id).maybeSingle();
-    if (chat) {
-      const otherId = chat.participants.find((pid) => pid !== user.id);
-      if (otherId) {
-        const { data } = await supabase
-          .from('users').select('*').eq('id', otherId).maybeSingle();
-        setOtherUser(data);
+    const { data } = await supabase.from('chats').select('*').eq('id', id).maybeSingle();
+    if (data) {
+      const oid = data.participants.find((p) => p !== user.id);
+      if (oid) {
+        const { data: u } = await supabase.from('users').select('*').eq('id', oid).maybeSingle();
+        setOtherUser(u);
       }
     }
   };
 
   const fetchMessages = async () => {
-    const { data } = await supabase
-      .from('messages')
-      .select('*, sender:sender_id(id, username, display_name, avatar_url)')
-      .eq('chat_id', id)
-      .order('created_at', { ascending: true })
-      .limit(200);
-    const filtered = (data || []).filter((m) => {
-      if (!m.deleted_for) return true;
-      return !m.deleted_for.includes(user.id);
-    });
-    setMessages(filtered);
-    const unread = filtered.filter((m) => m.sender_id !== user.id && !m.seen_at).length;
-    setUnreadCount(unread);
+    const { data } = await supabase.from('messages')
+      .select('*, sender:sender_id(id,username,display_name,avatar_url)')
+      .eq('chat_id', id).order('created_at', { ascending: true }).limit(200);
+    setMessages((data || []).filter((m) => !m.deleted_for?.includes(user.id)));
   };
 
-  const fetchPinnedMessage = async () => {
-    const { data } = await supabase
-      .from('messages')
-      .select('*, sender:sender_id(id, username, display_name, avatar_url)')
-      .eq('chat_id', id)
-      .eq('is_pinned', true)
-      .maybeSingle();
+  const fetchPinned = async () => {
+    const { data } = await supabase.from('messages').select('*, sender:sender_id(id,username,display_name,avatar_url)')
+      .eq('chat_id', id).eq('is_pinned', true).maybeSingle();
     if (data) setPinnedMsg(data);
   };
 
-  const markMessagesRead = async () => {
-    await supabase.from('messages')
-      .update({ seen_at: new Date().toISOString() })
-      .eq('chat_id', id)
-      .neq('sender_id', user.id)
-      .is('seen_at', null);
-    setUnreadCount(0);
+  const markRead = async () => {
+    await supabase.from('messages').update({ seen_at: new Date().toISOString() })
+      .eq('chat_id', id).neq('sender_id', user.id).is('seen_at', null);
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const scrollBot = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
 
+  // ── Send ──────────────────────────────────────────────────────────
   const handleSend = async () => {
-    const text = message.trim();
+    const text = msg.trim();
     if (!text) return;
 
-    if (editingMsg) {
-      await supabase.from('messages')
-        .update({ body: text, edited: true, edited_at: new Date().toISOString() })
-        .eq('id', editingMsg.id);
-      setMessages((prev) =>
-        prev.map((m) => m.id === editingMsg.id ? { ...m, body: text, edited: true } : m)
-      );
-      setEditingMsg(null);
-      setMessage('');
+    if (editing) {
+      await supabase.from('messages').update({ body: text, edited: true, edited_at: new Date().toISOString() }).eq('id', editing.id);
+      setMessages((prev) => prev.map((m) => m.id === editing.id ? { ...m, body: text, edited: true } : m));
+      setEditing(null); setMsg('');
+      if (inputRef.current) inputRef.current.style.height = '24px';
       return;
     }
 
     setSending(true);
-    setMessage('');
+    setMsg('');
+    if (inputRef.current) inputRef.current.style.height = '24px';
     setShowEmoji(false);
-    // Reset textarea height
-    if (inputRef.current) {
-      inputRef.current.style.height = '22px';
-    }
 
-    if (scheduledTime) {
-      alert('Message scheduled for ' + new Date(scheduledTime).toLocaleString('en-KE'));
-      setScheduledTime('');
-      setShowScheduler(false);
-      setSending(false);
-      setReplyTo(null);
-      return;
-    }
-
-    const { data } = await supabase
-      .from('messages')
-      .insert({
-        chat_id: id,
-        sender_id: user.id,
-        body: text,
-        message_type: 'text',
-        parent_message_id: replyTo?.id || null,
-        delivered_at: new Date().toISOString(),
-        forwarded: false,
-        deleted_for: [],
-        starred_by: [],
-      })
-      .select('*, sender:sender_id(id, username, display_name, avatar_url)')
-      .single();
+    const { data } = await supabase.from('messages').insert({
+      chat_id: id, sender_id: user.id, body: text, message_type: 'text',
+      parent_message_id: replyTo?.id || null,
+      delivered_at: new Date().toISOString(),
+      deleted_for: [], starred_by: [],
+    }).select('*, sender:sender_id(id,username,display_name,avatar_url)').single();
 
     if (data) {
-      setMessages((prev) => {
-        if (prev.find((m) => m.id === data.id)) return prev;
-        return [...prev, data];
-      });
-      await supabase.from('chats').update({
-        last_message: text,
-        last_message_at: new Date().toISOString(),
-      }).eq('id', id);
-
-      if (otherUser && !isMuted) {
-        await sendNotification({
-          to: otherUser.id, from: user.id,
-          type: 'message',
-          message: 'sent you a message: "' + text.slice(0, 50) + '"',
-          refId: id,
-        });
+      setMessages((prev) => prev.find((m) => m.id === data.id) ? prev : [...prev, data]);
+      await supabase.from('chats').update({ last_message: text, last_message_at: new Date().toISOString() }).eq('id', id);
+      if (otherUser && !muted) {
+        await sendNotification({ to: otherUser.id, from: user.id, type: 'message', message: 'sent you a message: "' + text.slice(0, 50) + '"', refId: id });
       }
     }
-
-    setReplyTo(null);
-    setSending(false);
-    scrollToBottom();
+    setReplyTo(null); setSending(false); scrollBot();
   };
 
-  const handleTypingBroadcast = () => {
-    if (typingChannel.current) {
-      typingChannel.current.send({
-        type: 'broadcast',
-        event: 'typing',
-        payload: { user_id: user.id },
-      });
-    }
+  const broadcastTyping = () => {
+    typingBroadcast.current?.send({ type: 'broadcast', event: 'typing', payload: { uid: user.id } });
   };
 
   const handleImageSend = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const file = e.target.files[0]; if (!file) return;
     setUploading(true);
     const url = await uploadToCloudinary(file, 'chat_media');
-    const { data } = await supabase
-      .from('messages')
-      .insert({
-        chat_id: id, sender_id: user.id,
-        body: '', media_url: url, message_type: 'image',
-        delivered_at: new Date().toISOString(),
-        deleted_for: [], starred_by: [],
-      })
-      .select('*, sender:sender_id(id, username, display_name, avatar_url)')
-      .single();
+    const { data } = await supabase.from('messages').insert({
+      chat_id: id, sender_id: user.id, body: '', media_url: url, message_type: 'image',
+      delivered_at: new Date().toISOString(), deleted_for: [], starred_by: [],
+    }).select('*, sender:sender_id(id,username,display_name,avatar_url)').single();
     if (data) {
-      setMessages((prev) => {
-        if (prev.find((m) => m.id === data.id)) return prev;
-        return [...prev, data];
-      });
-      await supabase.from('chats').update({
-        last_message: '📷 Photo',
-        last_message_at: new Date().toISOString(),
-      }).eq('id', id);
-      if (otherUser) {
-        await sendNotification({
-          to: otherUser.id, from: user.id,
-          type: 'message', message: 'sent you a photo 📷', refId: id,
-        });
-      }
+      setMessages((prev) => prev.find((m) => m.id === data.id) ? prev : [...prev, data]);
+      await supabase.from('chats').update({ last_message: '📷 Photo', last_message_at: new Date().toISOString() }).eq('id', id);
+      if (otherUser) await sendNotification({ to: otherUser.id, from: user.id, type: 'message', message: 'sent you a photo 📷', refId: id });
     }
-    setUploading(false);
-    scrollToBottom();
+    setUploading(false); scrollBot();
   };
 
-  const handleDeleteForMe = async (msgId) => {
-    setShowMsgMenu(null);
-    const msg = messages.find((m) => m.id === msgId);
-    const newDeleted = [...(msg?.deleted_for || []), user.id];
-    await supabase.from('messages')
-      .update({ deleted_for: newDeleted })
-      .eq('id', msgId);
-    setMessages((prev) => prev.filter((m) => m.id !== msgId));
+  // ── Message actions ───────────────────────────────────────────────
+  const delForMe = async (mid) => {
+    setMsgMenu(null);
+    const m = messages.find((x) => x.id === mid);
+    await supabase.from('messages').update({ deleted_for: [...(m?.deleted_for || []), user.id] }).eq('id', mid);
+    setMessages((prev) => prev.filter((x) => x.id !== mid));
   };
 
-  const handleDeleteForEveryone = async (msgId) => {
-    setShowMsgMenu(null);
-    await supabase.from('messages')
-      .update({ is_deleted: true, body: '', media_url: null, deleted_for: [] })
-      .eq('id', msgId);
-    setMessages((prev) =>
-      prev.map((m) => m.id === msgId ? { ...m, is_deleted: true, body: '', media_url: null } : m)
-    );
+  const delForAll = async (mid) => {
+    setMsgMenu(null);
+    await supabase.from('messages').update({ is_deleted: true, body: '', media_url: null, deleted_for: [] }).eq('id', mid);
+    setMessages((prev) => prev.map((m) => m.id === mid ? { ...m, is_deleted: true, body: '', media_url: null } : m));
   };
 
-  const handleStar = async (msgId) => {
-    setShowMsgMenu(null);
-    const msg = messages.find((m) => m.id === msgId);
-    const isStarred = msg?.starred_by?.includes(user.id);
-    const newStarred = isStarred
-      ? (msg.starred_by || []).filter((uid) => uid !== user.id)
-      : [...(msg.starred_by || []), user.id];
-    await supabase.from('messages').update({ starred_by: newStarred }).eq('id', msgId);
-    setMessages((prev) =>
-      prev.map((m) => m.id === msgId ? { ...m, starred_by: newStarred } : m)
-    );
+  const toggleStar = async (mid) => {
+    setMsgMenu(null);
+    const m = messages.find((x) => x.id === mid);
+    const starred = m?.starred_by?.includes(user.id);
+    const ns = starred ? (m.starred_by || []).filter((u) => u !== user.id) : [...(m.starred_by || []), user.id];
+    await supabase.from('messages').update({ starred_by: ns }).eq('id', mid);
+    setMessages((prev) => prev.map((m) => m.id === mid ? { ...m, starred_by: ns } : m));
   };
 
-  const handlePin = async (msgId) => {
-    setShowMsgMenu(null);
-    // Unpin previous
-    await supabase.from('messages')
-      .update({ is_pinned: false })
-      .eq('chat_id', id)
-      .eq('is_pinned', true);
-    // Pin new
-    await supabase.from('messages')
-      .update({ is_pinned: true })
-      .eq('id', msgId);
-    const msg = messages.find((m) => m.id === msgId);
-    setPinnedMsg(msg);
-    setShowPinnedMsg(true);
-    setMessages((prev) => prev.map((m) => ({
-      ...m, is_pinned: m.id === msgId,
-    })));
+  const pinMsg = async (mid) => {
+    setMsgMenu(null);
+    await supabase.from('messages').update({ is_pinned: false }).eq('chat_id', id);
+    await supabase.from('messages').update({ is_pinned: true }).eq('id', mid);
+    const m = messages.find((x) => x.id === mid);
+    setPinnedMsg(m);
+    setMessages((prev) => prev.map((m) => ({ ...m, is_pinned: m.id === mid })));
   };
 
-  const handleCopy = (text) => {
-    setShowMsgMenu(null);
-    navigator.clipboard.writeText(text);
+  const react = async (mid, emoji) => {
+    setQuickReact(null);
+    try { await supabase.from('message_reactions').upsert({ message_id: mid, user_id: user.id, emoji }, { onConflict: 'message_id,user_id' }); } catch (e) {}
+    setMessages((prev) => prev.map((m) => {
+      if (m.id !== mid) return m;
+      return { ...m, reactions: { ...(m.reactions || {}), [user.id]: emoji } };
+    }));
   };
 
-  const handleForward = (msg) => {
-    setShowMsgMenu(null);
-    navigator.clipboard.writeText(msg.body || '📷 Photo');
-    alert('Message copied — paste in another chat to forward');
+  // ── Swipe to reply ────────────────────────────────────────────────
+  const onTS = (e, m) => { swipeX.current = e.touches[0].clientX; swipeY.current = e.touches[0].clientY; };
+  const onTM = (e, m) => {
+    if (!swipeX.current) return;
+    const dx = e.touches[0].clientX - swipeX.current;
+    const dy = Math.abs(e.touches[0].clientY - swipeY.current);
+    if (dy > 20) return;
+    if ((m.sender_id !== user.id && dx > 60) || (m.sender_id === user.id && dx < -60)) setSwipeMsg(m.id);
+    else setSwipeMsg(null);
+  };
+  const onTE = (m) => {
+    if (swipeMsg === m.id && !m.is_deleted) { setReplyTo(m); setTimeout(() => inputRef.current?.focus(), 80); }
+    swipeX.current = null; swipeY.current = null; setSwipeMsg(null);
   };
 
-  const handleEdit = (msg) => {
-    setShowMsgMenu(null);
-    setEditingMsg(msg);
-    setMessage(msg.body);
-    inputRef.current?.focus();
-  };
-
-  const handleReact = async (msgId, emoji) => {
-    setShowQuickReact(null);
-    try {
-      await supabase.from('message_reactions').upsert(
-        { message_id: msgId, user_id: user.id, emoji },
-        { onConflict: 'message_id,user_id' }
-      );
-    } catch (e) {}
-    setMessages((prev) =>
-      prev.map((m) => {
-        if (m.id !== msgId) return m;
-        const reactions = { ...(m.reactions || {}) };
-        reactions[user.id] = emoji;
-        return { ...m, reactions };
-      })
-    );
-  };
-
-  const handleTouchStart = (e, msg) => {
-    swipeStartX.current = e.touches[0].clientX;
-    swipeStartY.current = e.touches[0].clientY;
-  };
-
-  const handleTouchMove = (e, msg) => {
-    if (!swipeStartX.current) return;
-    const diffX = e.touches[0].clientX - swipeStartX.current;
-    const diffY = Math.abs(e.touches[0].clientY - swipeStartY.current);
-    if (diffY > 20) return;
-    const isMine = msg.sender_id === user.id;
-    if (!isMine && diffX > 60) setSwipingMsg(msg.id);
-    else if (isMine && diffX < -60) setSwipingMsg(msg.id);
-    else setSwipingMsg(null);
-  };
-
-  const handleTouchEnd = (msg) => {
-    if (swipingMsg === msg.id && !msg.is_deleted) {
-      setReplyTo(msg);
-      setShowMsgMenu(null);
-      setTimeout(() => inputRef.current?.focus(), 100);
-    }
-    swipeStartX.current = null;
-    swipeStartY.current = null;
-    setSwipingMsg(null);
-  };
-
-  const groupedMessages = messages.reduce((acc, msg) => {
-    const date = new Date(msg.created_at).toDateString();
-    if (!acc[date]) acc[date] = [];
-    acc[date].push(msg);
-    return acc;
-  }, {});
-
-  const filteredMessages = searchQuery
-    ? messages.filter((m) => m.body?.toLowerCase().includes(searchQuery.toLowerCase()))
+  // ── Grouped messages ──────────────────────────────────────────────
+  const display = searchQ
+    ? { Results: messages.filter((m) => m.body?.toLowerCase().includes(searchQ.toLowerCase())) }
     : starredOnly
-    ? messages.filter((m) => m.starred_by?.includes(user.id))
-    : null;
+    ? { Starred: messages.filter((m) => m.starred_by?.includes(user.id)) }
+    : messages.reduce((acc, m) => {
+        const d = new Date(m.created_at).toDateString();
+        if (!acc[d]) acc[d] = [];
+        acc[d].push(m);
+        return acc;
+      }, {});
 
-  const displayGroups = filteredMessages
-    ? { Results: filteredMessages }
-    : groupedMessages;
+  const emojis = emojiSearch
+    ? EMOJI_CATS.flatMap((c) => c.emojis).filter((e) => e.includes(emojiSearch))
+    : EMOJI_CATS[emojiCat]?.emojis || [];
 
-  const currentEmojis = emojiSearch
-    ? EMOJI_CATEGORIES.flatMap((c) => c.emojis).filter((e) => e.includes(emojiSearch))
-    : EMOJI_CATEGORIES[emojiCategoryIdx]?.emojis || [];
+  const dateLabel = (key) => {
+    if (key === 'Results' || key === 'Starred') return key;
+    const d = new Date(key);
+    const t = new Date(); const y = new Date(t); y.setDate(t.getDate() - 1);
+    if (d.toDateString() === t.toDateString()) return '📅 Today';
+    if (d.toDateString() === y.toDateString()) return '📅 Yesterday';
+    return d.toLocaleDateString('en-KE', { weekday: 'short', month: 'short', day: 'numeric' });
+  };
 
+  // ── Render ────────────────────────────────────────────────────────
   return (
     <div
-      className="flex flex-col bg-[#0A1628]"
-      style={{ height: '100dvh' }}
-      onClick={() => { setShowMsgMenu(null); setShowQuickReact(null); setShowChatInfo(false); }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100dvh',
+        background: '#0A1628',
+        overflow: 'hidden',
+        position: 'fixed',
+        top: 0, left: 0, right: 0, bottom: 0,
+      }}
+      onClick={() => { setMsgMenu(null); setQuickReact(null); setChatMenu(false); }}
     >
+
       {/* ── TOP BAR ── */}
-      <div className="flex-shrink-0 bg-[#0d1f3c] border-b border-white/10 px-3 py-2.5 flex items-center gap-2">
+      <div style={{
+        flexShrink: 0,
+        background: '#0d1f3c',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+        padding: '10px 12px',
+        display: 'flex', alignItems: 'center', gap: '8px',
+      }}>
         {searchMode ? (
           <>
-            <button onClick={() => { setSearchMode(false); setSearchQuery(''); }} className="text-[#6B7280] p-1">
+            <button onClick={() => { setSearchMode(false); setSearchQ(''); }} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
               <ArrowLeft size={22} />
             </button>
             <input
-              type="text" value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              type="text" value={searchQ} onChange={(e) => setSearchQ(e.target.value)}
               placeholder="Search messages..." autoFocus
-              className="flex-1 bg-transparent text-white placeholder-[#6B7280] text-sm focus:outline-none"
+              style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'white', fontSize: '14px' }}
             />
-            {searchQuery && (
-              <button onClick={() => setSearchQuery('')} className="text-[#6B7280]"><X size={18} /></button>
-            )}
+            {searchQ && <button onClick={() => setSearchQ('')} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={18} /></button>}
           </>
         ) : (
           <>
-            <button onClick={() => navigate('/chats')} className="text-[#6B7280] hover:text-white p-1 flex-shrink-0">
+            <button onClick={() => navigate('/chats')} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', flexShrink: 0 }}>
               <ArrowLeft size={22} />
             </button>
-            <button
-              onClick={() => navigate('/profile/' + otherUser?.username)}
-              className="flex items-center gap-2.5 flex-1 min-w-0"
-            >
-              <div className="relative flex-shrink-0">
+            <button onClick={() => navigate('/profile/' + otherUser?.username)} style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+              <div style={{ position: 'relative', flexShrink: 0 }}>
                 <Avatar url={otherUser?.avatar_url} name={otherUser?.display_name} size={10} />
                 {otherUser?.is_online && (
-                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#2ECC71] rounded-full border-2 border-[#0d1f3c] shadow-sm shadow-[#2ECC71]/50" />
+                  <div style={{ position: 'absolute', bottom: 0, right: 0, width: '10px', height: '10px', borderRadius: '50%', background: '#2ECC71', border: '2px solid #0d1f3c' }} />
                 )}
               </div>
-              <div className="min-w-0 text-left">
-                <div className="flex items-center gap-1.5">
-                  <p className="text-white font-bold text-sm truncate">{otherUser?.display_name}</p>
-                  {otherUser?.is_verified && (
-                    <span className="bg-[#1E6FFF] text-white text-[8px] px-1 py-0.5 rounded-full font-bold flex-shrink-0">✓</span>
-                  )}
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <p style={{ color: 'white', fontWeight: 700, fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{otherUser?.display_name}</p>
+                  {otherUser?.is_verified && <span style={{ background: '#1E6FFF', color: 'white', fontSize: '8px', padding: '1px 4px', borderRadius: '99px', fontWeight: 700, flexShrink: 0 }}>✓</span>}
                 </div>
-                <OnlineStatus user={otherUser} isTyping={isOtherTyping} />
+                <OnlineStatus otherUser={otherUser} isTyping={isTyping} />
               </div>
             </button>
-            <div className="flex items-center gap-0.5 flex-shrink-0">
-              <button className="text-[#6B7280] hover:text-white p-2 rounded-full hover:bg-white/5 transition-colors">
-                <Phone size={19} />
-              </button>
-              <button className="text-[#6B7280] hover:text-white p-2 rounded-full hover:bg-white/5 transition-colors">
-                <Video size={19} />
-              </button>
-              <button onClick={() => setSearchMode(true)} className="text-[#6B7280] hover:text-white p-2 rounded-full hover:bg-white/5 transition-colors">
-                <Search size={19} />
-              </button>
-              <div className="relative">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
+              <button style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}><Phone size={19} /></button>
+              <button style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}><Video size={19} /></button>
+              <button onClick={() => setSearchMode(true)} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}><Search size={19} /></button>
+              <div style={{ position: 'relative' }}>
                 <button
-                  onClick={(e) => { e.stopPropagation(); setShowChatInfo(!showChatInfo); }}
-                  className="text-[#6B7280] hover:text-white p-2 rounded-full hover:bg-white/5 transition-colors"
+                  onClick={(e) => { e.stopPropagation(); setChatMenu(!chatMenu); }}
+                  style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}
                 >
                   <MoreVertical size={19} />
                 </button>
-                {showChatInfo && (
+                {chatMenu && (
                   <div
-                    className="absolute right-0 top-10 bg-[#111827] border border-white/10 rounded-2xl overflow-hidden z-50 w-56 shadow-2xl slide-up"
+                    style={{ position: 'absolute', right: 0, top: '36px', background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', width: '220px', zIndex: 50, boxShadow: '0 20px 40px rgba(0,0,0,0.5)', overflow: 'hidden' }}
                     onClick={(e) => e.stopPropagation()}
                   >
                     {[
-                      { icon: Star, label: 'Starred messages', action: () => { setStarredOnly(true); setShowChatInfo(false); } },
-                      { icon: Pin, label: 'View pinned message', action: () => { setShowPinnedMsg(true); setShowChatInfo(false); } },
-                      { icon: isMuted ? Volume2 : VolumeX, label: isMuted ? 'Unmute' : 'Mute notifications', action: () => { setIsMuted(!isMuted); setShowChatInfo(false); } },
-                      { icon: Search, label: 'Search messages', action: () => { setSearchMode(true); setShowChatInfo(false); } },
-                      { icon: Info, label: 'Contact info', action: () => { navigate('/profile/' + otherUser?.username); setShowChatInfo(false); } },
-                      { icon: Shield, label: 'Block contact', action: () => setShowChatInfo(false) },
+                      { icon: Star, label: 'Starred messages', action: () => { setStarredOnly(true); setChatMenu(false); } },
+                      { icon: Pin, label: 'View pinned', action: () => setChatMenu(false) },
+                      { icon: muted ? Volume2 : VolumeX, label: muted ? 'Unmute' : 'Mute', action: () => { setMuted(!muted); setChatMenu(false); } },
+                      { icon: Info, label: 'Contact info', action: () => { navigate('/profile/' + otherUser?.username); setChatMenu(false); } },
+                      { icon: Shield, label: 'Block contact', action: () => setChatMenu(false) },
                       {
-                        icon: Trash2, label: 'Clear chat', action: async () => {
-                          if (window.confirm('Clear all messages for you?')) {
-                            // Delete for me only
-                            for (const msg of messages) {
-                              const newDeleted = [...(msg.deleted_for || []), user.id];
-                              await supabase.from('messages').update({ deleted_for: newDeleted }).eq('id', msg.id);
+                        icon: Trash2, label: 'Clear chat',
+                        action: async () => {
+                          if (window.confirm('Clear all messages?')) {
+                            for (const m of messages) {
+                              await supabase.from('messages').update({ deleted_for: [...(m.deleted_for || []), user.id] }).eq('id', m.id);
                             }
-                            setMessages([]);
-                            setShowChatInfo(false);
+                            setMessages([]); setChatMenu(false);
                           }
                         }
                       },
                     ].map((item) => (
-                      <button key={item.label} onClick={item.action}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/5 text-sm border-b border-white/5 last:border-0">
-                        <item.icon size={15} className="text-[#6B7280] flex-shrink-0" />
-                        {item.label}
+                      <button key={item.label} onClick={item.action} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', color: 'rgba(255,255,255,0.8)', background: 'none', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', fontSize: '13px', textAlign: 'left' }}>
+                        <item.icon size={15} style={{ color: '#6B7280', flexShrink: 0 }} />{item.label}
                       </button>
                     ))}
                   </div>
@@ -679,334 +436,210 @@ const ChatRoom = () => {
         )}
       </div>
 
-      {/* Pinned message banner */}
-      {pinnedMsg && showPinnedMsg && (
-        <div className="flex-shrink-0 bg-[#1E6FFF]/10 border-b border-[#1E6FFF]/20 px-4 py-2 flex items-center gap-3">
-          <Pin size={14} className="text-[#1E6FFF] flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-[#1E6FFF] text-[10px] font-bold">Pinned Message</p>
-            <p className="text-white/70 text-xs truncate">{pinnedMsg.body || '📷 Photo'}</p>
+      {/* Pinned */}
+      {pinnedMsg && (
+        <div style={{ flexShrink: 0, background: 'rgba(30,111,255,0.1)', borderBottom: '1px solid rgba(30,111,255,0.2)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Pin size={14} style={{ color: '#1E6FFF', flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ color: '#1E6FFF', fontSize: '10px', fontWeight: 700 }}>Pinned</p>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pinnedMsg.body || '📷 Photo'}</p>
           </div>
-          <button onClick={() => setShowPinnedMsg(false)} className="text-[#6B7280]">
-            <X size={14} />
-          </button>
+          <button onClick={() => setPinnedMsg(null)} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={14} /></button>
         </div>
       )}
 
-      {/* Starred banner */}
+      {/* Starred */}
       {starredOnly && (
-        <div className="flex-shrink-0 bg-[#FFD700]/10 border-b border-[#FFD700]/20 px-4 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Star size={14} className="text-[#FFD700] fill-[#FFD700]" />
-            <p className="text-[#FFD700] text-xs font-semibold">Starred messages</p>
+        <div style={{ flexShrink: 0, background: 'rgba(255,215,0,0.1)', borderBottom: '1px solid rgba(255,215,0,0.2)', padding: '8px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Star size={14} style={{ color: '#FFD700', fill: '#FFD700' }} />
+            <span style={{ color: '#FFD700', fontSize: '12px', fontWeight: 600 }}>Starred messages</span>
           </div>
-          <button onClick={() => setStarredOnly(false)} className="text-[#6B7280]"><X size={16} /></button>
+          <button onClick={() => setStarredOnly(false)} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
         </div>
       )}
 
-      {/* ── MESSAGES AREA ── */}
+      {/* ── MESSAGES ── */}
       <div
-        className="flex-1 overflow-y-auto px-3 py-3 overscroll-contain"
-        style={{
-          backgroundImage: wallpaper
-            ? 'url(' + wallpaper + ')'
-            : 'radial-gradient(circle at 20% 50%, rgba(30,111,255,0.04) 0%, transparent 60%), radial-gradient(circle at 80% 20%, rgba(123,47,255,0.04) 0%, transparent 60%)',
-          backgroundSize: wallpaper ? 'cover' : 'auto',
-        }}
-        onClick={() => { setShowMsgMenu(null); setShowQuickReact(null); setShowChatInfo(false); setShowEmoji(false); }}
+        style={{ flex: 1, overflowY: 'auto', padding: '12px', overscrollBehavior: 'contain' }}
+        onClick={() => { setMsgMenu(null); setQuickReact(null); setChatMenu(false); setShowEmoji(false); }}
       >
-        {Object.entries(displayGroups).map(([dateLabel, msgs]) => (
-          <div key={dateLabel}>
-            {/* Date separator */}
-            <div className="flex items-center justify-center my-4">
-              <div className="flex-1 h-px bg-white/5" />
-              <span className="mx-3 text-[#6B7280] text-[10px] bg-[#111827]/80 backdrop-blur-sm px-3 py-1 rounded-full flex-shrink-0">
-                {dateLabel === 'Results' ? '🔍 Search Results' : (() => {
-                  const d = new Date(dateLabel);
-                  const today = new Date();
-                  const yesterday = new Date(today);
-                  yesterday.setDate(today.getDate() - 1);
-                  if (d.toDateString() === today.toDateString()) return '📅 Today';
-                  if (d.toDateString() === yesterday.toDateString()) return '📅 Yesterday';
-                  return d.toLocaleDateString('en-KE', { weekday: 'short', month: 'short', day: 'numeric' });
-                })()}
-              </span>
-              <div className="flex-1 h-px bg-white/5" />
+        {Object.entries(display).map(([key, msgs]) => (
+          <div key={key}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '16px 0' }}>
+              <span style={{ color: '#6B7280', fontSize: '11px', background: 'rgba(17,24,39,0.8)', padding: '4px 12px', borderRadius: '99px' }}>{dateLabel(key)}</span>
             </div>
-
-            {msgs.map((msg, idx) => {
-              const isMine = msg.sender_id === user.id;
-              const isFirst = idx === 0 || msgs[idx - 1]?.sender_id !== msg.sender_id;
-              const isLast = idx === msgs.length - 1 || msgs[idx + 1]?.sender_id !== msg.sender_id;
-              const isDeleted = msg.is_deleted;
-              const isSwiping = swipingMsg === msg.id;
-              const isStarred = msg.starred_by?.includes(user.id);
-              const isPinned = msg.is_pinned;
-              const msgReactions = msg.reactions || {};
-              const reactionCounts = Object.values(msgReactions).reduce((acc, emoji) => {
-                acc[emoji] = (acc[emoji] || 0) + 1;
-                return acc;
-              }, {});
+            {msgs.map((m, idx) => {
+              const isMine = m.sender_id === user.id;
+              const isFirst = idx === 0 || msgs[idx-1]?.sender_id !== m.sender_id;
+              const isLast = idx === msgs.length-1 || msgs[idx+1]?.sender_id !== m.sender_id;
+              const isDeleted = m.is_deleted;
+              const isSwiping = swipeMsg === m.id;
+              const isStarred = m.starred_by?.includes(user.id);
+              const reactionCounts = Object.values(m.reactions || {}).reduce((a, e) => { a[e] = (a[e]||0)+1; return a; }, {});
 
               return (
                 <div
-                  key={msg.id}
-                  className={
-                    'flex items-end gap-2 mb-0.5 ' +
-                    (isMine ? 'flex-row-reverse' : 'flex-row') +
-                    (isPinned ? ' bg-[#1E6FFF]/5 rounded-2xl px-1 py-0.5' : '')
-                  }
-                  onTouchStart={(e) => handleTouchStart(e, msg)}
-                  onTouchMove={(e) => handleTouchMove(e, msg)}
-                  onTouchEnd={() => handleTouchEnd(msg)}
+                  key={m.id}
+                  style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', marginBottom: '2px', flexDirection: isMine ? 'row-reverse' : 'row' }}
+                  onTouchStart={(e) => onTS(e, m)}
+                  onTouchMove={(e) => onTM(e, m)}
+                  onTouchEnd={() => onTE(m)}
                 >
                   {/* Avatar */}
                   {!isMine && (
-                    <div className="w-7 flex-shrink-0 mb-1">
-                      {isLast && (
-                        <Avatar url={msg.sender?.avatar_url} name={msg.sender?.display_name} size={7} />
-                      )}
+                    <div style={{ width: '28px', flexShrink: 0, marginBottom: '4px' }}>
+                      {isLast && <Avatar url={m.sender?.avatar_url} name={m.sender?.display_name} size={7} />}
                     </div>
                   )}
 
-                  {/* Swipe reply indicator */}
+                  {/* Swipe indicator */}
                   {isSwiping && !isDeleted && (
-                    <div className="flex items-center justify-center w-7 h-7 rounded-full bg-[#1E6FFF]/30 flex-shrink-0">
-                      <Reply size={13} className="text-[#1E6FFF]" />
+                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(30,111,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Reply size={13} style={{ color: '#1E6FFF' }} />
                     </div>
                   )}
 
-                  {/* Message bubble */}
+                  {/* Bubble */}
                   <div
-                    className={
-                      'max-w-[78%] group relative transition-transform duration-150 ' +
-                      (isSwiping ? (isMine ? '-translate-x-8' : 'translate-x-8') : '')
-                    }
+                    className="group"
+                    style={{
+                      maxWidth: '78%', position: 'relative',
+                      transform: isSwiping ? (isMine ? 'translateX(-32px)' : 'translateX(32px)') : 'none',
+                      transition: 'transform 0.15s',
+                    }}
                   >
-                    {/* Sender name */}
                     {!isMine && isFirst && (
-                      <p className="text-[#1E6FFF] text-xs font-bold mb-1 px-1">
-                        {msg.sender?.display_name}
-                      </p>
+                      <p style={{ color: '#1E6FFF', fontSize: '11px', fontWeight: 700, marginBottom: '3px', paddingLeft: '4px' }}>{m.sender?.display_name}</p>
                     )}
 
-                    {/* Reply preview */}
-                    {msg.parent_message_id && (
-                      <div className={
-                        'text-xs mb-1 px-3 py-2 rounded-xl border-l-2 border-[#1E6FFF] ' +
-                        (isMine ? 'bg-white/10' : 'bg-white/5')
-                      }>
-                        <p className="text-[#1E6FFF] font-semibold text-[10px] mb-0.5">↩ Reply</p>
-                        <p className="text-white/50 text-[11px] truncate">Original message</p>
+                    {m.parent_message_id && (
+                      <div style={{ fontSize: '11px', marginBottom: '4px', padding: '6px 10px', borderRadius: '10px', borderLeft: '2px solid #1E6FFF', background: isMine ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)' }}>
+                        <p style={{ color: '#1E6FFF', fontSize: '10px', fontWeight: 700, marginBottom: '2px' }}>↩ Reply</p>
+                        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Original message</p>
                       </div>
                     )}
 
-                    {/* Bubble */}
                     <div
-                      className={
-                        'px-3 py-2 relative select-text ' +
-                        (isMine
-                          ? 'bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] text-white ' +
-                            (isFirst ? 'rounded-t-2xl ' : 'rounded-t-xl ') +
-                            (isLast ? 'rounded-bl-2xl rounded-br-sm ' : 'rounded-b-xl ')
-                          : 'bg-[#1a2a4a] text-white/90 ' +
-                            (isFirst ? 'rounded-t-2xl ' : 'rounded-t-xl ') +
-                            (isLast ? 'rounded-br-2xl rounded-bl-sm ' : 'rounded-b-xl ')) +
-                        (isDeleted ? 'opacity-60 ' : '')
-                      }
-                      onDoubleClick={() => !isDeleted && setShowQuickReact(msg.id)}
+                      style={{
+                        padding: '9px 13px',
+                        borderRadius: isFirst && isLast ? '16px' : isMine ? (isFirst ? '16px 4px 16px 16px' : isLast ? '16px 16px 4px 16px' : '16px 4px 4px 16px') : (isFirst ? '4px 16px 16px 16px' : isLast ? '16px 16px 16px 4px' : '4px 16px 16px 4px'),
+                        background: isMine ? 'linear-gradient(135deg, #1E6FFF, #7B2FFF)' : '#1a2a4a',
+                        opacity: isDeleted ? 0.6 : 1,
+                        position: 'relative',
+                      }}
+                      onDoubleClick={() => !isDeleted && setQuickReact(m.id)}
                     >
-                      {/* Forwarded */}
-                      {msg.forwarded && (
-                        <div className="flex items-center gap-1 mb-1 opacity-60">
-                          <Forward size={11} />
-                          <p className="text-[10px]">Forwarded</p>
-                        </div>
-                      )}
-
-                      {/* Starred + Pinned indicators */}
-                      <div className="absolute top-1 right-2 flex items-center gap-1">
-                        {isStarred && <Star size={9} className="text-[#FFD700] fill-[#FFD700]" />}
-                        {isPinned && <Pin size={9} className="text-[#1E6FFF]" />}
+                      {m.forwarded && <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px', opacity: 0.6, fontSize: '10px', color: 'white' }}><Forward size={10} /> Forwarded</div>}
+                      <div style={{ position: 'absolute', top: '4px', right: '6px', display: 'flex', gap: '2px' }}>
+                        {isStarred && <Star size={9} style={{ color: '#FFD700', fill: '#FFD700' }} />}
+                        {m.is_pinned && <Pin size={9} style={{ color: '#1E6FFF' }} />}
                       </div>
 
-                      {/* Image */}
-                      {msg.message_type === 'image' && msg.media_url && !isDeleted && (
-                        <img
-                          src={msg.media_url} alt="sent"
-                          className="rounded-xl max-w-full mb-1.5 max-h-64 object-cover cursor-pointer block"
-                          onClick={() => window.open(msg.media_url, '_blank')}
-                        />
+                      {m.message_type === 'image' && m.media_url && !isDeleted && (
+                        <img src={m.media_url} alt="sent" onClick={() => window.open(m.media_url, '_blank')}
+                          style={{ borderRadius: '10px', maxWidth: '100%', maxHeight: '220px', objectFit: 'cover', display: 'block', marginBottom: '6px', cursor: 'pointer' }} />
                       )}
 
-                      {/* Text */}
-                      {(msg.body || isDeleted) && (
-                        <p className={
-                          'text-sm leading-relaxed break-words ' +
-                          (isDeleted ? 'italic text-white/40' : '')
-                        }>
-                          {isDeleted ? '🚫 This message was deleted' : msg.body}
-                        </p>
-                      )}
+                      <p style={{ fontSize: '14px', lineHeight: 1.5, color: isDeleted ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.93)', wordBreak: 'break-word', fontStyle: isDeleted ? 'italic' : 'normal' }}>
+                        {isDeleted ? '🚫 This message was deleted' : m.body}
+                      </p>
+                      {m.edited && !isDeleted && <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>edited</p>}
 
-                      {/* Edited */}
-                      {msg.edited && !isDeleted && (
-                        <p className="text-[10px] text-white/40 mt-0.5">edited</p>
-                      )}
-
-                      {/* Time + Status */}
-                      <div className={
-                        'flex items-center gap-1.5 mt-1 ' +
-                        (isMine ? 'justify-end' : 'justify-start')
-                      }>
-                        <span className="text-[10px] text-white/40">
-                          {new Date(msg.created_at).toLocaleTimeString('en-KE', {
-                            hour: '2-digit', minute: '2-digit'
-                          })}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: isMine ? 'flex-end' : 'flex-start', gap: '4px', marginTop: '4px' }}>
+                        <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>
+                          {new Date(m.created_at).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
                         </span>
-                        <MessageStatus msg={msg} isMine={isMine} />
+                        <MsgStatus msg={m} isMine={isMine} />
                       </div>
                     </div>
 
                     {/* Reactions */}
                     {Object.keys(reactionCounts).length > 0 && (
-                      <div className={
-                        'flex gap-1 flex-wrap mt-1 ' +
-                        (isMine ? 'justify-end' : 'justify-start')
-                      }>
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '4px', justifyContent: isMine ? 'flex-end' : 'flex-start' }}>
                         {Object.entries(reactionCounts).map(([emoji, count]) => (
-                          <button
-                            key={emoji}
-                            onClick={() => handleReact(msg.id, emoji)}
-                            className="flex items-center gap-0.5 bg-[#111827] border border-white/10 rounded-full px-1.5 py-0.5 hover:bg-white/10 transition-colors"
-                          >
-                            <span className="text-xs">{emoji}</span>
-                            {count > 1 && <span className="text-[10px] text-white/60">{count}</span>}
+                          <button key={emoji} onClick={() => react(m.id, emoji)}
+                            style={{ display: 'flex', alignItems: 'center', gap: '2px', background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '99px', padding: '2px 6px', cursor: 'pointer' }}>
+                            <span style={{ fontSize: '12px' }}>{emoji}</span>
+                            {count > 1 && <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>{count}</span>}
                           </button>
                         ))}
                       </div>
                     )}
 
-                    {/* Quick react picker */}
-                    {showQuickReact === msg.id && !isDeleted && (
+                    {/* Quick react */}
+                    {quickReact === m.id && !isDeleted && (
                       <div
-                        className={
-                          'absolute -top-14 ' +
-                          (isMine ? 'right-0' : 'left-0') +
-                          ' bg-[#111827] border border-white/10 rounded-full px-2 py-2 flex gap-1 z-30 shadow-2xl slide-up'
-                        }
+                        style={{
+                          position: 'absolute', zIndex: 30,
+                          [isMine ? 'right' : 'left']: 0, top: '-52px',
+                          background: '#111827', border: '1px solid rgba(255,255,255,0.1)',
+                          borderRadius: '99px', padding: '6px 8px',
+                          display: 'flex', gap: '4px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                        }}
                         onClick={(e) => e.stopPropagation()}
                       >
                         {QUICK_REACTIONS.map((emoji) => (
-                          <button
-                            key={emoji}
-                            onClick={() => handleReact(msg.id, emoji)}
-                            className="text-xl hover:scale-125 transition-transform w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10"
-                          >
-                            {emoji}
-                          </button>
+                          <button key={emoji} onClick={() => react(m.id, emoji)}
+                            style={{ fontSize: '20px', background: 'none', border: 'none', cursor: 'pointer', padding: '2px', borderRadius: '8px' }}
+                            onMouseOver={(e) => { e.target.style.transform = 'scale(1.3)'; }}
+                            onMouseOut={(e) => { e.target.style.transform = 'scale(1)'; }}
+                          >{emoji}</button>
                         ))}
                       </div>
                     )}
 
-                    {/* Hover action buttons */}
+                    {/* Hover actions */}
                     {!isDeleted && (
                       <div
-                        className={
-                          'absolute top-0 hidden group-hover:flex items-center gap-1 z-20 ' +
-                          (isMine
-                            ? 'left-0 -translate-x-full pr-1 flex-row-reverse'
-                            : 'right-0 translate-x-full pl-1')
-                        }
+                        className="hidden group-hover:flex"
+                        style={{
+                          position: 'absolute', top: 0, zIndex: 20,
+                          [isMine ? 'left' : 'right']: isMine ? '-72px' : '-72px',
+                          flexDirection: isMine ? 'row-reverse' : 'row',
+                          gap: '4px', alignItems: 'center',
+                        }}
                       >
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setReplyTo(msg);
-                            setTimeout(() => inputRef.current?.focus(), 50);
-                          }}
-                          className="w-7 h-7 bg-[#111827] border border-white/10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
-                        >
-                          <Reply size={12} className="text-white/70" />
-                        </button>
+                          onClick={(e) => { e.stopPropagation(); setReplyTo(m); setTimeout(() => inputRef.current?.focus(), 80); }}
+                          style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#111827', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                        ><Reply size={12} style={{ color: 'rgba(255,255,255,0.7)' }} /></button>
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowMsgMenu(showMsgMenu === msg.id ? null : msg.id);
-                          }}
-                          className="w-7 h-7 bg-[#111827] border border-white/10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
-                        >
-                          <ChevronDown size={12} className="text-white/70" />
-                        </button>
+                          onClick={(e) => { e.stopPropagation(); setMsgMenu(msgMenu === m.id ? null : m.id); }}
+                          style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#111827', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                        ><ChevronDown size={12} style={{ color: 'rgba(255,255,255,0.7)' }} /></button>
                       </div>
                     )}
 
-                    {/* Full message menu */}
-                    {showMsgMenu === msg.id && (
+                    {/* Message menu */}
+                    {msgMenu === m.id && (
                       <div
-                        className={
-                          'absolute top-8 bg-[#111827] border border-white/10 rounded-2xl overflow-hidden z-40 w-52 shadow-2xl slide-up ' +
-                          (isMine ? 'right-0' : 'left-0')
-                        }
+                        style={{
+                          position: 'absolute', top: '32px',
+                          [isMine ? 'right' : 'left']: 0, zIndex: 40,
+                          background: '#111827', border: '1px solid rgba(255,255,255,0.1)',
+                          borderRadius: '16px', width: '200px',
+                          boxShadow: '0 20px 40px rgba(0,0,0,0.6)', overflow: 'hidden',
+                        }}
                         onClick={(e) => e.stopPropagation()}
                       >
-                        {!isDeleted && msg.body && (
-                          <button onClick={() => handleCopy(msg.body)} className="w-full flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/5 text-sm border-b border-white/5">
-                            <Copy size={14} className="text-[#6B7280]" /> Copy text
+                        {[
+                          ...((!isDeleted && m.body) ? [{ icon: Copy, label: 'Copy text', action: () => { navigator.clipboard.writeText(m.body); setMsgMenu(null); } }] : []),
+                          ...(!isDeleted ? [{ icon: () => <span style={{fontSize:'14px'}}>😊</span>, label: 'React', action: () => { setQuickReact(m.id); setMsgMenu(null); } }] : []),
+                          { icon: Reply, label: 'Reply', action: () => { setReplyTo(m); setMsgMenu(null); setTimeout(() => inputRef.current?.focus(), 80); } },
+                          ...(!isDeleted ? [{ icon: Forward, label: 'Forward', action: () => { navigator.clipboard.writeText(m.body || '📷 Photo'); setMsgMenu(null); alert('Copied — paste in another chat'); } }] : []),
+                          { icon: Star, label: isStarred ? 'Unstar' : 'Star', action: () => toggleStar(m.id) },
+                          { icon: Pin, label: m.is_pinned ? 'Unpin' : 'Pin', action: () => pinMsg(m.id) },
+                          ...(isMine && !isDeleted && m.message_type === 'text' ? [{ icon: Edit3, label: 'Edit', action: () => { setEditing(m); setMsg(m.body); setMsgMenu(null); setTimeout(() => inputRef.current?.focus(), 80); } }] : []),
+                          ...(!isDeleted && m.media_url ? [{ icon: Download, label: 'Download', action: () => { window.open(m.media_url, '_blank'); setMsgMenu(null); } }] : []),
+                          { icon: Trash2, label: 'Delete for me', action: () => delForMe(m.id), red: false },
+                          ...(isMine && !isDeleted ? [{ icon: Trash2, label: 'Delete for everyone', action: () => delForAll(m.id), red: true }] : []),
+                        ].map((item) => (
+                          <button key={item.label} onClick={item.action}
+                            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '11px 16px', color: item.red ? '#EF4444' : 'rgba(255,255,255,0.8)', background: 'none', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', fontSize: '13px', textAlign: 'left' }}>
+                            <item.icon size={14} style={{ color: item.red ? '#EF4444' : '#6B7280', flexShrink: 0 }} />{item.label}
                           </button>
-                        )}
-                        {!isDeleted && (
-                          <button
-                            onClick={() => { setShowQuickReact(msg.id); setShowMsgMenu(null); }}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/5 text-sm border-b border-white/5"
-                          >
-                            <span className="text-base">😊</span> React
-                          </button>
-                        )}
-                        <button
-                          onClick={() => {
-                            setReplyTo(msg);
-                            setShowMsgMenu(null);
-                            setTimeout(() => inputRef.current?.focus(), 50);
-                          }}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/5 text-sm border-b border-white/5"
-                        >
-                          <Reply size={14} className="text-[#6B7280]" /> Reply
-                        </button>
-                        {!isDeleted && (
-                          <button onClick={() => handleForward(msg)} className="w-full flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/5 text-sm border-b border-white/5">
-                            <Forward size={14} className="text-[#6B7280]" /> Forward
-                          </button>
-                        )}
-                        <button onClick={() => handleStar(msg.id)} className="w-full flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/5 text-sm border-b border-white/5">
-                          <Star size={14} className={isStarred ? 'text-[#FFD700] fill-[#FFD700]' : 'text-[#6B7280]'} />
-                          {isStarred ? 'Unstar' : 'Star message'}
-                        </button>
-                        <button onClick={() => handlePin(msg.id)} className="w-full flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/5 text-sm border-b border-white/5">
-                          <Pin size={14} className="text-[#6B7280]" />
-                          {msg.is_pinned ? 'Unpin' : 'Pin message'}
-                        </button>
-                        {isMine && !isDeleted && msg.message_type === 'text' && (
-                          <button onClick={() => handleEdit(msg)} className="w-full flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/5 text-sm border-b border-white/5">
-                            <Edit3 size={14} className="text-[#6B7280]" /> Edit message
-                          </button>
-                        )}
-                        {!isDeleted && msg.media_url && (
-                          <button
-                            onClick={() => { window.open(msg.media_url, '_blank'); setShowMsgMenu(null); }}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/5 text-sm border-b border-white/5"
-                          >
-                            <Download size={14} className="text-[#6B7280]" /> Download
-                          </button>
-                        )}
-                        <button onClick={() => handleDeleteForMe(msg.id)} className="w-full flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/5 text-sm border-b border-white/5">
-                          <Trash2 size={14} className="text-[#6B7280]" /> Delete for me
-                        </button>
-                        {isMine && !isDeleted && (
-                          <button onClick={() => handleDeleteForEveryone(msg.id)} className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 text-sm">
-                            <Trash2 size={14} /> Delete for everyone
-                          </button>
-                        )}
+                        ))}
                       </div>
                     )}
                   </div>
@@ -1016,27 +649,20 @@ const ChatRoom = () => {
           </div>
         ))}
 
-        {messages.length === 0 && !searchQuery && (
-          <div className="flex flex-col items-center justify-center min-h-full gap-4 py-20">
-            <div className="relative">
+        {/* Empty state */}
+        {messages.length === 0 && !searchQ && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '16px' }}>
+            <div style={{ position: 'relative' }}>
               <Avatar url={otherUser?.avatar_url} name={otherUser?.display_name} size={20} />
-              {otherUser?.is_online && (
-                <div className="absolute bottom-1 right-1 w-4 h-4 bg-[#2ECC71] rounded-full border-2 border-[#0A1628] shadow-lg shadow-[#2ECC71]/50" />
-              )}
+              {otherUser?.is_online && <div style={{ position: 'absolute', bottom: '2px', right: '2px', width: '14px', height: '14px', borderRadius: '50%', background: '#2ECC71', border: '2px solid #0A1628' }} />}
             </div>
-            <h3 className="text-white font-bold text-xl">{otherUser?.display_name}</h3>
-            <p className="text-[#6B7280] text-sm text-center">
-              Say hello to {otherUser?.display_name?.split(' ')[0]}! 👋
-            </p>
-            {/* Greeting suggestions */}
-            <div className="flex flex-wrap gap-2 justify-center max-w-xs">
-              {['👋 Hey!', '😊 Hi there!', '🔥 What\'s good?', '🇰🇪 Mambo!', '✨ Sawa!'].map((greet) => (
-                <button
-                  key={greet}
-                  onClick={() => { setMessage(greet); setTimeout(() => inputRef.current?.focus(), 50); }}
-                  className="bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-white/80 hover:bg-[#1E6FFF]/20 hover:border-[#1E6FFF]/40 transition-all"
-                >
-                  {greet}
+            <h3 style={{ color: 'white', fontWeight: 700, fontSize: '18px' }}>{otherUser?.display_name}</h3>
+            <p style={{ color: '#6B7280', fontSize: '14px', textAlign: 'center' }}>Say hello to {otherUser?.display_name?.split(' ')[0]}! 👋</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', maxWidth: '280px' }}>
+              {['👋 Hey!', '😊 Hi there!', '🔥 What\'s good?', '🇰🇪 Mambo!', '✨ Sawa!'].map((g) => (
+                <button key={g} onClick={() => { setMsg(g); setTimeout(() => inputRef.current?.focus(), 50); }}
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '99px', padding: '8px 16px', color: 'rgba(255,255,255,0.8)', fontSize: '13px', cursor: 'pointer' }}>
+                  {g}
                 </button>
               ))}
             </div>
@@ -1044,64 +670,43 @@ const ChatRoom = () => {
         )}
 
         {/* Typing indicator */}
-        {isOtherTyping && (
-          <div className="flex items-end gap-2 mt-2">
+        {isTyping && (
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', marginTop: '8px' }}>
             <Avatar url={otherUser?.avatar_url} name={otherUser?.display_name} size={7} />
-            <div className="bg-[#1a2a4a] rounded-2xl rounded-bl-sm px-4 py-3">
-              <div className="flex gap-1">
-                {[0,1,2].map((i) => (
-                  <div
-                    key={i}
-                    className="w-2 h-2 rounded-full bg-[#6B7280]"
-                    style={{ animation: 'bounce 1.2s infinite', animationDelay: i * 0.2 + 's' }}
-                  />
-                ))}
-              </div>
+            <div style={{ background: '#1a2a4a', borderRadius: '16px 16px 16px 4px', padding: '10px 14px', display: 'flex', gap: '4px', alignItems: 'center' }}>
+              {[0,1,2].map((i) => (
+                <div key={i} style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#6B7280', animation: 'bounce 1.2s infinite', animationDelay: i * 0.2 + 's' }} />
+              ))}
             </div>
           </div>
         )}
 
-        <div ref={messagesEndRef} className="h-2" />
+        <div ref={messagesEndRef} style={{ height: '8px' }} />
       </div>
 
       {/* ── EMOJI PICKER ── */}
       {showEmoji && (
-        <div className="flex-shrink-0 bg-[#111827] border-t border-white/10" style={{ maxHeight: '240px' }}>
-          <div className="px-3 pt-2 pb-1">
-            <input
-              type="text" value={emojiSearch}
-              onChange={(e) => setEmojiSearch(e.target.value)}
-              placeholder="Search emoji..."
-              className="w-full bg-white/5 border border-white/10 rounded-lg py-1.5 px-3 text-white placeholder-[#6B7280] text-xs focus:outline-none focus:border-[#1E6FFF]"
-            />
+        <div style={{ flexShrink: 0, background: '#111827', borderTop: '1px solid rgba(255,255,255,0.1)', maxHeight: '220px' }}>
+          <div style={{ padding: '8px 12px 4px' }}>
+            <input type="text" value={emojiSearch} onChange={(e) => setEmojiSearch(e.target.value)} placeholder="Search emoji..."
+              style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '6px 12px', color: 'white', fontSize: '12px', outline: 'none', boxSizing: 'border-box' }} />
           </div>
           {!emojiSearch && (
-            <div className="flex overflow-x-auto px-2 border-b border-white/5 gap-1" style={{ scrollbarWidth: 'none' }}>
-              {EMOJI_CATEGORIES.map((cat, i) => (
-                <button
-                  key={cat.label}
-                  onClick={() => setEmojiCategoryIdx(i)}
-                  className={
-                    'flex-shrink-0 px-2 py-2 text-xl transition-all rounded-lg ' +
-                    (emojiCategoryIdx === i ? 'bg-[#1E6FFF]/20 border-b-2 border-[#1E6FFF]' : 'opacity-60 hover:opacity-100')
-                  }
-                >
-                  {cat.label}
+            <div style={{ display: 'flex', overflowX: 'auto', padding: '0 8px', borderBottom: '1px solid rgba(255,255,255,0.05)', scrollbarWidth: 'none' }}>
+              {EMOJI_CATS.map((c, i) => (
+                <button key={c.label} onClick={() => setEmojiCat(i)}
+                  style={{ flexShrink: 0, padding: '6px 8px', fontSize: '18px', background: 'none', border: 'none', cursor: 'pointer', borderBottom: emojiCat === i ? '2px solid #1E6FFF' : '2px solid transparent', opacity: emojiCat === i ? 1 : 0.6 }}>
+                  {c.label}
                 </button>
               ))}
             </div>
           )}
-          <div
-            className="grid grid-cols-8 gap-0.5 p-2 overflow-y-auto"
-            style={{ maxHeight: '150px', scrollbarWidth: 'none' }}
-          >
-            {currentEmojis.map((emoji) => (
-              <button
-                key={emoji}
-                onClick={() => { setMessage((m) => m + emoji); inputRef.current?.focus(); }}
-                className="text-2xl p-1 rounded-lg hover:bg-white/10 transition-colors active:scale-90 flex items-center justify-center"
-              >
-                {emoji}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8,1fr)', gap: '2px', padding: '8px', overflowY: 'auto', maxHeight: '130px', scrollbarWidth: 'none' }}>
+            {emojis.map((e) => (
+              <button key={e}
+                onMouseDown={(ev) => { ev.preventDefault(); setMsg((m) => m + e); }}
+                style={{ fontSize: '22px', padding: '4px', borderRadius: '8px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {e}
               </button>
             ))}
           </div>
@@ -1110,163 +715,161 @@ const ChatRoom = () => {
 
       {/* ── REPLY PREVIEW ── */}
       {replyTo && (
-        <div className="flex-shrink-0 bg-[#111827] border-t border-white/10 px-4 py-2 flex items-center gap-3">
-          <div className="w-0.5 h-10 bg-[#1E6FFF] rounded-full flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-[#1E6FFF] text-xs font-bold">
-              {replyTo.sender_id === user.id ? 'You' : replyTo.sender?.display_name}
-            </p>
-            <p className="text-[#6B7280] text-xs truncate">
-              {replyTo.message_type === 'image' ? '📷 Photo' : replyTo.body}
-            </p>
+        <div style={{ flexShrink: 0, background: '#111827', borderTop: '1px solid rgba(255,255,255,0.1)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ width: '2px', height: '36px', background: '#1E6FFF', borderRadius: '2px', flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ color: '#1E6FFF', fontSize: '11px', fontWeight: 700 }}>{replyTo.sender_id === user.id ? 'You' : replyTo.sender?.display_name}</p>
+            <p style={{ color: '#6B7280', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{replyTo.message_type === 'image' ? '📷 Photo' : replyTo.body}</p>
           </div>
-          <button onClick={() => setReplyTo(null)} className="text-[#6B7280] flex-shrink-0 hover:text-white transition-colors">
-            <X size={16} />
-          </button>
+          <button onClick={() => setReplyTo(null)} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
         </div>
       )}
 
       {/* ── EDIT BANNER ── */}
-      {editingMsg && (
-        <div className="flex-shrink-0 bg-[#1E6FFF]/10 border-t border-[#1E6FFF]/20 px-4 py-2 flex items-center gap-3">
-          <Edit3 size={14} className="text-[#1E6FFF] flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-[#1E6FFF] text-xs font-bold">Editing message</p>
-            <p className="text-[#6B7280] text-xs truncate">{editingMsg.body}</p>
+      {editing && (
+        <div style={{ flexShrink: 0, background: 'rgba(30,111,255,0.1)', borderTop: '1px solid rgba(30,111,255,0.2)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Edit3 size={14} style={{ color: '#1E6FFF', flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ color: '#1E6FFF', fontSize: '11px', fontWeight: 700 }}>Editing message</p>
+            <p style={{ color: '#6B7280', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{editing.body}</p>
           </div>
-          <button
-            onClick={() => { setEditingMsg(null); setMessage(''); if (inputRef.current) inputRef.current.style.height = '22px'; }}
-            className="text-[#6B7280] flex-shrink-0 hover:text-white transition-colors"
-          >
-            <X size={16} />
-          </button>
+          <button onClick={() => { setEditing(null); setMsg(''); if (inputRef.current) inputRef.current.style.height = '24px'; }} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
         </div>
       )}
 
       {/* ── SCHEDULE BANNER ── */}
-      {showScheduler && (
-        <div className="flex-shrink-0 bg-[#7B2FFF]/10 border-t border-[#7B2FFF]/20 px-4 py-2 flex items-center gap-3">
-          <Clock size={14} className="text-[#7B2FFF] flex-shrink-0" />
-          <input
-            type="datetime-local" value={scheduledTime}
-            onChange={(e) => setScheduledTime(e.target.value)}
-            className="flex-1 bg-transparent text-white text-xs focus:outline-none"
-          />
-          <button
-            onClick={() => { setShowScheduler(false); setScheduledTime(''); }}
-            className="text-[#6B7280] flex-shrink-0"
-          >
-            <X size={16} />
-          </button>
+      {scheduler && (
+        <div style={{ flexShrink: 0, background: 'rgba(123,47,255,0.1)', borderTop: '1px solid rgba(123,47,255,0.2)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Clock size={14} style={{ color: '#7B2FFF', flexShrink: 0 }} />
+          <input type="datetime-local" value={schedTime} onChange={(e) => setSchedTime(e.target.value)}
+            style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'white', fontSize: '12px' }} />
+          <button onClick={() => { setScheduler(false); setSchedTime(''); }} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
         </div>
       )}
 
-  {/* ── INPUT BAR — ALWAYS VISIBLE ── */}
-      <div
-        className="flex-shrink-0 bg-[#0d1f3c] border-t border-white/10 w-full"
-        style={{
-          paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
-          minHeight: '64px',
-        }}
-      >
-        <div className="flex items-end gap-2 px-3 pt-2.5 pb-1 w-full">
+      {/* ── INPUT BAR — using inline styles to avoid CSS conflicts ── */}
+      <div style={{
+        flexShrink: 0,
+        background: '#0d1f3c',
+        borderTop: '1px solid rgba(255,255,255,0.1)',
+        paddingLeft: '12px',
+        paddingRight: '12px',
+        paddingTop: '10px',
+        paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
+        display: 'block',
+        width: '100%',
+        boxSizing: 'border-box',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', width: '100%' }}>
 
-          {/* Emoji button */}
+          {/* Emoji btn */}
           <button
             type="button"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              setShowEmoji((v) => !v);
+            onMouseDown={(e) => { e.preventDefault(); setShowEmoji((v) => !v); }}
+            style={{
+              width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
+              background: showEmoji ? 'rgba(30,111,255,0.2)' : 'transparent',
+              border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: showEmoji ? '#1E6FFF' : '#6B7280',
             }}
-            className={
-              'w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full transition-all ' +
-              (showEmoji ? 'bg-[#1E6FFF]/20 text-[#1E6FFF]' : 'text-[#6B7280]')
-            }
           >
-            <Smile size={21} />
+            <Smile size={22} />
           </button>
 
-          {/* Image button */}
+          {/* Image btn */}
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="w-9 h-9 flex-shrink-0 flex items-center justify-center text-[#6B7280] rounded-full"
+            style={{
+              width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#6B7280',
+            }}
           >
             {uploading
-              ? <div className="w-4 h-4 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" />
-              : <Image size={21} />
+              ? <div style={{ width: '16px', height: '16px', border: '2px solid #1E6FFF', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              : <ImageIcon size={22} />
             }
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleImageSend}
-          />
+          <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageSend} />
 
-          {/* Text input */}
-          <div
-            className="flex-1 min-w-0 rounded-2xl px-3 py-2.5 border border-white/15 focus-within:border-[#1E6FFF]/50 transition-colors"
-            style={{ background: 'rgba(255,255,255,0.07)' }}
-          >
+          {/* Textarea wrapper */}
+          <div style={{
+            flex: 1, minWidth: 0,
+            background: 'rgba(255,255,255,0.07)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            borderRadius: '22px',
+            padding: '10px 14px',
+            display: 'flex', alignItems: 'flex-end',
+          }}>
             <textarea
               ref={inputRef}
-              value={message}
+              value={msg}
               onChange={(e) => {
-                setMessage(e.target.value);
-                handleTypingBroadcast();
+                setMsg(e.target.value);
+                broadcastTyping();
                 e.target.style.height = 'auto';
                 e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
               }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              placeholder={editingMsg ? 'Edit message...' : 'Message...'}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+              onFocus={() => { setShowEmoji(false); setTimeout(scrollBot, 350); }}
+              placeholder={editing ? 'Edit message...' : 'Message...'}
               rows={1}
-              className="w-full bg-transparent text-white placeholder-[#6B7280] text-sm focus:outline-none resize-none leading-relaxed block"
               style={{
+                width: '100%',
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                color: 'white',
+                fontSize: '14px',
+                lineHeight: '1.5',
+                resize: 'none',
                 minHeight: '22px',
                 maxHeight: '120px',
-                height: '22px',
                 overflowY: 'auto',
-                scrollbarWidth: 'none',
+                fontFamily: 'inherit',
+                display: 'block',
+                padding: 0,
               }}
             />
           </div>
 
-          {/* Schedule */}
+          {/* Schedule btn */}
           <button
             type="button"
-            onClick={() => setShowScheduler(!showScheduler)}
-            className={
-              'w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full transition-all ' +
-              (showScheduler ? 'bg-[#7B2FFF]/20 text-[#7B2FFF]' : 'text-[#6B7280]')
-            }
+            onClick={() => setScheduler(!scheduler)}
+            style={{
+              width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
+              background: scheduler ? 'rgba(123,47,255,0.2)' : 'transparent',
+              border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: scheduler ? '#7B2FFF' : '#6B7280',
+            }}
           >
-            <Clock size={19} />
+            <Clock size={20} />
           </button>
 
-          {/* Send */}
+          {/* Send btn */}
           <button
             type="button"
             onClick={handleSend}
-            disabled={sending || (!message.trim() && !uploading)}
-            className="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] rounded-full flex items-center justify-center disabled:opacity-40 active:scale-90 transition-all shadow-lg shadow-[#1E6FFF]/30"
+            disabled={sending || !msg.trim()}
+            style={{
+              width: '42px', height: '42px', borderRadius: '50%', flexShrink: 0,
+              background: (sending || !msg.trim()) ? 'rgba(30,111,255,0.4)' : 'linear-gradient(135deg, #1E6FFF, #7B2FFF)',
+              border: 'none', cursor: (sending || !msg.trim()) ? 'default' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(30,111,255,0.4)',
+            }}
           >
             {sending
-              ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              : <Send size={16} className="text-white ml-0.5" />
+              ? <div style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              : <Send size={17} style={{ color: 'white', marginLeft: '2px' }} />
             }
           </button>
         </div>
       </div>
     </div>
   );
-};
-
-export default ChatRoom;    
+} 

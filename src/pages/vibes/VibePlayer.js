@@ -338,134 +338,110 @@ const VibePlayer = ({ vibe, isActive, onNext, onPrev, showComments, setShowComme
         </div>
       </div>
 
-      {/* ── RIGHT SIDE ACTION BAR ── */}
-      {/* Positioned carefully: starts well below top bar, ends above bottom creator info */}
-      <div
-        className="absolute right-3 z-20 flex flex-col items-center gap-5"
-        style={{ bottom: '140px' }}
-      >
-        {/* Creator avatar + follow */}
-        <div className="flex flex-col items-center gap-1">
-          <button onClick={() => navigate('/profile/' + author?.username)} className="relative">
-            <div className="w-11 h-11 rounded-full border-2 border-white overflow-hidden shadow-xl">
-              {author?.avatar_url ? (
-                <img src={author.avatar_url} alt={author.display_name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold">
-                  {author?.display_name?.[0]?.toUpperCase()}
-                </div>
-              )}
-            </div>
-          </button>
-          {author?.id !== user.id && (
-            <button
-              onClick={handleFollow}
-              className={'w-6 h-6 rounded-full border-2 border-black flex items-center justify-center shadow ' +
-                (isFollowing ? 'bg-[#2ECC71]' : 'bg-[#FF6B35]')}
-            >
-              {isFollowing
-                ? <UserCheck size={11} className="text-white" />
-                : <UserPlus size={11} className="text-white" />
-              }
-            </button>
-          )}
-        </div>
-
-        {/* 🔥 Fire */}
-        <div className="flex flex-col items-center gap-0.5">
-          <button
-            onClick={handleFire}
-            className={'w-11 h-11 rounded-full flex items-center justify-center transition-all active:scale-75 ' +
-              (fired ? 'bg-orange-500/25' : 'bg-black/30 backdrop-blur-sm')}
-          >
-            <span
-              className="text-2xl"
-              style={{ filter: fired ? 'drop-shadow(0 0 6px #FF6B35)' : 'none' }}
-            >
-              🔥
-            </span>
-          </button>
-          <span className="text-white text-xs font-bold drop-shadow-lg">
-            {formatNumber(firesCount)}
-          </span>
-        </div>
-
-        {/* 💬 Comments */}
-        <div className="flex flex-col items-center gap-0.5">
-          <button
-            onClick={() => setShowComments(true)}
-            className="w-11 h-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
-          >
-            <MessageCircle size={22} className="text-white" fill="white" />
-          </button>
-          <span className="text-white text-xs font-bold drop-shadow-lg">
-            {formatNumber(vibe.comments_count || 0)}
-          </span>
-        </div>
-
-        {/* ↗️ Share */}
-        <div className="flex flex-col items-center gap-0.5">
-          <button
-            onClick={() => setShowShare(true)}
-            className="w-11 h-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
-          >
-            <Share2 size={22} className="text-white" />
-          </button>
-          <span className="text-white text-xs font-bold drop-shadow-lg">
-            {formatNumber(vibe.shares_count || 0)}
-          </span>
-        </div>
-
-        {/* 🔖 Save */}
-        <div className="flex flex-col items-center gap-0.5">
-          <button
-            onClick={handleSave}
-            className={'w-11 h-11 rounded-full flex items-center justify-center active:scale-90 transition-all ' +
-              (saved ? 'bg-[#FFD700]/25' : 'bg-black/30 backdrop-blur-sm')}
-          >
-            <Bookmark
-              size={22}
-              className={'transition-colors ' + (saved ? 'text-[#FFD700] fill-[#FFD700]' : 'text-white')}
-            />
-          </button>
-          <span className="text-white text-xs font-bold drop-shadow-lg">
-            {formatNumber(vibe.saves_count || 0)}
-          </span>
-        </div>
-
-        {/* ⋯ More */}
-        <div className="flex flex-col items-center">
-          <button
-            onClick={() => setShowOptions(true)}
-            className="w-11 h-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
-          >
-            <MoreHorizontal size={22} className="text-white" />
-          </button>
-        </div>
-
-        {/* 🎵 Spinning record — at very bottom of action bar */}
-        <div className="flex flex-col items-center mt-1">
-          <div
-            className="w-10 h-10 rounded-full border-3 border-white/30 overflow-hidden bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center"
-            style={{
-              transform: 'rotate(' + rotation + 'deg)',
-              border: '3px solid rgba(255,255,255,0.3)',
-            }}
-          >
-            <Music size={14} className="text-white" />
-          </div>
-        </div>
+     {/* RIGHT ACTION BAR — fixed position to not collide with top or bottom */}
+<div
+  style={{
+    position: 'absolute',
+    right: '8px',
+    // Start at 140px from top (below the 2 header rows)
+    // End at 130px from bottom (above progress bar + creator info)
+    top: '140px',
+    bottom: '130px',
+    zIndex: 20,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'space-evenly',  // evenly space all icons
+  }}
+  onClick={(e) => e.stopPropagation()}
+>
+  {/* Creator avatar */}
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+    <button onClick={() => navigate('/profile/' + author?.username)}>
+      <div style={{ width: '44px', height: '44px', borderRadius: '50%', border: '2px solid white', overflow: 'hidden' }}>
+        {author?.avatar_url
+          ? <img src={author.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,#1E6FFF,#7B2FFF)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700 }}>{author?.display_name?.[0]?.toUpperCase()}</div>
+        }
       </div>
+    </button>
+    {!isOwner && (
+      <button onClick={handleFollow}
+        style={{ width: '22px', height: '22px', borderRadius: '50%', border: '2px solid black', background: isFollowing ? '#2ECC71' : '#1E6FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+        {isFollowing ? <UserCheck size={11} color="white" /> : <UserPlus size={11} color="white" />}
+      </button>
+    )}
+  </div>
 
-      {/* ── BOTTOM — Creator info + caption ── */}
-      {/* Left side, ends before right action bar, above bottom nav */}
-      <div
-        className="absolute left-0 z-20 px-4"
-        style={{
-          right: '72px', // clear the right action bar
-          bottom: 'max(72px, calc(64px + env(safe-area-inset-bottom)))', // above bottom nav
-        }}
-      >
+  {/* Fire */}
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+    <button onClick={(e) => { e.stopPropagation(); handleFire(); }}
+      style={{ width: '46px', height: '46px', borderRadius: '50%', background: fired ? 'rgba(255,107,53,0.3)' : 'rgba(0,0,0,0.35)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px' }}>
+      🔥
+    </button>
+    <span style={{ color: 'white', fontSize: '12px', fontWeight: 700, textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>{formatNumber(firesCount)}</span>
+  </div>
+
+  {/* Comments */}
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+    <button onClick={(e) => { e.stopPropagation(); setShowComments(true); }}
+      style={{ width: '46px', height: '46px', borderRadius: '50%', background: 'rgba(0,0,0,0.35)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <MessageCircle size={26} color="white" fill="white" />
+    </button>
+    <span style={{ color: 'white', fontSize: '12px', fontWeight: 700, textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>{formatNumber(vibe.comments_count || 0)}</span>
+  </div>
+
+  {/* Share */}
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+    <button onClick={(e) => { e.stopPropagation(); setShowShare(true); }}
+      style={{ width: '46px', height: '46px', borderRadius: '50%', background: 'rgba(0,0,0,0.35)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Share2 size={26} color="white" />
+    </button>
+    <span style={{ color: 'white', fontSize: '12px', fontWeight: 700, textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>{formatNumber(vibe.shares_count || 0)}</span>
+  </div>
+
+  {/* Save */}
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+    <button onClick={(e) => { e.stopPropagation(); handleSave(); }}
+      style={{ width: '46px', height: '46px', borderRadius: '50%', background: saved ? 'rgba(255,215,0,0.3)' : 'rgba(0,0,0,0.35)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Bookmark size={26} color={saved ? '#FFD700' : 'white'} fill={saved ? '#FFD700' : 'none'} />
+    </button>
+    <span style={{ color: 'white', fontSize: '12px', fontWeight: 700, textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>{formatNumber(vibe.saves_count || 0)}</span>
+  </div>
+
+  {/* More */}
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <button onClick={(e) => { e.stopPropagation(); setShowOptions(true); }}
+      style={{ width: '46px', height: '46px', borderRadius: '50%', background: 'rgba(0,0,0,0.35)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <MoreHorizontal size={26} color="white" />
+    </button>
+  </div>
+
+  {/* Spinning music record — at very bottom of bar */}
+  <div
+    style={{
+      width: '40px', height: '40px', borderRadius: '50%',
+      border: '3px solid rgba(255,255,255,0.35)',
+      background: 'linear-gradient(135deg,#1E6FFF,#7B2FFF)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      transform: 'rotate(' + rotation + 'deg)',
+      flexShrink: 0,
+    }}
+  >
+    <Music size={14} color="white" />
+  </div>
+</div>
+
+   {/* BOTTOM CREATOR INFO */}
+<div
+  style={{
+    position: 'absolute', bottom: '6px', left: '12px',
+    right: '72px',   // clear the 56px right bar + margin
+    zIndex: 20,
+  }}
+  onClick={(e) => e.stopPropagation()}
+>
+      
         {/* Creator row */}
         <div className="flex items-center gap-2 mb-1.5 flex-wrap">
           <button
