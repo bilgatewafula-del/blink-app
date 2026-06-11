@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, Zap, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
@@ -8,7 +8,6 @@ import Avatar from '../../components/Avatar';
 import PostCard from '../../components/PostCard';
 import { PostCardSkeleton } from '../../components/Skeleton';
 import Stories from '../../components/Stories';
-import { RefreshCw } from 'lucide-react';
 
 const POSTS_PER_PAGE = 10;
 
@@ -160,10 +159,10 @@ const Home = () => {
     <div className="min-h-screen bg-[#0A1628] pb-20">
       <Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
-      {/* Top bar */}
+      {/* ── TOP BAR ── */}
       <div className="sticky top-0 z-20 bg-[#0A1628] border-b border-white/10 px-4 py-3">
         <div className="flex items-center justify-between">
-          {/* B-Link logo left */}
+          {/* Left: Logo */}
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-[#1E6FFF]/30">
               B
@@ -171,17 +170,28 @@ const Home = () => {
             <span className="text-white font-bold text-lg">B-Link</span>
           </div>
 
-          {/* Right side: bell + menu */}
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/notifications')} className="relative">
+          {/* Right: Vibes shortcut + Bell + Menu */}
+          <div className="flex items-center gap-2">
+            {/* Vibes tab — only on Home */}
+            <button
+              onClick={() => navigate('/vibes')}
+              className="flex items-center gap-1.5 bg-gradient-to-r from-[#FF6B35]/20 to-[#FFD700]/20 border border-[#FF6B35]/30 rounded-full px-3 py-1.5 hover:from-[#FF6B35]/30 hover:to-[#FFD700]/30 transition-all active:scale-95"
+            >
+              <Zap size={14} className="text-[#FF6B35]" />
+              <span className="text-[#FF6B35] text-xs font-bold">Vibes</span>
+            </button>
+
+            {/* Bell */}
+            <button onClick={() => navigate('/notifications')} className="relative p-1">
               <Bell size={22} className="text-[#6B7280]" />
               {unreadNotifs > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-[#FF6B35] rounded-full text-[9px] text-white flex items-center justify-center font-bold px-0.5">
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-[#FF6B35] rounded-full text-[9px] text-white flex items-center justify-center font-bold px-0.5">
                   {unreadNotifs > 9 ? '9+' : unreadNotifs}
                 </span>
               )}
             </button>
-            {/* Hamburger menu — circle */}
+
+            {/* Hamburger */}
             <button
               onClick={() => setDrawerOpen(true)}
               className="w-9 h-9 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex flex-col items-center justify-center gap-1 shadow-lg shadow-[#1E6FFF]/30 flex-shrink-0"
@@ -222,8 +232,11 @@ const Home = () => {
         style={{ height: isPulling || refreshing ? Math.max(pullDistance, refreshing ? 48 : 0) : 0 }}
       >
         <div className={'flex items-center gap-2 ' + (pullDistance >= PULL_THRESHOLD || refreshing ? 'text-[#1E6FFF]' : 'text-[#6B7280]')}>
-          <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''}
-            style={{ transform: !refreshing ? 'rotate(' + Math.min((pullDistance / PULL_THRESHOLD) * 180, 180) + 'deg)' : undefined }} />
+          <RefreshCw
+            size={18}
+            className={refreshing ? 'animate-spin' : ''}
+            style={{ transform: !refreshing ? 'rotate(' + Math.min((pullDistance / PULL_THRESHOLD) * 180, 180) + 'deg)' : undefined }}
+          />
           <span className="text-xs font-semibold">
             {refreshing ? 'Refreshing...' : pullDistance >= PULL_THRESHOLD ? 'Release to refresh' : 'Pull to refresh'}
           </span>
@@ -241,7 +254,7 @@ const Home = () => {
               {activeTab === 'following' ? 'Your feed is empty' : 'No posts yet'}
             </h2>
             <p className="text-[#6B7280] text-sm text-center">
-              {activeTab === 'following' ? 'Follow people to see their posts here.' : 'Be the first to post something!'}
+              {activeTab === 'following' ? 'Follow people to see their posts here.' : 'Be the first to post!'}
             </p>
             <button
               onClick={() => navigate('/discover')}

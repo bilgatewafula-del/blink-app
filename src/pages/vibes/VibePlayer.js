@@ -8,7 +8,7 @@ import {
   Music, MoreHorizontal, ChevronDown,
   UserPlus, UserCheck, MapPin, Flag,
   Download, Copy, Repeat2, Scissors,
-  Users, AlertCircle, X
+  Users, AlertCircle, X, Trash2
 } from 'lucide-react';
 import Avatar from '../../components/Avatar';
 import { formatNumber } from '../../utils/formatNumber';
@@ -65,6 +65,23 @@ const VibePlayer = ({
   const rotationTimer = useRef();
 
   const author = vibe.users;
+  const handleDeleteVibe = async () => {
+  if (!window.confirm('Delete this Vibe? This cannot be undone.')) return;
+
+  await supabase
+    .from('vibes')
+    .delete()
+    .eq('id', vibe.id);
+
+  await supabase
+    .from('users')
+    .update({
+      post_count: Math.max(0, (author?.post_count || 1) - 1),
+    })
+    .eq('id', user.id);
+
+  onNext();
+};
   const category = CATEGORY_CONFIG[vibe.category] || CATEGORY_CONFIG.street;
 
   // Rotating record icon
@@ -334,65 +351,52 @@ const VibePlayer = ({
         </div>
       )}
 
-      {/* Top bar */}
-      <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-4 pb-2">
-        <div className="flex items-center justify-between">
-          {/* Category pill */}
-          <div
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-sm border border-white/20"
-            style={{ background: category.color + '30' }}
-          >
-            <span className="text-sm">{category.emoji}</span>
-            <span className="text-white text-xs font-bold">{category.label}</span>
-          </div>
+{/* TOP BAR — pushed down to avoid overlap with status bar */}
+<div className="absolute top-0 left-0 right-0 z-20 px-3 pt-10 pb-2">
+  <div className="flex items-center justify-between">
 
-          <div className="flex items-center gap-2">
-            {/* Expires badge */}
-            <div className="bg-black/40 backdrop-blur-sm border border-white/20 px-2 py-1 rounded-full">
-              <span className="text-white/70 text-[10px]">
-                {expiresIn === 0 ? 'Expires today' : expiresIn + 'd left'}
-              </span>
-            </div>
+    {/* Category pill */}
+    <div
+      className="flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-sm border border-white/20"
+      style={{ background: category.color + '25' }}
+    >
+      <span className="text-sm">{category.emoji}</span>
+      <span className="text-white text-xs font-bold">
+        {category.label}
+      </span>
+    </div>
 
-            {/* Quality selector */}
-            <div className="relative">
-              <button
-                onClick={() => setShowQuality(!showQuality)}
-                className="bg-black/40 backdrop-blur-sm border border-white/20 px-2 py-1 rounded-full"
-              >
-                <span className="text-white text-[10px] font-bold">{quality}</span>
-              </button>
-              {showQuality && (
-                <div className="absolute right-0 top-8 bg-black/90 backdrop-blur-sm border border-white/20 rounded-xl overflow-hidden z-30 w-24">
-                  {['Auto', '1080p', '720p', '480p', '360p'].map((q) => (
-                    <button
-                      key={q}
-                      onClick={() => { setQuality(q); setShowQuality(false); }}
-                      className={'w-full px-3 py-2 text-xs text-left transition-colors ' + (quality === q ? 'text-[#1E6FFF] bg-[#1E6FFF]/20' : 'text-white hover:bg-white/10')}
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+    {/* Right controls */}
+    <div className="flex items-center gap-1.5">
 
-            {/* Mute button */}
-            <button
-              onClick={() => setMuted(!muted)}
-              className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm border border-white/20 flex items-center justify-center"
-            >
-              {muted
-                ? <VolumeX size={14} className="text-white" />
-                : <Volume2 size={14} className="text-white" />
-              }
-            </button>
-          </div>
-        </div>
+      {/* Expires */}
+      <div className="bg-black/40 backdrop-blur-sm border border-white/20 px-2 py-1 rounded-full">
+        <span className="text-white/70 text-[10px]">
+          {expiresIn === 0 ? 'Expires today' : expiresIn + 'd left'}
+        </span>
       </div>
 
+      {/* Mute */}
+      <button
+        onClick={() => setMuted(!muted)}
+        className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm border border-white/20 flex items-center justify-center"
+      >
+        {muted ? (
+          <VolumeX size={13} className="text-white" />
+        ) : (
+          <Volume2 size={13} className="text-white" />
+        )}
+      </button>
+    </div>
+
+  </div>
+</div>
+
       {/* RIGHT SIDE — Action bar */}
-      <div className="absolute right-3 bottom-32 z-20 flex flex-col items-center gap-5">
+<div
+  className="absolute right-3 z-20 flex flex-col items-center gap-4"
+  style={{ bottom: '130px' }}
+>
         {/* Creator avatar + follow */}
         <div className="flex flex-col items-center gap-1">
           <button
@@ -504,7 +508,12 @@ const VibePlayer = ({
       </div>
 
       {/* BOTTOM — Creator info + caption */}
-      <div className="absolute bottom-0 left-0 right-16 z-20 px-4 pb-4">
+<div
+  className="absolute bottom-0 left-0 right-14 z-20 px-4"
+  style={{
+    paddingBottom: 'max(16px, env(safe-area-inset-bottom))'
+  }}
+>
         {/* Creator info */}
         <div className="flex items-center gap-2 mb-2">
           <button
@@ -609,40 +618,90 @@ const VibePlayer = ({
         </div>
       )}
 
-      {/* Options menu */}
-      {showOptions && (
-        <div className="absolute inset-0 z-40 flex items-end" onClick={() => setShowOptions(false)}>
-          <div
-            className="w-full bg-black/90 backdrop-blur-md rounded-t-3xl border-t border-white/20 p-5 slide-up"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="w-10 h-1 bg-white/30 rounded-full mx-auto mb-4" />
-            <div className="space-y-1">
-              {[
-                { icon: AlertCircle, label: 'Not interested', color: 'text-white/80' },
-                { icon: Flag, label: 'Report Vibe', color: 'text-red-400' },
-                { icon: Users, label: 'Block @' + author?.username, color: 'text-red-400' },
-                { icon: Download, label: 'Download Vibe', color: 'text-[#2ECC71]' },
-                { icon: Scissors, label: 'Stitch this Vibe', color: 'text-[#1E6FFF]' },
-                { icon: Users, label: 'Duet with this Vibe', color: 'text-[#7B2FFF]' },
-              ].map((item) => (
-                <button
-                  key={item.label}
-                  onClick={() => { setShowOptions(false); if (item.label.includes('Download')) handleShare('download'); }}
-                  className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/10 transition-colors"
-                >
-                  <item.icon size={20} className={item.color} />
-                  <span className={'text-sm font-medium ' + item.color}>{item.label}</span>
-                </button>
-              ))}
-            </div>
-            <button onClick={() => setShowOptions(false)} className="w-full mt-3 py-3 bg-white/10 rounded-2xl text-white font-semibold">
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+     {/* Options menu */}
+{showOptions && (
+  <div
+    className="absolute inset-0 z-40 flex items-end"
+    onClick={() => setShowOptions(false)}
+  >
+    <div
+      className="w-full bg-black/90 backdrop-blur-md rounded-t-3xl border-t border-white/20 p-5 slide-up"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="w-10 h-1 bg-white/30 rounded-full mx-auto mb-4" />
 
+      <div className="space-y-1">
+        {[
+          {
+            icon: AlertCircle,
+            label: 'Not interested',
+            color: 'text-white/80',
+            action: () => setShowOptions(false),
+          },
+          {
+            icon: Flag,
+            label: 'Report Vibe',
+            color: 'text-red-400',
+            action: () => setShowOptions(false),
+          },
+          {
+            icon: Users,
+            label: 'Block @' + author?.username,
+            color: 'text-red-400',
+            action: () => setShowOptions(false),
+          },
+          {
+            icon: Download,
+            label: 'Download Vibe',
+            color: 'text-[#2ECC71]',
+            action: () => handleShare('download'),
+          },
+          {
+            icon: Scissors,
+            label: 'Stitch this Vibe',
+            color: 'text-[#1E6FFF]',
+            action: () => setShowOptions(false),
+          },
+
+          // DELETE (only for owner)
+          {
+            icon: Trash2,
+            label: 'Delete my Vibe',
+            color: 'text-red-400',
+            action: handleDeleteVibe,
+            ownerOnly: true,
+          },
+        ]
+          .filter(
+            (item) =>
+              !item.ownerOnly || author?.id === user?.id
+          )
+          .map((item) => (
+            <button
+              key={item.label}
+              onClick={() => {
+                setShowOptions(false);
+                item.action?.();
+              }}
+              className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/10 transition-colors"
+            >
+              <item.icon size={20} className={item.color} />
+              <span className={'text-sm font-medium ' + item.color}>
+                {item.label}
+              </span>
+            </button>
+          ))}
+      </div>
+
+      <button
+        onClick={() => setShowOptions(false)}
+        className="w-full mt-3 py-3 bg-white/10 rounded-2xl text-white font-semibold"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+)}
       {/* Comments panel */}
       {showComments && (
         <VibeComments

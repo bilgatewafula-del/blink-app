@@ -180,68 +180,107 @@ const VibeComments = ({ vibe, onClose }) => {
           )}
         </div>
 
-        {/* Emoji quick pick */}
-        {showEmoji && (
-          <div className="flex-shrink-0 flex gap-2 px-4 py-2 overflow-x-auto border-t border-white/10" style={{ scrollbarWidth: 'none' }}>
-            {COMMENT_EMOJIS.map((emoji) => (
-              <button
-                key={emoji}
-                onClick={() => setComment((c) => c + emoji)}
-                className="text-2xl flex-shrink-0 hover:scale-125 transition-transform"
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Reply banner */}
-        {replyTo && (
-          <div className="flex-shrink-0 flex items-center gap-3 px-4 py-2 bg-white/5 border-t border-white/10">
-            <div className="w-0.5 h-8 bg-[#1E6FFF] rounded-full" />
-            <div className="flex-1 min-w-0">
-              <p className="text-[#1E6FFF] text-xs font-bold">Replying to @{replyTo.users?.username}</p>
-              <p className="text-[#6B7280] text-xs truncate">{replyTo.body}</p>
-            </div>
-            <button onClick={() => { setReplyTo(null); setComment(''); }} className="text-[#6B7280]">
-              <X size={14} />
-            </button>
-          </div>
-        )}
-
-        {/* Input */}
-        <div className="flex-shrink-0 flex items-center gap-3 px-4 py-3 border-t border-white/10"
-          style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+       {/* Input — always visible, above keyboard */}
+<div
+  className="flex-shrink-0 border-t border-white/10 bg-[#0d1f3c]"
+  style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
+>
+  {/* Emoji quick pick */}
+  {showEmoji && (
+    <div
+      className="flex gap-2 px-4 py-2 overflow-x-auto border-b border-white/10"
+      style={{ scrollbarWidth: 'none' }}
+    >
+      {COMMENT_EMOJIS.map((emoji) => (
+        <button
+          key={emoji}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setComment((c) => c + emoji);
+          }}
+          className="text-2xl flex-shrink-0 hover:scale-125 transition-transform"
         >
-          <Avatar url={profile?.avatar_url} name={profile?.display_name} size={9} />
-          <div className="flex-1 flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-2.5">
-            <input
-              ref={inputRef}
-              type="text"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-              placeholder="Add a comment..."
-              className="flex-1 bg-transparent text-white placeholder-white/40 text-sm focus:outline-none"
-            />
-            <button
-              onClick={() => setShowEmoji(!showEmoji)}
-              className={'text-sm transition-colors ' + (showEmoji ? 'text-[#FFD700]' : 'text-white/40 hover:text-white/80')}
-            >
-              😊
-            </button>
-            <button className="text-white/40 hover:text-[#1E6FFF] transition-colors">
-              <AtSign size={15} />
-            </button>
-          </div>
-          <button
-            onClick={handleSubmit}
-            disabled={submitting || !comment.trim()}
-            className="w-10 h-10 bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] rounded-full flex items-center justify-center disabled:opacity-40 active:scale-90 transition-all shadow-lg"
-          >
-            <Send size={15} className="text-white" />
-          </button>
-        </div>
+          {emoji}
+        </button>
+      ))}
+    </div>
+  )}
+
+  {/* Reply banner */}
+  {replyTo && (
+    <div className="flex items-center gap-3 px-4 py-2 bg-[#1E6FFF]/10 border-b border-[#1E6FFF]/20">
+      <div className="w-0.5 h-8 bg-[#1E6FFF] rounded-full" />
+      <div className="flex-1 min-w-0">
+        <p className="text-[#1E6FFF] text-xs font-bold">
+          Replying to @{replyTo.users?.username}
+        </p>
+        <p className="text-[#6B7280] text-xs truncate">
+          {replyTo.body}
+        </p>
+      </div>
+      <button
+        onClick={() => {
+          setReplyTo(null);
+          setComment('');
+        }}
+        className="text-[#6B7280]"
+      >
+        <X size={14} />
+      </button>
+    </div>
+  )}
+
+  <div className="flex items-center gap-2 px-4 pt-3 pb-2">
+    <Avatar
+      url={profile?.avatar_url}
+      name={profile?.display_name}
+      size={9}
+    />
+
+    <div
+      className="flex-1 flex items-center gap-2 border border-white/20 rounded-full px-4 py-2.5 focus-within:border-[#1E6FFF]/60 transition-colors"
+      style={{ background: 'rgba(255,255,255,0.08)' }}
+    >
+      <input
+        ref={inputRef}
+        type="text"
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+        placeholder="Add a comment..."
+        className="flex-1 bg-transparent text-white placeholder-white/40 text-sm focus:outline-none"
+      />
+
+      <button
+        onMouseDown={(e) => {
+          e.preventDefault();
+          setShowEmoji(!showEmoji);
+        }}
+        className={
+          'text-lg transition-colors ' +
+          (showEmoji
+            ? 'text-[#FFD700]'
+            : 'text-white/40 hover:text-white/80')
+        }
+      >
+        😊
+      </button>
+
+      <button className="text-white/40 hover:text-[#1E6FFF] transition-colors">
+        <AtSign size={15} />
+      </button>
+    </div>
+
+    <button
+      onClick={handleSubmit}
+      disabled={submitting || !comment.trim()}
+      className="w-10 h-10 bg-gradient-to-br from-[#FF6B35] to-[#FFD700] rounded-full flex items-center justify-center disabled:opacity-40 active:scale-90 transition-all shadow-lg"
+    >
+      <Send size={15} className="text-white" />
+    </button>
+  </div>
+</div>
+
       </div>
     </div>
   );

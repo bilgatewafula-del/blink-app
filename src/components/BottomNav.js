@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Home, Search, Zap, MessageCircle, User, Sparkles } from 'lucide-react';
+import { Home, Search, Zap, MessageCircle, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -71,26 +71,15 @@ const BottomNav = () => {
     }
     setUnreadChats(total);
   };
-return (
-  <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-none">
-    <div className="w-full max-w-[620px] pointer-events-auto relative">
 
-      {/* B-Link AI floating button */}
-      <div className="absolute -top-16 right-4">
-        <button
-          onClick={() => navigate('/ai')}
-          className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1E6FFF] via-[#7B2FFF] to-[#00D4C8] flex items-center justify-center shadow-xl shadow-[#1E6FFF]/40 active:scale-95 transition-all border-2 border-white/20"
-          title="B-Link AI"
-        >
-          <Sparkles size={20} className="text-white" />
-        </button>
-      </div>
-
-      {/* Glass bar */}
-        <div className="bg-[#0d1f3c]/95 backdrop-blur-md border-t border-white/10 h-16 flex items-center justify-around px-2 shadow-2xl shadow-black/50">
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-none">
+      <div className="w-full max-w-[620px] pointer-events-auto">
+        <div className="bg-[#0d1f3c]/97 backdrop-blur-md border-t border-white/10 h-16 flex items-center justify-around px-2 shadow-2xl shadow-black/50">
           {tabs.map(({ icon: Icon, label, path, color }) => {
             const isActive = location.pathname === path ||
-              (path === '/chats' && location.pathname.startsWith('/chats'));
+              (path === '/chats' && location.pathname.startsWith('/chats')) ||
+              (path === '/vibes' && location.pathname.startsWith('/vibes'));
             const isVibes = label === 'Vibes';
             const isChats = path === '/chats';
 
@@ -101,10 +90,15 @@ return (
                 className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full group relative"
               >
                 {isVibes ? (
-  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#FFD700] flex items-center justify-center shadow-lg shadow-[#FF6B35]/40 active:scale-95 transition-transform">
-    <Icon size={22} className="text-white" />
-  </div>
-) : (
+                  <div className={
+                    'w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-all active:scale-95 ' +
+                    (isActive
+                      ? 'bg-gradient-to-br from-[#FF6B35] to-[#FFD700] shadow-[#FF6B35]/40'
+                      : 'bg-gradient-to-br from-[#FF6B35]/80 to-[#FFD700]/80 shadow-[#FF6B35]/20')
+                  }>
+                    <Icon size={22} className="text-white" />
+                  </div>
+                ) : (
                   <>
                     <div className="relative">
                       <Icon
@@ -112,13 +106,13 @@ return (
                         className={'transition-all duration-200 ' + (isActive ? color : 'text-[#6B7280] group-hover:text-white/60')}
                         fill={isActive ? 'currentColor' : 'none'}
                       />
-                      {/* Notification badge on home via notifications */}
+                      {/* Notification badge */}
                       {path === '/' && unreadNotifs > 0 && (
                         <span className="absolute -top-2 -right-2 min-w-[16px] h-4 bg-[#FF6B35] rounded-full text-[9px] text-white flex items-center justify-center font-bold px-0.5">
                           {unreadNotifs > 9 ? '9+' : unreadNotifs}
                         </span>
                       )}
-                      {/* Chat unread badge */}
+                      {/* Chat unread */}
                       {isChats && unreadChats > 0 && !location.pathname.startsWith('/chats') && (
                         <span className="absolute -top-2 -right-2 min-w-[16px] h-4 bg-[#1E6FFF] rounded-full text-[9px] text-white flex items-center justify-center font-bold px-0.5">
                           {unreadChats > 99 ? '99+' : unreadChats}
@@ -128,7 +122,6 @@ return (
                     <span className={'text-[10px] font-medium transition-all duration-200 ' + (isActive ? color : 'text-[#6B7280]')}>
                       {label}
                     </span>
-                    {/* Active dot */}
                     {isActive && (
                       <div className={'absolute -bottom-0 w-1 h-1 rounded-full ' + color.replace('text-', 'bg-')} />
                     )}
