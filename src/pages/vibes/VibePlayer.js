@@ -46,16 +46,43 @@ export default function VibePlayer({ vibe, isActive, onNext, onRemoveFromFeed, s
 
   const expiresIn = Math.max(0, Math.ceil((new Date(vibe.expires_at) - new Date()) / (1000 * 3600 * 24)));
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (isActive) {
-      video.play().then(() => { setPlaying(true); setWatchStart(Date.now()); }).catch(() => setPlaying(false));
-    } else {
-      video.pause(); setPlaying(false);
-      if (watchStart && !viewRecorded) recordView();
+  // ── Auto play/pause — handles play() promise safely ──────────────
+useEffect(() => {
+  const video = videoRef.current;
+  if (!video) return;
+
+  let cancelled = false;
+
+  if (isActive) {
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          if (!cancelled) {
+            setPlaying(true);
+            setWatchStart(Date.now());
+          }
+        })
+        .catch((err) => {
+          // Ignore AbortError/play-interrupted errors — these happen
+          // harmlessly when the video element is removed/replaced
+          // (e.g. right after deleting a vibe)
+          if (err.name !== 'AbortError') {
+            console.warn('Video play error:', err);
+          }
+          if (!cancelled) setPlaying(false);
+        });
     }
-  }, [isActive]);
+  } else {
+    video.pause();
+    setPlaying(false);
+    if (watchStart && !viewRecorded) recordView();
+  }
+
+  return () => {
+    cancelled = true;
+  };
+}, [isActive]);
 
   useEffect(() => {
     (async () => {
@@ -161,38 +188,41 @@ export default function VibePlayer({ vibe, isActive, onNext, onRemoveFromFeed, s
     }
   };
 
-  // ── DELETE VIBE — real backend deletion ──────────────────────────
-  const handleDeleteVibe = async () => {
-    if (!window.confirm('Delete this Vibe permanently? This cannot be undone and will free up storage space.')) return;
-    setDeleting(true);
-    setShowOptions(false);
+ const handleDeleteVibe = async () => {
+  if (!window.confirm('Delete this Vibe permanently? This cannot be undone and will free up storage space.')) return;
+  setDeleting(true);
+  setShowOptions(false);
 
-    try {
-      // 1. Delete related records first (comments, fires, saves, views)
-      await supabase.from('vibe_comments').delete().eq('vibe_id', vibe.id);
-      await supabase.from('vibe_fires').delete().eq('vibe_id', vibe.id);
-      await supabase.from('vibe_saves').delete().eq('vibe_id', vibe.id);
-      await supabase.from('vibe_views').delete().eq('vibe_id', vibe.id);
+  // Pause video FIRST to avoid play()-interrupted errors when the
+  // element is removed from the DOM right after this.
+  const video = videoRef.current;
+  if (video) {
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+  }
 
-      // 2. Delete the vibe record itself from database
-      const { error } = await supabase.from('vibes').delete().eq('id', vibe.id).eq('user_id', user.id);
+  try {
+    await supabase.from('vibe_comments').delete().eq('vibe_id', vibe.id);
+    await supabase.from('vibe_fires').delete().eq('vibe_id', vibe.id);
+    await supabase.from('vibe_saves').delete().eq('vibe_id', vibe.id);
+    await supabase.from('vibe_views').delete().eq('vibe_id', vibe.id);
 
-      if (error) throw error;
+    const { error } = await supabase.from('vibes').delete().eq('id', vibe.id).eq('user_id', user.id);
+    if (error) throw error;
 
-      // 3. Decrement user's post count
-      const { data: u } = await supabase.from('users').select('post_count').eq('id', user.id).maybeSingle();
-      await supabase.from('users')
-        .update({ post_count: Math.max(0, (u?.post_count || 1) - 1) })
-        .eq('id', user.id);
+    const { data: u } = await supabase.from('users').select('post_count').eq('id', user.id).maybeSingle();
+    await supabase.from('users')
+      .update({ post_count: Math.max(0, (u?.post_count || 1) - 1) })
+      .eq('id', user.id);
 
-      // 4. Remove from local feed immediately
-      onRemoveFromFeed(vibe.id);
+    onRemoveFromFeed(vibe.id);
 
-    } catch (err) {
-      alert('Failed to delete: ' + err.message);
-    }
-    setDeleting(false);
-  };
+  } catch (err) {
+    alert('Failed to delete: ' + err.message);
+  }
+  setDeleting(false);
+};
 
   // ── EDIT CAPTION ──────────────────────────────────────────────────
   const handleEditCaption = async () => {

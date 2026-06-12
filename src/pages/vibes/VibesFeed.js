@@ -21,7 +21,6 @@ export default function VibesFeed() {
   const fetchVibes = async () => {
     setLoading(true);
 
-    // Get vibes user marked "not interested" to exclude
     const { data: notInterested } = await supabase
       .from('vibe_not_interested').select('vibe_id').eq('user_id', user.id);
     const excludeIds = (notInterested || []).map((n) => n.vibe_id);
@@ -52,10 +51,29 @@ export default function VibesFeed() {
     setLoading(false);
   };
 
+  // ── FIX: safely remove a vibe from the feed without breaking the
+  // currently-mounted <video> element (avoids "play() interrupted"
+  // black screen error) ─────────────────────────────────────────────
   const removeVibeFromFeed = (vibeId) => {
     setVibes((prev) => {
+      const removedIdx = prev.findIndex((v) => v.id === vibeId);
+      if (removedIdx === -1) return prev;
+
       const filtered = prev.filter((v) => v.id !== vibeId);
-      if (activeIdx >= filtered.length) setActiveIdx(Math.max(0, filtered.length - 1));
+
+      // Adjust activeIdx BEFORE the list shrinks so React doesn't try
+      // to keep rendering+playing the now-removed video element.
+      setActiveIdx((curIdx) => {
+        if (filtered.length === 0) return 0;
+        // If we removed something before or at the active index,
+        // shift the active index back by one (but not below 0)
+        if (removedIdx <= curIdx) {
+          return Math.max(0, Math.min(curIdx - 1 >= 0 ? curIdx : 0, filtered.length - 1));
+        }
+        // If removed item was after the active one, index stays the same
+        return Math.min(curIdx, filtered.length - 1);
+      });
+
       return filtered;
     });
   };
@@ -116,6 +134,10 @@ export default function VibesFeed() {
     </div>
   );
 
+  // Clamp activeIdx defensively (handles edge case after deletion)
+  const safeIdx = Math.min(activeIdx, vibes.length - 1);
+  const currentVibe = vibes[safeIdx];
+
   return (
     <div
       style={{ position: 'relative', height: '100dvh', background: 'black', overflow: 'hidden' }}
@@ -123,13 +145,16 @@ export default function VibesFeed() {
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {vibes[activeIdx] && (
+      {currentVibe && (
         <VibePlayer
-          key={vibes[activeIdx].id}
-          vibe={vibes[activeIdx]}
+          // Use vibe.id as key so React fully remounts the <video> element
+          // for a new vibe — prevents stale play() promises from firing
+          // against a removed/replaced element.
+          key={currentVibe.id}
+          vibe={currentVibe}
           isActive={true}
-          onNext={() => { if (activeIdx < vibes.length-1) { setActiveIdx((i) => i+1); setShowComments(false); } }}
-          onPrev={() => { if (activeIdx > 0) { setActiveIdx((i) => i-1); setShowComments(false); } }}
+          onNext={() => { if (safeIdx < vibes.length-1) { setActiveIdx(safeIdx + 1); setShowComments(false); } }}
+          onPrev={() => { if (safeIdx > 0) { setActiveIdx(safeIdx - 1); setShowComments(false); } }}
           onRemoveFromFeed={removeVibeFromFeed}
           showComments={showComments}
           setShowComments={setShowComments}
@@ -137,26 +162,6 @@ export default function VibesFeed() {
       )}
 
       {!showComments && <TabRow activeTab={activeTab} setActiveTab={setActiveTab} />}
-
-      {/* Progress dots */}
-      {!showComments && vibes.length > 1 && (
-        <div style={{
-          position: 'absolute', left: '6px', top: '50%', transform: 'translateY(-50%)',
-          zIndex: 20, display: 'flex', flexDirection: 'column', gap: '4px',
-        }}>
-          {vibes.slice(Math.max(0, activeIdx-3), Math.min(vibes.length, activeIdx+4)).map((_, i) => {
-            const ri = Math.max(0, activeIdx-3) + i;
-            return (
-              <div key={ri} style={{
-                width: '3px', borderRadius: '99px',
-                height: ri === activeIdx ? '20px' : '6px',
-                background: ri === activeIdx ? 'white' : 'rgba(255,255,255,0.35)',
-                transition: 'all 0.2s',
-              }} />
-            );
-          })}
-        </div>
-      )}
 
       {/* Upload FAB */}
       {!showComments && (
@@ -177,7 +182,7 @@ export default function VibesFeed() {
       )}
 
       {/* Swipe hint */}
-      {vibes.length > 1 && activeIdx === 0 && !showComments && (
+      {vibes.length > 1 && safeIdx === 0 && !showComments && (
         <div style={{
           position: 'absolute', bottom: '110px', left: 0, right: 0,
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
@@ -203,7 +208,6 @@ function TabRow({ activeTab, setActiveTab }) {
     <div
       style={{
         position: 'absolute', top: 0, left: 0, right: 0, zIndex: 25,
-        // Reduced from 44px -> 28px so it sits higher, less video coverage
         paddingTop: '28px',
         display: 'flex', justifyContent: 'center',
         pointerEvents: 'none',
