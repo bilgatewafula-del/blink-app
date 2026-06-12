@@ -1,15 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
-import { X, Send, Heart, AtSign } from 'lucide-react';
+import { X, Send, Heart, AtSign, Image as ImageIcon, Mic } from 'lucide-react';
 import Avatar from '../../components/Avatar';
 import { formatTime } from '../../utils/formatTime';
 import { formatNumber } from '../../utils/formatNumber';
 
-const COMMENT_EMOJIS = [
-  '🔥','❤️','😂','😍','👏','💯','🙏','😭','🤣','💃','⚽','🎵','✨','🌍','🇰🇪',
-  '😊','🥳','😎','🤔','👍','💪','✌️','🎉','🏆','💎','🚀','⭐',
+const EMOJI_TABS = [
+  { label: '🔥', emojis: ['🔥','💯','🚀','⭐','💎','🏆','✨','💫','⚡','🎯'] },
+  { label: '😂', emojis: ['😂','🤣','😭','😅','😆','😁','😊','🥳','😎','🤩'] },
+  { label: '❤️', emojis: ['❤️','😍','🥰','💕','💖','💘','😘','🙏','👏','💪'] },
+  { label: '🇰🇪', emojis: ['🇰🇪','🇳🇬','🇬🇭','🇿🇦','🇹🇿','🇺🇬','🌍','💃','🕺','🎵'] },
+  { label: '👍', emojis: ['👍','👎','✌️','🤞','👌','🤙','🙌','👀','🤔','😮'] },
 ];
+
+const STICKERS = ['🎉','🏆','💯','🔥','❤️','😂','👏','🙏','💪','🌟','🎶','💎'];
 
 export default function VibeComments({ vibe, onClose }) {
   const { user, profile } = useAuth();
@@ -19,12 +24,15 @@ export default function VibeComments({ vibe, onClose }) {
   const [submitting, setSubmitting] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
   const [showEmoji, setShowEmoji] = useState(false);
+  const [emojiTab, setEmojiTab] = useState(0);
+  const [showStickers, setShowStickers] = useState(false);
   const [sortBy, setSortBy] = useState('recent');
   const [likedComments, setLikedComments] = useState(new Set());
   const inputRef = useRef();
 
   useEffect(() => {
     fetchComments();
+    fetchUserLikes();
     const ch = supabase.channel('vc:' + vibe.id)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'vibe_comments', filter: 'vibe_id=eq.' + vibe.id }, () => fetchComments())
       .subscribe();
@@ -43,29 +51,51 @@ export default function VibeComments({ vibe, onClose }) {
     setLoading(false);
   };
 
-  const handleSubmit = async () => {
-    if (!comment.trim() || submitting) return;
+  // Load which comments THIS user has already liked (1-per-person, persisted)
+  const fetchUserLikes = async () => {
+    const { data } = await supabase
+      .from('vibe_comment_likes')
+      .select('comment_id')
+      .eq('user_id', user.id);
+    if (data) setLikedComments(new Set(data.map((d) => d.comment_id)));
+  };
+
+  const handleSubmit = async (overrideText = null) => {
+    const text = overrideText || comment.trim();
+    if (!text || submitting) return;
     setSubmitting(true);
     const { data } = await supabase.from('vibe_comments').insert({
       vibe_id: vibe.id, user_id: user.id,
-      body: comment.trim(), parent_id: replyTo?.id || null,
+      body: text, parent_id: replyTo?.id || null,
     }).select('*, users:user_id(id,username,display_name,avatar_url,is_verified)').single();
 
     if (data) {
       setComments((prev) => [data, ...prev]);
       await supabase.from('vibes').update({ comments_count: (vibe.comments_count || 0) + 1 }).eq('id', vibe.id);
+
+      // Notify the vibe owner
+      if (vibe.user_id !== user.id) {
+        await supabase.from('notifications').insert({
+          user_id: vibe.user_id, from_user_id: user.id, type: 'comment',
+          message: 'commented on your Vibe: "' + text.slice(0, 40) + '"',
+          ref_id: vibe.id, is_read: false,
+        });
+      }
     }
-    setComment(''); setReplyTo(null); setShowEmoji(false); setSubmitting(false);
+    setComment(''); setReplyTo(null); setShowEmoji(false); setShowStickers(false); setSubmitting(false);
   };
 
+  // 1 like per person — persisted via vibe_comment_likes table
   const handleLike = async (commentId, currentLikes) => {
     if (likedComments.has(commentId)) {
       const nl = Math.max(0, currentLikes - 1);
+      await supabase.from('vibe_comment_likes').delete().eq('comment_id', commentId).eq('user_id', user.id);
       await supabase.from('vibe_comments').update({ likes_count: nl }).eq('id', commentId);
       setComments((prev) => prev.map((c) => c.id === commentId ? { ...c, likes_count: nl } : c));
       setLikedComments((prev) => { const s = new Set(prev); s.delete(commentId); return s; });
     } else {
       const nl = currentLikes + 1;
+      await supabase.from('vibe_comment_likes').insert({ comment_id: commentId, user_id: user.id });
       await supabase.from('vibe_comments').update({ likes_count: nl }).eq('id', commentId);
       setComments((prev) => prev.map((c) => c.id === commentId ? { ...c, likes_count: nl } : c));
       setLikedComments((prev) => new Set([...prev, commentId]));
@@ -73,16 +103,14 @@ export default function VibeComments({ vibe, onClose }) {
   };
 
   return (
-    // ── Backdrop ──
     <div
       style={{ position: 'absolute', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.4)' }}
       onClick={onClose}
     >
-      {/* ── Bottom sheet — slides up from bottom, video stays full screen behind ── */}
       <div
         style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
-          height: '65dvh',
+          height: '68dvh',
           background: 'rgba(10,22,40,0.98)',
           backdropFilter: 'blur(24px)',
           borderTop: '1px solid rgba(255,255,255,0.15)',
@@ -180,16 +208,38 @@ export default function VibeComments({ vibe, onClose }) {
           )}
         </div>
 
-        {/* Emoji quick row */}
-        {showEmoji && (
-          <div style={{ flexShrink: 0, display: 'flex', gap: '6px', padding: '8px 16px', overflowX: 'auto', borderTop: '1px solid rgba(255,255,255,0.08)', scrollbarWidth: 'none' }}>
-            {COMMENT_EMOJIS.map((emoji) => (
-              <button key={emoji}
-                onMouseDown={(e) => { e.preventDefault(); setComment((c) => c + emoji); }}
-                style={{ fontSize: '22px', flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}>
-                {emoji}
+        {/* Sticker row */}
+        {showStickers && (
+          <div style={{ flexShrink: 0, display: 'flex', gap: '8px', padding: '10px 16px', overflowX: 'auto', borderTop: '1px solid rgba(255,255,255,0.08)', scrollbarWidth: 'none' }}>
+            {STICKERS.map((s) => (
+              <button key={s} onClick={() => handleSubmit(s + s + s)}
+                style={{ fontSize: '32px', flexShrink: 0, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', cursor: 'pointer', padding: '8px 12px' }}>
+                {s}
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Emoji picker — tabs + grid */}
+        {showEmoji && (
+          <div style={{ flexShrink: 0, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ display: 'flex', gap: '4px', padding: '8px 16px 4px' }}>
+              {EMOJI_TABS.map((tab, i) => (
+                <button key={tab.label} onClick={() => setEmojiTab(i)}
+                  style={{ fontSize: '18px', padding: '4px 8px', borderRadius: '8px', background: emojiTab === i ? 'rgba(255,107,53,0.2)' : 'none', border: 'none', cursor: 'pointer' }}>
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: '4px', padding: '4px 16px 10px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+              {EMOJI_TABS[emojiTab].emojis.map((emoji) => (
+                <button key={emoji}
+                  onMouseDown={(e) => { e.preventDefault(); setComment((c) => c + emoji); }}
+                  style={{ fontSize: '24px', flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}>
+                  {emoji}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -207,7 +257,7 @@ export default function VibeComments({ vibe, onClose }) {
           </div>
         )}
 
-        {/* ── Comment input — ALWAYS visible at bottom of sheet ── */}
+        {/* ── Comment input — fixed, inline styles, always visible ── */}
         <div style={{
           flexShrink: 0,
           background: '#0d1f3c',
@@ -221,6 +271,14 @@ export default function VibeComments({ vibe, onClose }) {
           <div style={{ flexShrink: 0 }}>
             <Avatar url={profile?.avatar_url} name={profile?.display_name} size={9} />
           </div>
+
+          {/* Sticker toggle */}
+          <button
+            onMouseDown={(e) => { e.preventDefault(); setShowStickers(!showStickers); setShowEmoji(false); }}
+            style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: showStickers ? '#FFD700' : 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px' }}
+          >
+            <ImageIcon size={18} />
+          </button>
 
           <div style={{
             flex: 1, display: 'flex', alignItems: 'center', gap: '6px',
@@ -240,7 +298,7 @@ export default function VibeComments({ vibe, onClose }) {
               style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'white', fontSize: '14px', fontFamily: 'inherit' }}
             />
             <button
-              onMouseDown={(e) => { e.preventDefault(); setShowEmoji(!showEmoji); }}
+              onMouseDown={(e) => { e.preventDefault(); setShowEmoji(!showEmoji); setShowStickers(false); }}
               style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', flexShrink: 0, color: showEmoji ? '#FFD700' : 'rgba(255,255,255,0.4)' }}
             >😊</button>
             <button style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, color: 'rgba(255,255,255,0.4)' }}>
@@ -249,7 +307,7 @@ export default function VibeComments({ vibe, onClose }) {
           </div>
 
           <button
-            onClick={handleSubmit}
+            onClick={() => handleSubmit()}
             disabled={submitting || !comment.trim()}
             style={{
               width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,

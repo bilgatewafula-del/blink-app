@@ -80,7 +80,7 @@ const BottomNav = () => {
   if (isInsideChatRoom) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-none">
+ <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-center pointer-events-none">
       <div className="w-full max-w-[620px] pointer-events-auto">
         <div className="bg-[#0d1f3c]/97 backdrop-blur-md border-t border-white/10 h-16 flex items-center justify-around px-2 shadow-2xl shadow-black/50">
           {tabs.map(({ icon: Icon, label, path, color }) => {

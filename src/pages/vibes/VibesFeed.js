@@ -11,7 +11,7 @@ export default function VibesFeed() {
   const [vibes, setVibes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeIdx, setActiveIdx] = useState(0);
-  const [activeTab, setActiveTab] = useState('foryou'); // foryou | following | trending
+  const [activeTab, setActiveTab] = useState('foryou');
   const [showComments, setShowComments] = useState(false);
   const touchStartY = useRef(null);
   const touchStartTime = useRef(null);
@@ -20,12 +20,20 @@ export default function VibesFeed() {
 
   const fetchVibes = async () => {
     setLoading(true);
+
+    // Get vibes user marked "not interested" to exclude
+    const { data: notInterested } = await supabase
+      .from('vibe_not_interested').select('vibe_id').eq('user_id', user.id);
+    const excludeIds = (notInterested || []).map((n) => n.vibe_id);
+
     let q = supabase
       .from('vibes')
       .select('*, users:user_id(id,username,display_name,avatar_url,is_verified,country)')
       .eq('audience', 'public')
       .gt('expires_at', new Date().toISOString())
       .limit(30);
+
+    if (excludeIds.length > 0) q = q.not('id', 'in', '(' + excludeIds.join(',') + ')');
 
     if (activeTab === 'following') {
       const { data: follows } = await supabase.from('follows').select('following_id').eq('follower_id', user.id).eq('status', 'accepted');
@@ -42,6 +50,14 @@ export default function VibesFeed() {
     setVibes(data || []);
     setActiveIdx(0);
     setLoading(false);
+  };
+
+  const removeVibeFromFeed = (vibeId) => {
+    setVibes((prev) => {
+      const filtered = prev.filter((v) => v.id !== vibeId);
+      if (activeIdx >= filtered.length) setActiveIdx(Math.max(0, filtered.length - 1));
+      return filtered;
+    });
   };
 
   const onTouchStart = (e) => {
@@ -83,7 +99,6 @@ export default function VibesFeed() {
 
   if (vibes.length === 0) return (
     <div style={{ height: '100dvh', background: 'black', display: 'flex', flexDirection: 'column' }}>
-      {/* Tabs still visible on empty state */}
       <TabRow activeTab={activeTab} setActiveTab={setActiveTab} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', padding: '24px' }}>
         <p style={{ fontSize: '64px' }}>🎬</p>
@@ -108,7 +123,6 @@ export default function VibesFeed() {
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {/* Active vibe */}
       {vibes[activeIdx] && (
         <VibePlayer
           key={vibes[activeIdx].id}
@@ -116,15 +130,15 @@ export default function VibesFeed() {
           isActive={true}
           onNext={() => { if (activeIdx < vibes.length-1) { setActiveIdx((i) => i+1); setShowComments(false); } }}
           onPrev={() => { if (activeIdx > 0) { setActiveIdx((i) => i-1); setShowComments(false); } }}
+          onRemoveFromFeed={removeVibeFromFeed}
           showComments={showComments}
           setShowComments={setShowComments}
         />
       )}
 
-      {/* ── TOP TABS — single row, solid background ── */}
       {!showComments && <TabRow activeTab={activeTab} setActiveTab={setActiveTab} />}
 
-      {/* Progress dots — left side, vertically centered */}
+      {/* Progress dots */}
       {!showComments && vibes.length > 1 && (
         <div style={{
           position: 'absolute', left: '6px', top: '50%', transform: 'translateY(-50%)',
@@ -144,15 +158,12 @@ export default function VibesFeed() {
         </div>
       )}
 
-      {/* Upload FAB — bottom right */}
+      {/* Upload FAB */}
       {!showComments && (
         <button
           onClick={() => navigate('/vibes/upload')}
           style={{
-            position: 'absolute',
-            right: '16px',
-            bottom: '90px',
-            zIndex: 15,
+            position: 'absolute', right: '16px', bottom: '90px', zIndex: 15,
             width: '46px', height: '46px', borderRadius: '50%',
             background: 'linear-gradient(135deg, #FF6B35, #FFD700)',
             border: '2px solid rgba(255,255,255,0.3)',
@@ -181,7 +192,6 @@ export default function VibesFeed() {
   );
 }
 
-// ── Single-row tab bar with solid background ──
 function TabRow({ activeTab, setActiveTab }) {
   const tabs = [
     { key: 'foryou', label: 'For You' },
@@ -193,8 +203,10 @@ function TabRow({ activeTab, setActiveTab }) {
     <div
       style={{
         position: 'absolute', top: 0, left: 0, right: 0, zIndex: 25,
-        paddingTop: '44px', // clear status bar
+        // Reduced from 44px -> 28px so it sits higher, less video coverage
+        paddingTop: '28px',
         display: 'flex', justifyContent: 'center',
+        pointerEvents: 'none',
       }}
     >
       <div style={{
@@ -204,15 +216,16 @@ function TabRow({ activeTab, setActiveTab }) {
         padding: '4px',
         border: '1px solid rgba(255,255,255,0.1)',
         boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+        pointerEvents: 'auto',
       }}>
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             style={{
-              padding: '8px 20px',
+              padding: '7px 18px',
               borderRadius: '99px',
-              fontSize: '13px',
+              fontSize: '12px',
               fontWeight: 700,
               background: activeTab === tab.key ? '#1E6FFF' : 'transparent',
               color: activeTab === tab.key ? 'white' : 'rgba(255,255,255,0.55)',
