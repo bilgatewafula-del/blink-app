@@ -8,7 +8,7 @@ import { formatNumber } from '../../utils/formatNumber';
 
 const COMMENT_EMOJIS = [
   '🔥','❤️','😂','😍','👏','💯','🙏','😭','🤣','💃','⚽','🎵','✨','🌍','🇰🇪',
-  '😊','🥳','😎','🤔','👍','💪','✌️','🤞','💃','🕺','🎉','🏆','💎','🚀','⭐',
+  '😊','🥳','😎','🤔','👍','💪','✌️','🎉','🏆','💎','🚀','⭐',
 ];
 
 export default function VibeComments({ vibe, onClose }) {
@@ -20,7 +20,6 @@ export default function VibeComments({ vibe, onClose }) {
   const [replyTo, setReplyTo] = useState(null);
   const [showEmoji, setShowEmoji] = useState(false);
   const [sortBy, setSortBy] = useState('recent');
-  // Track which comments this user has liked
   const [likedComments, setLikedComments] = useState(new Set());
   const inputRef = useRef();
 
@@ -59,69 +58,56 @@ export default function VibeComments({ vibe, onClose }) {
     setComment(''); setReplyTo(null); setShowEmoji(false); setSubmitting(false);
   };
 
-  // 1 like per person — toggle
   const handleLike = async (commentId, currentLikes) => {
     if (likedComments.has(commentId)) {
-      // Unlike
-      const newLikes = Math.max(0, currentLikes - 1);
-      await supabase.from('vibe_comments').update({ likes_count: newLikes }).eq('id', commentId);
-      setComments((prev) => prev.map((c) => c.id === commentId ? { ...c, likes_count: newLikes } : c));
+      const nl = Math.max(0, currentLikes - 1);
+      await supabase.from('vibe_comments').update({ likes_count: nl }).eq('id', commentId);
+      setComments((prev) => prev.map((c) => c.id === commentId ? { ...c, likes_count: nl } : c));
       setLikedComments((prev) => { const s = new Set(prev); s.delete(commentId); return s; });
     } else {
-      // Like
-      const newLikes = currentLikes + 1;
-      await supabase.from('vibe_comments').update({ likes_count: newLikes }).eq('id', commentId);
-      setComments((prev) => prev.map((c) => c.id === commentId ? { ...c, likes_count: newLikes } : c));
+      const nl = currentLikes + 1;
+      await supabase.from('vibe_comments').update({ likes_count: nl }).eq('id', commentId);
+      setComments((prev) => prev.map((c) => c.id === commentId ? { ...c, likes_count: nl } : c));
       setLikedComments((prev) => new Set([...prev, commentId]));
     }
   };
 
   return (
-    // ── Split screen container ──────────────────────────────────────
+    // ── Backdrop ──
     <div
-      style={{
-        position: 'absolute', inset: 0, zIndex: 40,
-        display: 'flex', flexDirection: 'column',
-        background: 'transparent',
-      }}
-      onClick={(e) => e.stopPropagation()}
+      style={{ position: 'absolute', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.4)' }}
+      onClick={onClose}
     >
-      {/* Top 40% = video still visible (tap to close) */}
-      <div
-        style={{ height: '40%', flexShrink: 0, background: 'transparent' }}
-        onClick={onClose}
-      />
-
-      {/* Bottom 60% = comments panel */}
+      {/* ── Bottom sheet — slides up from bottom, video stays full screen behind ── */}
       <div
         style={{
-          flex: 1,
-          background: 'rgba(10,22,40,0.97)',
-          backdropFilter: 'blur(20px)',
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          height: '65dvh',
+          background: 'rgba(10,22,40,0.98)',
+          backdropFilter: 'blur(24px)',
           borderTop: '1px solid rgba(255,255,255,0.15)',
           borderRadius: '24px 24px 0 0',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
+          animation: 'slideUp 0.25s ease-out',
+          boxShadow: '0 -8px 40px rgba(0,0,0,0.6)',
         }}
+        onClick={(e) => e.stopPropagation()}
       >
+        {/* Drag handle */}
+        <div style={{ width: '36px', height: '4px', background: 'rgba(255,255,255,0.3)', borderRadius: '2px', margin: '10px auto 4px', flexShrink: 0 }} />
+
         {/* Header */}
         <div style={{
-          flexShrink: 0, padding: '12px 16px 8px',
+          flexShrink: 0, padding: '8px 16px 10px',
           borderBottom: '1px solid rgba(255,255,255,0.08)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
-          {/* Drag handle */}
-          <div style={{ position: 'absolute', top: '8px', left: '50%', transform: 'translateX(-50%)', width: '36px', height: '4px', background: 'rgba(255,255,255,0.3)', borderRadius: '2px' }} />
-
-          <div style={{ marginTop: '4px' }}>
-            <p style={{ color: 'white', fontWeight: 700, fontSize: '15px' }}>
-              {formatNumber(vibe.comments_count || 0)} Comments
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-            {/* Sort */}
+          <p style={{ color: 'white', fontWeight: 700, fontSize: '15px' }}>
+            {formatNumber(vibe.comments_count || 0)} Comments
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ display: 'flex', background: 'rgba(255,255,255,0.08)', borderRadius: '99px', padding: '2px' }}>
               {['recent', 'top'].map((s) => (
                 <button key={s} onClick={() => setSortBy(s)}
@@ -179,22 +165,12 @@ export default function VibeComments({ vibe, onClose }) {
                           >Reply</button>
                         </div>
                       </div>
-                      {/* Like button — 1 per person */}
                       <button
                         onClick={() => handleLike(c.id, c.likes_count || 0)}
                         style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: '4px' }}
                       >
-                        <Heart
-                          size={17}
-                          style={{
-                            color: isLiked ? '#EF4444' : '#6B7280',
-                            fill: isLiked ? '#EF4444' : 'none',
-                            transition: 'all 0.2s',
-                          }}
-                        />
-                        {(c.likes_count || 0) > 0 && (
-                          <span style={{ color: '#6B7280', fontSize: '10px' }}>{formatNumber(c.likes_count)}</span>
-                        )}
+                        <Heart size={17} style={{ color: isLiked ? '#EF4444' : '#6B7280', fill: isLiked ? '#EF4444' : 'none', transition: 'all 0.2s' }} />
+                        {(c.likes_count || 0) > 0 && <span style={{ color: '#6B7280', fontSize: '10px' }}>{formatNumber(c.likes_count)}</span>}
                       </button>
                     </div>
                   </div>
@@ -206,10 +182,7 @@ export default function VibeComments({ vibe, onClose }) {
 
         {/* Emoji quick row */}
         {showEmoji && (
-          <div style={{
-            flexShrink: 0, display: 'flex', gap: '6px', padding: '8px 16px',
-            overflowX: 'auto', borderTop: '1px solid rgba(255,255,255,0.08)', scrollbarWidth: 'none',
-          }}>
+          <div style={{ flexShrink: 0, display: 'flex', gap: '6px', padding: '8px 16px', overflowX: 'auto', borderTop: '1px solid rgba(255,255,255,0.08)', scrollbarWidth: 'none' }}>
             {COMMENT_EMOJIS.map((emoji) => (
               <button key={emoji}
                 onMouseDown={(e) => { e.preventDefault(); setComment((c) => c + emoji); }}
@@ -222,11 +195,7 @@ export default function VibeComments({ vibe, onClose }) {
 
         {/* Reply banner */}
         {replyTo && (
-          <div style={{
-            flexShrink: 0, display: 'flex', alignItems: 'center', gap: '10px',
-            padding: '8px 16px', background: 'rgba(30,111,255,0.1)',
-            borderTop: '1px solid rgba(30,111,255,0.2)',
-          }}>
+          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 16px', background: 'rgba(30,111,255,0.1)', borderTop: '1px solid rgba(30,111,255,0.2)' }}>
             <div style={{ width: '2px', height: '32px', background: '#FF6B35', borderRadius: '2px', flexShrink: 0 }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ color: '#FF6B35', fontSize: '11px', fontWeight: 700 }}>Replying to @{replyTo.users?.username}</p>
@@ -238,7 +207,7 @@ export default function VibeComments({ vibe, onClose }) {
           </div>
         )}
 
-        {/* ── Comment input — always visible ── */}
+        {/* ── Comment input — ALWAYS visible at bottom of sheet ── */}
         <div style={{
           flexShrink: 0,
           background: '#0d1f3c',
@@ -268,10 +237,7 @@ export default function VibeComments({ vibe, onClose }) {
               onChange={(e) => setComment(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
               placeholder="Add a comment..."
-              style={{
-                flex: 1, background: 'transparent', border: 'none', outline: 'none',
-                color: 'white', fontSize: '14px', fontFamily: 'inherit',
-              }}
+              style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'white', fontSize: '14px', fontFamily: 'inherit' }}
             />
             <button
               onMouseDown={(e) => { e.preventDefault(); setShowEmoji(!showEmoji); }}

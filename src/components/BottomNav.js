@@ -72,6 +72,13 @@ const BottomNav = () => {
     setUnreadChats(total);
   };
 
+  // ── HIDE BottomNav entirely when inside a chat room ──
+  // /chats        -> show nav (chat list page)
+  // /chats/:id    -> hide nav (full screen chat like WhatsApp/Telegram)
+  const isInsideChatRoom = /^\/chats\/.+/.test(location.pathname);
+
+  if (isInsideChatRoom) return null;
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-none">
       <div className="w-full max-w-[620px] pointer-events-auto">
@@ -106,13 +113,11 @@ const BottomNav = () => {
                         className={'transition-all duration-200 ' + (isActive ? color : 'text-[#6B7280] group-hover:text-white/60')}
                         fill={isActive ? 'currentColor' : 'none'}
                       />
-                      {/* Notification badge */}
                       {path === '/' && unreadNotifs > 0 && (
                         <span className="absolute -top-2 -right-2 min-w-[16px] h-4 bg-[#FF6B35] rounded-full text-[9px] text-white flex items-center justify-center font-bold px-0.5">
                           {unreadNotifs > 9 ? '9+' : unreadNotifs}
                         </span>
                       )}
-                      {/* Chat unread */}
                       {isChats && unreadChats > 0 && !location.pathname.startsWith('/chats') && (
                         <span className="absolute -top-2 -right-2 min-w-[16px] h-4 bg-[#1E6FFF] rounded-full text-[9px] text-white flex items-center justify-center font-bold px-0.5">
                           {unreadChats > 99 ? '99+' : unreadChats}
