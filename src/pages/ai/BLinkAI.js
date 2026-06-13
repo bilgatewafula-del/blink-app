@@ -213,56 +213,88 @@ export default function BLinkAI() {
 
     await new Promise((r) => setTimeout(r, 350));
     setThinking(true);
+try {
+  let aiText = '';
 
-    try {
-      const history = newMessages
-        .filter((m) => m.role === 'user' || m.role === 'assistant')
-        .slice(-12)
-        .map((m) => ({ role: m.role, content: m.content }));
+  const lower = messageText.toLowerCase().trim();
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'anthropic-dangerous-allow-browser': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 800,
-          system: BLINK_KNOWLEDGE,
-          messages: history,
-        }),
-      });
+  if (['hi', 'hello', 'hey'].includes(lower)) {
+    aiText = 'Hello! 👋 Welcome to B-Link. How can I help you today?';
+  } else if (lower.includes('good morning')) {
+    aiText = 'Good morning! ☀️ Welcome to B-Link AI. I hope your day is going well.';
+  } else if (lower.includes('good afternoon')) {
+    aiText = 'Good afternoon! 👋 Great to see you. How can I help you with B-Link today?';
+  } else if (lower.includes('good evening')) {
+    aiText = 'Good evening! 🌙 I am here to help with anything related to B-Link.';
+  } else if (
+    lower.includes('feature') ||
+    lower.includes('features')
+  ) {
+    aiText = `B-Link features include:
 
-      if (!response.ok) throw new Error('Request failed: ' + response.status);
-      const data = await response.json();
-      if (data.error) throw new Error(data.error.message || 'API error');
+• Posts with text and images
+• Vibes short videos
+• Stories
+• Discover search
+• Real-time chats
+• Notifications
+• News section
+• Business Center
+• Verification
+• Wallet (coming soon)
 
-      const aiText = data.content?.[0]?.text;
-      if (!aiText) throw new Error('No response');
+Thank you for being part of the B-Link community.`;
+  } else if (lower.includes('chat')) {
+    aiText = `B-Link chats support:
 
-      setThinking(false);
-      const typingDelay = Math.min(aiText.length * 5, 1000);
-      await new Promise((r) => setTimeout(r, typingDelay));
+• Real-time messaging
+• Read receipts
+• Online status
+• Message reactions
+• Replies
+• Edit and delete messages
+• Starred messages`;
+  } else if (lower.includes('notification')) {
+    aiText = `Notifications keep you updated about:
 
-      const aiMsg = {
-        id: 'a-' + Date.now(),
-        role: 'assistant',
-        content: aiText,
-        timestamp: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, aiMsg]);
+• Likes
+• Comments
+• New followers
+• Mentions
+• Messages
+• Activity on your posts`;
+  } else {
+    aiText =
+      "I'm not certain about that yet, but I'm always improving. Feel free to ask me about B-Link features, profiles, posts, videos, chats, or settings.";
+  }
 
-    } catch (err) {
-      setThinking(false);
-      const fallback = "I'm not certain about that yet, but I'm always improving. Feel free to ask me about B-Link features, profiles, posts, videos, chats, or settings.";
-      setMessages((prev) => [...prev, {
-        id: 'a-' + Date.now(),
-        role: 'assistant',
-        content: fallback,
-        timestamp: new Date().toISOString(),
-      }]);
-    }
+  setThinking(false);
+
+  const typingDelay = Math.min(aiText.length * 5, 1000);
+  await new Promise((r) => setTimeout(r, typingDelay));
+
+  const aiMsg = {
+    id: 'a-' + Date.now(),
+    role: 'assistant',
+    content: aiText,
+    timestamp: new Date().toISOString(),
+  };
+
+  setMessages((prev) => [...prev, aiMsg]);
+
+} catch (err) {
+  setThinking(false);
+
+  setMessages((prev) => [
+    ...prev,
+    {
+      id: 'a-' + Date.now(),
+      role: 'assistant',
+      content: 'Sorry, something went wrong. Please try again.',
+      timestamp: new Date().toISOString(),
+    },
+  ]);
+}
 
     setLoading(false);
   }, [input, messages]);
