@@ -257,16 +257,19 @@ export default function VibeComments({ vibe, onClose }) {
           </div>
         )}
 
-        {/* ── Comment input — fixed, inline styles, always visible ── */}
+       {/* ── Comment input — fixed, inline styles, always visible ── */}
         <div style={{
           flexShrink: 0,
           background: '#0d1f3c',
           borderTop: '1px solid rgba(255,255,255,0.1)',
-          padding: '10px 12px',
+          padding: '10px 10px',
           paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
+          gap: '6px',
+          width: '100%',
+          boxSizing: 'border-box',
+          overflow: 'hidden',
         }}>
           <div style={{ flexShrink: 0 }}>
             <Avatar url={profile?.avatar_url} name={profile?.display_name} size={9} />
@@ -275,18 +278,22 @@ export default function VibeComments({ vibe, onClose }) {
           {/* Sticker toggle */}
           <button
             onMouseDown={(e) => { e.preventDefault(); setShowStickers(!showStickers); setShowEmoji(false); }}
-            style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: showStickers ? '#FFD700' : 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px' }}
+            style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: showStickers ? '#FFD700' : 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', padding: 0 }}
           >
-            <ImageIcon size={18} />
+            <ImageIcon size={17} />
           </button>
 
           <div style={{
-            flex: 1, display: 'flex', alignItems: 'center', gap: '6px',
+            flex: '1 1 auto',
+            minWidth: 0,
+            display: 'flex', alignItems: 'center', gap: '4px',
             background: 'rgba(255,255,255,0.08)',
             border: '1px solid rgba(255,255,255,0.15)',
-            borderRadius: '22px',
-            padding: '8px 14px',
-            minHeight: '40px',
+            borderRadius: '20px',
+            padding: '8px 10px',
+            minHeight: '38px',
+            boxSizing: 'border-box',
+            overflow: 'hidden',
           }}>
             <input
               ref={inputRef}
@@ -295,29 +302,27 @@ export default function VibeComments({ vibe, onClose }) {
               onChange={(e) => setComment(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
               placeholder="Add a comment..."
-              style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'white', fontSize: '14px', fontFamily: 'inherit' }}
+              style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', color: 'white', fontSize: '14px', fontFamily: 'inherit', width: '100%' }}
             />
             <button
               onMouseDown={(e) => { e.preventDefault(); setShowEmoji(!showEmoji); setShowStickers(false); }}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', flexShrink: 0, color: showEmoji ? '#FFD700' : 'rgba(255,255,255,0.4)' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '17px', flexShrink: 0, color: showEmoji ? '#FFD700' : 'rgba(255,255,255,0.4)', padding: 0, lineHeight: 1 }}
             >😊</button>
-            <button style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, color: 'rgba(255,255,255,0.4)' }}>
-              <AtSign size={16} />
-            </button>
           </div>
 
           <button
             onClick={() => handleSubmit()}
             disabled={submitting || !comment.trim()}
             style={{
-              width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
+              width: '38px', height: '38px', minWidth: '38px', borderRadius: '50%', flexShrink: 0,
               background: (submitting || !comment.trim()) ? 'rgba(255,107,53,0.4)' : 'linear-gradient(135deg, #FF6B35, #FFD700)',
               border: 'none', cursor: (submitting || !comment.trim()) ? 'default' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: '0 4px 12px rgba(255,107,53,0.4)',
+              padding: 0,
             }}
           >
-            <Send size={16} style={{ color: 'white', marginLeft: '2px' }} />
+            <Send size={15} style={{ color: 'white', marginLeft: '1px' }} />
           </button>
         </div>
       </div>

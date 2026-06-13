@@ -54,13 +54,12 @@ const Drawer = ({ isOpen, onClose }) => {
     { icon: User, label: 'My Profile', path: '/profile', color: 'text-[#2ECC71]', bg: 'bg-[#2ECC71]/15' },
   ];
 
+// In moreItems array, add as FIRST item:
 const moreItems = [
   {
     icon: Sparkles,
     label: 'B-Link AI',
     path: '/ai',
-    color: 'text-transparent',
-    bg: 'bg-gradient-to-br from-[#1E6FFF]/20 to-[#7B2FFF]/20',
     gradient: true,
   },
 
@@ -175,33 +174,45 @@ const moreItems = [
             })}
           </div>
 
-          {/* More section */}
-          <div className="px-3 mt-2">
-            <p className="text-[#6B7280] text-[10px] font-bold uppercase tracking-widest px-2 py-2">More</p>
-         {moreItems.map(({ icon: Icon, label, path, color, bg, gradient }) => (
-  <button
-    key={path + label}
-    onClick={() => handleNavigate(path)}
-    className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl mb-0.5 hover:bg-white/5 transition-all group"
-  >
-    <div className={'w-9 h-9 rounded-xl ' + bg + ' flex items-center justify-center flex-shrink-0'}>
-      {gradient
-        ? <Sparkles size={18} className="text-[#1E6FFF]" />
-        : <Icon size={18} className={color} />
-      }
-    </div>
+        {/* More section */}
+<div className="px-3 mt-2">
+  <p className="text-[#6B7280] text-[10px] font-bold uppercase tracking-widest px-2 py-2">
+    More
+  </p>
 
-    <span className="text-white/80 text-sm font-medium flex-1 text-left">
-      {label}
-    </span>
+  {moreItems.map((item) => (
+    <button
+      key={item.path + item.label}
+      onClick={() => handleNavigate(item.path)}
+      className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl mb-0.5 hover:bg-white/5 transition-all group"
+    >
+      {item.gradient ? (
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-[#1E6FFF] via-[#7B2FFF] to-[#00D4C8] shadow-lg shadow-[#1E6FFF]/30">
+          <item.icon size={18} className="text-white" />
+        </div>
+      ) : (
+        <div
+          className={
+            'w-9 h-9 rounded-xl ' +
+            item.bg +
+            ' flex items-center justify-center flex-shrink-0'
+          }
+        >
+          <item.icon size={18} className={item.color} />
+        </div>
+      )}
 
-    <ChevronRight
-      size={14}
-      className="text-white/20 group-hover:text-white/40 transition-colors"
-    />
-  </button>
-))}
-          </div>
+      <span className="text-white/80 text-sm font-medium flex-1 text-left">
+        {item.label}
+      </span>
+
+      <ChevronRight
+        size={14}
+        className="text-white/20 group-hover:text-white/40 transition-colors"
+      />
+    </button>
+  ))}
+</div>
         </div>
 
         {/* Sign out */}

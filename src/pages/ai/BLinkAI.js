@@ -1,611 +1,416 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
-import {
-  ArrowLeft, Send, Paperclip, X,
-  Sparkles, RefreshCw, Copy, ThumbsUp,
-  ThumbsDown, Mic, Image as ImageIcon
-} from 'lucide-react';
-import { formatTime } from '../../utils/formatTime';
+import { ArrowLeft, Send, RefreshCw, Sparkles, Copy } from 'lucide-react';
 
-// ── B-Link AI Knowledge Base ──────────────────────────────────────
-const BLINK_KNOWLEDGE = `
-You are B-Link AI, the official intelligent assistant for B-Link — Africa's premier GenZ social media platform.
+// ── Knowledge base — system prompt ──────────────────────────────────
+const BLINK_KNOWLEDGE = `You are B-Link AI, the official intelligent assistant of B-Link, created by Bilgate Mukhayo.
 
-ABOUT YOU:
-- Name: B-Link AI (also called "Blinky" informally)
-- Created by: Bilgate Mukhayo (CEO & Founder of B-Link), with the B-Link Engineering Team
-- Purpose: Help B-Link users get the most out of the platform, answer questions, provide support, and be a friendly companion
-- Personality: Warm, encouraging, professional yet relatable, uses occasional African slang naturally, never robotic
-- You were launched alongside B-Link V2.0
+IDENTITY:
+When asked "who are you" or similar, respond with something like: "I am B-Link AI, your B-Link assistant created by Bilgate Mukhayo. My purpose is to help you navigate B-Link, answer questions, discover features, and make your experience enjoyable. We're pleased to have you on board."
 
-ABOUT B-LINK APP:
-- Full name: B-Link — Africa's Social Platform
-- Vision: Africa's first GenZ-centric lightweight social media platform
-- Built with: React.js, Supabase, Cloudinary, Vercel
-- Target audience: African GenZ users and African diaspora worldwide
-- Key markets: Kenya, Nigeria, Ghana, Uganda, Tanzania, South Africa and across Africa
+PERSONALITY:
+Friendly, natural, conversational, supportive, encouraging, never robotic, never repetitive. Vary your phrasing — don't reuse the same sentences. Keep responses concise and helpful, like a knowledgeable friend, not a wall of text.
 
-FEATURES YOU KNOW ABOUT:
-1. FEED: Three tabs — Following (people you follow), Trending (most liked posts), Country (posts from your country). Pull to refresh, infinite scroll, real-time updates.
-2. POSTS: Create text posts with colorful backgrounds (7 colors), upload up to 6 images, add hashtags with autocomplete, set location, choose audience (Public/Followers/Private). Double-tap any image to like instantly.
-3. REACTIONS: 5 reaction types — ❤️ Like, 😂 Haha, 😮 Wow, 😢 Sad, 😡 Angry. Long press the like button to see all reactions.
-4. STORIES: 24-hour disappearing content. Create photo stories or text stories with colorful backgrounds. Stories expire automatically after 24 hours.
-5. CHATS: Full-featured messaging — send text, images, reply to messages (swipe), delete for me or everyone, star important messages, edit sent messages, react with emoji, schedule messages, search within chats, mute conversations.
-6. NOTIFICATIONS: Real-time alerts for likes, comments, replies, follows, mentions, messages. Filter by type. Accept/decline follow requests.
-7. DISCOVER: Search users by name or username, browse trending hashtags, see trending posts grid, follow people directly.
-8. PROFILE: View your posts grid, saved posts, analytics (engagement rate, total reactions, comments). Edit profile photo, bio, website, country.
-9. VERIFICATION: 3-step process — choose badge type (Personal KES 200/mo, Business KES 500/mo, Creator free for 1K+ followers), upload ID, submit for review (3-5 business days).
-10. WALLET: Coming Soon — M-Pesa integration for tips and creator earnings. Creator economy features launching Q2 2025.
-11. BUSINESS CENTER: Analytics dashboard — impressions, reach, engagement rate, top posts, audience insights, boost packages (coming soon).
-12. NEWS: Kenya and Africa news with categories — Kenya, Politics, Business, Tech, Sports, Africa.
-13. HASHTAGS: Tap any hashtag to see all posts using it. Sort by Recent or Top.
-14. FOLLOW SYSTEM: Follow/Unfollow, Follow Back, private accounts with follow requests, mutual followers display.
-15. STORIES REPLY: Reply to someone's story — message goes directly to their chat inbox.
+GREETINGS:
+Respond naturally and warmly to hi/hello/hey/good morning/good afternoon/good evening, varying your wording each time.
 
-TECHNICAL DETAILS:
-- Available on: Web browser (Chrome, Safari, Firefox), installable as PWA on Android and iOS
-- To install on Android: Open in Chrome → tap 3 dots → Add to Home Screen
-- To install on iOS: Open in Safari → tap Share → Add to Home Screen
-- Database: Supabase (PostgreSQL) with Row Level Security
-- Images: Cloudinary CDN with auto-compression
-- Deployed on: Vercel
+KNOWLEDGE — B-Link is a social media app for African GenZ with these features:
+- Authentication: email or phone signup/login
+- Profiles: bio, avatar, cover photo, follower/following counts, posts grid, saved posts
+- Posts: text with colored backgrounds, up to 6 images, hashtags, location, audience settings (Public/Followers/Private), reactions (like, haha, wow, sad, angry)
+- Vibes: short videos 5-60 seconds, categories (street, music, comedy, dance, food, sports, knowledge, faith), auto-delete after 7 days, fire reactions, comments, share, save
+- Home feed: Following/Trending/Country tabs, Stories (24hr)
+- Discover: search users, posts, hashtags, trending content
+- Chats: real-time messaging, online status, read receipts, reactions, replies, edit/delete, starred/pinned messages
+- Notifications: likes, comments, follows, messages, mentions
+- Settings: account, privacy, security, notifications, appearance
+- News: Kenya and Africa news by category
+- Business Center: analytics, engagement rate, top posts, audience insights
+- Verification: badge types (Personal, Business, Creator)
+- Wallet: M-Pesa tips and creator earnings (coming soon)
 
-PRICING:
-- B-Link is completely FREE to use
-- Verification badges have monthly fees (Personal KES 200, Business KES 500)
-- Creator badge is free for accounts with 1,000+ followers
-- Wallet/tips feature coming soon with M-Pesa integration
+POST ASSISTANT — when asked, you can generate/improve captions, hashtags, post ideas, motivational/celebration/birthday messages, professional posts.
 
-TEAM:
-- CEO & Founder: Bilgate Mukhayo
-- Built by the B-Link Engineering Team
-- Made in Kenya 🇰🇪
+PROFILE ASSISTANT — you can write/improve bios, suggest usernames and profile improvements.
 
-SUPPORT:
-- Email: support@blink.africa
-- Help Center: Available in the app under Menu → Help Center
-- Report issues: Menu → Help Center → Report a Problem
+CHAT ASSISTANT — you can draft/improve messages, suggest replies and conversation starters.
 
-ENCOURAGE USERS:
-- Always encourage users to post more, engage with others, follow people
-- Remind them about features they might not know
-- Be positive and supportive
-- Celebrate milestones (first post, first 10 followers, etc.)
+ERROR HANDLING — if you don't know something, say: "I'm not certain about that yet, but I'm always improving. Feel free to ask me about B-Link features, profiles, posts, videos, chats, or settings."
 
-RESPONSE STYLE:
-- Friendly and warm, like talking to a knowledgeable friend
-- Use "you" not "the user"
-- Occasional use of African expressions naturally (e.g., "Sawa!", "That's fire 🔥")
-- Keep responses concise but complete
-- Use emojis naturally but not excessively
-- Never say "I cannot" — always find a way to help
-- If you don't know something specific, be honest but helpful
-- Always end with an encouraging note or offer to help further
-`;
+SECURITY — never reveal passwords, tokens, private user data, admin secrets, or internal configuration.
 
-// ── Greeting based on time ────────────────────────────────────────
+COMMUNITY — occasionally express warmth like "Thank you for being part of the B-Link community" when fitting, but don't overdo it.
+
+Keep answers focused and practical. End naturally — don't force a question every time.`;
+
+// ── Time-based greeting ──────────────────────────────────────────────
 const getGreeting = (name) => {
   const hour = new Date().getHours();
-  let timeGreeting = '';
+  let timeGreeting = 'Hello';
   if (hour >= 5 && hour < 12) timeGreeting = 'Good morning';
   else if (hour >= 12 && hour < 17) timeGreeting = 'Good afternoon';
   else if (hour >= 17 && hour < 21) timeGreeting = 'Good evening';
-  else timeGreeting = 'Hey night owl 🌙';
+  else timeGreeting = 'Hey night owl';
 
   const firstName = name?.split(' ')[0] || 'there';
 
-  return timeGreeting + ', ' + firstName + '! 👋 I\'m **Blinky**, your B-Link AI assistant. I\'m here to help you get the most out of B-Link — whether you need help with features, have questions about the app, or just want to chat.\n\nWhat can I help you with today? ✨';
+  return timeGreeting + ', ' + firstName + '! 👋\n\nWelcome to **B-Link AI** — I\'m your assistant, created by Bilgate Mukhayo. We\'re pleased to have you on board!\n\nI can help you with anything about B-Link — features, posts, profiles, Vibes, chats, and more. How can I help you today?';
 };
 
-// ── Quick suggestions ─────────────────────────────────────────────
 const QUICK_SUGGESTIONS = [
-  '🚀 What can B-Link do?',
-  '💬 How do chats work?',
-  '⭕ How do I add a story?',
-  '✓ How do I get verified?',
-  '💰 When is wallet launching?',
-  '📊 What is Business Center?',
-  '📱 How do I install the app?',
-  '🔔 Why am I not getting notifications?',
+  'Tell me about B-Link',
+  'How do I create a post?',
+  'How do I upload Vibes?',
+  'Help me write a bio',
+  'Help me write a caption',
+  'How do chats work?',
 ];
 
-// ── Message bubble ────────────────────────────────────────────────
-const MessageBubble = ({ msg, onCopy, onRate }) => {
-  const isAI = msg.role === 'assistant';
-  const [rated, setRated] = useState(null);
+const FOLLOWUP_SUGGESTIONS = [
+  'Tell me more',
+  'Help me write a post',
+  'Explain notifications',
+  'Improve my bio',
+  'How do chats work?',
+  'Show B-Link features',
+];
 
-  const formatText = (text) => {
-    return text
+// ── Message bubble ────────────────────────────────────────────────────
+const MessageBubble = ({ msg, onCopy }) => {
+  const isAI = msg.role === 'assistant';
+
+  const formatText = (text) =>
+    text
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/\n/g, '<br/>');
-  };
 
   return (
-    <div className={'flex items-end gap-2 mb-4 ' + (isAI ? 'flex-row' : 'flex-row-reverse') + ' fade-in'}>
+    <div style={{
+      display: 'flex',
+      alignItems: 'flex-end',
+      gap: '8px',
+      marginBottom: '14px',
+      flexDirection: isAI ? 'row' : 'row-reverse',
+    }}>
       {isAI && (
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1E6FFF] via-[#7B2FFF] to-[#00D4C8] flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#1E6FFF]/30">
-          <Sparkles size={14} className="text-white" />
+        <div style={{
+          width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0,
+          background: 'linear-gradient(135deg, #1E6FFF, #7B2FFF, #00D4C8)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 4px 12px rgba(30,111,255,0.4)',
+        }}>
+          <Sparkles size={14} color="white" />
         </div>
       )}
 
-      <div className={'max-w-[82%] ' + (isAI ? '' : 'items-end flex flex-col')}>
-        <div
-          className={
-            'px-4 py-3 rounded-2xl ' +
-            (isAI
-              ? 'bg-[#0d1f3c] border border-white/10 text-white/90 rounded-tl-sm'
-              : 'bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] text-white rounded-tr-sm')
-          }
-        >
-          {msg.file && (
-            <div className="mb-2">
-              {msg.fileType?.startsWith('image/') ? (
-                <img src={msg.file} alt="uploaded" className="rounded-xl max-w-full max-h-48 object-cover" />
-              ) : (
-                <div className="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-                  <Paperclip size={14} />
-                  <span className="text-xs truncate">{msg.fileName}</span>
-                </div>
-              )}
-            </div>
-          )}
+      <div style={{ maxWidth: '80%', display: 'flex', flexDirection: 'column', alignItems: isAI ? 'flex-start' : 'flex-end' }}>
+        <div style={{
+          padding: '11px 15px',
+          borderRadius: isAI ? '16px 16px 16px 4px' : '16px 16px 4px 16px',
+          background: isAI ? '#0d1f3c' : 'linear-gradient(135deg, #1E6FFF, #7B2FFF)',
+          border: isAI ? '1px solid rgba(255,255,255,0.08)' : 'none',
+        }}>
           <p
-            className="text-sm leading-relaxed"
+            style={{ fontSize: '14px', lineHeight: 1.6, color: 'rgba(255,255,255,0.92)', margin: 0 }}
             dangerouslySetInnerHTML={{ __html: formatText(msg.content) }}
           />
-          <p className={'text-[10px] mt-1.5 ' + (isAI ? 'text-white/40' : 'text-white/60')}>
-            {formatTime(msg.timestamp)}
+          <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '6px', marginBottom: 0 }}>
+            {new Date(msg.timestamp).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
           </p>
         </div>
 
-        {/* AI message actions */}
         {isAI && (
-          <div className="flex items-center gap-2 mt-1.5 px-1">
-            <button
-              onClick={() => onCopy(msg.content)}
-              className="text-[#6B7280] hover:text-white transition-colors p-1"
-              title="Copy"
-            >
-              <Copy size={12} />
-            </button>
-            <button
-              onClick={() => { setRated('up'); onRate(msg.id, 'up'); }}
-              className={'transition-colors p-1 ' + (rated === 'up' ? 'text-[#2ECC71]' : 'text-[#6B7280] hover:text-[#2ECC71]')}
-              title="Helpful"
-            >
-              <ThumbsUp size={12} />
-            </button>
-            <button
-              onClick={() => { setRated('down'); onRate(msg.id, 'down'); }}
-              className={'transition-colors p-1 ' + (rated === 'down' ? 'text-red-400' : 'text-[#6B7280] hover:text-red-400')}
-              title="Not helpful"
-            >
-              <ThumbsDown size={12} />
-            </button>
-          </div>
+          <button
+            onClick={() => onCopy(msg.content)}
+            style={{ marginTop: '4px', background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280', padding: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}
+          >
+            <Copy size={11} />
+          </button>
         )}
       </div>
     </div>
   );
 };
 
-// ── Typing indicator ──────────────────────────────────────────────
+// ── Typing indicator ──────────────────────────────────────────────────
 const TypingIndicator = () => (
-  <div className="flex items-end gap-2 mb-4 fade-in">
-    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1E6FFF] via-[#7B2FFF] to-[#00D4C8] flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#1E6FFF]/30">
-      <Sparkles size={14} className="text-white" />
+  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', marginBottom: '14px' }}>
+    <div style={{
+      width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0,
+      background: 'linear-gradient(135deg, #1E6FFF, #7B2FFF, #00D4C8)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      boxShadow: '0 4px 12px rgba(30,111,255,0.4)',
+    }}>
+      <Sparkles size={14} color="white" />
     </div>
-    <div className="bg-[#0d1f3c] border border-white/10 rounded-2xl rounded-tl-sm px-4 py-3">
-      <div className="flex items-center gap-1.5">
-        <div className="flex gap-1 items-center">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="w-2 h-2 rounded-full bg-[#1E6FFF]"
-              style={{
-                animation: 'bounce 1.2s infinite',
-                animationDelay: i * 0.2 + 's',
-              }}
-            />
-          ))}
-        </div>
-        <span className="text-[#6B7280] text-xs ml-1">Blinky is thinking...</span>
+    <div style={{ background: '#0d1f3c', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px 16px 16px 4px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', gap: '4px' }}>
+        {[0, 1, 2].map((i) => (
+          <div key={i} style={{
+            width: '6px', height: '6px', borderRadius: '50%', background: '#1E6FFF',
+            animation: 'bounce 1.2s infinite', animationDelay: i * 0.2 + 's',
+          }} />
+        ))}
       </div>
+      <span style={{ color: '#6B7280', fontSize: '12px' }}>B-Link AI is thinking...</span>
     </div>
   </div>
 );
 
-// ── Main AI Page ──────────────────────────────────────────────────
-const BLinkAI = () => {
-  const { user, profile } = useAuth();
+// ── Main page ───────────────────────────────────────────────────────
+export default function BLinkAI() {
+  const { profile } = useAuth();
   const navigate = useNavigate();
+
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [thinking, setThinking] = useState(false);
-  const [file, setFile] = useState(null);
-  const [fileName, setFileName] = useState('');
-  const [fileType, setFileType] = useState('');
-  const [filePreview, setFilePreview] = useState(null);
-  const [conversationId, setConversationId] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(true);
-  const [isFirstVisit, setIsFirstVisit] = useState(true);
+
   const messagesEndRef = useRef();
   const inputRef = useRef();
-  const fileInputRef = useRef();
 
+  // Session-only memory — greet on mount, no DB persistence
   useEffect(() => {
-    loadOrCreateConversation();
+    const greeting = {
+      id: 'greet-' + Date.now(),
+      role: 'assistant',
+      content: getGreeting(profile?.display_name),
+      timestamp: new Date().toISOString(),
+    };
+    setMessages([greeting]);
+
+    // Clear session memory on tab close / refresh
+    const handleUnload = () => setMessages([]);
+    window.addEventListener('beforeunload', handleUnload);
+    return () => window.removeEventListener('beforeunload', handleUnload);
   }, []);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, thinking]);
+  useEffect(() => { scrollBot(); }, [messages, thinking]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const loadOrCreateConversation = async () => {
-    const { data: existing } = await supabase
-      .from('ai_conversations')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (existing && existing.messages?.length > 0) {
-      setConversationId(existing.id);
-      setMessages(existing.messages);
-      setIsFirstVisit(false);
-      setShowSuggestions(false);
-    } else {
-      // First visit — show greeting
-      const greeting = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: getGreeting(profile?.display_name),
-        timestamp: new Date().toISOString(),
-      };
-      setMessages([greeting]);
-
-      const { data: newConv } = await supabase
-        .from('ai_conversations')
-        .insert({
-          user_id: user.id,
-          messages: [greeting],
-        })
-        .select()
-        .single();
-
-      if (newConv) setConversationId(newConv.id);
-    }
-  };
-
-  const saveConversation = async (msgs) => {
-    if (!conversationId) return;
-    await supabase
-      .from('ai_conversations')
-      .update({
-        messages: msgs,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', conversationId);
-  };
+  const scrollBot = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
 
   const sendMessage = useCallback(async (text = null) => {
     const messageText = text || input.trim();
-    if (!messageText && !file) return;
+    if (!messageText) return;
 
     setShowSuggestions(false);
 
     const userMsg = {
-      id: Date.now().toString(),
+      id: 'u-' + Date.now(),
       role: 'user',
-      content: messageText || '(sent a file)',
+      content: messageText,
       timestamp: new Date().toISOString(),
-      file: filePreview,
-      fileName,
-      fileType,
     };
 
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setInput('');
-    setFile(null);
-    setFilePreview(null);
-    setFileName('');
-    setFileType('');
+    if (inputRef.current) inputRef.current.style.height = '24px';
     setLoading(true);
 
-    // Show thinking indicator after short delay
-    await new Promise((r) => setTimeout(r, 300));
+    await new Promise((r) => setTimeout(r, 350));
     setThinking(true);
 
     try {
-      // Build conversation history for Claude API
       const history = newMessages
         .filter((m) => m.role === 'user' || m.role === 'assistant')
-        .slice(-10) // last 10 messages for context
-        .map((m) => ({
-          role: m.role,
-          content: m.content,
-        }));
+        .slice(-12)
+        .map((m) => ({ role: m.role, content: m.content }));
 
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'anthropic-dangerous-allow-browser': 'true',
+        },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
+          max_tokens: 800,
           system: BLINK_KNOWLEDGE,
           messages: history,
         }),
       });
 
+      if (!response.ok) throw new Error('Request failed: ' + response.status);
       const data = await response.json();
-      const aiText = data.content?.[0]?.text || 'I\'m having trouble connecting right now. Please try again in a moment! 🙏';
+      if (data.error) throw new Error(data.error.message || 'API error');
+
+      const aiText = data.content?.[0]?.text;
+      if (!aiText) throw new Error('No response');
 
       setThinking(false);
-
-      // Simulate natural typing delay based on response length
-      const typingDelay = Math.min(aiText.length * 8, 1500);
+      const typingDelay = Math.min(aiText.length * 5, 1000);
       await new Promise((r) => setTimeout(r, typingDelay));
 
       const aiMsg = {
-        id: (Date.now() + 1).toString(),
+        id: 'a-' + Date.now(),
         role: 'assistant',
         content: aiText,
         timestamp: new Date().toISOString(),
       };
-
-      const finalMessages = [...newMessages, aiMsg];
-      setMessages(finalMessages);
-      saveConversation(finalMessages);
+      setMessages((prev) => [...prev, aiMsg]);
 
     } catch (err) {
       setThinking(false);
-      const errMsg = {
-        id: (Date.now() + 1).toString(),
+      const fallback = "I'm not certain about that yet, but I'm always improving. Feel free to ask me about B-Link features, profiles, posts, videos, chats, or settings.";
+      setMessages((prev) => [...prev, {
+        id: 'a-' + Date.now(),
         role: 'assistant',
-        content: 'Oops! I\'m having a moment 😅 My connection is a bit unstable right now. Please try again shortly. If this keeps happening, you can reach support at support@blink.africa',
+        content: fallback,
         timestamp: new Date().toISOString(),
-      };
-      const finalMessages = [...newMessages, errMsg];
-      setMessages(finalMessages);
-      saveConversation(finalMessages);
+      }]);
     }
 
     setLoading(false);
-  }, [input, file, filePreview, fileName, fileType, messages, conversationId]);
+  }, [input, messages]);
 
-  const handleFileSelect = (e) => {
-    const selected = e.target.files[0];
-    if (!selected) return;
-    setFile(selected);
-    setFileName(selected.name);
-    setFileType(selected.type);
-
-    if (selected.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (ev) => setFilePreview(ev.target.result);
-      reader.readAsDataURL(selected);
-    } else {
-      setFilePreview(null);
-    }
-  };
-
-  const handleCopy = (text) => {
-    navigator.clipboard.writeText(text.replace(/<[^>]*>/g, ''));
-  };
-
-  const handleRate = (msgId, rating) => {
-    // Could save to DB for improving AI
-    console.log('Rated message:', msgId, rating);
-  };
-
-  const handleClearChat = async () => {
-    if (!window.confirm('Clear this conversation? This cannot be undone.')) return;
+  const handleClear = () => {
     const greeting = {
-      id: Date.now().toString(),
+      id: 'greet-' + Date.now(),
       role: 'assistant',
       content: getGreeting(profile?.display_name),
       timestamp: new Date().toISOString(),
     };
     setMessages([greeting]);
     setShowSuggestions(true);
-    if (conversationId) {
-      await supabase
-        .from('ai_conversations')
-        .update({ messages: [greeting], updated_at: new Date().toISOString() })
-        .eq('id', conversationId);
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
   };
 
   return (
-    <div className="flex flex-col bg-[#0A1628]" style={{ height: '100dvh' }}>
-      {/* Header */}
-      <div className="flex-shrink-0 bg-[#0d1f3c] border-b border-white/10 px-4 py-3">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white flex-shrink-0">
-            <ArrowLeft size={22} />
-          </button>
+    <div style={{
+      display: 'flex', flexDirection: 'column',
+      height: '100dvh', background: '#0A1628',
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      overflow: 'hidden',
+    }}>
 
-          {/* AI avatar */}
-          <div className="relative flex-shrink-0">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1E6FFF] via-[#7B2FFF] to-[#00D4C8] flex items-center justify-center shadow-lg shadow-[#1E6FFF]/40">
-              <Sparkles size={18} className="text-white" />
-            </div>
-            <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#2ECC71] border-2 border-[#0d1f3c]" />
+      {/* ── HEADER ── */}
+      <div style={{
+        flexShrink: 0, background: '#0d1f3c',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+        padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px',
+      }}>
+        <button onClick={() => navigate(-1)} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', flexShrink: 0 }}>
+          <ArrowLeft size={22} />
+        </button>
+
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div style={{
+            width: '38px', height: '38px', borderRadius: '50%',
+            background: 'linear-gradient(135deg, #1E6FFF, #7B2FFF, #00D4C8)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 4px 14px rgba(30,111,255,0.45)',
+          }}>
+            <Sparkles size={18} color="white" />
           </div>
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="text-white font-bold text-base">Blinky</h1>
-              <span className="bg-gradient-to-r from-[#1E6FFF] to-[#7B2FFF] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
-                AI
-              </span>
-            </div>
-            <p className="text-[#2ECC71] text-xs">
-              {thinking ? '✨ Thinking...' : '● Online — B-Link Assistant'}
-            </p>
-          </div>
-
-          <button
-            onClick={handleClearChat}
-            className="text-[#6B7280] hover:text-white transition-colors p-2 flex-shrink-0"
-            title="Clear conversation"
-          >
-            <RefreshCw size={18} />
-          </button>
+          <div style={{ position: 'absolute', bottom: '-1px', right: '-1px', width: '11px', height: '11px', borderRadius: '50%', background: '#2ECC71', border: '2px solid #0d1f3c' }} />
         </div>
-      </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 overscroll-contain">
-        {/* AI info banner */}
-        <div className="mb-4 bg-gradient-to-r from-[#1E6FFF]/10 to-[#7B2FFF]/10 border border-[#1E6FFF]/20 rounded-2xl p-3 text-center">
-          <div className="flex items-center justify-center gap-2 mb-1">
-            <Sparkles size={14} className="text-[#1E6FFF]" />
-            <p className="text-white font-semibold text-xs">Powered by Claude AI</p>
-            <Sparkles size={14} className="text-[#7B2FFF]" />
-          </div>
-          <p className="text-[#6B7280] text-[10px]">
-            Blinky knows everything about B-Link and is here to help you 24/7
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ color: 'white', fontWeight: 700, fontSize: '15px', margin: 0 }}>B-Link AI</p>
+          <p style={{ color: '#2ECC71', fontSize: '11px', margin: 0 }}>
+            {thinking ? 'B-Link AI is typing...' : '● Online'}
           </p>
         </div>
 
-        {/* Messages list */}
+        <button onClick={handleClear} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '6px', flexShrink: 0 }} title="Clear chat">
+          <RefreshCw size={18} />
+        </button>
+      </div>
+
+      {/* ── MESSAGES ── */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '14px', overscrollBehavior: 'contain' }}>
         {messages.map((msg) => (
-          <MessageBubble
-            key={msg.id}
-            msg={msg}
-            onCopy={handleCopy}
-            onRate={handleRate}
-          />
+          <MessageBubble key={msg.id} msg={msg} onCopy={(t) => navigator.clipboard.writeText(t)} />
         ))}
 
-        {/* Thinking indicator */}
         {thinking && <TypingIndicator />}
 
-        {/* Quick suggestions */}
-        {showSuggestions && messages.length <= 1 && !loading && (
-          <div className="mt-4">
-            <p className="text-[#6B7280] text-xs font-semibold text-center mb-3">
-              💡 Try asking me...
+        {/* Suggestions */}
+        {!loading && (
+          <div style={{ marginTop: '8px' }}>
+            <p style={{ color: '#6B7280', fontSize: '11px', fontWeight: 700, textAlign: 'center', marginBottom: '10px' }}>
+              {showSuggestions ? '💡 Try asking me...' : 'Continue the conversation'}
             </p>
-            <div className="flex flex-wrap gap-2 justify-center">
-              {QUICK_SUGGESTIONS.map((suggestion) => (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+              {(showSuggestions ? QUICK_SUGGESTIONS : FOLLOWUP_SUGGESTIONS).map((s) => (
                 <button
-                  key={suggestion}
-                  onClick={() => sendMessage(suggestion.replace(/^[^\s]+\s/, ''))}
-                  className="bg-white/5 border border-white/10 rounded-full px-3 py-2 text-xs text-white/80 hover:bg-[#1E6FFF]/20 hover:border-[#1E6FFF]/40 hover:text-white transition-all"
+                  key={s}
+                  onClick={() => sendMessage(s)}
+                  style={{
+                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '99px', padding: '8px 14px', color: 'rgba(255,255,255,0.8)',
+                    fontSize: '12px', cursor: 'pointer',
+                  }}
                 >
-                  {suggestion}
+                  {s}
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} style={{ height: '8px' }} />
       </div>
 
-      {/* File preview */}
-      {(file || filePreview) && (
-        <div className="flex-shrink-0 bg-[#111827] border-t border-white/10 px-4 py-2">
-          <div className="flex items-center gap-3">
-            {filePreview ? (
-              <img src={filePreview} alt="preview" className="w-12 h-12 rounded-xl object-cover" />
-            ) : (
-              <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
-                <Paperclip size={18} className="text-[#6B7280]" />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-white text-xs font-semibold truncate">{fileName}</p>
-              <p className="text-[#6B7280] text-[10px]">{fileType}</p>
-            </div>
-            <button
-              onClick={() => { setFile(null); setFilePreview(null); setFileName(''); setFileType(''); }}
-              className="text-[#6B7280] hover:text-red-400 transition-colors"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Input bar */}
-      <div
-        className="flex-shrink-0 bg-[#0d1f3c] border-t border-white/10 px-3 py-3"
-        style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
-      >
-        <div className="flex items-end gap-2">
-          {/* File attach */}
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="w-9 h-9 flex items-center justify-center text-[#6B7280] hover:text-[#1E6FFF] transition-colors rounded-full flex-shrink-0"
-          >
-            <Paperclip size={20} />
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*,.pdf,.doc,.docx,.txt"
-            className="hidden"
-            onChange={handleFileSelect}
-          />
-
-          {/* Text input */}
-          <div className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-2xl px-3 py-2.5 focus-within:border-[#1E6FFF]/50 transition-colors">
+      {/* ── INPUT BAR — same fixed pattern as ChatRoom ── */}
+      <div style={{
+        flexShrink: 0,
+        background: '#0d1f3c',
+        borderTop: '1px solid rgba(255,255,255,0.1)',
+        padding: '10px 12px',
+        paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
+        boxSizing: 'border-box',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
+          <div style={{
+            flex: 1, minWidth: 0,
+            background: 'rgba(255,255,255,0.07)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            borderRadius: '22px',
+            padding: '10px 14px',
+            display: 'flex', alignItems: 'flex-end',
+          }}>
             <textarea
               ref={inputRef}
               value={input}
               onChange={(e) => {
                 setInput(e.target.value);
                 e.target.style.height = 'auto';
-                e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px';
+                e.target.style.height = Math.min(e.target.scrollHeight, 110) + 'px';
               }}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask Blinky anything about B-Link..."
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+              placeholder="Ask B-Link AI anything..."
               rows={1}
-              className="w-full bg-transparent text-white placeholder-[#6B7280] text-sm focus:outline-none resize-none leading-relaxed"
-              style={{ minHeight: '22px', maxHeight: '100px', overflowY: 'auto', scrollbarWidth: 'none' }}
+              style={{
+                width: '100%', background: 'transparent', border: 'none', outline: 'none',
+                color: 'white', fontSize: '14px', lineHeight: '1.5', resize: 'none',
+                minHeight: '22px', maxHeight: '110px', overflowY: 'auto',
+                fontFamily: 'inherit', display: 'block', padding: 0,
+              }}
             />
           </div>
 
-          {/* Send button */}
           <button
             onClick={() => sendMessage()}
-            disabled={loading || (!input.trim() && !file)}
-            className="w-10 h-10 bg-gradient-to-br from-[#1E6FFF] via-[#7B2FFF] to-[#00D4C8] rounded-full flex items-center justify-center disabled:opacity-40 active:scale-95 transition-all shadow-lg shadow-[#1E6FFF]/30 flex-shrink-0"
+            disabled={loading || !input.trim()}
+            style={{
+              width: '42px', height: '42px', borderRadius: '50%', flexShrink: 0,
+              background: (loading || !input.trim()) ? 'rgba(30,111,255,0.4)' : 'linear-gradient(135deg, #1E6FFF, #7B2FFF, #00D4C8)',
+              border: 'none', cursor: (loading || !input.trim()) ? 'default' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(30,111,255,0.4)',
+            }}
           >
-            {loading ? (
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <Send size={15} className="text-white ml-0.5" />
-            )}
+            {loading
+              ? <div style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              : <Send size={17} style={{ color: 'white', marginLeft: '2px' }} />
+            }
           </button>
         </div>
-
-        <p className="text-center text-[#6B7280] text-[10px] mt-2">
-          Blinky can make mistakes. Verify important information.
-        </p>
       </div>
     </div>
   );
-};
-
-export default BLinkAI;
+}

@@ -72,12 +72,11 @@ const BottomNav = () => {
     setUnreadChats(total);
   };
 
-  // ── HIDE BottomNav entirely when inside a chat room ──
-  // /chats        -> show nav (chat list page)
-  // /chats/:id    -> hide nav (full screen chat like WhatsApp/Telegram)
-  const isInsideChatRoom = /^\/chats\/.+/.test(location.pathname);
+// Hide BottomNav on chat rooms and AI page
+const isInsideChatRoom = /^\/chats\/.+/.test(location.pathname);
+const isAIPage = location.pathname.startsWith('/ai');
 
-  if (isInsideChatRoom) return null;
+if (isInsideChatRoom || isAIPage) return null;
 
   return (
  <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-center pointer-events-none">
