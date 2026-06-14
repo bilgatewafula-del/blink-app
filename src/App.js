@@ -67,61 +67,60 @@ const ProtectedRoute = ({ children }) => {
 const AppRoutes = () => {
   const { user } = useAuth();
   return (
-    <BrowserRouter>
-      {/* Single centered column — no sidebars */}
-      <div className="min-h-screen bg-[#0A1628] flex justify-center">
-        <div className="w-full max-w-[620px] min-h-screen relative bg-[#0A1628]">
-          <Routes>
-            {/* Auth */}
-            <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
-            <Route path="/signup" element={!user ? <Signup /> : <Navigate to="/" />} />
-            <Route path="/verify-otp" element={<OTPVerify />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
+    <div className="min-h-screen bg-[#0A1628] flex justify-center">
+      <div className="w-full max-w-[620px] min-h-screen relative bg-[#0A1628]">
+        <Routes>
+          {/* Auth */}
+          <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
+          <Route path="/signup" element={!user ? <Signup /> : <Navigate to="/" />} />
+          <Route path="/verify-otp" element={<OTPVerify />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
-            {/* Main */}
-            <Route path="/" element={<ProtectedRoute><PageWrapper><Home /></PageWrapper></ProtectedRoute>} />
-            <Route path="/discover" element={<ProtectedRoute><PageWrapper><Discover /></PageWrapper></ProtectedRoute>} />
-            <Route path="/hashtag/:tag" element={<ProtectedRoute><PageWrapper><HashtagFeed /></PageWrapper></ProtectedRoute>} />
-            <Route path="/create" element={<ProtectedRoute><PageWrapper><CreatePost /></PageWrapper></ProtectedRoute>} />
-            <Route path="/post/:id" element={<ProtectedRoute><PageWrapper><PostDetail /></PageWrapper></ProtectedRoute>} />
-            <Route path="/post/:id/edit" element={<ProtectedRoute><PageWrapper><EditPost /></PageWrapper></ProtectedRoute>} />
-            <Route path="/chats" element={<ProtectedRoute><PageWrapper><ChatList /></PageWrapper></ProtectedRoute>} />
-            <Route path="/chats/:id" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><PageWrapper><Profile /></PageWrapper></ProtectedRoute>} />
-            <Route path="/profile/edit" element={<ProtectedRoute><PageWrapper><EditProfile /></PageWrapper></ProtectedRoute>} />
-            <Route path="/profile/:username" element={<ProtectedRoute><PageWrapper><OtherProfile /></PageWrapper></ProtectedRoute>} />
-            <Route path="/notifications" element={<ProtectedRoute><PageWrapper><Notifications /></PageWrapper></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><PageWrapper><Settings /></PageWrapper></ProtectedRoute>} />
-            <Route path="/settings/account" element={<ProtectedRoute><PageWrapper><AccountSettings /></PageWrapper></ProtectedRoute>} />
-            <Route path="/settings/privacy" element={<ProtectedRoute><PageWrapper><PrivacySettings /></PageWrapper></ProtectedRoute>} />
-            <Route path="/settings/security" element={<ProtectedRoute><PageWrapper><SecuritySettings /></PageWrapper></ProtectedRoute>} />
-            <Route path="/settings/notifications" element={<ProtectedRoute><PageWrapper><NotificationSettings /></PageWrapper></ProtectedRoute>} />
-            <Route path="/settings/appearance" element={<ProtectedRoute><PageWrapper><AppearanceSettings /></PageWrapper></ProtectedRoute>} />
-            <Route path="/business" element={<ProtectedRoute><PageWrapper><BusinessCenter /></PageWrapper></ProtectedRoute>} />
-            <Route path="/wallet" element={<ProtectedRoute><PageWrapper><WalletPage /></PageWrapper></ProtectedRoute>} />
-            <Route path="/verification" element={<ProtectedRoute><PageWrapper><Verification /></PageWrapper></ProtectedRoute>} />
-            <Route path="/news" element={<ProtectedRoute><PageWrapper><News /></PageWrapper></ProtectedRoute>} />
-            <Route path="/help" element={<ProtectedRoute><PageWrapper><Help /></PageWrapper></ProtectedRoute>} />
-            <Route path="/about" element={<ProtectedRoute><PageWrapper><About /></PageWrapper></ProtectedRoute>} />
-            <Route path="/ai" element={<ProtectedRoute><BLinkAI /></ProtectedRoute>} />
-            <Route path="/vibes" element={<ProtectedRoute><VibesFeed /></ProtectedRoute>} />
-<Route path="/vibes/upload" element={<ProtectedRoute><PageWrapper><UploadVibe /></PageWrapper></ProtectedRoute>} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
+          {/* Main */}
+          <Route path="/" element={<ProtectedRoute><PageWrapper><Home /></PageWrapper></ProtectedRoute>} />
+          <Route path="/discover" element={<ProtectedRoute><PageWrapper><Discover /></PageWrapper></ProtectedRoute>} />
+          <Route path="/hashtag/:tag" element={<ProtectedRoute><PageWrapper><HashtagFeed /></PageWrapper></ProtectedRoute>} />
+          <Route path="/create" element={<ProtectedRoute><PageWrapper><CreatePost /></PageWrapper></ProtectedRoute>} />
+          <Route path="/post/:id" element={<ProtectedRoute><PageWrapper><PostDetail /></PageWrapper></ProtectedRoute>} />
+          <Route path="/post/:id/edit" element={<ProtectedRoute><PageWrapper><EditPost /></PageWrapper></ProtectedRoute>} />
+          <Route path="/chats" element={<ProtectedRoute><PageWrapper><ChatList /></PageWrapper></ProtectedRoute>} />
+          <Route path="/chats/:id" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><PageWrapper><Profile /></PageWrapper></ProtectedRoute>} />
+          <Route path="/profile/edit" element={<ProtectedRoute><PageWrapper><EditProfile /></PageWrapper></ProtectedRoute>} />
+          <Route path="/profile/:username" element={<ProtectedRoute><PageWrapper><OtherProfile /></PageWrapper></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><PageWrapper><Notifications /></PageWrapper></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><PageWrapper><Settings /></PageWrapper></ProtectedRoute>} />
+          <Route path="/settings/account" element={<ProtectedRoute><PageWrapper><AccountSettings /></PageWrapper></ProtectedRoute>} />
+          <Route path="/settings/privacy" element={<ProtectedRoute><PageWrapper><PrivacySettings /></PageWrapper></ProtectedRoute>} />
+          <Route path="/settings/security" element={<ProtectedRoute><PageWrapper><SecuritySettings /></PageWrapper></ProtectedRoute>} />
+          <Route path="/settings/notifications" element={<ProtectedRoute><PageWrapper><NotificationSettings /></PageWrapper></ProtectedRoute>} />
+          <Route path="/settings/appearance" element={<ProtectedRoute><PageWrapper><AppearanceSettings /></PageWrapper></ProtectedRoute>} />
+          <Route path="/business" element={<ProtectedRoute><PageWrapper><BusinessCenter /></PageWrapper></ProtectedRoute>} />
+          <Route path="/wallet" element={<ProtectedRoute><PageWrapper><WalletPage /></PageWrapper></ProtectedRoute>} />
+          <Route path="/verification" element={<ProtectedRoute><PageWrapper><Verification /></PageWrapper></ProtectedRoute>} />
+          <Route path="/news" element={<ProtectedRoute><PageWrapper><News /></PageWrapper></ProtectedRoute>} />
+          <Route path="/help" element={<ProtectedRoute><PageWrapper><Help /></PageWrapper></ProtectedRoute>} />
+          <Route path="/about" element={<ProtectedRoute><PageWrapper><About /></PageWrapper></ProtectedRoute>} />
+          <Route path="/ai" element={<ProtectedRoute><BLinkAI /></ProtectedRoute>} />
+          <Route path="/vibes" element={<ProtectedRoute><VibesFeed /></ProtectedRoute>} />
+          <Route path="/vibes/upload" element={<ProtectedRoute><PageWrapper><UploadVibe /></PageWrapper></ProtectedRoute>} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
 
-          {user && <BottomNav />}
-        </div>
+        {user && <BottomNav />}
       </div>
-    </BrowserRouter>
+    </div>
   );
 };
 
 function App() {
   return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 

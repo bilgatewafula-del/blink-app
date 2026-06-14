@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 const AuthContext = createContext({});
@@ -17,16 +17,27 @@ export const AuthProvider = ({ children }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setUser(session?.user ?? null);
-        if (session?.user) fetchProfile(session.user.id);
-        else { setProfile(null); setLoading(false); }
+        // Avoid redundant re-renders if user id hasn't actually changed
+        setUser((prev) => {
+          const newId = session?.user?.id ?? null;
+          const prevId = prev?.id ?? null;
+          if (newId === prevId) return prev; // no-op, prevents re-render
+          return session?.user ?? null;
+        });
+
+        if (session?.user) {
+          fetchProfile(session.user.id);
+        } else {
+          setProfile(null);
+          setLoading(false);
+        }
       }
     );
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId) => {
+  const fetchProfile = useCallback(async (userId) => {
     try {
       const { data, error } = await supabase
         .from('users')
@@ -41,7 +52,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Real-time profile updates (follower count etc)
   useEffect(() => {
@@ -60,14 +71,21 @@ export const AuthProvider = ({ children }) => {
     return () => supabase.removeChannel(channel);
   }, [user]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
-  };
+  }, []);
+
+  // ── KEY FIX: memoize the context value ──
+  // Only creates a new object when user, profile, or loading actually change
+  const value = useMemo(
+    () => ({ user, profile, loading, signOut, fetchProfile }),
+    [user, profile, loading, signOut, fetchProfile]
+  );
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signOut, fetchProfile }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
