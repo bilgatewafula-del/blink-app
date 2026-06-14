@@ -2,340 +2,311 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
-import {
-  Bell, Heart, MessageCircle, UserPlus, Repeat2,
-  AtSign, BadgeCheck, Megaphone, Check, ArrowLeft
-} from 'lucide-react';
-import Avatar from '../../components/Avatar';
 import { formatTime } from '../../utils/formatTime';
-import { NotificationSkeleton } from '../../components/Skeleton';
-import SwipeBack from '../../components/SwipeBack';
+import { formatNumber } from '../../utils/formatNumber';
+import { Check } from 'lucide-react';
+import Avatar from '../../components/Avatar';
 
-const NOTIFICATION_ICONS = {
-  like: { icon: Heart, color: 'text-red-400', bg: 'bg-red-400/20' },
-  comment: { icon: MessageCircle, color: 'text-[#1E6FFF]', bg: 'bg-[#1E6FFF]/20' },
-  follow: { icon: UserPlus, color: 'text-[#2ECC71]', bg: 'bg-[#2ECC71]/20' },
-  follow_request: { icon: UserPlus, color: 'text-[#FFD700]', bg: 'bg-[#FFD700]/20' },
-  repost: { icon: Repeat2, color: 'text-[#00D4C8]', bg: 'bg-[#00D4C8]/20' },
-  mention: { icon: AtSign, color: 'text-[#7B2FFF]', bg: 'bg-[#7B2FFF]/20' },
-  verification: { icon: BadgeCheck, color: 'text-[#1E6FFF]', bg: 'bg-[#1E6FFF]/20' },
-  tip: { icon: () => <span className="text-sm">💰</span>, color: 'text-[#FFD700]', bg: 'bg-[#FFD700]/20' },
-  system: { icon: Megaphone, color: 'text-[#FF6B35]', bg: 'bg-[#FF6B35]/20' },
-  message: { icon: MessageCircle, color: 'text-[#00B4D8]', bg: 'bg-[#00B4D8]/20' },
+const NOTIF_TABS = [
+  { key: 'all',      label: 'All'      },
+  { key: 'activity', label: 'Activity' },
+  { key: 'social',   label: 'Social'   },
+  { key: 'messages', label: 'Messages' },
+];
+
+const TYPE_CONFIG = {
+  like:        { emoji: '❤️', color: '#EF4444', text: 'reacted to your post'           },
+  love:        { emoji: '❤️', color: '#EF4444', text: 'loved your post'                },
+  fire:        { emoji: '🔥', color: '#FF6B35', text: 'fired your post'                },
+  haha:        { emoji: '😂', color: '#FFD700', text: 'found your post funny'          },
+  wow:         { emoji: '😮', color: '#FFD700', text: 'was amazed by your post'        },
+  sad:         { emoji: '😢', color: '#6B7280', text: 'felt sad about your post'       },
+  clap:        { emoji: '👏', color: '#00D4C8', text: 'clapped for your post'          },
+  comment:     { emoji: '💬', color: '#1E6FFF', text: 'commented on your post'         },
+  reply:       { emoji: '↩️', color: '#1E6FFF', text: 'replied to your comment'        },
+  follow:      { emoji: '👥', color: '#7B2FFF', text: 'followed you'                   },
+  follow_request:{ emoji:'👤', color:'#7B2FFF', text: 'sent a follow request'          },
+  repost:      { emoji: '🔁', color: '#2ECC71', text: 'reposted your post'             },
+  quote:       { emoji: '💬', color: '#2ECC71', text: 'quoted your post'               },
+  share:       { emoji: '📤', color: '#00D4C8', text: 'shared your post'               },
+  mention:     { emoji: '🏷️', color: '#FF6B35', text: 'mentioned you'                  },
+  message:     { emoji: '📨', color: '#1E6FFF', text: 'sent you a message'             },
+  milestone:   { emoji: '🔥', color: '#FFD700', text: ''                               },
+  achievement: { emoji: '🏆', color: '#FFD700', text: ''                               },
+  system:      { emoji: '📢', color: '#6B7280', text: ''                               },
 };
 
-const getDefaultMessage = (type) => {
-  switch (type) {
-    case 'like': return 'reacted to your post';
-    case 'comment': return 'commented on your post';
-    case 'follow': return 'started following you';
-    case 'follow_request': return 'wants to follow you';
-    case 'repost': return 'reposted your post';
-    case 'mention': return 'mentioned you';
-    case 'tip': return 'sent you a tip';
-    case 'message': return 'sent you a message';
-    case 'verification': return 'Your verification was reviewed';
-    default: return 'sent you a notification';
-  }
+const getTabTypes = (tab) => {
+  if (tab === 'activity') return ['like','love','fire','haha','wow','sad','clap','comment','reply','repost','quote','share'];
+  if (tab === 'social')   return ['follow','follow_request','mention'];
+  if (tab === 'messages') return ['message'];
+  return null;
 };
 
-const Notifications = () => {
+export default function Notifications() {
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState('all');
-  const [unreadCount, setUnreadCount] = useState(0);
+  const navigate  = useNavigate();
+  const [activeTab, setActiveTab] = useState('all');
+  const [notifs, setNotifs]       = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [todayStats, setTodayStats] = useState({ reactions: 0, comments: 0, followers: 0, messages: 0 });
 
   useEffect(() => {
-    seedDemoNotifications();
     fetchNotifications();
-  }, []);
+    markAllRead();
+  }, [activeTab]);
 
+  // Real-time updates
   useEffect(() => {
-    const channel = supabase
-      .channel('notifications:' + user.id)
+    const ch = supabase.channel('notifs:' + user.id)
       .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'notifications',
+        event: 'INSERT', schema: 'public', table: 'notifications',
         filter: 'user_id=eq.' + user.id,
-      }, (payload) => {
-        setNotifications((prev) => [payload.new, ...prev]);
-        setUnreadCount((c) => c + 1);
-      })
+      }, () => fetchNotifications())
       .subscribe();
-    return () => supabase.removeChannel(channel);
-  }, [user]);
+    return () => supabase.removeChannel(ch);
+  }, [user.id]);
 
   const fetchNotifications = async () => {
-    const { data } = await supabase
+    setLoading(true);
+    const types = getTabTypes(activeTab);
+
+    let q = supabase
       .from('notifications')
-      .select('*, from_user:from_user_id(id, username, display_name, avatar_url, is_verified)')
+      .select('*, from_user:from_user_id(id,username,display_name,avatar_url,is_verified,badge_type)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(50);
-    setNotifications(data || []);
-    setUnreadCount(data?.filter((n) => !n.is_read).length || 0);
+      .limit(80);
+
+    if (types) q = q.in('type', types);
+
+    const { data } = await q;
+    const grouped = groupNotifications(data || []);
+    setNotifs(grouped);
+
+    // Today stats
+    const today = new Date(); today.setHours(0,0,0,0);
+    const todayN = (data || []).filter((n) => new Date(n.created_at) >= today);
+    setTodayStats({
+      reactions: todayN.filter((n) => ['like','love','fire','haha','wow','sad','clap'].includes(n.type)).length,
+      comments:  todayN.filter((n) => ['comment','reply'].includes(n.type)).length,
+      followers: todayN.filter((n) => n.type === 'follow').length,
+      messages:  todayN.filter((n) => n.type === 'message').length,
+    });
     setLoading(false);
   };
 
-  const seedDemoNotifications = async () => {
-    const { data: existing } = await supabase
-      .from('notifications')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('type', 'system')
-      .limit(1);
-    if (existing && existing.length > 0) return;
-    await supabase.from('notifications').insert([
-      {
-        user_id: user.id,
-        type: 'system',
-        message: '🎉 Welcome to B-Link! Your African social platform is ready.',
-        is_read: false,
-      },
-      {
-        user_id: user.id,
-        type: 'system',
-        message: '🔥 Start posting and connect with others.',
-        is_read: false,
-      },
-    ]);
-    fetchNotifications();
+  // Smart bundling — group same type + ref_id
+  const groupNotifications = (data) => {
+    const groups = {};
+    data.forEach((n) => {
+      const key = n.type + '_' + (n.ref_id || 'general');
+      if (!groups[key]) {
+        groups[key] = {
+          ...n,
+          actors: n.from_user ? [n.from_user] : [],
+          count: 1,
+        };
+      } else {
+        if (n.from_user && !groups[key].actors.find((a) => a?.id === n.from_user?.id)) {
+          groups[key].actors.push(n.from_user);
+          groups[key].count++;
+        }
+        // Update to most recent
+        if (new Date(n.created_at) > new Date(groups[key].created_at)) {
+          groups[key].created_at = n.created_at;
+          groups[key].is_read = n.is_read && groups[key].is_read;
+        }
+      }
+    });
+    return Object.values(groups).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   };
 
   const markAllRead = async () => {
-    await supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('user_id', user.id)
-      .eq('is_read', false);
-    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    setUnreadCount(0);
+    await supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id).eq('is_read', false);
   };
 
-  const markRead = async (id) => {
-    await supabase.from('notifications').update({ is_read: true }).eq('id', id);
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
-    );
-    setUnreadCount((c) => Math.max(0, c - 1));
+  const markOneRead = async (nid) => {
+    await supabase.from('notifications').update({ is_read: true }).eq('id', nid);
+    setNotifs((prev) => prev.map((n) => n.id === nid ? { ...n, is_read: true } : n));
   };
 
-  const handleNotificationClick = async (n) => {
-    if (!n.is_read) await markRead(n.id);
-    if (['like', 'comment', 'repost', 'mention'].includes(n.type)) {
-      if (n.ref_id) navigate('/post/' + n.ref_id);
-    } else if (['follow', 'follow_request'].includes(n.type)) {
-      if (n.from_user?.username) navigate('/profile/' + n.from_user.username);
-    } else if (n.type === 'message') {
-      if (n.ref_id) navigate('/chats/' + n.ref_id);
+  const handleAction = async (notif) => {
+    await markOneRead(notif.id);
+    if (['like','love','fire','haha','wow','sad','clap','comment','reply','repost','quote','share','mention'].includes(notif.type) && notif.ref_id) {
+      navigate('/post/' + notif.ref_id);
+    } else if (notif.type === 'follow' || notif.type === 'follow_request') {
+      navigate('/profile/' + notif.actors?.[0]?.username);
+    } else if (notif.type === 'message' && notif.ref_id) {
+      navigate('/chats/' + notif.ref_id);
+    } else if (notif.actors?.[0]?.username) {
+      navigate('/profile/' + notif.actors[0].username);
     }
   };
 
-  const handleAcceptFollow = async (n) => {
-    await supabase.from('follows')
-      .update({ status: 'accepted' })
-      .eq('follower_id', n.from_user_id)
-      .eq('following_id', user.id);
-    await sendNotification({
-      to: n.from_user_id,
-      from: user.id,
-      type: 'follow',
-      message: 'accepted your follow request',
-    });
-    await markRead(n.id);
-    fetchNotifications();
-  };
-
-  const handleDeclineFollow = async (n) => {
-    await supabase.from('follows')
-      .delete()
-      .eq('follower_id', n.from_user_id)
-      .eq('following_id', user.id);
-    await markRead(n.id);
-    fetchNotifications();
-  };
-
-  const sendNotification = async ({ to, from, type, message }) => {
-    if (!to || !from || to === from) return;
+  const handleFollowBack = async (e, fromUserId, fromUsername) => {
+    e.stopPropagation();
+    await supabase.from('follows').upsert(
+      { follower_id: user.id, following_id: fromUserId, status: 'accepted' },
+      { onConflict: 'follower_id,following_id' }
+    );
     await supabase.from('notifications').insert({
-      user_id: to, from_user_id: from, type, message, is_read: false,
+      user_id: fromUserId, from_user_id: user.id,
+      type: 'follow', message: 'followed you back', is_read: false,
     });
+    alert('You are now following @' + fromUsername);
   };
 
-  const filters = [
-    { key: 'all', label: 'All' },
-    { key: 'like', label: '❤️ Likes' },
-    { key: 'comment', label: '💬 Comments' },
-    { key: 'follow', label: '👥 Follows' },
-    { key: 'mention', label: '@ Mentions' },
-    { key: 'system', label: '📢 System' },
-  ];
+  const buildText = (notif) => {
+    const cfg = TYPE_CONFIG[notif.type] || TYPE_CONFIG.system;
+    const actors = notif.actors || [];
+    const firstName = actors[0]?.display_name || 'Someone';
+    const extra = notif.count > 1 ? ' and ' + formatNumber(notif.count - 1) + (notif.count === 2 ? ' other' : ' others') : '';
 
-  const filtered = activeFilter === 'all'
-    ? notifications
-    : notifications.filter((n) => n.type === activeFilter ||
-        (activeFilter === 'follow' && n.type === 'follow_request'));
+    if (notif.type === 'milestone' || notif.type === 'achievement' || notif.type === 'system') {
+      return notif.message || 'New notification';
+    }
+    return firstName + extra + ' ' + (cfg.text || notif.message || '');
+  };
 
-  const grouped = filtered.reduce((acc, n) => {
-    const date = new Date(n.created_at);
-    const now = new Date();
-    const diffDays = Math.floor((now - date) / 86400000);
-    let key;
-    if (diffDays < 0 || diffDays === 0) key = 'Today';
-    else if (diffDays === 1) key = 'Yesterday';
-    else if (diffDays < 7) key = diffDays + ' days ago';
-    else key = date.toLocaleDateString('en-KE', { month: 'short', day: 'numeric' });
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(n);
-    return acc;
-  }, {});
+  const hasTodayActivity = Object.values(todayStats).some((v) => v > 0);
 
   return (
-    <SwipeBack>
-      <div className="min-h-screen bg-[#0A1628] pb-24">
-        {/* Top bar */}
-        <div className="sticky top-0 z-20 bg-[#0A1628] border-b border-white/10 px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Bell size={20} className="text-[#FF6B35]" />
-              <h1 className="text-white font-bold text-lg">Notifications</h1>
-              {unreadCount > 0 && (
-                <span className="bg-[#FF6B35] text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                  {unreadCount}
-                </span>
-              )}
-            </div>
-            {unreadCount > 0 && (
-              <button
-                onClick={markAllRead}
-                className="flex items-center gap-1.5 text-[#1E6FFF] text-xs font-semibold"
-              >
-                <Check size={14} /> Mark all read
-              </button>
-            )}
-          </div>
-
-          {/* Filter tabs */}
-          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-            {filters.map((f) => (
-              <button
-                key={f.key}
-                onClick={() => setActiveFilter(f.key)}
-                className={
-                  'flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ' +
-                  (activeFilter === f.key
-                    ? 'bg-[#1E6FFF] text-white shadow-lg shadow-[#1E6FFF]/30'
-                    : 'bg-white/5 border border-white/10 text-[#6B7280] hover:text-white')
-                }
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
+    <div className="min-h-screen bg-[#0A1628] pb-24">
+      {/* Top bar */}
+      <div className="sticky top-0 z-20 bg-[#0A1628] border-b border-white/10 px-4 py-3">
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-white font-bold text-xl">Notifications</h1>
+          <button onClick={markAllRead} className="text-[#1E6FFF] text-xs font-semibold flex items-center gap-1">
+            <Check size={14} /> All read
+          </button>
         </div>
+        <div className="flex gap-1 bg-white/5 rounded-xl p-1">
+          {NOTIF_TABS.map((tab) => (
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+              className={'flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ' +
+                (activeTab === tab.key ? 'bg-[#1E6FFF] text-white shadow-lg' : 'text-[#6B7280]')}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-        {/* List */}
-        {loading ? (
-          <NotificationSkeleton />
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center mt-20 gap-4 px-6">
-            <div className="text-6xl">🔔</div>
-            <h2 className="text-white font-bold text-xl text-center">No notifications yet</h2>
-            <p className="text-[#6B7280] text-sm text-center">
-              When people like, comment or follow you, it shows here.
-            </p>
-          </div>
-        ) : (
-          <div>
-            {Object.entries(grouped).map(([dateLabel, items]) => (
-              <div key={dateLabel}>
-                <div className="px-4 py-2">
-                  <p className="text-[#6B7280] text-xs font-semibold uppercase tracking-wide">
-                    {dateLabel}
-                  </p>
-                </div>
-
-                {items.map((n) => {
-                  const config = NOTIFICATION_ICONS[n.type] || NOTIFICATION_ICONS.system;
-                  const IconComponent = config.icon;
-                  const isFollowRequest = n.type === 'follow_request';
-
-                  return (
-                    <div
-                      key={n.id}
-                      onClick={() => !isFollowRequest && handleNotificationClick(n)}
-                      className={
-                        'flex items-start gap-3 px-4 py-4 border-b border-white/5 transition-colors ' +
-                        (!isFollowRequest ? 'cursor-pointer hover:bg-white/3 ' : '') +
-                        (!n.is_read ? 'bg-[#1E6FFF]/5 border-l-2 border-l-[#1E6FFF]' : '')
-                      }
-                    >
-                      {/* Icon / avatar */}
-                      <div className="relative flex-shrink-0">
-                        {n.from_user ? (
-                          <>
-                            <button onClick={(e) => { e.stopPropagation(); navigate('/profile/' + n.from_user.username); }}>
-                              <Avatar url={n.from_user.avatar_url} name={n.from_user.display_name} size={10} />
-                            </button>
-                            <div className={'absolute -bottom-1 -right-1 w-5 h-5 rounded-full ' + config.bg + ' flex items-center justify-center'}>
-                              <IconComponent size={11} className={config.color} />
-                            </div>
-                          </>
-                        ) : (
-                          <div className={'w-10 h-10 rounded-full ' + config.bg + ' flex items-center justify-center'}>
-                            <IconComponent size={20} className={config.color} />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <p className={'text-sm leading-relaxed ' + (!n.is_read ? 'text-white' : 'text-white/70')}>
-                          {n.from_user && (
-                            <span className="font-bold text-white">
-                              {n.from_user.display_name}{' '}
-                            </span>
-                          )}
-                          {n.message || getDefaultMessage(n.type)}
-                        </p>
-                        <p className="text-[#6B7280] text-xs mt-1">{formatTime(n.created_at)}</p>
-
-                        {/* Follow request actions */}
-                        {isFollowRequest && n.from_user && (
-                          <div className="flex gap-2 mt-2">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleAcceptFollow(n); }}
-                              className="bg-[#1E6FFF] text-white text-xs font-bold px-4 py-1.5 rounded-full hover:opacity-90 transition-opacity"
-                            >
-                              Accept
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleDeclineFollow(n); }}
-                              className="bg-white/10 border border-white/20 text-white/70 text-xs font-bold px-4 py-1.5 rounded-full hover:bg-white/20 transition-colors"
-                            >
-                              Decline
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Unread dot */}
-                      {!n.is_read && (
-                        <div className="w-2 h-2 rounded-full bg-[#1E6FFF] flex-shrink-0 mt-2" />
-                      )}
-                    </div>
-                  );
-                })}
+      {/* Today summary card */}
+      {hasTodayActivity && activeTab === 'all' && (
+        <div className="mx-4 mt-4 bg-gradient-to-r from-[#1E6FFF]/10 to-[#7B2FFF]/10 border border-[#1E6FFF]/20 rounded-2xl p-4">
+          <p className="text-white font-bold text-sm mb-3">📊 Today</p>
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { label: 'Reactions', value: todayStats.reactions, emoji: '❤️' },
+              { label: 'Comments',  value: todayStats.comments,  emoji: '💬' },
+              { label: 'Followers', value: todayStats.followers, emoji: '👥' },
+              { label: 'Messages',  value: todayStats.messages,  emoji: '📨' },
+            ].map((s) => (
+              <div key={s.label} className="text-center bg-white/5 rounded-xl py-2.5">
+                <p className="text-lg mb-0.5">{s.emoji}</p>
+                <p className="text-white font-bold text-base">{s.value}</p>
+                <p className="text-[#6B7280] text-[10px]">{s.label}</p>
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* List */}
+      <div className="px-4 py-3 space-y-1">
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="w-7 h-7 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : notifs.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-5xl mb-3">🔔</p>
+            <p className="text-white font-bold text-lg">No notifications yet</p>
+            <p className="text-[#6B7280] text-sm mt-1">When people interact with you, you'll see it here.</p>
+          </div>
+        ) : (
+          notifs.map((notif) => {
+            const cfg     = TYPE_CONFIG[notif.type] || TYPE_CONFIG.system;
+            const actors  = notif.actors || [];
+            const isFollow = notif.type === 'follow';
+            const isSpecial = ['milestone', 'achievement', 'system'].includes(notif.type);
+            const hasPreview = notif.preview_text || notif.preview_image;
+
+            return (
+              <button
+                key={notif.id + notif.type + (notif.ref_id || '')}
+                onClick={() => handleAction(notif)}
+                className={'w-full flex items-start gap-3 p-3 rounded-2xl transition-all hover:bg-white/5 text-left ' +
+                  (!notif.is_read ? 'bg-[#1E6FFF]/5 border border-[#1E6FFF]/10' : '')}
+              >
+                {/* Avatar or emoji */}
+                <div className="relative flex-shrink-0 mt-0.5">
+                  {isSpecial || actors.length === 0 ? (
+                    <div className="w-11 h-11 rounded-full flex items-center justify-center text-2xl"
+                      style={{ background: cfg.color + '20' }}>
+                      {cfg.emoji}
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <Avatar url={actors[0]?.avatar_url} name={actors[0]?.display_name} size={11} />
+                      {actors.length > 1 && (
+                        <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-[#0A1628] overflow-hidden">
+                          <Avatar url={actors[1]?.avatar_url} name={actors[1]?.display_name} size={6} />
+                        </div>
+                      )}
+                      <div className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full border-2 border-[#0A1628] flex items-center justify-center text-[10px]"
+                        style={{ background: cfg.color + '30' }}>
+                        {cfg.emoji}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  {/* Main text */}
+                  <p className="text-white/90 text-sm leading-snug">
+                    {!isSpecial && actors.length > 0 && (
+                      <span className="font-bold">{actors[0]?.display_name}</span>
+                    )}
+                    {!isSpecial && ' '}
+                    <span>{isSpecial ? buildText(notif) : buildText(notif).replace(actors[0]?.display_name || '', '').trim()}</span>
+                  </p>
+
+                  {/* Preview card */}
+                  {hasPreview && (
+                    <div className="mt-1.5 bg-white/5 border border-white/8 rounded-xl p-2 flex items-center gap-2">
+                      {notif.preview_image && (
+                        <img src={notif.preview_image} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                      )}
+                      {notif.preview_text && (
+                        <p className="text-[#6B7280] text-xs line-clamp-2 flex-1">"{notif.preview_text}"</p>
+                      )}
+                    </div>
+                  )}
+
+                  <p className="text-[#6B7280] text-xs mt-1">{formatTime(notif.created_at)}</p>
+
+                  {/* Follow back button */}
+                  {isFollow && actors[0] && (
+                    <button
+                      onClick={(e) => handleFollowBack(e, actors[0].id, actors[0].username)}
+                      className="mt-2 bg-gradient-to-r from-[#1E6FFF] to-[#7B2FFF] text-white text-xs font-bold px-4 py-1.5 rounded-full"
+                    >
+                      Follow Back
+                    </button>
+                  )}
+                </div>
+
+                {/* Unread dot */}
+                {!notif.is_read && (
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#1E6FFF] shadow-sm shadow-[#1E6FFF]/50 flex-shrink-0 mt-1.5" />
+                )}
+              </button>
+            );
+          })
         )}
       </div>
-    </SwipeBack>
+    </div>
   );
-};
-
-export default Notifications;
+}
