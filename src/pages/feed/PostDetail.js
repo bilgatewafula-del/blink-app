@@ -142,6 +142,19 @@ export default function PostDetail() {
     return () => supabase.removeChannel(ch);
   }, [id]);
 
+  useEffect(() => {
+  const input = commentInputRef.current;
+  if (!input) return;
+  const onFocus = () => window.dispatchEvent(new Event('blink:comments:open'));
+  const onBlur  = () => window.dispatchEvent(new Event('blink:comments:close'));
+  input.addEventListener('focus', onFocus);
+  input.addEventListener('blur',  onBlur);
+  return () => {
+    input.removeEventListener('focus', onFocus);
+    input.removeEventListener('blur',  onBlur);
+  };
+}, []);
+
   // ── Record view + reach ──────────────────────────────────────────
   const recordViewAndReach = async () => {
     if (!user) return;
