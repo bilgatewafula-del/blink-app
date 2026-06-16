@@ -16,14 +16,14 @@ import Avatar from '../../components/Avatar';
 import ReportModal from '../../components/ReportModal';
 
 const REACTIONS = [
-  { emoji: '👍', type: 'like',    label: 'Like'  },
-  { emoji: '❤️', type: 'love',    label: 'Love'  },
-  { emoji: '😂', type: 'haha',    label: 'Haha'  },
-  { emoji: '😮', type: 'wow',     label: 'Wow'   },
-  { emoji: '😢', type: 'sad',     label: 'Sad'   },
-  { emoji: '🔥', type: 'fire',    label: 'Fire'  },
-  { emoji: '👏', type: 'clap',    label: 'Clap'  },
-  { emoji: '💯', type: 'hundred', label: '100'   },
+  { emoji: '👍', type: 'like',    label: 'Like'    },
+  { emoji: '❤️', type: 'love',    label: 'Love'    },
+  { emoji: '😂', type: 'haha',    label: 'Haha'    },
+  { emoji: '😮', type: 'wow',     label: 'Wow'     },
+  { emoji: '😢', type: 'sad',     label: 'Sad'     },
+  { emoji: '🔥', type: 'fire',    label: 'Fire'    },
+  { emoji: '👏', type: 'clap',    label: 'Clap'    },
+  { emoji: '💯', type: 'hundred', label: '100'     },
 ];
 
 const COMMENT_REACTIONS = [
@@ -36,14 +36,12 @@ const COMMENT_REACTIONS = [
 ];
 
 const COMMENT_SORT = [
-  { key: 'relevant', label: 'Most Relevant' },
-  { key: 'newest',   label: 'Newest'        },
-  { key: 'oldest',   label: 'Oldest'        },
-  { key: 'liked',    label: 'Most Liked'    },
+  { key: 'relevant', label: 'Most Relevant'     },
+  { key: 'newest',   label: 'Newest'            },
+  { key: 'oldest',   label: 'Oldest'            },
+  { key: 'liked',    label: 'Most Liked'        },
   { key: 'creator',  label: "Creator's Replies" },
 ];
-
-const REPORT_REASONS = ['Spam', 'Harassment', 'Fake Account', 'Violence', 'Misinformation', 'Sexual Content', 'Hate Speech', 'Other'];
 
 const SAVE_COLLECTIONS = ['Saved Posts', 'Business', 'Technology', 'News', 'Favorites', 'Entertainment'];
 
@@ -59,11 +57,12 @@ const flagMap = {
   GB:'🇬🇧',US:'🇺🇸',CA:'🇨🇦',
 };
 
-const getBadge = (user) => {
-  if (user?.badge_type === 'verified') return <span className="bg-[#1E6FFF] text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold">✓ Verified</span>;
-  if (user?.badge_type === 'creator')  return <span className="bg-[#FFD700] text-black text-[8px] px-1.5 py-0.5 rounded-full font-bold">⭐ Creator</span>;
-  if (user?.badge_type === 'business') return <span className="bg-[#7B2FFF] text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold">🏢 Business</span>;
-  if (user?.is_verified) return <span className="bg-[#1E6FFF] text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold">✓</span>;
+const getBadge = (u) => {
+  if (!u) return null;
+  if (u.badge_type === 'verified') return <span className="bg-[#1E6FFF] text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold">✓ Verified</span>;
+  if (u.badge_type === 'creator')  return <span className="bg-[#FFD700] text-black text-[8px] px-1.5 py-0.5 rounded-full font-bold">⭐ Creator</span>;
+  if (u.badge_type === 'business') return <span className="bg-[#7B2FFF] text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold">🏢 Business</span>;
+  if (u.is_verified)               return <span className="bg-[#1E6FFF] text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold">✓</span>;
   return null;
 };
 
@@ -80,17 +79,18 @@ export default function PostDetail() {
   const commentInputRef = useRef();
   const longPressTimer  = useRef();
 
-  const [post, setPost]             = useState(null);
-  const [loading, setLoading]       = useState(true);
-  const [comments, setComments]     = useState([]);
+  const [post, setPost]               = useState(null);
+  const [loading, setLoading]         = useState(true);
+  const [comments, setComments]       = useState([]);
   const [commentText, setCommentText] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [replyTo, setReplyTo]       = useState(null);
+  const [submitting, setSubmitting]   = useState(false);
+  const [replyTo, setReplyTo]         = useState(null);
   const [editingComment, setEditingComment] = useState(null);
   const [commentSort, setCommentSort] = useState('relevant');
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [localCommentCount, setLocalCommentCount] = useState(0);
 
-  // Post reactions
+  // Reactions
   const [userReaction, setUserReaction]     = useState(null);
   const [reactionCounts, setReactionCounts] = useState({});
   const [totalReactions, setTotalReactions] = useState(0);
@@ -101,8 +101,8 @@ export default function PostDetail() {
   const [topLikers, setTopLikers]           = useState([]);
 
   // Comment reactions
-  const [commentReactions, setCommentReactions]   = useState({});
-  const [showCommentReact, setShowCommentReact]   = useState(null);
+  const [commentReactions, setCommentReactions]     = useState({});
+  const [showCommentReact, setShowCommentReact]     = useState(null);
   const [userCommentReactions, setUserCommentReactions] = useState({});
 
   // Post state
@@ -117,52 +117,55 @@ export default function PostDetail() {
   const [imageIdx, setImageIdx]     = useState(0);
   const [showEmoji, setShowEmoji]   = useState(false);
   const [commentLikes, setCommentLikes] = useState(new Set());
-
-  // Media analytics
   const [mediaStats, setMediaStats] = useState({ opens: 0, zooms: 0, downloads: 0 });
-
-  // Mention suggestions
   const [mentionSuggestions, setMentionSuggestions] = useState([]);
-  const [showMentions, setShowMentions]             = useState(false);
-
-  // Analytics
+  const [showMentions, setShowMentions] = useState(false);
   const [engagementRate, setEngagementRate] = useState(0);
+
+  // ── Fire bottom nav hide events ──────────────────────────────────
+  useEffect(() => {
+    const input = commentInputRef.current;
+    if (!input) return;
+    const onFocus = () => window.dispatchEvent(new Event('blink:comments:open'));
+    const onBlur  = () => window.dispatchEvent(new Event('blink:comments:close'));
+    input.addEventListener('focus', onFocus);
+    input.addEventListener('blur',  onBlur);
+    return () => {
+      input.removeEventListener('focus', onFocus);
+      input.removeEventListener('blur',  onBlur);
+      // Ensure nav reappears when leaving page
+      window.dispatchEvent(new Event('blink:comments:close'));
+    };
+  }, []);
 
   useEffect(() => {
     fetchPost();
     fetchComments();
     checkSaved();
     recordViewAndReach();
+    // Hide nav on mount (post detail = reading mode)
+    return () => {
+      window.dispatchEvent(new Event('blink:comments:close'));
+    };
   }, [id]);
 
   useEffect(() => {
     const ch = supabase.channel('comments:' + id)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments', filter: 'post_id=eq.' + id }, () => fetchComments())
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'comments',
+        filter: 'post_id=eq.' + id,
+      }, () => {
+        fetchComments();
+        fetchCommentCount();
+      })
       .subscribe();
     return () => supabase.removeChannel(ch);
   }, [id]);
 
-  useEffect(() => {
-  const input = commentInputRef.current;
-  if (!input) return;
-  const onFocus = () => window.dispatchEvent(new Event('blink:comments:open'));
-  const onBlur  = () => window.dispatchEvent(new Event('blink:comments:close'));
-  input.addEventListener('focus', onFocus);
-  input.addEventListener('blur',  onBlur);
-  return () => {
-    input.removeEventListener('focus', onFocus);
-    input.removeEventListener('blur',  onBlur);
-  };
-}, []);
-
-  // ── Record view + reach ──────────────────────────────────────────
   const recordViewAndReach = async () => {
     if (!user) return;
-    // Views (can repeat)
     const { data: pv } = await supabase.from('posts').select('views_count').eq('id', id).maybeSingle();
     if (pv) await supabase.from('posts').update({ views_count: (pv.views_count || 0) + 1 }).eq('id', id);
-
-    // Reach (unique)
     const { error } = await supabase.from('post_reach').upsert(
       { post_id: id, viewer_id: user.id },
       { onConflict: 'post_id,viewer_id' }
@@ -173,7 +176,6 @@ export default function PostDetail() {
     }
   };
 
-  // ── Track media event ────────────────────────────────────────────
   const trackMedia = async (eventType, mediaUrl = null) => {
     await supabase.from('media_analytics').insert({
       post_id: id, user_id: user?.id, event_type: eventType, media_url: mediaUrl,
@@ -194,14 +196,12 @@ export default function PostDetail() {
       .eq('id', id).maybeSingle();
     setPost(data);
     setLoading(false);
-
     if (data) {
-      // Load reactions
+      setLocalCommentCount(data.comments_count || 0);
       const { data: likes } = await supabase
         .from('likes')
         .select('reaction_type, user_id, users:user_id(id,display_name,avatar_url,username,badge_type,is_verified)')
         .eq('post_id', id);
-
       if (likes) {
         const counts = likes.reduce((acc, l) => {
           acc[l.reaction_type] = (acc[l.reaction_type] || 0) + 1;
@@ -214,13 +214,9 @@ export default function PostDetail() {
         setTopLikers(likes.slice(0, 2).map((l) => l.users?.display_name).filter(Boolean));
         setReactionUsers(likes.map((l) => l.users).filter(Boolean));
       }
-
-      // Engagement rate
       const reach = data.reach_count || 1;
       const eng = ((data.likes_count || 0) + (data.comments_count || 0) + (data.shares_count || 0) + (data.reposts_count || 0)) / reach * 100;
       setEngagementRate(Math.min(eng, 100).toFixed(1));
-
-      // Media analytics summary
       if (data.media_urls?.length > 0) {
         const { data: ma } = await supabase.from('media_analytics').select('event_type').eq('post_id', id);
         if (ma) {
@@ -234,6 +230,16 @@ export default function PostDetail() {
     }
   };
 
+  // ── Fetch comment count from DB (source of truth) ────────────────
+  const fetchCommentCount = async () => {
+    const { count } = await supabase
+      .from('comments')
+      .select('id', { count: 'exact', head: true })
+      .eq('post_id', id)
+      .is('parent_id', null);
+    if (count !== null) setLocalCommentCount(count);
+  };
+
   // ── Fetch comments ───────────────────────────────────────────────
   const fetchComments = async () => {
     let q = supabase
@@ -242,20 +248,25 @@ export default function PostDetail() {
       .eq('post_id', id)
       .is('parent_id', null);
 
-    if (commentSort === 'newest')  q = q.order('created_at', { ascending: false });
-    else if (commentSort === 'oldest') q = q.order('created_at', { ascending: true });
-    else if (commentSort === 'liked')  q = q.order('likes_count', { ascending: false });
-    else if (commentSort === 'creator') q = q.eq('user_id', post?.user_id || '').order('created_at', { ascending: false });
+    if (commentSort === 'newest')   q = q.order('created_at', { ascending: false });
+    else if (commentSort === 'oldest')  q = q.order('created_at', { ascending: true });
+    else if (commentSort === 'liked')   q = q.order('likes_count', { ascending: false });
+    else if (commentSort === 'creator') q = q.order('created_at', { ascending: false });
     else q = q.order('is_pinned', { ascending: false }).order('created_at', { ascending: false });
 
     const { data } = await q.limit(50);
-    setComments(data || []);
+    const filtered = commentSort === 'creator'
+      ? (data || []).filter((c) => c.user_id === post?.user_id || post?.user_id === undefined)
+      : (data || []);
+    setComments(filtered);
+    setLocalCommentCount(filtered.length);
 
-    // Comment likes
+    // Real count from DB
+    fetchCommentCount();
+
     const { data: liked } = await supabase.from('comment_likes').select('comment_id').eq('user_id', user.id);
     if (liked) setCommentLikes(new Set(liked.map((l) => l.comment_id)));
 
-    // Comment reactions
     if (data?.length > 0) {
       const ids = data.map((c) => c.id);
       const { data: cr } = await supabase.from('comment_reactions').select('*').in('comment_id', ids);
@@ -266,17 +277,17 @@ export default function PostDetail() {
           return acc;
         }, {});
         setCommentReactions(byComment);
-        const myReactions = cr.filter((r) => r.user_id === user.id).reduce((acc, r) => {
-          acc[r.comment_id] = r.reaction_type;
-          return acc;
+        const myR = cr.filter((r) => r.user_id === user.id).reduce((acc, r) => {
+          acc[r.comment_id] = r.reaction_type; return acc;
         }, {});
-        setUserCommentReactions(myReactions);
+        setUserCommentReactions(myR);
       }
     }
   };
 
   const checkSaved = async () => {
-    const { data } = await supabase.from('saved_posts').select('id,collection').eq('post_id', id).eq('user_id', user.id).maybeSingle();
+    const { data } = await supabase.from('saved_posts').select('id,collection')
+      .eq('post_id', id).eq('user_id', user.id).maybeSingle();
     if (data) { setSaved(true); setSaveCollection(data.collection || 'Saved Posts'); }
   };
 
@@ -363,10 +374,13 @@ export default function PostDetail() {
     }).select('*, users(id,username,display_name,avatar_url,is_verified,badge_type,country)').single();
 
     if (data) {
-      if (!replyTo) setComments((prev) => [data, ...prev]);
-      await supabase.from('posts').update({ comments_count: (post?.comments_count || 0) + 1 }).eq('id', id);
+      if (!replyTo) {
+        setComments((prev) => [data, ...prev]);
+        setLocalCommentCount((c) => c + 1);
+      }
+      // Sync count from DB
+      fetchCommentCount();
 
-      // Notify post owner
       if (post?.users?.id !== user.id) {
         await supabase.from('notifications').insert({
           user_id: post?.users?.id, from_user_id: user.id, type: 'comment',
@@ -377,7 +391,6 @@ export default function PostDetail() {
         });
       }
 
-      // Mention notifications
       const mentions = body.match(/@(\w+)/g);
       if (mentions) {
         for (const mention of mentions) {
@@ -435,7 +448,8 @@ export default function PostDetail() {
   const handleDeleteComment = async (commentId) => {
     await supabase.from('comments').delete().eq('id', commentId);
     setComments((prev) => prev.filter((c) => c.id !== commentId));
-    await supabase.from('posts').update({ comments_count: Math.max(0, (post?.comments_count || 1) - 1) }).eq('id', id);
+    setLocalCommentCount((c) => Math.max(0, c - 1));
+    fetchCommentCount();
   };
 
   const handlePinComment = async (commentId, isPinned) => {
@@ -455,11 +469,9 @@ export default function PostDetail() {
         { post_id: id, user_id: user.id, collection },
         { onConflict: 'post_id,user_id' }
       );
-      // Increment saves count
       await supabase.from('posts').update({ saves_count: (post?.saves_count || 0) + 1 }).eq('id', id);
-      // Save milestone notification
       const newSaves = (post?.saves_count || 0) + 1;
-      if ([10, 50, 100, 500, 1000].includes(newSaves) && post?.user_id !== user.id) {
+      if ([10,50,100,500,1000].includes(newSaves) && post?.user_id !== user.id) {
         await supabase.from('notifications').insert({
           user_id: post?.user_id, from_user_id: user.id, type: 'milestone',
           message: '🔖 Your post was saved ' + newSaves + ' times!',
@@ -522,7 +534,6 @@ export default function PostDetail() {
   };
 
   const getReactionEmoji = (type) => REACTIONS.find((r) => r.type === type)?.emoji || '👍';
-
   const topReactionTypes = Object.entries(reactionCounts)
     .sort((a, b) => b[1] - a[1]).slice(0, 3).map(([type]) => type);
 
@@ -554,12 +565,22 @@ export default function PostDetail() {
   const isTrending = post.is_trending || (post.views_count || 0) > 1000;
 
   return (
-    <div className="min-h-screen bg-[#0A1628] flex flex-col pb-6"
-      onClick={() => { setShowPostMenu(false); setShowReactionPicker(false); setShowSortMenu(false); setShowCommentReact(null); }}>
-
+    <div
+      className="bg-[#0A1628] flex flex-col"
+      style={{ minHeight: '100dvh', paddingBottom: 0 }}
+      onClick={() => {
+        setShowPostMenu(false);
+        setShowReactionPicker(false);
+        setShowSortMenu(false);
+        setShowCommentReact(null);
+        setShowSaveMenu(false);
+      }}
+    >
       {/* ── TOP BAR ── */}
-      <div className="sticky top-0 z-30 bg-[#0A1628]/95 backdrop-blur-md border-b border-white/5 px-4 py-3 flex items-center justify-between">
-        <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white"><ArrowLeft size={22} /></button>
+      <div className="sticky top-0 z-30 bg-[#0A1628]/95 backdrop-blur-md border-b border-white/5 px-4 py-3 flex items-center justify-between flex-shrink-0">
+        <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white">
+          <ArrowLeft size={22} />
+        </button>
         <div className="flex items-center gap-2">
           {isTrending && <span className="bg-[#FF6B35]/20 text-[#FF6B35] text-xs font-bold px-2.5 py-1 rounded-full">🔥 Trending</span>}
           {post.is_pinned && <span className="text-[#6B7280] text-xs flex items-center gap-0.5"><Pin size={11} /> Pinned</span>}
@@ -581,7 +602,7 @@ export default function PostDetail() {
                   </button>
                   {post.edited && (
                     <button onClick={() => { setShowEditHistory(true); setShowPostMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/5 text-sm border-b border-white/5">
-                      <History size={14} className="text-[#6B7280]" /> View Edit History
+                      <History size={14} className="text-[#6B7280]" /> Edit History
                     </button>
                   )}
                   <button onClick={handleDeletePost} className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 text-sm">
@@ -603,8 +624,9 @@ export default function PostDetail() {
         </div>
       </div>
 
+      {/* ── SCROLLABLE CONTENT ── */}
       <div className="flex-1 overflow-y-auto">
-        {/* ── AUTHOR ── */}
+        {/* Author */}
         <div className="flex items-center gap-3 px-4 py-4">
           <button onClick={() => navigate('/profile/' + author?.username)}>
             <Avatar url={author?.avatar_url} name={author?.display_name} size={12} />
@@ -633,7 +655,7 @@ export default function PostDetail() {
           )}
         </div>
 
-        {/* ── CONTENT ── */}
+        {/* Content */}
         {post.caption && (
           <div className={!images.length && post.bg_color ? 'mx-4 mb-3 rounded-2xl py-10 px-6 text-center' : 'px-4 mb-3'}
             style={{ background: !images.length && post.bg_color ? post.bg_color : 'transparent' }}>
@@ -652,50 +674,29 @@ export default function PostDetail() {
           </div>
         )}
 
-        {/* ── IMAGES with analytics ── */}
+        {/* Images */}
         {images.length > 0 && (
           <div className="relative mb-3">
-            <div className="aspect-square overflow-hidden bg-[#111827] cursor-pointer"
-              onClick={() => trackMedia('open', images[imageIdx])}>
-              <img
-                src={images[imageIdx]} alt="post"
-                className="w-full h-full object-cover"
-                onClick={() => trackMedia('open', images[imageIdx])}
-              />
+            <div className="aspect-square overflow-hidden bg-[#111827] cursor-pointer" onClick={() => trackMedia('open', images[imageIdx])}>
+              <img src={images[imageIdx]} alt="post" className="w-full h-full object-cover" />
             </div>
             <div className="absolute top-2 right-2 flex gap-1">
-              <button onClick={() => trackMedia('zoom', images[imageIdx])} className="bg-black/50 text-white p-1.5 rounded-full hover:bg-black/70">
-                <ZoomIn size={14} />
-              </button>
-              {isOwner && (
-                <button onClick={() => trackMedia('download', images[imageIdx])} className="bg-black/50 text-white p-1.5 rounded-full hover:bg-black/70">
-                  <Download size={14} />
-                </button>
-              )}
+              <button onClick={() => trackMedia('zoom', images[imageIdx])} className="bg-black/50 text-white p-1.5 rounded-full"><ZoomIn size={14} /></button>
+              {isOwner && <button onClick={() => trackMedia('download', images[imageIdx])} className="bg-black/50 text-white p-1.5 rounded-full"><Download size={14} /></button>}
             </div>
             {images.length > 1 && (
               <>
-                {imageIdx > 0 && (
-                  <button onClick={() => { setImageIdx((i) => i - 1); trackMedia('swipe'); }} className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/60 rounded-full p-2">
-                    <ChevronLeft size={18} className="text-white" />
-                  </button>
-                )}
-                {imageIdx < images.length - 1 && (
-                  <button onClick={() => { setImageIdx((i) => i + 1); trackMedia('swipe'); }} className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/60 rounded-full p-2">
-                    <ChevronRight size={18} className="text-white" />
-                  </button>
-                )}
+                {imageIdx > 0 && <button onClick={() => setImageIdx((i) => i - 1)} className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/60 rounded-full p-2"><ChevronLeft size={18} className="text-white" /></button>}
+                {imageIdx < images.length - 1 && <button onClick={() => setImageIdx((i) => i + 1)} className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/60 rounded-full p-2"><ChevronRight size={18} className="text-white" /></button>}
                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/40 px-2 py-1 rounded-full">
-                  {images.map((_, i) => (
-                    <button key={i} onClick={() => setImageIdx(i)} className={'rounded-full transition-all ' + (i === imageIdx ? 'bg-white w-4 h-1.5' : 'bg-white/40 w-1.5 h-1.5')} />
-                  ))}
+                  {images.map((_, i) => <button key={i} onClick={() => setImageIdx(i)} className={'rounded-full transition-all ' + (i === imageIdx ? 'bg-white w-4 h-1.5' : 'bg-white/40 w-1.5 h-1.5')} />)}
                 </div>
               </>
             )}
           </div>
         )}
 
-        {/* ── ENGAGEMENT STATISTICS ── */}
+        {/* Engagement stats */}
         <div className="px-4 py-3 border-y border-white/5">
           <div className="flex items-center justify-between mb-2">
             <button onClick={() => { setShowReactionModal(true); setReactionModalTab('all'); }} className="flex items-center gap-2">
@@ -709,12 +710,10 @@ export default function PostDetail() {
               {totalReactions > 0 && <span className="text-white/70 text-sm">{likeText()}</span>}
             </button>
             <div className="flex items-center gap-3">
-              {(post.comments_count || 0) > 0 && <span className="text-[#6B7280] text-xs">{formatNumber(post.comments_count)} comments</span>}
+              {localCommentCount > 0 && <span className="text-[#6B7280] text-xs">{formatNumber(localCommentCount)} comments</span>}
               {(post.reposts_count || 0) > 0 && <span className="text-[#6B7280] text-xs">{formatNumber(post.reposts_count)} reposts</span>}
             </div>
           </div>
-
-          {/* Stats grid */}
           <div className="grid grid-cols-2 gap-2 mb-2">
             <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
               <Eye size={14} className="text-[#1E6FFF]" />
@@ -731,17 +730,14 @@ export default function PostDetail() {
               </div>
             </div>
           </div>
-
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1">
               <TrendingUp size={12} className="text-[#2ECC71]" />
               <span className="text-[#2ECC71] text-xs font-bold">{engagementRate}% engagement</span>
             </div>
-            {(post.shares_count || 0) > 0 && <span className="text-[#6B7280] text-xs">📤 {formatNumber(post.shares_count)} shares</span>}
-            {(post.saves_count || 0) > 0 && <span className="text-[#6B7280] text-xs">🔖 {formatNumber(post.saves_count)} saves</span>}
+            {(post.shares_count || 0) > 0 && <span className="text-[#6B7280] text-xs">📤 {formatNumber(post.shares_count)}</span>}
+            {(post.saves_count || 0) > 0 && <span className="text-[#6B7280] text-xs">🔖 {formatNumber(post.saves_count)}</span>}
           </div>
-
-          {/* Media analytics for owner */}
           {isOwner && images.length > 0 && (
             <div className="flex items-center gap-3 mt-2 pt-2 border-t border-white/5">
               <span className="text-[#6B7280] text-xs">📷 {mediaStats.opens} opens</span>
@@ -751,7 +747,7 @@ export default function PostDetail() {
           )}
         </div>
 
-        {/* ── ACTION BAR ── */}
+        {/* Action bar */}
         <div className="flex items-center border-b border-white/5">
           {/* React */}
           <div className="flex-1 relative">
@@ -778,48 +774,47 @@ export default function PostDetail() {
             </button>
           </div>
           <div className="w-px h-8 bg-white/10" />
-          <button onClick={() => commentInputRef.current?.focus()} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-[#6B7280] hover:text-[#1E6FFF] transition-colors">
+          <button
+            onClick={() => { commentInputRef.current?.focus(); window.dispatchEvent(new Event('blink:comments:open')); }}
+            className="flex-1 flex items-center justify-center gap-1.5 py-3 text-[#6B7280] hover:text-[#1E6FFF] transition-colors"
+          >
             <MessageCircle size={17} />
             <span className="text-xs font-semibold">Comment</span>
           </button>
           <div className="w-px h-8 bg-white/10" />
           <button onClick={handleRepost} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-[#6B7280] hover:text-[#2ECC71] transition-colors">
-            <Repeat2 size={17} />
-            <span className="text-xs font-semibold">Repost</span>
+            <Repeat2 size={17} /><span className="text-xs font-semibold">Repost</span>
           </button>
           <div className="w-px h-8 bg-white/10" />
           <button onClick={() => setShowShareSheet(true)} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-[#6B7280] hover:text-[#00D4C8] transition-colors">
-            <Share2 size={17} />
-            <span className="text-xs font-semibold">Share</span>
+            <Share2 size={17} /><span className="text-xs font-semibold">Share</span>
           </button>
           <div className="w-px h-8 bg-white/10" />
           <div className="relative flex-1">
             <button onClick={() => setShowSaveMenu(!showSaveMenu)}
               className={'flex items-center justify-center gap-1.5 py-3 w-full transition-colors ' + (saved ? 'text-[#FFD700]' : 'text-[#6B7280] hover:text-[#FFD700]')}>
-              <Bookmark size={17} fill={saved ? 'currentColor' : 'none'} />
-              <span className="text-xs font-semibold">Save</span>
+              <Bookmark size={17} fill={saved ? 'currentColor' : 'none'} /><span className="text-xs font-semibold">Save</span>
             </button>
             {showSaveMenu && !saved && (
               <div className="absolute bottom-12 right-0 bg-[#111827] border border-white/10 rounded-2xl overflow-hidden z-30 w-44 shadow-2xl" onClick={(e) => e.stopPropagation()}>
                 <p className="text-[#6B7280] text-xs font-bold px-4 py-2 border-b border-white/5">Save to collection</p>
                 {SAVE_COLLECTIONS.map((col) => (
-                  <button key={col} onClick={() => handleSave(col)} className="w-full text-left px-4 py-3 text-white/80 text-sm hover:bg-white/5 border-b border-white/5 last:border-0">
-                    {col}
-                  </button>
+                  <button key={col} onClick={() => handleSave(col)} className="w-full text-left px-4 py-3 text-white/80 text-sm hover:bg-white/5 border-b border-white/5 last:border-0">{col}</button>
                 ))}
               </div>
             )}
           </div>
         </div>
 
-        {/* ── COMMENTS ── */}
+        {/* Comments section */}
         <div className="px-4 pt-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-white font-bold text-base">Comments ({formatNumber(post.comments_count || 0)})</h3>
+            <h3 className="text-white font-bold text-base">
+              Comments ({formatNumber(localCommentCount)})
+            </h3>
             <div className="relative">
               <button onClick={(e) => { e.stopPropagation(); setShowSortMenu(!showSortMenu); }} className="flex items-center gap-1 text-[#6B7280] text-xs hover:text-white">
-                {COMMENT_SORT.find((s) => s.key === commentSort)?.label}
-                <ChevronDown size={13} />
+                {COMMENT_SORT.find((s) => s.key === commentSort)?.label}<ChevronDown size={13} />
               </button>
               {showSortMenu && (
                 <div className="absolute right-0 top-6 bg-[#111827] border border-white/10 rounded-xl overflow-hidden z-30 w-44 shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -840,14 +835,14 @@ export default function PostDetail() {
               <p className="text-white/60 text-sm">No comments yet. Be the first!</p>
             </div>
           ) : (
-            <div className="mb-6 space-y-0">
+            <div className="mb-4 space-y-0">
               {comments.map((c) => {
-                const isLikedComment = commentLikes.has(c.id);
-                const isMineComment  = c.user_id === user?.id;
-                const isAuthor       = c.user_id === post.user_id;
-                const cReactions     = commentReactions[c.id] || {};
-                const myCommentReact = userCommentReactions[c.id];
-                const topCReactions  = Object.entries(cReactions).filter(([,v]) => v > 0).sort((a,b) => b[1]-a[1]).slice(0,3);
+                const isLikedComment  = commentLikes.has(c.id);
+                const isMineComment   = c.user_id === user?.id;
+                const isAuthor        = c.user_id === post.user_id;
+                const cReactions      = commentReactions[c.id] || {};
+                const myCommentReact  = userCommentReactions[c.id];
+                const topCReactions   = Object.entries(cReactions).filter(([,v]) => v > 0).sort((a,b) => b[1]-a[1]).slice(0,3);
 
                 return (
                   <div key={c.id} className="group py-3 border-b border-white/5 last:border-0">
@@ -864,14 +859,10 @@ export default function PostDetail() {
                         )}
                         <div className="bg-white/5 rounded-2xl rounded-tl-none px-3 py-2.5 inline-block max-w-full">
                           <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                            <button onClick={() => navigate('/profile/' + c.users?.username)} className="text-white font-bold text-sm hover:underline">
-                              {c.users?.display_name}
-                            </button>
+                            <button onClick={() => navigate('/profile/' + c.users?.username)} className="text-white font-bold text-sm hover:underline">{c.users?.display_name}</button>
                             {getBadge(c.users)}
                             {isAuthor && (
-                              <span className="bg-gradient-to-r from-[#1E6FFF] to-[#7B2FFF] text-white text-[9px] px-2 py-0.5 rounded-full font-bold">
-                                👑 Author
-                              </span>
+                              <span className="bg-gradient-to-r from-[#1E6FFF] to-[#7B2FFF] text-white text-[9px] px-2 py-0.5 rounded-full font-bold">👑 Author</span>
                             )}
                           </div>
                           <p className="text-white/85 text-sm leading-relaxed break-words">
@@ -884,14 +875,14 @@ export default function PostDetail() {
                           {c.edited && <p className="text-[#6B7280] text-[10px] mt-1">edited</p>}
                         </div>
 
-                        {/* Comment reactions display */}
+                        {/* Comment reactions */}
                         {topCReactions.length > 0 && (
                           <div className="flex gap-1 mt-1 flex-wrap">
                             {topCReactions.map(([type, count]) => (
                               <button key={type} onClick={() => handleCommentReaction(c.id, type)}
-                                className={'flex items-center gap-1 text-xs rounded-full px-2 py-0.5 border transition-colors ' + (myCommentReact === type ? 'bg-[#1E6FFF]/20 border-[#1E6FFF]/40 text-[#1E6FFF]' : 'bg-white/5 border-white/10 text-white/70')}>
-                                <span>{COMMENT_REACTIONS.find((r) => r.type === type)?.emoji}</span>
-                                <span>{count}</span>
+                                className={'flex items-center gap-1 text-xs rounded-full px-2 py-0.5 border transition-colors ' +
+                                  (myCommentReact === type ? 'bg-[#1E6FFF]/20 border-[#1E6FFF]/40 text-[#1E6FFF]' : 'bg-white/5 border-white/10 text-white/70')}>
+                                {COMMENT_REACTIONS.find((r) => r.type === type)?.emoji} {count}
                               </button>
                             ))}
                           </div>
@@ -904,12 +895,8 @@ export default function PostDetail() {
                             className={'text-xs font-bold transition-colors ' + (isLikedComment ? 'text-red-400' : 'text-[#6B7280] hover:text-red-400')}>
                             {isLikedComment ? '❤️' : '🤍'} {c.likes_count > 0 ? formatNumber(c.likes_count) : 'Like'}
                           </button>
-                          {/* Comment react button */}
                           <div className="relative">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setShowCommentReact(showCommentReact === c.id ? null : c.id); }}
-                              className="text-[#6B7280] text-xs hover:text-[#FFD700]"
-                            >
+                            <button onClick={(e) => { e.stopPropagation(); setShowCommentReact(showCommentReact === c.id ? null : c.id); }} className="text-[#6B7280] text-xs hover:text-[#FFD700]">
                               React
                             </button>
                             {showCommentReact === c.id && (
@@ -923,7 +910,7 @@ export default function PostDetail() {
                               </div>
                             )}
                           </div>
-                          <button onClick={() => { setReplyTo(c); setCommentText('@' + c.users?.username + ' '); commentInputRef.current?.focus(); }}
+                          <button onClick={() => { setReplyTo(c); setCommentText('@' + c.users?.username + ' '); commentInputRef.current?.focus(); window.dispatchEvent(new Event('blink:comments:open')); }}
                             className="text-[#6B7280] text-xs font-bold hover:text-[#1E6FFF]">
                             Reply
                           </button>
@@ -938,9 +925,7 @@ export default function PostDetail() {
                               <button onClick={() => handleDeleteComment(c.id)} className="text-[#6B7280] text-xs hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">Delete</button>
                             </>
                           ) : (
-                            <button onClick={() => { setReportTarget({ type: 'comment', id: c.id }); setShowReportModal(true); }} className="text-[#6B7280] text-xs hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
-                              Report
-                            </button>
+                            <button onClick={() => { setReportTarget({ type: 'comment', id: c.id }); setShowReportModal(true); }} className="text-[#6B7280] text-xs hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">Report</button>
                           )}
                         </div>
                       </div>
@@ -986,29 +971,32 @@ export default function PostDetail() {
             <p className="text-[#1E6FFF] text-xs font-bold">
               {editingComment ? 'Editing comment' : 'Replying to @' + replyTo?.users?.username}
             </p>
-            <p className="text-[#6B7280] text-xs truncate">
-              {editingComment ? editingComment.body : replyTo?.body}
-            </p>
+            <p className="text-[#6B7280] text-xs truncate">{editingComment ? editingComment.body : replyTo?.body}</p>
           </div>
           <button onClick={() => { setReplyTo(null); setEditingComment(null); setCommentText(''); }} className="text-[#6B7280] hover:text-white"><X size={16} /></button>
         </div>
       )}
 
-      {/* ── COMMENT INPUT ── */}
+      {/* ── COMMENT INPUT — always visible, inline styles to avoid conflicts ── */}
       <div style={{
-        flexShrink: 0, background: '#0d1f3c',
-        borderTop: '1px solid rgba(255,255,255,0.1)',
+        flexShrink: 0,
+        background: '#0d1f3c',
+        borderTop: '1px solid rgba(255,255,255,0.12)',
         padding: '10px 10px',
-        paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
+        paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
         boxSizing: 'border-box',
+        width: '100%',
       }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', width: '100%' }}>
-          <Avatar url={profile?.avatar_url} name={profile?.display_name} size={9} />
+          <div style={{ flexShrink: 0 }}>
+            <Avatar url={profile?.avatar_url} name={profile?.display_name} size={9} />
+          </div>
           <div style={{
             flex: '1 1 auto', minWidth: 0,
             background: 'rgba(255,255,255,0.07)',
             border: '1px solid rgba(255,255,255,0.15)',
-            borderRadius: '20px', padding: '8px 12px',
+            borderRadius: '20px',
+            padding: '8px 12px',
             display: 'flex', alignItems: 'center', gap: '6px',
             boxSizing: 'border-box', overflow: 'hidden',
           }}>
@@ -1018,20 +1006,29 @@ export default function PostDetail() {
               value={commentText}
               onChange={(e) => handleCommentInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleComment()}
+              onFocus={() => window.dispatchEvent(new Event('blink:comments:open'))}
+              onBlur={() => {
+                // Small delay so tapping send button doesn't re-show nav first
+                setTimeout(() => window.dispatchEvent(new Event('blink:comments:close')), 200);
+              }}
               placeholder={editingComment ? 'Edit comment...' : replyTo ? 'Reply to @' + replyTo.users?.username + '...' : 'Write a comment...'}
               style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', color: 'white', fontSize: '14px', fontFamily: 'inherit' }}
             />
             <button onMouseDown={(e) => { e.preventDefault(); setShowEmoji(!showEmoji); }}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '17px', color: showEmoji ? '#FFD700' : 'rgba(255,255,255,0.4)', flexShrink: 0 }}>
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '17px', color: showEmoji ? '#FFD700' : 'rgba(255,255,255,0.4)', flexShrink: 0, padding: 0 }}>
               😊
             </button>
           </div>
-          <button onClick={handleComment} disabled={submitting || !commentText.trim()}
+          <button
+            onClick={handleComment}
+            disabled={submitting || !commentText.trim()}
             style={{
               width: '38px', height: '38px', minWidth: '38px', borderRadius: '50%', flexShrink: 0,
-              background: (submitting || !commentText.trim()) ? 'rgba(30,111,255,0.4)' : 'linear-gradient(135deg, #1E6FFF, #7B2FFF)',
+              background: (submitting || !commentText.trim()) ? 'rgba(30,111,255,0.4)' : 'linear-gradient(135deg,#1E6FFF,#7B2FFF)',
               border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
+              boxShadow: '0 4px 12px rgba(30,111,255,0.3)',
+            }}
+          >
             <Send size={15} style={{ color: 'white', marginLeft: '1px' }} />
           </button>
         </div>
@@ -1045,26 +1042,22 @@ export default function PostDetail() {
             <h3 className="text-white font-bold text-lg mb-4">Share Post</h3>
             <div className="grid grid-cols-4 gap-4 mb-4">
               {[
-                { icon: '💬', label: 'Chat',     action: 'chat'     },
-                { icon: '🔗', label: 'Copy Link', action: 'copy'    },
-                { icon: '📱', label: 'WhatsApp', action: 'whatsapp' },
-                { icon: '📘', label: 'Facebook', action: 'facebook' },
-                { icon: '🐦', label: 'X / Twitter', action: 'twitter' },
-                { icon: '✈️', label: 'Telegram', action: 'telegram' },
-                { icon: '📧', label: 'Email',    action: 'email'    },
-                { icon: '↗️', label: 'More',     action: 'native'   },
+                { icon: '💬', label: 'Chat',       action: 'chat'     },
+                { icon: '🔗', label: 'Copy Link',  action: 'copy'     },
+                { icon: '📱', label: 'WhatsApp',   action: 'whatsapp' },
+                { icon: '📘', label: 'Facebook',   action: 'facebook' },
+                { icon: '🐦', label: 'X / Twitter',action: 'twitter'  },
+                { icon: '✈️', label: 'Telegram',   action: 'telegram' },
+                { icon: '📧', label: 'Email',      action: 'email'    },
+                { icon: '↗️', label: 'More',       action: 'native'   },
               ].map((item) => (
                 <button key={item.label} onClick={() => handleShare(item.action)} className="flex flex-col items-center gap-2">
-                  <div className="w-14 h-14 rounded-2xl bg-white/8 border border-white/15 flex items-center justify-center text-2xl hover:bg-white/15 transition-colors active:scale-95">
-                    {item.icon}
-                  </div>
+                  <div className="w-14 h-14 rounded-2xl bg-white/8 border border-white/15 flex items-center justify-center text-2xl hover:bg-white/15 transition-colors active:scale-95">{item.icon}</div>
                   <span className="text-white/70 text-xs">{item.label}</span>
                 </button>
               ))}
             </div>
-            <button onClick={() => setShowShareSheet(false)} className="w-full py-3 bg-white/8 rounded-2xl text-white font-semibold border border-white/10">
-              Cancel
-            </button>
+            <button onClick={() => setShowShareSheet(false)} className="w-full py-3 bg-white/8 rounded-2xl text-white font-semibold border border-white/10">Cancel</button>
           </div>
         </div>
       )}
@@ -1108,33 +1101,25 @@ export default function PostDetail() {
             <div className="w-10 h-1 bg-white/30 rounded-full mx-auto mb-4" />
             <h3 className="text-white font-bold text-lg mb-4 flex items-center gap-2"><History size={18} /> Edit History</h3>
             <div className="overflow-y-auto space-y-3" style={{ maxHeight: '40dvh' }}>
-              {/* Current version */}
               <div className="bg-[#1E6FFF]/10 border border-[#1E6FFF]/20 rounded-xl p-3">
                 <p className="text-[#1E6FFF] text-xs font-bold mb-1">Current version</p>
                 <p className="text-white/85 text-sm">{post.caption}</p>
               </div>
-              {/* Previous versions */}
-              {(post.edit_history || []).reverse().map((version, i) => (
+              {(post.edit_history || []).map((version, i) => (
                 <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-3">
-                  <p className="text-[#6B7280] text-xs mb-1">Version {(post.edit_history.length - i)} · {formatTime(version.editedAt)}</p>
+                  <p className="text-[#6B7280] text-xs mb-1">Version {i + 1} · {formatTime(version.editedAt)}</p>
                   <p className="text-white/70 text-sm">{version.body}</p>
                 </div>
               ))}
             </div>
-            <button onClick={() => setShowEditHistory(false)} className="w-full mt-4 py-3 bg-white/8 rounded-2xl text-white font-semibold border border-white/10">
-              Close
-            </button>
+            <button onClick={() => setShowEditHistory(false)} className="w-full mt-4 py-3 bg-white/8 rounded-2xl text-white font-semibold border border-white/10">Close</button>
           </div>
         </div>
       )}
 
       {/* ── REPORT MODAL ── */}
       {showReportModal && (
-        <ReportModal
-          target={reportTarget}
-          onClose={() => setShowReportModal(false)}
-          userId={user.id}
-        />
+        <ReportModal target={reportTarget} onClose={() => setShowReportModal(false)} userId={user.id} />
       )}
     </div>
   );
