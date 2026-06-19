@@ -190,15 +190,13 @@ export default function Home() {
       <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07]">
         <div className="flex items-center justify-between px-4 py-3">
 
-          {/* LEFT — Hamburger menu button (clearly a menu, not a profile avatar) */}
+          {/* LEFT — Hamburger menu button */}
           <button
             onClick={() => setDrawerOpen(true)}
-            className="flex flex-col items-center justify-center gap-[5px] w-9 h-9 rounded-xl hover:bg-white/10 transition-colors"
+            className="w-9 h-9 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-center"
             aria-label="Open menu"
           >
-            <span className="w-5 h-[2px] bg-white rounded-full block" />
-            <span className="w-5 h-[2px] bg-white rounded-full block" />
-            <span className="w-3.5 h-[2px] bg-white rounded-full block self-start ml-[5px]" />
+            <Menu size={22} className="text-white" />
           </button>
 
           {/* CENTER — B-Link logo */}
