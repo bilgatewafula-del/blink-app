@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Bell, RefreshCw, Feather } from 'lucide-react';
+import { Bell, RefreshCw, Feather, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
@@ -24,17 +24,12 @@ function PostSkeleton() {
           <div className="flex gap-2">
             <div className="h-3 bg-white/10 rounded-full w-24" />
             <div className="h-3 bg-white/10 rounded-full w-16" />
-            <div className="h-3 bg-white/10 rounded-full w-10" />
           </div>
           <div className="h-3 bg-white/10 rounded-full w-full" />
           <div className="h-3 bg-white/10 rounded-full w-4/5" />
-          <div className="h-3 bg-white/10 rounded-full w-3/5" />
-          <div className="h-32 bg-white/10 rounded-2xl w-full mt-2" />
+          <div className="h-28 bg-white/10 rounded-2xl w-full mt-2" />
           <div className="flex gap-6 mt-2">
-            <div className="h-3 bg-white/10 rounded-full w-8" />
-            <div className="h-3 bg-white/10 rounded-full w-8" />
-            <div className="h-3 bg-white/10 rounded-full w-8" />
-            <div className="h-3 bg-white/10 rounded-full w-8" />
+            {[1,2,3,4].map(i => <div key={i} className="h-3 bg-white/10 rounded-full w-8" />)}
           </div>
         </div>
       </div>
@@ -59,10 +54,10 @@ export default function Home() {
   const [isPulling,     setIsPulling]     = useState(false);
   const [newPostsAvail, setNewPostsAvail] = useState(false);
 
-  const observerRef  = useRef();
-  const loadMoreRef  = useRef();
-  const touchStartY  = useRef(null);
-  const feedRef      = useRef();
+  const observerRef = useRef();
+  const loadMoreRef = useRef();
+  const touchStartY = useRef(null);
+  const feedRef     = useRef();
   const PULL_THRESHOLD = 80;
 
   useEffect(() => {
@@ -71,7 +66,6 @@ export default function Home() {
     fetchUnread();
   }, [activeTab]);
 
-  // Infinite scroll observer
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
       (entries) => {
@@ -84,10 +78,8 @@ export default function Home() {
     return () => observerRef.current?.disconnect();
   }, [hasMore, loadingMore, loading, page]);
 
-  // Real-time new posts notification
   useEffect(() => {
-    const ch = supabase
-      .channel('home:rt:' + user.id)
+    const ch = supabase.channel('home:rt:' + user.id)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, () => {
         if (page === 0 && !loading) setNewPostsAvail(true);
       })
@@ -96,11 +88,9 @@ export default function Home() {
   }, [activeTab, page, loading]);
 
   const fetchUnread = async () => {
-    const { count } = await supabase
-      .from('notifications')
+    const { count } = await supabase.from('notifications')
       .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('is_read', false);
+      .eq('user_id', user.id).eq('is_read', false);
     setUnreadNotifs(count || 0);
   };
 
@@ -109,40 +99,31 @@ export default function Home() {
     const to   = from + POSTS_PER_PAGE - 1;
 
     if (activeTab === 'following') {
-      const { data: follows } = await supabase
-        .from('follows').select('following_id')
+      const { data: follows } = await supabase.from('follows').select('following_id')
         .eq('follower_id', user.id).eq('status', 'accepted');
-      const ids = [...(follows || []).map((f) => f.following_id), user.id];
-      return supabase
-        .from('posts')
+      const ids = [...(follows || []).map(f => f.following_id), user.id];
+      return supabase.from('posts')
         .select('*, users(id,username,display_name,avatar_url,country,is_verified)')
         .eq('is_draft', false).eq('audience', 'public')
         .in('user_id', ids)
-        .order('created_at', { ascending: false })
-        .range(from, to);
+        .order('created_at', { ascending: false }).range(from, to);
     }
-
     if (activeTab === 'foryou') {
-      return supabase
-        .from('posts')
+      return supabase.from('posts')
         .select('*, users(id,username,display_name,avatar_url,country,is_verified)')
         .eq('is_draft', false).eq('audience', 'public')
         .order('likes_count', { ascending: false })
-        .order('created_at', { ascending: false })
-        .range(from, to);
+        .order('created_at', { ascending: false }).range(from, to);
     }
-
     if (activeTab === 'country') {
-      const { data: cu } = await supabase
-        .from('users').select('id').eq('country', profile?.country || 'KE');
-      const ids = (cu || []).map((u) => u.id);
-      return supabase
-        .from('posts')
+      const { data: cu } = await supabase.from('users').select('id')
+        .eq('country', profile?.country || 'KE');
+      const ids = (cu || []).map(u => u.id);
+      return supabase.from('posts')
         .select('*, users(id,username,display_name,avatar_url,country,is_verified)')
         .eq('is_draft', false).eq('audience', 'public')
-        .in('user_id', ids.length > 0 ? ids : ['00000000-0000-0000-0000-000000000000'])
-        .order('created_at', { ascending: false })
-        .range(from, to);
+        .in('user_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000'])
+        .order('created_at', { ascending: false }).range(from, to);
     }
   };
 
@@ -159,9 +140,9 @@ export default function Home() {
     if (reset) {
       setPosts(newPosts);
     } else {
-      setPosts((prev) => {
-        const ids = new Set(prev.map((p) => p.id));
-        return [...prev, ...newPosts.filter((p) => !ids.has(p.id))];
+      setPosts(prev => {
+        const ids = new Set(prev.map(p => p.id));
+        return [...prev, ...newPosts.filter(p => !ids.has(p.id))];
       });
     }
 
@@ -180,7 +161,6 @@ export default function Home() {
     loadPosts(next, false);
   }, [page, activeTab]);
 
-  // Pull-to-refresh
   const handleTouchStart = (e) => {
     if ((feedRef.current?.scrollTop || 0) === 0)
       touchStartY.current = e.touches[0].clientY;
@@ -207,21 +187,21 @@ export default function Home() {
       <Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       {/* ── TOP BAR ── */}
-      <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/8">
+      <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07]">
         <div className="flex items-center justify-between px-4 py-3">
-          {/* Profile avatar → opens drawer */}
-          <button onClick={() => setDrawerOpen(true)} className="relative">
-            <div className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-white/10">
-              {profile?.avatar_url
-                ? <img src={profile.avatar_url} alt="me" className="w-full h-full object-cover" />
-                : <div className="w-full h-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-sm">
-                    {profile?.display_name?.[0]?.toUpperCase() || 'B'}
-                  </div>
-              }
-            </div>
+
+          {/* LEFT — Hamburger menu button (clearly a menu, not a profile avatar) */}
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="flex flex-col items-center justify-center gap-[5px] w-9 h-9 rounded-xl hover:bg-white/10 transition-colors"
+            aria-label="Open menu"
+          >
+            <span className="w-5 h-[2px] bg-white rounded-full block" />
+            <span className="w-5 h-[2px] bg-white rounded-full block" />
+            <span className="w-3.5 h-[2px] bg-white rounded-full block self-start ml-[5px]" />
           </button>
 
-          {/* B-Link logo center */}
+          {/* CENTER — B-Link logo */}
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-base shadow-lg shadow-[#1E6FFF]/30">
               B
@@ -229,11 +209,11 @@ export default function Home() {
             <span className="text-white font-extrabold text-lg tracking-tight">B-Link</span>
           </div>
 
-          {/* Notification bell */}
-          <button onClick={() => navigate('/notifications')} className="relative p-1">
+          {/* RIGHT — Notification bell */}
+          <button onClick={() => navigate('/notifications')} className="relative p-1 w-9 h-9 flex items-center justify-center">
             <Bell size={22} className="text-[#6B7280]" />
             {unreadNotifs > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-[#1E6FFF] rounded-full text-[9px] text-white flex items-center justify-center font-bold px-0.5">
+              <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-[#1E6FFF] rounded-full text-[9px] text-white flex items-center justify-center font-bold px-0.5">
                 {unreadNotifs > 9 ? '9+' : unreadNotifs}
               </span>
             )}
@@ -261,12 +241,12 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Stories row */}
+      {/* Stories */}
       <Stories />
 
       {/* New posts pill */}
       {newPostsAvail && !loading && (
-        <div className="flex justify-center py-2 sticky top-28 z-10">
+        <div className="flex justify-center py-2 sticky top-[104px] z-10">
           <button
             onClick={() => loadPosts(0, true)}
             className="bg-[#1E6FFF] text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-[#1E6FFF]/40 flex items-center gap-2 hover:bg-[#1565cc] transition-colors"
@@ -276,9 +256,9 @@ export default function Home() {
         </div>
       )}
 
-      {/* Pull indicator */}
+      {/* Pull-to-refresh indicator */}
       <div
-        className="overflow-hidden transition-all flex items-center justify-center"
+        className="overflow-hidden flex items-center justify-center transition-all"
         style={{ height: isPulling || refreshing ? Math.max(pullDistance, refreshing ? 44 : 0) : 0 }}
       >
         <div className={`flex items-center gap-2 text-sm ${pullDistance >= PULL_THRESHOLD || refreshing ? 'text-[#1E6FFF]' : 'text-[#6B7280]'}`}>
@@ -288,12 +268,7 @@ export default function Home() {
       </div>
 
       {/* Feed */}
-      <div
-        ref={feedRef}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
+      <div ref={feedRef} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
         {loading ? (
           <>{Array(5).fill(0).map((_, i) => <PostSkeleton key={i} />)}</>
         ) : posts.length === 0 ? (
@@ -303,29 +278,18 @@ export default function Home() {
               {activeTab === 'following' ? 'Nothing in your feed yet' : 'No posts yet'}
             </h2>
             <p className="text-[#6B7280] text-sm text-center">
-              {activeTab === 'following'
-                ? 'Follow people to see their posts here.'
-                : 'Be the first to post something!'}
+              {activeTab === 'following' ? 'Follow people to see their posts here.' : 'Be the first to post!'}
             </p>
-            <button
-              onClick={() => navigate('/discover')}
-              className="bg-[#1E6FFF] text-white px-6 py-3 rounded-full font-bold text-sm shadow-lg shadow-[#1E6FFF]/30"
-            >
+            <button onClick={() => navigate('/discover')}
+              className="bg-[#1E6FFF] text-white px-6 py-3 rounded-full font-bold text-sm shadow-lg shadow-[#1E6FFF]/30">
               Find people to follow
             </button>
           </div>
         ) : (
           <>
-            {posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                currentUser={user}
-                onRefresh={() => loadPosts(0, true)}
-              />
+            {posts.map(post => (
+              <PostCard key={post.id} post={post} currentUser={user} onRefresh={() => loadPosts(0, true)} />
             ))}
-
-            {/* Infinite scroll sentinel */}
             <div ref={loadMoreRef} className="flex justify-center py-6 min-h-[60px]">
               {loadingMore && (
                 <div className="flex items-center gap-2 text-[#6B7280]">
@@ -345,7 +309,6 @@ export default function Home() {
       <button
         onClick={() => navigate('/create')}
         className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-[#1E6FFF] flex items-center justify-center shadow-xl shadow-[#1E6FFF]/40 hover:bg-[#1565cc] transition-colors z-20"
-        style={{ maxWidth: 'calc(310px + 0px)' }}
       >
         <Feather size={22} color="white" />
       </button>
