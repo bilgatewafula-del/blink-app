@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import EmojiPicker from 'emoji-picker-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import { formatTime } from '../../utils/formatTime';
@@ -13,7 +12,45 @@ import {
 } from 'lucide-react';
 import Avatar from '../../components/Avatar';
 
-/* ── helpers ────────────────────────────────────── */
+/* ─────────────────────────────────────────────────
+   ERROR BOUNDARY — prevents emoji picker crash
+   from killing the whole page
+───────────────────────────────────────────────── */
+import { Component } from 'react';
+class EmojiErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { crashed: false }; }
+  static getDerivedStateFromError() { return { crashed: true }; }
+  render() {
+    if (this.state.crashed) {
+      return (
+        <div style={{ background:'#111827', borderRadius:16, padding:'12px 16px', color:'#6B7280', fontSize:13 }}>
+          Emoji picker unavailable. Type emoji directly 😊
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+/* lazy-load EmojiPicker so a crash doesn't block the page */
+let EmojiPickerComponent = null;
+function LazyEmojiPicker(props) {
+  const [Picker, setPicker] = useState(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (EmojiPickerComponent) { setPicker(() => EmojiPickerComponent); return; }
+    import('emoji-picker-react')
+      .then(mod => { EmojiPickerComponent = mod.default; setPicker(() => mod.default); })
+      .catch(() => setFailed(true));
+  }, []);
+
+  if (failed) return <div style={{ background:'#111827', borderRadius:16, padding:'12px 16px', color:'#6B7280', fontSize:13 }}>Emoji picker failed to load.</div>;
+  if (!Picker)  return <div style={{ background:'#111827', borderRadius:16, padding:'14px 20px', color:'#6B7280', fontSize:13 }}>Loading emojis…</div>;
+  return <Picker {...props} />;
+}
+
+/* ── helpers ──────────────────────────────────── */
 const flagMap = {
   KE:'🇰🇪',NG:'🇳🇬',GH:'🇬🇭',UG:'🇺🇬',
   TZ:'🇹🇿',ZA:'🇿🇦',ET:'🇪🇹',RW:'🇷🇼',
@@ -80,39 +117,53 @@ function MediaGrid({ images }) {
   );
 }
 
-/* ── Single comment row — Twitter compressed ──── */
-function CommentRow({ c, postAuthorId, currentUserId, onReply, onDelete, navigate, onReactToComment }) {
+/* ── Comment row — Twitter compressed ─────────── */
+function CommentRow({ c, postAuthorId, currentUserId, onReply, onDelete, navigate }) {
   const [showReactions, setShowReactions] = useState(false);
   const [myReaction,    setMyReaction]    = useState(c.my_reaction || null);
   const [reactionCount, setReactionCount] = useState(c.reaction_count || 0);
   const longPressTimer = useRef();
+  const pickerRef      = useRef();
 
   const isAuthor = c.user_id === postAuthorId;
   const isMine   = c.user_id === currentUserId;
 
+  /* close on outside click */
+  useEffect(() => {
+    if (!showReactions) return;
+    const h = (e) => { if (pickerRef.current && !pickerRef.current.contains(e.target)) setShowReactions(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [showReactions]);
+
   const handleReact = async (emoji) => {
     setShowReactions(false);
-    if (myReaction === emoji) {
-      // Remove reaction
-      setMyReaction(null);
-      setReactionCount(rc => Math.max(0, rc - 1));
-      await supabase.from('comment_reactions')
-        .delete()
-        .eq('comment_id', c.id)
-        .eq('user_id', currentUserId);
-    } else {
-      if (!myReaction) setReactionCount(rc => rc + 1);
-      setMyReaction(emoji);
-      await supabase.from('comment_reactions').upsert(
-        { comment_id: c.id, user_id: currentUserId, emoji },
-        { onConflict: 'comment_id,user_id' }
-      );
+    try {
+      if (myReaction === emoji) {
+        setMyReaction(null);
+        setReactionCount(rc => Math.max(0, rc - 1));
+        await supabase.from('comment_reactions')
+          .delete()
+          .eq('comment_id', c.id)
+          .eq('user_id', currentUserId);
+      } else {
+        const wasEmpty = !myReaction;
+        if (wasEmpty) setReactionCount(rc => rc + 1);
+        setMyReaction(emoji);
+        /* upsert — requires unique(comment_id, user_id) constraint */
+        await supabase.from('comment_reactions').upsert(
+          { comment_id: c.id, user_id: currentUserId, emoji },
+          { onConflict: 'comment_id,user_id' }
+        );
+      }
+    } catch (err) {
+      console.error('comment reaction error:', err.message);
     }
   };
 
   return (
     <div className="flex gap-2.5 px-4 py-2.5 border-b border-white/[0.05] hover:bg-white/[0.015] transition-colors group">
-      {/* Avatar — small, Twitter size */}
+      {/* Small avatar */}
       <button onClick={() => navigate('/profile/' + c.users?.username)} className="flex-shrink-0 mt-0.5">
         {c.users?.avatar_url
           ? <img src={c.users.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
@@ -122,9 +173,8 @@ function CommentRow({ c, postAuthorId, currentUserId, onReply, onDelete, navigat
         }
       </button>
 
-      {/* Body */}
       <div className="flex-1 min-w-0">
-        {/* Name line — all inline, Twitter style */}
+        {/* Name · @handle · time — all one line */}
         <div className="flex items-baseline gap-1 flex-wrap">
           <button onClick={() => navigate('/profile/' + c.users?.username)} className="text-white font-bold text-[13px] hover:underline leading-tight">
             {c.users?.display_name}
@@ -140,23 +190,21 @@ function CommentRow({ c, postAuthorId, currentUserId, onReply, onDelete, navigat
           <span className="text-[#6B7280] text-[12px] whitespace-nowrap">{formatTime(c.created_at)}</span>
         </div>
 
-        {/* Comment text */}
+        {/* Text */}
         <p className="text-white/85 text-[14px] leading-snug break-words mt-0.5">
           <RichText
             text={c.body}
-            onHashtag={(t) => navigate('/hashtag/' + t)}
-            onMention={(u) => navigate('/profile/' + u)}
+            onHashtag={t => navigate('/hashtag/' + t)}
+            onMention={u => navigate('/profile/' + u)}
           />
         </p>
 
         {/* Reaction count pill */}
         {reactionCount > 0 && (
-          <div className="flex items-center gap-1 mt-1">
-            <span className="text-[11px] text-[#6B7280]">{myReaction || '❤️'} {reactionCount}</span>
-          </div>
+          <span className="text-[11px] text-[#6B7280] mt-0.5 block">{myReaction || '❤️'} {reactionCount}</span>
         )}
 
-        {/* Action row — Reply | Heart icon | Delete */}
+        {/* Action row */}
         <div className="flex items-center gap-1 mt-1 -ml-1.5">
           <button
             onClick={() => onReply(c)}
@@ -165,14 +213,14 @@ function CommentRow({ c, postAuthorId, currentUserId, onReply, onDelete, navigat
             <MessageCircle size={12} /> Reply
           </button>
 
-          {/* Comment like — heart icon, long press = emoji picker */}
-          <div className="relative">
+          {/* Comment heart — long press = emoji reaction picker */}
+          <div className="relative" ref={pickerRef}>
             {showReactions && (
               <div
                 className="absolute bottom-8 left-0 bg-[#111827] border border-white/10 rounded-full px-1.5 py-1.5 flex gap-1 z-30 shadow-2xl"
                 style={{ minWidth:'max-content' }}
               >
-                {COMMENT_REACTIONS.map((emoji) => (
+                {COMMENT_REACTIONS.map(emoji => (
                   <button
                     key={emoji}
                     onClick={() => handleReact(emoji)}
@@ -194,7 +242,7 @@ function CommentRow({ c, postAuthorId, currentUserId, onReply, onDelete, navigat
             >
               {myReaction
                 ? <span className="text-[13px] leading-none">{myReaction}</span>
-                : <Heart size={12} fill={myReaction ? 'currentColor' : 'none'} />
+                : <Heart size={12} fill="none" />
               }
             </button>
           </div>
@@ -202,7 +250,7 @@ function CommentRow({ c, postAuthorId, currentUserId, onReply, onDelete, navigat
           {isMine && (
             <button
               onClick={() => onDelete(c.id)}
-              className="text-[#6B7280] hover:text-red-400 px-1.5 py-1 rounded-full hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all"
+              className="text-[#6B7280] hover:text-red-400 px-1.5 py-1 rounded-full hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all ml-1"
             >
               <Trash2 size={12} />
             </button>
@@ -214,17 +262,17 @@ function CommentRow({ c, postAuthorId, currentUserId, onReply, onDelete, navigat
 }
 
 /* ═══════════════════════════════════════════════
-   MAIN
+   MAIN COMPONENT
 ═══════════════════════════════════════════════ */
 export default function PostDetail() {
-  const { id } = useParams();
-  const navigate = useNavigate();
+  const { id }       = useParams();
+  const navigate     = useNavigate();
   const { user, profile } = useAuth();
 
   const inputRef       = useRef();
   const videoRef       = useRef();
   const longPressTimer = useRef();
-  const emojiRef       = useRef();
+  const emojiWrapRef   = useRef();
 
   /* data */
   const [post,         setPost]        = useState(null);
@@ -236,22 +284,22 @@ export default function PostDetail() {
   const [commentCount, setCommentCount]= useState(0);
 
   /* post engagement */
-  const [liked,      setLiked]      = useState(false);
-  const [reaction,   setReaction]   = useState(null);
-  const [likesCount, setLikesCount] = useState(0);
-  const [saved,      setSaved]      = useState(false);
-  const [reposted,   setReposted]   = useState(false);
-  const [repostCount,setRepostCount]= useState(0);
+  const [liked,       setLiked]      = useState(false);
+  const [reaction,    setReaction]   = useState(null);
+  const [likesCount,  setLikesCount] = useState(0);
+  const [saved,       setSaved]      = useState(false);
+  const [reposted,    setReposted]   = useState(false);
+  const [repostCount, setRepostCount]= useState(0);
 
   /* UI */
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   const [showRepostMenu,     setShowRepostMenu]     = useState(false);
   const [showQuoteModal,     setShowQuoteModal]     = useState(false);
   const [quoteText,          setQuoteText]          = useState('');
-  const [showMenu,     setShowMenu]   = useState(false);
-  const [showEmoji,    setShowEmoji]  = useState(false);
-  const [playing,      setPlaying]    = useState(false);
-  const [muted,        setMuted]      = useState(false);
+  const [showMenu,    setShowMenu]   = useState(false);
+  const [showEmoji,   setShowEmoji]  = useState(false);
+  const [playing,     setPlaying]    = useState(false);
+  const [muted,       setMuted]      = useState(false);
 
   /* ── mount ── */
   useEffect(() => {
@@ -262,28 +310,30 @@ export default function PostDetail() {
     return () => window.dispatchEvent(new Event('blink:comments:close'));
   }, [id]);
 
-  /* close emoji picker on outside click */
+  /* close emoji on outside click */
   useEffect(() => {
-    const h = (e) => { if (emojiRef.current && !emojiRef.current.contains(e.target)) setShowEmoji(false); };
-    if (showEmoji) document.addEventListener('mousedown', h);
+    if (!showEmoji) return;
+    const h = (e) => { if (emojiWrapRef.current && !emojiWrapRef.current.contains(e.target)) setShowEmoji(false); };
+    document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, [showEmoji]);
 
   /* real-time comments */
   useEffect(() => {
-    const ch = supabase.channel('comments:' + id)
+    const ch = supabase.channel('postdetail:comments:' + id)
       .on('postgres_changes', { event:'*', schema:'public', table:'comments', filter:'post_id=eq.'+id },
         () => fetchComments())
       .subscribe();
     return () => supabase.removeChannel(ch);
   }, [id]);
 
-  /* ── data helpers ── */
+  /* ── helpers ── */
   const recordView = async () => {
     if (!user) return;
-    const { data } = await supabase.from('posts').select('views_count').eq('id', id).maybeSingle();
-    if (data != null)
-      await supabase.from('posts').update({ views_count: (data.views_count||0)+1 }).eq('id', id);
+    try {
+      const { data } = await supabase.from('posts').select('views_count').eq('id', id).maybeSingle();
+      if (data != null) await supabase.from('posts').update({ views_count: (data.views_count||0)+1 }).eq('id', id);
+    } catch (_) {}
   };
 
   const fetchPost = async () => {
@@ -292,7 +342,7 @@ export default function PostDetail() {
       .select('*, users(id,username,display_name,avatar_url,country,is_verified,badge_type)')
       .eq('id', id).maybeSingle();
     setPost(data);
-    setLikesCount(data?.likes_count || 0);
+    setLikesCount(data?.likes_count   || 0);
     setRepostCount(data?.reposts_count || 0);
     setCommentCount(data?.comments_count || 0);
     setLoading(false);
@@ -300,7 +350,7 @@ export default function PostDetail() {
 
   const fetchComments = async () => {
     const uid = user?.id;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('comments')
       .select('*, users(id,username,display_name,avatar_url,is_verified,country)')
       .eq('post_id', id)
@@ -308,62 +358,67 @@ export default function PostDetail() {
       .order('created_at', { ascending: true })
       .limit(200);
 
-    if (!data) return;
+    if (error || !data) return;
 
-    // fetch each user's reaction to each comment
-    if (uid) {
+    /* only query comment_reactions if table exists AND there are comments */
+    let reactionMap = {};
+    let countMap    = {};
+
+    if (uid && data.length > 0) {
       const ids = data.map(c => c.id);
-      const { data: myReactions } = await supabase
-        .from('comment_reactions')
-        .select('comment_id, emoji')
-        .eq('user_id', uid)
-        .in('comment_id', ids);
+      try {
+        const { data: myR } = await supabase
+          .from('comment_reactions')
+          .select('comment_id, emoji')
+          .eq('user_id', uid)
+          .in('comment_id', ids);
 
-      const { data: counts } = await supabase
-        .from('comment_reactions')
-        .select('comment_id')
-        .in('comment_id', ids);
+        const { data: allR } = await supabase
+          .from('comment_reactions')
+          .select('comment_id')
+          .in('comment_id', ids);
 
-      const reactionMap  = {};
-      const countMap     = {};
-      (myReactions || []).forEach(r => { reactionMap[r.comment_id] = r.emoji; });
-      (counts || []).forEach(r => { countMap[r.comment_id] = (countMap[r.comment_id] || 0) + 1; });
-
-      const enriched = data.map(c => ({
-        ...c,
-        my_reaction:   reactionMap[c.id] || null,
-        reaction_count: countMap[c.id] || 0,
-      }));
-      setComments(enriched);
-    } else {
-      setComments(data);
+        (myR  || []).forEach(r => { reactionMap[r.comment_id] = r.emoji; });
+        (allR || []).forEach(r => { countMap[r.comment_id] = (countMap[r.comment_id] || 0) + 1; });
+      } catch (_) {
+        /* comment_reactions table not yet created — degrade gracefully */
+      }
     }
+
+    setComments(data.map(c => ({
+      ...c,
+      my_reaction:    reactionMap[c.id] || null,
+      reaction_count: countMap[c.id]    || 0,
+    })));
     setCommentCount(data.length);
   };
 
   const checkActions = async () => {
     const uid = user?.id;
     if (!uid) return;
+    try {
+      const { data: ld } = await supabase.from('likes').select('reaction_type')
+        .eq('post_id', id).eq('user_id', uid).maybeSingle();
+      if (ld) { setLiked(true); setReaction(ld.reaction_type); }
 
-    const { data: ld } = await supabase.from('likes').select('reaction_type')
-      .eq('post_id', id).eq('user_id', uid).maybeSingle();
-    if (ld) { setLiked(true); setReaction(ld.reaction_type); }
+      const { data: sd } = await supabase.from('saved_posts').select('id')
+        .eq('post_id', id).eq('user_id', uid).maybeSingle();
+      if (sd) setSaved(true);
 
-    const { data: sd } = await supabase.from('saved_posts').select('id')
-      .eq('post_id', id).eq('user_id', uid).maybeSingle();
-    if (sd) setSaved(true);
-
-    const { data: rd } = await supabase.from('posts').select('id')
-      .eq('user_id', uid).eq('quoted_post_id', id).maybeSingle();
-    if (rd) setReposted(true);
+      const { data: rd } = await supabase.from('posts').select('id')
+        .eq('user_id', uid).eq('quoted_post_id', id).eq('is_repost', true).maybeSingle();
+      if (rd) setReposted(true);
+    } catch (_) {}
   };
 
-  /* ── post engagement ── */
+  /* ── post like ── */
   const handleLike = useCallback(async (type = 'like') => {
     setShowReactionPicker(false);
     const uid = user?.id;
+    if (!uid) return;
 
     if (liked && reaction === type) {
+      /* unlike */
       setLiked(false); setReaction(null);
       setLikesCount(c => Math.max(0, c - 1));
       await supabase.from('likes').delete().eq('post_id', id).eq('user_id', uid);
@@ -372,11 +427,12 @@ export default function PostDetail() {
       if (!liked) {
         setLikesCount(c => c + 1);
         await supabase.from('posts').update({ likes_count: likesCount + 1 }).eq('id', id);
-        if (post?.users?.id !== uid) {
-          await supabase.from('notifications').insert({
-            user_id: post?.users?.id, from_user_id: uid,
-            type: 'like', message: 'liked your post', ref_id: id, is_read: false,
-          });
+        /* notification — skip if self, skip if 409 conflict */
+        if (post?.users?.id && post.users.id !== uid) {
+          await supabase.from('notifications').upsert(
+            { user_id: post.users.id, from_user_id: uid, type: 'like', message: 'liked your post', ref_id: id, is_read: false },
+            { onConflict: 'user_id,from_user_id,type,ref_id', ignoreDuplicates: true }
+          );
         }
       }
       setLiked(true); setReaction(type);
@@ -387,9 +443,11 @@ export default function PostDetail() {
     }
   }, [liked, reaction, likesCount, id, post, user]);
 
+  /* ── repost ── */
   const handleDirectRepost = async () => {
     setShowRepostMenu(false);
     const uid = user?.id;
+    if (!uid) return;
     if (reposted) {
       setReposted(false); setRepostCount(c => Math.max(0, c - 1));
       await supabase.from('posts').delete().eq('user_id', uid).eq('quoted_post_id', id).eq('is_repost', true);
@@ -398,8 +456,11 @@ export default function PostDetail() {
       setReposted(true); setRepostCount(c => c + 1);
       await supabase.from('posts').insert({ user_id: uid, caption: '', quoted_post_id: id, audience: 'public', is_draft: false, is_repost: true });
       await supabase.from('posts').update({ reposts_count: repostCount + 1 }).eq('id', id);
-      if (post?.users?.id !== uid) {
-        await supabase.from('notifications').insert({ user_id: post?.users?.id, from_user_id: uid, type: 'repost', message: 'reposted your post', ref_id: id, is_read: false });
+      if (post?.users?.id && post.users.id !== uid) {
+        await supabase.from('notifications').upsert(
+          { user_id: post.users.id, from_user_id: uid, type: 'repost', message: 'reposted your post', ref_id: id, is_read: false },
+          { onConflict: 'user_id,from_user_id,type,ref_id', ignoreDuplicates: true }
+        );
       }
     }
   };
@@ -412,18 +473,22 @@ export default function PostDetail() {
     await supabase.from('posts').update({ reposts_count: repostCount + 1 }).eq('id', id);
     setRepostCount(c => c + 1);
     setQuoteText('');
-    if (post?.users?.id !== uid) {
-      await supabase.from('notifications').insert({ user_id: post?.users?.id, from_user_id: uid, type: 'repost', message: 'quoted your post', ref_id: id, is_read: false });
+    if (post?.users?.id && post.users.id !== uid) {
+      await supabase.from('notifications').upsert(
+        { user_id: post.users.id, from_user_id: uid, type: 'repost', message: 'quoted your post', ref_id: id, is_read: false },
+        { onConflict: 'user_id,from_user_id,type,ref_id', ignoreDuplicates: true }
+      );
     }
   };
 
   const handleSave = async () => {
+    const uid = user?.id;
     if (saved) {
       setSaved(false);
-      await supabase.from('saved_posts').delete().eq('post_id', id).eq('user_id', user?.id);
+      await supabase.from('saved_posts').delete().eq('post_id', id).eq('user_id', uid);
     } else {
       setSaved(true);
-      await supabase.from('saved_posts').upsert({ post_id: id, user_id: user?.id, collection: 'Saved Posts' }, { onConflict: 'post_id,user_id' });
+      await supabase.from('saved_posts').upsert({ post_id: id, user_id: uid, collection: 'Saved Posts' }, { onConflict: 'post_id,user_id' });
     }
   };
 
@@ -447,29 +512,38 @@ export default function PostDetail() {
     setSubmitting(true);
     setShowEmoji(false);
 
-    const { data } = await supabase.from('comments')
-      .insert({ post_id: id, user_id: user?.id, body, parent_id: replyTo?.id || null })
-      .select('*, users(id,username,display_name,avatar_url,is_verified,country)')
-      .single();
+    try {
+      const { data } = await supabase.from('comments')
+        .insert({ post_id: id, user_id: user?.id, body, parent_id: replyTo?.id || null })
+        .select('*, users(id,username,display_name,avatar_url,is_verified,country)')
+        .single();
 
-    if (data) {
-      if (!replyTo) {
-        setComments(prev => [...prev, { ...data, my_reaction: null, reaction_count: 0 }]);
-        setCommentCount(c => c + 1);
-      }
-      if (post?.users?.id !== user?.id) {
-        await supabase.from('notifications').insert({
-          user_id: post?.users?.id, from_user_id: user?.id, type: 'comment',
-          message: 'replied: "' + body.slice(0, 60) + '"', ref_id: id, is_read: false,
-        });
-      }
-      const mentions = body.match(/@(\w+)/g) || [];
-      for (const m of mentions) {
-        const { data: mu } = await supabase.from('users').select('id').eq('username', m.slice(1)).maybeSingle();
-        if (mu && mu.id !== user?.id) {
-          await supabase.from('notifications').insert({ user_id: mu.id, from_user_id: user?.id, type: 'mention', message: 'mentioned you: "' + body.slice(0, 60) + '"', ref_id: id, is_read: false });
+      if (data) {
+        if (!replyTo) {
+          setComments(prev => [...prev, { ...data, my_reaction: null, reaction_count: 0 }]);
+          setCommentCount(c => c + 1);
+        }
+        /* notification — upsert to avoid 409 */
+        if (post?.users?.id && post.users.id !== user?.id) {
+          await supabase.from('notifications').upsert(
+            { user_id: post.users.id, from_user_id: user?.id, type: 'comment', message: 'replied: "' + body.slice(0, 60) + '"', ref_id: id, is_read: false },
+            { onConflict: 'user_id,from_user_id,type,ref_id', ignoreDuplicates: true }
+          );
+        }
+        /* mention notifications */
+        const mentions = body.match(/@(\w+)/g) || [];
+        for (const m of mentions) {
+          const { data: mu } = await supabase.from('users').select('id').eq('username', m.slice(1)).maybeSingle();
+          if (mu && mu.id !== user?.id) {
+            await supabase.from('notifications').upsert(
+              { user_id: mu.id, from_user_id: user?.id, type: 'mention', message: 'mentioned you: "' + body.slice(0, 60) + '"', ref_id: id, is_read: false },
+              { onConflict: 'user_id,from_user_id,type,ref_id', ignoreDuplicates: true }
+            );
+          }
         }
       }
+    } catch (err) {
+      console.error('comment error:', err.message);
     }
 
     setCommentText(''); setReplyTo(null); setSubmitting(false);
@@ -485,7 +559,7 @@ export default function PostDetail() {
   const handleReply = (c) => {
     setReplyTo(c);
     setCommentText('@' + c.users?.username + ' ');
-    inputRef.current?.focus();
+    setTimeout(() => { inputRef.current?.focus(); }, 100);
     window.dispatchEvent(new Event('blink:comments:open'));
   };
 
@@ -498,23 +572,29 @@ export default function PostDetail() {
   const getReactionEmoji = () => REACTIONS.find(r => r.type === reaction)?.emoji || null;
   const getReactionColor = () => REACTIONS.find(r => r.type === reaction)?.color || '#6B7280';
 
-  /* ── SQL for comment_reactions table (run once in Supabase) ──
-  create table if not exists public.comment_reactions (
-    id uuid default gen_random_uuid() primary key,
-    comment_id uuid references public.comments(id) on delete cascade not null,
-    user_id uuid references public.users(id) on delete cascade not null,
-    emoji text not null default '❤️',
-    created_at timestamptz default now(),
-    unique(comment_id, user_id)
-  );
-  ── end SQL ── */
+  /* ── insert emoji at cursor ── */
+  const insertEmoji = (emojiData) => {
+    const el = inputRef.current;
+    if (el) {
+      const start = el.selectionStart ?? commentText.length;
+      const end   = el.selectionEnd   ?? commentText.length;
+      const next  = commentText.slice(0, start) + emojiData.emoji + commentText.slice(end);
+      setCommentText(next);
+      setTimeout(() => {
+        el.focus();
+        el.setSelectionRange(start + emojiData.emoji.length, start + emojiData.emoji.length);
+      }, 0);
+    } else {
+      setCommentText(t => t + emojiData.emoji);
+    }
+  };
 
+  /* ─────────── render guards ─────────── */
   if (loading) return (
     <div className="min-h-screen bg-[#0A1628] flex items-center justify-center">
       <div className="w-7 h-7 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" />
     </div>
   );
-
   if (!post) return (
     <div className="min-h-screen bg-[#0A1628] flex flex-col items-center justify-center gap-3">
       <p className="text-5xl">🔍</p>
@@ -528,22 +608,20 @@ export default function PostDetail() {
   const images  = post.media_urls || [];
 
   return (
-    <div className="bg-[#0A1628] flex flex-col" style={{ minHeight:'100dvh' }}
+    <div
+      className="bg-[#0A1628] flex flex-col"
+      style={{ minHeight:'100dvh' }}
       onClick={() => { setShowMenu(false); setShowReactionPicker(false); setShowRepostMenu(false); }}
     >
-      {/* Quote modal */}
+      {/* ── Quote modal ── */}
       {showQuoteModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center"
-          onClick={() => setShowQuoteModal(false)}>
-          <div className="w-full max-w-[620px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl p-4 pb-8"
-            onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center" onClick={() => setShowQuoteModal(false)}>
+          <div className="w-full max-w-[620px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl p-4 pb-8" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <button onClick={() => setShowQuoteModal(false)} className="text-[#6B7280] hover:text-white"><X size={20} /></button>
               <h3 className="text-white font-bold">Quote Post</h3>
               <button onClick={handleQuotePost} disabled={!quoteText.trim()}
-                className="bg-[#1E6FFF] text-white text-sm font-bold px-4 py-1.5 rounded-full disabled:opacity-40 hover:bg-[#1565cc] transition-colors">
-                Post
-              </button>
+                className="bg-[#1E6FFF] text-white text-sm font-bold px-4 py-1.5 rounded-full disabled:opacity-40 hover:bg-[#1565cc] transition-colors">Post</button>
             </div>
             <textarea autoFocus value={quoteText} onChange={e => setQuoteText(e.target.value)}
               placeholder="Add a comment..." maxLength={500} rows={3}
@@ -563,28 +641,25 @@ export default function PostDetail() {
         </div>
       )}
 
-      {/* Top bar */}
+      {/* ── Top bar ── */}
       <div className="sticky top-0 z-30 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.06] px-4 py-3 flex items-center gap-4 flex-shrink-0">
-        <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white transition-colors">
-          <ArrowLeft size={22} />
-        </button>
+        <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white transition-colors"><ArrowLeft size={22} /></button>
         <h1 className="text-white font-bold text-base">Post</h1>
       </div>
 
-      {/* Scrollable body — paddingBottom leaves room for fixed input */}
+      {/* ── Scrollable body ── */}
       <div className="flex-1 overflow-y-auto" style={{ paddingBottom: 80 }}>
 
-        {/* ═══ ORIGINAL POST ═══ */}
+        {/* Original post */}
         <div className="px-4 pt-4 pb-0 border-b border-white/[0.07]">
-          {/* Author block */}
+
+          {/* Author */}
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className="flex items-center gap-3">
               <button onClick={() => navigate('/profile/' + author?.username)}>
                 {author?.avatar_url
                   ? <img src={author.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover" />
-                  : <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-xl">
-                      {author?.display_name?.[0]?.toUpperCase()}
-                    </div>
+                  : <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-xl">{author?.display_name?.[0]?.toUpperCase()}</div>
                 }
               </button>
               <div>
@@ -595,11 +670,8 @@ export default function PostDetail() {
                 <p className="text-[#6B7280] text-sm">@{author?.username} {flagMap[author?.country] || ''}</p>
               </div>
             </div>
-            {/* ⋯ menu */}
             <div className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
-              <button onClick={() => setShowMenu(!showMenu)} className="text-[#6B7280] hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors">
-                <MoreHorizontal size={20} />
-              </button>
+              <button onClick={() => setShowMenu(!showMenu)} className="text-[#6B7280] hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors"><MoreHorizontal size={20} /></button>
               {showMenu && (
                 <div className="absolute right-0 top-9 bg-[#111827] border border-white/10 rounded-2xl overflow-hidden z-50 w-44 shadow-2xl">
                   {isOwner
@@ -652,31 +724,29 @@ export default function PostDetail() {
             {(post.views_count||0) > 0 && <><span>·</span><span>{formatNumber(post.views_count)} views</span></>}
           </div>
 
-          {/* Engagement counts row */}
+          {/* Engagement counts */}
           {(repostCount > 0 || likesCount > 0 || commentCount > 0 || (post.shares_count||0) > 0) && (
             <div className="flex items-center gap-5 py-3 border-y border-white/[0.07] mb-1">
-              {repostCount > 0 && <div><span className="text-white font-bold">{formatNumber(repostCount)}</span><span className="text-[#6B7280] text-sm ml-1">Reposts</span></div>}
-              {likesCount  > 0 && <div><span className="text-white font-bold">{formatNumber(likesCount)}</span><span className="text-[#6B7280] text-sm ml-1">Likes</span></div>}
-              {commentCount> 0 && <div><span className="text-white font-bold">{formatNumber(commentCount)}</span><span className="text-[#6B7280] text-sm ml-1">Replies</span></div>}
+              {repostCount  > 0 && <div><span className="text-white font-bold">{formatNumber(repostCount)}</span><span className="text-[#6B7280] text-sm ml-1">Reposts</span></div>}
+              {likesCount   > 0 && <div><span className="text-white font-bold">{formatNumber(likesCount)}</span><span className="text-[#6B7280] text-sm ml-1">Likes</span></div>}
+              {commentCount > 0 && <div><span className="text-white font-bold">{formatNumber(commentCount)}</span><span className="text-[#6B7280] text-sm ml-1">Replies</span></div>}
               {(post.shares_count||0) > 0 && <div><span className="text-white font-bold">{formatNumber(post.shares_count)}</span><span className="text-[#6B7280] text-sm ml-1">Shares</span></div>}
             </div>
           )}
 
           {/* Action bar */}
           <div className="flex items-center justify-between py-1 -mx-1" onClick={e => e.stopPropagation()}>
-            {/* Comment */}
             <button onClick={() => { inputRef.current?.focus(); window.dispatchEvent(new Event('blink:comments:open')); }}
               className="text-[#6B7280] hover:text-[#1E6FFF] px-2 py-2 rounded-full hover:bg-[#1E6FFF]/10 transition-all">
               <MessageCircle size={20} />
             </button>
 
-            {/* Repost dropdown */}
+            {/* Repost menu */}
             <div className="relative" onClick={e => e.stopPropagation()}>
               {showRepostMenu && (
                 <div className="absolute bottom-12 left-0 bg-[#111827] border border-white/10 rounded-2xl overflow-hidden z-30 shadow-2xl" style={{ minWidth:180 }}>
                   <button onClick={handleDirectRepost} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-sm border-b border-white/5" style={{ color: reposted ? '#2ECC71' : 'white' }}>
-                    <Repeat2 size={16} style={{ color: reposted ? '#2ECC71' : '#6B7280' }} />
-                    {reposted ? 'Undo Repost' : 'Repost'}
+                    <Repeat2 size={16} style={{ color: reposted ? '#2ECC71' : '#6B7280' }} />{reposted ? 'Undo Repost' : 'Repost'}
                   </button>
                   <button onClick={() => { setShowRepostMenu(false); setShowQuoteModal(true); }}
                     className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white text-sm">
@@ -712,21 +782,17 @@ export default function PostDetail() {
               </button>
             </div>
 
-            <button className="text-[#6B7280] hover:text-[#1E6FFF] px-2 py-2 rounded-full hover:bg-[#1E6FFF]/10 transition-all">
-              <BarChart2 size={20} />
-            </button>
+            <button className="text-[#6B7280] hover:text-[#1E6FFF] px-2 py-2 rounded-full hover:bg-[#1E6FFF]/10 transition-all"><BarChart2 size={20} /></button>
 
             <button onClick={handleSave} className={'px-2 py-2 rounded-full transition-all ' + (saved ? 'text-[#1E6FFF] hover:bg-[#1E6FFF]/10' : 'text-[#6B7280] hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10')}>
               <Bookmark size={20} fill={saved ? 'currentColor' : 'none'} />
             </button>
 
-            <button onClick={handleShare} className="text-[#6B7280] hover:text-[#1E6FFF] px-2 py-2 rounded-full hover:bg-[#1E6FFF]/10 transition-all">
-              <Share2 size={20} />
-            </button>
+            <button onClick={handleShare} className="text-[#6B7280] hover:text-[#1E6FFF] px-2 py-2 rounded-full hover:bg-[#1E6FFF]/10 transition-all"><Share2 size={20} /></button>
           </div>
         </div>
 
-        {/* ═══ COMMENTS ═══ */}
+        {/* Comments */}
         {comments.length === 0
           ? <div className="text-center py-12 px-6">
               <p className="text-3xl mb-2">💬</p>
@@ -735,20 +801,18 @@ export default function PostDetail() {
             </div>
           : comments.map(c => (
               <CommentRow
-                key={c.id}
-                c={c}
+                key={c.id} c={c}
                 postAuthorId={post.user_id}
                 currentUserId={user?.id}
                 onReply={handleReply}
                 onDelete={handleDeleteComment}
                 navigate={navigate}
-                onReactToComment={() => {}}
               />
             ))
         }
       </div>
 
-      {/* ═══ FIXED BOTTOM INPUT — single, with emoji picker ═══ */}
+      {/* ═══ FIXED BOTTOM INPUT — one only, with emoji picker ═══ */}
       <div style={{
         position:'fixed', bottom:0, left:'50%', transform:'translateX(-50%)',
         width:'100%', maxWidth:'620px', zIndex:40,
@@ -769,49 +833,37 @@ export default function PostDetail() {
           </div>
         )}
 
-        {/* Emoji picker — renders upward */}
+        {/* Emoji picker — opens upward, wrapped in error boundary */}
         {showEmoji && (
-          <div ref={emojiRef} style={{ position:'absolute', bottom:'100%', left:0, right:0, display:'flex', justifyContent:'flex-start', padding:'0 12px 8px' }}>
-            <EmojiPicker
-              onEmojiClick={(emojiData) => {
-                const el = inputRef.current;
-                if (el) {
-                  const start = el.selectionStart ?? commentText.length;
-                  const end   = el.selectionEnd   ?? commentText.length;
-                  const next  = commentText.slice(0, start) + emojiData.emoji + commentText.slice(end);
-                  setCommentText(next);
-                  setTimeout(() => {
-                    el.focus();
-                    el.setSelectionRange(start + emojiData.emoji.length, start + emojiData.emoji.length);
-                  }, 0);
-                } else {
-                  setCommentText(t => t + emojiData.emoji);
-                }
-              }}
-              theme="dark"
-              skinTonesDisabled
-              searchPlaceholder="Search emoji..."
-              width={300}
-              height={320}
-              previewConfig={{ showPreview: false }}
-            />
+          <div
+            ref={emojiWrapRef}
+            style={{ position:'absolute', bottom:'100%', left:12, zIndex:50 }}
+            onMouseDown={e => e.stopPropagation()}
+          >
+            <EmojiErrorBoundary>
+              <LazyEmojiPicker
+                onEmojiClick={insertEmoji}
+                theme="dark"
+                skinTonesDisabled
+                searchPlaceholder="Search emoji..."
+                width={300}
+                height={320}
+                previewConfig={{ showPreview: false }}
+              />
+            </EmojiErrorBoundary>
           </div>
         )}
 
         {/* Input row */}
         <div style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', paddingBottom:'max(12px, env(safe-area-inset-bottom))' }}>
-          {/* Avatar */}
           <div style={{ flexShrink:0 }}>
             <Avatar url={profile?.avatar_url} name={profile?.display_name} size={9} />
           </div>
-
-          {/* Input pill */}
           <div style={{
             flex:'1 1 auto', minWidth:0,
             background:'rgba(255,255,255,0.07)',
             border:'1px solid rgba(255,255,255,0.14)',
-            borderRadius:22,
-            padding:'9px 14px',
+            borderRadius:22, padding:'9px 14px',
             display:'flex', alignItems:'center', gap:8,
           }}>
             <input
@@ -825,25 +877,30 @@ export default function PostDetail() {
               placeholder={replyTo ? 'Reply to @' + replyTo.users?.username + '...' : 'Post your reply...'}
               style={{ flex:1, minWidth:0, background:'transparent', border:'none', outline:'none', color:'white', fontSize:15, fontFamily:'inherit' }}
             />
-            {/* Emoji toggle */}
+            {/* Emoji toggle button */}
             <button
-              onMouseDown={e => { e.preventDefault(); setShowEmoji(!showEmoji); }}
-              style={{ background:'none', border:'none', cursor:'pointer', flexShrink:0, padding:2 }}
+              type="button"
+              onMouseDown={e => {
+                e.preventDefault();   // keep input focus
+                e.stopPropagation();
+                setShowEmoji(prev => !prev);
+              }}
+              style={{ background:'none', border:'none', cursor:'pointer', flexShrink:0, padding:2, lineHeight:0 }}
             >
-              <SmilePlus size={18} style={{ color: showEmoji ? '#FFD700' : 'rgba(255,255,255,0.4)' }} />
+              <SmilePlus size={18} style={{ color: showEmoji ? '#FFD700' : 'rgba(255,255,255,0.4)', display:'block' }} />
             </button>
           </div>
 
-          {/* Send */}
+          {/* Send button */}
           <button
+            type="button"
             onClick={handleComment}
             disabled={submitting || !commentText.trim()}
             style={{
               width:38, height:38, borderRadius:'50%', flexShrink:0,
               background: (!submitting && commentText.trim()) ? '#1E6FFF' : 'rgba(30,111,255,0.35)',
-              border:'none', cursor:'pointer',
+              border:'none', cursor: commentText.trim() ? 'pointer' : 'default',
               display:'flex', alignItems:'center', justifyContent:'center',
-              boxShadow: (!submitting && commentText.trim()) ? '0 4px 12px rgba(30,111,255,0.35)' : 'none',
               transition:'all 0.2s',
             }}
           >
