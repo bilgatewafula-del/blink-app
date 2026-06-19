@@ -32,18 +32,13 @@ import News from './pages/news/News';
 import Help from './pages/help/Help';
 import About from './pages/about/About';
 import BLinkAI from './pages/ai/BLinkAI';
-import VibesFeed from './pages/vibes/VibesFeed';
-import UploadVibe from './pages/vibes/UploadVibe';
 import BottomNav from './components/BottomNav';
 
 const PageWrapper = ({ children }) => {
   const location = useLocation();
   useEffect(() => { window.scrollTo(0, 0); }, [location.pathname]);
   return (
-    <div
-      key={location.pathname}
-      style={{ animation: 'pageSlideIn 0.25s ease-out' }}
-    >
+    <div key={location.pathname} style={{ animation: 'pageSlideIn 0.2s ease-out' }}>
       {children}
     </div>
   );
@@ -54,9 +49,7 @@ const ProtectedRoute = ({ children }) => {
   if (loading) return (
     <div className="flex items-center justify-center h-screen bg-[#0A1628]">
       <div className="flex flex-col items-center gap-3">
-        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-2xl animate-pulse">
-          B
-        </div>
+        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-2xl animate-pulse">B</div>
         <p className="text-[#6B7280] text-sm">Loading B-Link...</p>
       </div>
     </div>
@@ -103,11 +96,8 @@ const AppRoutes = () => {
           <Route path="/help" element={<ProtectedRoute><PageWrapper><Help /></PageWrapper></ProtectedRoute>} />
           <Route path="/about" element={<ProtectedRoute><PageWrapper><About /></PageWrapper></ProtectedRoute>} />
           <Route path="/ai" element={<ProtectedRoute><BLinkAI /></ProtectedRoute>} />
-          <Route path="/vibes" element={<ProtectedRoute><VibesFeed /></ProtectedRoute>} />
-          <Route path="/vibes/upload" element={<ProtectedRoute><PageWrapper><UploadVibe /></PageWrapper></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
-
         {user && <BottomNav />}
       </div>
     </div>
