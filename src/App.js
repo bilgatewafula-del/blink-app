@@ -9,6 +9,7 @@ import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 import Home from './pages/feed/Home';
 import Discover from './pages/discover/Discover';
+import AdminPanel from './pages/admin/AdminPanel';
 import HashtagFeed from './pages/discover/HashtagFeed';
 import CreatePost from './pages/feed/CreatePost';
 import PostDetail from './pages/feed/PostDetail';
@@ -75,6 +76,7 @@ const AppRoutes = () => {
           <Route path="/discover" element={<ProtectedRoute><PageWrapper><Discover /></PageWrapper></ProtectedRoute>} />
           <Route path="/hashtag/:tag" element={<ProtectedRoute><PageWrapper><HashtagFeed /></PageWrapper></ProtectedRoute>} />
           <Route path="/create" element={<ProtectedRoute><PageWrapper><CreatePost /></PageWrapper></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
           <Route path="/post/:id" element={<ProtectedRoute><PageWrapper><PostDetail /></PageWrapper></ProtectedRoute>} />
           <Route path="/post/:id/edit" element={<ProtectedRoute><PageWrapper><EditPost /></PageWrapper></ProtectedRoute>} />
           <Route path="/chats" element={<ProtectedRoute><PageWrapper><ChatList /></PageWrapper></ProtectedRoute>} />
