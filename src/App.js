@@ -1,119 +1,112 @@
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { useEffect } from 'react';
-
-import Login from './pages/auth/Login';
-import Signup from './pages/auth/Signup';
-import OTPVerify from './pages/auth/OTPVerify';
-import ForgotPassword from './pages/auth/ForgotPassword';
-import ResetPassword from './pages/auth/ResetPassword';
-import Home from './pages/feed/Home';
-import Discover from './pages/discover/Discover';
-import AdminPanel from './pages/admin/AdminPanel';
-import HashtagFeed from './pages/discover/HashtagFeed';
-import CreatePost from './pages/feed/CreatePost';
-import PostDetail from './pages/feed/PostDetail';
-import EditPost from './pages/feed/EditPost';
-import ChatList from './pages/chat/ChatList';
-import ChatRoom from './pages/chat/ChatRoom';
-import Profile from './pages/profile/Profile';
-import EditProfile from './pages/profile/EditProfile';
-import OtherProfile from './pages/profile/OtherProfile';
-import Notifications from './pages/notifications/Notifications';
-import Settings from './pages/settings/Settings';
-import AccountSettings from './pages/settings/AccountSettings';
-import PrivacySettings from './pages/settings/PrivacySettings';
-import SecuritySettings from './pages/settings/SecuritySettings';
-import NotificationSettings from './pages/settings/NotificationSettings';
-import AppearanceSettings from './pages/settings/AppearanceSettings';
-import BusinessCenter from './pages/settings/BusinessCenter';
-import WalletPage from './pages/wallet/Wallet';
-import Verification from './pages/verification/Verification';
-import News from './pages/news/News';
-import Help from './pages/help/Help';
-import About from './pages/about/About';
-import BLinkAI from './pages/ai/BLinkAI';
+import SplashScreen from './components/SplashScreen';
 import BottomNav from './components/BottomNav';
 
-const PageWrapper = ({ children }) => {
-  const location = useLocation();
-  useEffect(() => { window.scrollTo(0, 0); }, [location.pathname]);
+/* ── Lazy-loaded pages (code splitting for speed) ── */
+const LandingPage   = lazy(() => import('./pages/auth/LandingPage'));
+const Login         = lazy(() => import('./pages/auth/Login'));
+const SignUp = lazy(() => import('./pages/auth/Signup'));
+const Home          = lazy(() => import('./pages/feed/Home'));
+const Discover      = lazy(() => import('./pages/discover/Discover'));
+const Notifications = lazy(() => import('./pages/notifications/Notifications'));
+const Profile       = lazy(() => import('./pages/profile/Profile'));
+const EditProfile   = lazy(() => import('./pages/profile/EditProfile'));
+const PostDetail    = lazy(() => import('./pages/feed/PostDetail'));
+const CreatePost    = lazy(() => import('./pages/feed/CreatePost'));
+const AdminPanel    = lazy(() => import('./pages/admin/AdminPanel'));
+const Chats = lazy(() => import('./pages/chat/ChatList'));
+const ChatDetail = lazy(() => import('./pages/chat/ChatRoom'));
+
+/* ── Page spinner (shown while lazy chunk loads) ── */
+function PageSpinner() {
   return (
-    <div key={location.pathname} style={{ animation: 'pageSlideIn 0.2s ease-out' }}>
-      {children}
+    <div className="min-h-screen bg-[#0A1628] flex items-center justify-center">
+      <div className="w-7 h-7 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" />
     </div>
   );
-};
+}
 
-const ProtectedRoute = ({ children }) => {
+/* ── Protected route ── */
+function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
-  if (loading) return (
-    <div className="flex items-center justify-center h-screen bg-[#0A1628]">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-2xl animate-pulse">B</div>
-        <p className="text-[#6B7280] text-sm">Loading B-Link...</p>
-      </div>
-    </div>
-  );
-  return user ? children : <Navigate to="/login" />;
-};
+  if (loading) return <PageSpinner />;
+  if (!user)   return <Navigate to="/welcome" replace />;
+  return children;
+}
 
-const AppRoutes = () => {
-  const { user } = useAuth();
+/* ── Public route (redirect away if logged in) ── */
+function PublicRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <PageSpinner />;
+  if (user)    return <Navigate to="/" replace />;
+  return children;
+}
+
+/* ── Bottom nav visibility ── */
+const NAV_ROUTES = ['/', '/discover', '/notifications', '/chats', '/profile'];
+
+function AppShell() {
+  const { user, loading }     = useAuth();
+  const location              = useLocation();
+  const [showSplash, setShowSplash] = useState(() => {
+    // Only show splash on first load per session
+    const shown = sessionStorage.getItem('blink_splash');
+    if (shown) return false;
+    sessionStorage.setItem('blink_splash', '1');
+    return true;
+  });
+
+  useEffect(() => {
+    if (showSplash) {
+      const t = setTimeout(() => setShowSplash(false), 1700);
+      return () => clearTimeout(t);
+    }
+  }, [showSplash]);
+
+  const showNav = user && NAV_ROUTES.some(r => location.pathname === r || location.pathname.startsWith('/profile/'));
+
   return (
-    <div className="min-h-screen bg-[#0A1628] flex justify-center">
-      <div className="w-full max-w-[620px] min-h-screen relative bg-[#0A1628]">
+    <>
+      {showSplash && <SplashScreen />}
+
+      <Suspense fallback={<PageSpinner />}>
         <Routes>
-          {/* Auth */}
-          <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
-          <Route path="/signup" element={!user ? <Signup /> : <Navigate to="/" />} />
-          <Route path="/verify-otp" element={<OTPVerify />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+          {/* Public */}
+          <Route path="/welcome"       element={<PublicRoute><LandingPage /></PublicRoute>} />
+          <Route path="/login"         element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/signup"        element={<PublicRoute><SignUp /></PublicRoute>} />
 
-          {/* Main */}
-          <Route path="/" element={<ProtectedRoute><PageWrapper><Home /></PageWrapper></ProtectedRoute>} />
-          <Route path="/discover" element={<ProtectedRoute><PageWrapper><Discover /></PageWrapper></ProtectedRoute>} />
-          <Route path="/hashtag/:tag" element={<ProtectedRoute><PageWrapper><HashtagFeed /></PageWrapper></ProtectedRoute>} />
-          <Route path="/create" element={<ProtectedRoute><PageWrapper><CreatePost /></PageWrapper></ProtectedRoute>} />
-          <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
-          <Route path="/post/:id" element={<ProtectedRoute><PageWrapper><PostDetail /></PageWrapper></ProtectedRoute>} />
-          <Route path="/post/:id/edit" element={<ProtectedRoute><PageWrapper><EditPost /></PageWrapper></ProtectedRoute>} />
-          <Route path="/chats" element={<ProtectedRoute><PageWrapper><ChatList /></PageWrapper></ProtectedRoute>} />
-          <Route path="/chats/:id" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><PageWrapper><Profile /></PageWrapper></ProtectedRoute>} />
-          <Route path="/profile/edit" element={<ProtectedRoute><PageWrapper><EditProfile /></PageWrapper></ProtectedRoute>} />
-          <Route path="/profile/:username" element={<ProtectedRoute><PageWrapper><OtherProfile /></PageWrapper></ProtectedRoute>} />
-          <Route path="/notifications" element={<ProtectedRoute><PageWrapper><Notifications /></PageWrapper></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><PageWrapper><Settings /></PageWrapper></ProtectedRoute>} />
-          <Route path="/settings/account" element={<ProtectedRoute><PageWrapper><AccountSettings /></PageWrapper></ProtectedRoute>} />
-          <Route path="/settings/privacy" element={<ProtectedRoute><PageWrapper><PrivacySettings /></PageWrapper></ProtectedRoute>} />
-          <Route path="/settings/security" element={<ProtectedRoute><PageWrapper><SecuritySettings /></PageWrapper></ProtectedRoute>} />
-          <Route path="/settings/notifications" element={<ProtectedRoute><PageWrapper><NotificationSettings /></PageWrapper></ProtectedRoute>} />
-          <Route path="/settings/appearance" element={<ProtectedRoute><PageWrapper><AppearanceSettings /></PageWrapper></ProtectedRoute>} />
-          <Route path="/business" element={<ProtectedRoute><PageWrapper><BusinessCenter /></PageWrapper></ProtectedRoute>} />
-          <Route path="/wallet" element={<ProtectedRoute><PageWrapper><WalletPage /></PageWrapper></ProtectedRoute>} />
-          <Route path="/verification" element={<ProtectedRoute><PageWrapper><Verification /></PageWrapper></ProtectedRoute>} />
-          <Route path="/news" element={<ProtectedRoute><PageWrapper><News /></PageWrapper></ProtectedRoute>} />
-          <Route path="/help" element={<ProtectedRoute><PageWrapper><Help /></PageWrapper></ProtectedRoute>} />
-          <Route path="/about" element={<ProtectedRoute><PageWrapper><About /></PageWrapper></ProtectedRoute>} />
-          <Route path="/ai" element={<ProtectedRoute><BLinkAI /></ProtectedRoute>} />
-          <Route path="*" element={<Navigate to="/" />} />
+          {/* Protected */}
+          <Route path="/"              element={<ProtectedRoute><Home /></ProtectedRoute>} />
+          <Route path="/discover"      element={<ProtectedRoute><Discover /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+          <Route path="/chats"         element={<ProtectedRoute><Chats /></ProtectedRoute>} />
+          <Route path="/chats/:id"     element={<ProtectedRoute><ChatDetail /></ProtectedRoute>} />
+          <Route path="/post/:id"      element={<ProtectedRoute><PostDetail /></ProtectedRoute>} />
+          <Route path="/create"        element={<ProtectedRoute><CreatePost /></ProtectedRoute>} />
+          <Route path="/profile"       element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/profile/:username" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/edit-profile"  element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+          <Route path="/admin"         element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to={user ? '/' : '/welcome'} replace />} />
         </Routes>
-        {user && <BottomNav />}
-      </div>
-    </div>
-  );
-};
+      </Suspense>
 
-function App() {
+      {showNav && <BottomNav />}
+    </>
+  );
+}
+
+export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppRoutes />
+        <AppShell />
       </AuthProvider>
     </BrowserRouter>
   );
 }
-
-export default App;

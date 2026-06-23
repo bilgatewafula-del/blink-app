@@ -1,94 +1,88 @@
-import { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
-const AuthContext = createContext({});
+const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
+/* ── Cache profile in memory across renders ── */
+let _profileCache = null;
+
+export function AuthProvider({ children }) {
+  const [user,    setUser]    = useState(null);
+  const [profile, setProfile] = useState(_profileCache);
   const [loading, setLoading] = useState(true);
 
+  /* Fetch profile — cached so it never refetches unless user changes */
+  const fetchProfile = useCallback(async (uid) => {
+    if (!uid) { setProfile(null); _profileCache = null; return; }
+
+    // Return cached immediately then revalidate
+    if (_profileCache?.id === uid) {
+      setProfile(_profileCache);
+    }
+
+    const { data } = await supabase
+      .from('users')
+      .select('id,username,display_name,avatar_url,bio,country,is_verified,role,is_banned,is_restricted,suspended_until,followers_count,posts_count')
+      .eq('id', uid)
+      .maybeSingle();
+
+    if (data) {
+      _profileCache = data;
+      setProfile(data);
+    }
+  }, []);
+
   useEffect(() => {
+    /* Check existing session first (avoids loading flicker) */
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user.id);
+      const u = session?.user ?? null;
+      setUser(u);
+      if (u) fetchProfile(u.id);
       else setLoading(false);
     });
 
+    /* Listen for auth changes */
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        // Avoid redundant re-renders if user id hasn't actually changed
-        setUser((prev) => {
-          const newId = session?.user?.id ?? null;
-          const prevId = prev?.id ?? null;
-          if (newId === prevId) return prev; // no-op, prevents re-render
-          return session?.user ?? null;
-        });
+      async (event, session) => {
+        const u = session?.user ?? null;
+        setUser(u);
 
-        if (session?.user) {
-          fetchProfile(session.user.id);
+        if (u) {
+          await fetchProfile(u.id);
         } else {
+          _profileCache = null;
           setProfile(null);
-          setLoading(false);
         }
+        setLoading(false);
       }
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [fetchProfile]);
 
-  const fetchProfile = useCallback(async (userId) => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      if (error) { console.warn('Profile fetch error:', error.message); setProfile(null); }
-      else setProfile(data);
-    } catch (err) {
-      console.warn('fetchProfile failed:', err);
-      setProfile(null);
-    } finally {
-      setLoading(false);
+  /* Expose a refresh function for EditProfile etc */
+  const refreshProfile = useCallback(() => {
+    if (user?.id) {
+      _profileCache = null;
+      fetchProfile(user.id);
     }
-  }, []);
-
-  // Real-time profile updates (follower count etc)
-  useEffect(() => {
-    if (!user) return;
-    const channel = supabase
-      .channel('profile:' + user.id)
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'users',
-        filter: 'id=eq.' + user.id,
-      }, (payload) => {
-        setProfile(payload.new);
-      })
-      .subscribe();
-    return () => supabase.removeChannel(channel);
-  }, [user]);
+  }, [user?.id, fetchProfile]);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
-    setUser(null);
+    _profileCache = null;
     setProfile(null);
+    await supabase.auth.signOut();
   }, []);
 
-  // ── KEY FIX: memoize the context value ──
-  // Only creates a new object when user, profile, or loading actually change
-  const value = useMemo(
-    () => ({ user, profile, loading, signOut, fetchProfile }),
-    [user, profile, loading, signOut, fetchProfile]
-  );
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, profile, loading, refreshProfile, signOut }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
+  return ctx;
+}
