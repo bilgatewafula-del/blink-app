@@ -8,8 +8,7 @@ import {
   BarChart2,
   Settings,
   Edit3,
-  Plus,
-  Film
+  Plus
 } from 'lucide-react';
 import { ProfileSkeleton } from '../../components/Skeleton';
 import { StoryCreator, StoryViewer } from '../../components/Stories';
@@ -28,8 +27,6 @@ const Profile = () => {
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [savedPosts, setSavedPosts] = useState([]);
-  const [vibes, setVibes] = useState([]);
-const [vibesLoading, setVibesLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('posts');
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -49,11 +46,6 @@ const [vibesLoading, setVibesLoading] = useState(false);
     }
   }, [user]);
 
-  useEffect(() => {
-  if (activeTab === 'vibes') {
-    fetchVibes();
-  }
-}, [activeTab]);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -114,29 +106,6 @@ const [vibesLoading, setVibesLoading] = useState(false);
     setSavedPosts(data || []);
   };
 
-  const fetchVibes = async () => {
-  setVibesLoading(true);
-
-  const { data } = await supabase
-    .from('vibes')
-    .select(`
-      id,
-      thumbnail_url,
-      video_url,
-      fires_count,
-      comments_count,
-      views_count,
-      caption,
-      created_at
-    `)
-    .eq('user_id', profile?.id || user.id)
-    .gt('expires_at', new Date().toISOString())
-    .order('created_at', { ascending: false })
-    .limit(30);
-
-  setVibes(data || []);
-  setVibesLoading(false);
-};
 
   const fetchMyStories = async () => {
     const { data } = await supabase
@@ -242,6 +211,21 @@ const [vibesLoading, setVibesLoading] = useState(false);
     🔗 {profile.website.replace('https://', '')}
   </a>
 )}
+<div className="flex gap-3 mb-4">
+  <button
+    onClick={() => navigate('/subscription')}
+    className="flex-1 bg-gradient-to-r from-[#FFD700] to-[#FFB800] text-[#0A1628] font-bold px-4 py-3 rounded-xl"
+  >
+    ⭐ Upgrade Plan
+  </button>
+
+  <button
+    onClick={() => navigate('/coins')}
+    className="flex-1 bg-gradient-to-r from-[#1E6FFF] to-[#7B2FFF] text-white font-bold px-4 py-3 rounded-xl"
+  >
+    🪙 Buy Coins
+  </button>
+</div>
         {/* Story status */}
         {myStories.length > 0 && (
           <button
@@ -282,7 +266,6 @@ const [vibesLoading, setVibesLoading] = useState(false);
       <div className="flex border-b border-white/5 sticky top-14 bg-[#0A1628] z-20">
         {[
   { key: 'posts', icon: Grid, label: 'Posts' },
-  { key: 'vibes', icon: Film, label: 'Vibes' },
   { key: 'saved', icon: Bookmark, label: 'Saved' },
   { key: 'analytics', icon: BarChart2, label: 'Analytics' },
 ].map(({ key, icon: Icon, label }) => (
@@ -356,71 +339,6 @@ const [vibesLoading, setVibesLoading] = useState(false);
                 </div>
               ))}
             </div>
-
-            {activeTab === 'vibes' && (
-  <div className="p-0.5">
-    {vibesLoading ? (
-      <div className="flex justify-center py-12">
-        <div className="w-7 h-7 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
-      </div>
-    ) : vibes.length === 0 ? (
-      <div className="flex flex-col items-center justify-center py-16 gap-3 px-6">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#FFD700] flex items-center justify-center">
-          <Film size={28} className="text-white" />
-        </div>
-
-        <p className="text-white font-bold text-lg">
-          No Vibes yet
-        </p>
-
-        <p className="text-[#6B7280] text-sm text-center">
-          Vibes disappear after 7 days.
-        </p>
-
-        <button
-          onClick={() => navigate('/vibes/upload')}
-          className="bg-gradient-to-r from-[#FF6B35] to-[#FFD700] text-white font-bold px-6 py-3 rounded-full text-sm"
-        >
-          🔥 Upload First Vibe
-        </button>
-      </div>
-    ) : (
-      <div className="grid grid-cols-3 gap-0.5">
-        {vibes.map((vibe) => (
-          <button
-            key={vibe.id}
-            onClick={() => navigate('/vibes')}
-            className="aspect-[9/16] relative overflow-hidden bg-[#111827] group"
-          >
-            {vibe.thumbnail_url ? (
-              <img
-                src={vibe.thumbnail_url}
-                alt=""
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-[#FF6B35]/20 to-[#FFD700]/20 flex items-center justify-center">
-                <Film size={24} className="text-[#FF6B35]" />
-              </div>
-            )}
-
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1.5">
-              <div className="flex items-center gap-2">
-                <span className="text-white text-[10px]">
-                  🔥 {formatNumber(vibe.fires_count || 0)}
-                </span>
-
-                <span className="text-white text-[10px]">
-                  👁 {formatNumber(vibe.views_count || 0)}
-                </span>
-              </div>
-            </div>
-          </button>
-        ))}
-      </div>
-    )}
-  </div>
-)}
 
             {/* Infinite scroll trigger */}
             <div ref={loadMoreRef} className="flex justify-center py-4">

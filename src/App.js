@@ -5,7 +5,7 @@ import BottomNav from './components/BottomNav';
 
 /* ── Lazy pages ── */
 const Login         = lazy(() => import('./pages/auth/Login'));
-const SignUp        = lazy(() => import('./pages/auth/Signup'));
+const SignUp     = lazy(() => import('./pages/auth/Signup'));
 const Home          = lazy(() => import('./pages/feed/Home'));
 const Discover      = lazy(() => import('./pages/discover/Discover'));
 const Notifications = lazy(() => import('./pages/notifications/Notifications'));
@@ -13,9 +13,12 @@ const Profile       = lazy(() => import('./pages/profile/Profile'));
 const EditProfile   = lazy(() => import('./pages/profile/EditProfile'));
 const PostDetail    = lazy(() => import('./pages/feed/PostDetail'));
 const CreatePost    = lazy(() => import('./pages/feed/CreatePost'));
-const AdminPanel    = lazy(() => import('./pages/admin/AdminPanel'));
-const Chats         = lazy(() => import('./pages/chat/ChatList'));
-const ChatDetail    = lazy(() => import('./pages/chat/ChatRoom'));
+const AdminPanel          = lazy(() => import('./pages/admin/AdminPanel'));
+const PaymentsAdminPanel = lazy(() => import('./pages/admin/PaymentsAdminPanel'));
+const SubscriptionPage   = lazy(() => import('./pages/monetisation/SubscriptionPage'));
+const CoinsPage          = lazy(() => import('./pages/monetisation/CoinsPage'));
+const Chats      = lazy(() => import('./pages/chat/ChatList'));
+const ChatDetail = lazy(() => import('./pages/chat/ChatRoom'));
 
 /* ── Minimal inline splash — no extra file needed ── */
 function Splash() {
@@ -108,6 +111,9 @@ function AppShell() {
           <Route path="/profile/:username" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/edit-profile"  element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
           <Route path="/admin"         element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
+          <Route path="/admin/payments" element={<ProtectedRoute><PaymentsAdminPanel /></ProtectedRoute>} />
+          <Route path="/subscription"  element={<ProtectedRoute><SubscriptionPage /></ProtectedRoute>} />
+          <Route path="/coins"         element={<ProtectedRoute><CoinsPage /></ProtectedRoute>} />
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to={user ? '/' : '/login'} replace />} />
