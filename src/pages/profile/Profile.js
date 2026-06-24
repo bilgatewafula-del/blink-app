@@ -520,13 +520,19 @@ const [vibesLoading, setVibesLoading] = useState(false);
       )}
 
       {/* Story viewer */}
-      {viewingStory && myStories.length > 0 && (
-        <StoryViewer
-          stories={[{ user: profile, stories: myStories }]}
-          initialIndex={0}
-          onClose={() => { setViewingStory(false); fetchMyStories(); }}
-        />
-      )}
+     {viewingStory && myStories.length > 0 && (
+  <StoryViewer
+    stories={myStories.map(story => ({
+      ...story,
+      users: profile
+    }))}
+    startIndex={0}
+    onClose={() => {
+      setViewingStory(false);
+      fetchMyStories();
+    }}
+  />
+)}
     </div>
   );
 };

@@ -376,6 +376,25 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
             </button>
           )}
 
+          {/* Delete (owner only) */}
+          {isOwner && (
+            <button
+              onClick={async () => {
+                if (!window.confirm('Delete this status?')) return;
+                await supabase.from('stories').delete().eq('id', story.id);
+                if (stories.length <= 1) onClose();
+                else goNext();
+              }}
+              style={{
+                background:'rgba(239,68,68,0.25)', border:'1px solid rgba(239,68,68,0.4)',
+                borderRadius:8, padding:'4px 10px', cursor:'pointer',
+                color:'#EF4444', fontSize:11, fontWeight:700,
+              }}
+            >
+              🗑️ Delete
+            </button>
+          )}
+
           {/* Close */}
           <button
             onClick={onClose}
@@ -535,31 +554,50 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
         </div>
       )}
 
-      {/* ── BOTTOM — Reply / React bar ── */}
+      {/* ── BOTTOM — Reply / React bar — constrained, no overflow ── */}
       {!showReactions && !showViewers && (
-        <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-8 pt-3"
-          style={{ background:'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)' }}>
-
+        <div
+          style={{
+            position:'absolute', bottom:0, left:0, right:0, zIndex:20,
+            background:'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)',
+            paddingLeft:12, paddingRight:12,
+            paddingBottom:'max(24px, env(safe-area-inset-bottom))',
+            paddingTop:16,
+            boxSizing:'border-box',
+            width:'100%',
+            maxWidth:'100vw',
+            overflow:'hidden',
+          }}
+        >
           {!isOwner ? (
-            /* ── Reply input (non-owner) ── */
-            <div className="flex items-center gap-2">
-              {/* Quick reaction bubbles */}
-              <div className="flex gap-1.5 flex-shrink-0">
+            /* ── Reply input (non-owner) — fully constrained ── */
+            <div style={{ display:'flex', alignItems:'center', gap:8, width:'100%', minWidth:0 }}>
+              {/* Quick reactions */}
+              <div style={{ display:'flex', gap:6, flexShrink:0 }}>
                 {['❤️','😂','🔥','😮'].map(emoji => (
                   <button
                     key={emoji}
                     onClick={() => sendReaction(emoji)}
-                    className={`w-9 h-9 rounded-full flex items-center justify-center text-lg transition-all active:scale-90 ${
-                      myReaction === emoji ? 'bg-white/40 scale-110' : 'bg-white/15 hover:bg-white/25'
-                    }`}
-                  >
-                    {emoji}
-                  </button>
+                    style={{
+                      width:36, height:36, borderRadius:'50%',
+                      background: myReaction === emoji ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.15)',
+                      border:'none', cursor:'pointer', fontSize:18,
+                      display:'flex', alignItems:'center', justifyContent:'center',
+                      flexShrink:0, transform: myReaction === emoji ? 'scale(1.15)' : 'scale(1)',
+                      transition:'transform 0.15s',
+                    }}
+                  >{emoji}</button>
                 ))}
               </div>
 
-              {/* Text reply */}
-              <div className="flex-1 flex items-center gap-2 bg-white/15 border border-white/25 rounded-full px-4 py-2.5">
+              {/* Text input — flex-1 with min-width:0 to prevent overflow */}
+              <div style={{
+                flex:'1 1 0', minWidth:0,
+                display:'flex', alignItems:'center', gap:6,
+                background:'rgba(255,255,255,0.15)',
+                border:'1px solid rgba(255,255,255,0.25)',
+                borderRadius:24, paddingLeft:14, paddingRight:8, paddingTop:8, paddingBottom:8,
+              }}>
                 <input
                   ref={replyInputRef}
                   type="text"
@@ -569,41 +607,60 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
                   onBlur={handleReplyBlur}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); sendReply(); } }}
                   placeholder="Reply to status..."
-                  className="flex-1 bg-transparent text-white text-sm placeholder-white/60 focus:outline-none min-w-0"
+                  style={{
+                    flex:'1 1 0', minWidth:0,
+                    background:'transparent', border:'none', outline:'none',
+                    color:'white', fontSize:14, fontFamily:'inherit',
+                    width:'100%',
+                  }}
                 />
                 {replyText.trim() && (
                   <button
                     onClick={sendReply}
                     disabled={sending}
-                    className="flex-shrink-0 w-7 h-7 bg-[#1E6FFF] rounded-full flex items-center justify-center"
+                    style={{
+                      width:30, height:30, borderRadius:'50%', flexShrink:0,
+                      background:'#1E6FFF', border:'none', cursor:'pointer',
+                      display:'flex', alignItems:'center', justifyContent:'center',
+                    }}
                   >
                     {sending
-                      ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      : <Send size={13} color="white" style={{ marginLeft:1 }} />
+                      ? <div style={{ width:12, height:12, border:'2px solid rgba(255,255,255,0.3)', borderTopColor:'white', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
+                      : <Send size={12} color="white" style={{ marginLeft:1 }} />
                     }
                   </button>
                 )}
               </div>
 
-              {/* More reactions */}
+              {/* More reactions button */}
               <button
                 onClick={() => { pauseStory(); setShowReactions(true); }}
-                className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-lg flex-shrink-0"
+                style={{
+                  width:36, height:36, borderRadius:'50%', flexShrink:0,
+                  background:'rgba(255,255,255,0.15)', border:'none', cursor:'pointer',
+                  fontSize:18, display:'flex', alignItems:'center', justifyContent:'center',
+                }}
               >
                 {myReaction || '😊'}
               </button>
             </div>
           ) : (
-            /* ── Owner: show view count + double tap hint ── */
-            <div className="flex items-center justify-center gap-3">
+            /* ── Owner: view count + hint ── */
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:12 }}>
               <button
                 onClick={() => { pauseStory(); setShowViewers(true); }}
-                className="flex items-center gap-2 bg-white/15 border border-white/25 rounded-full px-4 py-2"
+                style={{
+                  display:'flex', alignItems:'center', gap:8,
+                  background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.25)',
+                  borderRadius:24, padding:'8px 16px', cursor:'pointer',
+                }}
               >
                 <Eye size={15} color="white" />
-                <span className="text-white text-sm font-semibold">{formatNumber(viewCount)} view{viewCount !== 1 ? 's':''}</span>
+                <span style={{ color:'white', fontSize:14, fontWeight:600 }}>
+                  {formatNumber(viewCount)} view{viewCount !== 1 ? 's':''}
+                </span>
               </button>
-              <span className="text-white/50 text-xs">Double tap to react</span>
+              <span style={{ color:'rgba(255,255,255,0.45)', fontSize:12 }}>Double tap to react</span>
             </div>
           )}
         </div>
@@ -631,8 +688,8 @@ function StoryRing({ storyGroup, onPress, isOwn, hasUnviewed }) {
         <div className="w-full h-full rounded-full overflow-hidden bg-[#0A1628] p-[2px]">
           {isOwn && !storyGroup.stories?.length ? (
             /* Add story button */
-            <div className="w-full h-full rounded-full bg-white/10 flex items-center justify-center">
-              <Plus size={22} className="text-[#1E6FFF]" />
+            <div className="w-full h-full rounded-full bg-[#1E6FFF]/20 flex items-center justify-center border-2 border-dashed border-[#1E6FFF]/60">
+              <Plus size={20} className="text-[#1E6FFF]" />
             </div>
           ) : u?.avatar_url ? (
             <img src={u.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
@@ -909,12 +966,12 @@ export default function Stories() {
       )}
 
       {/* Create story sheet */}
-      {createOpen && (
-        <StoryCreator
-  onClose={() => setCreateOpen(false)}
-  onCreated={() => { fetchStories(); setCreateOpen(false); }}
-/>
-      )}
+     {createOpen && (
+  <StoryCreator
+    onClose={() => setCreateOpen(false)}
+    onCreated={() => { fetchStories(); setCreateOpen(false); }}
+  />
+)}
     </>
   );
 }

@@ -1,13 +1,11 @@
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import SplashScreen from './components/SplashScreen';
 import BottomNav from './components/BottomNav';
 
-/* ── Lazy-loaded pages (code splitting for speed) ── */
-const LandingPage   = lazy(() => import('./pages/auth/LandingPage'));
+/* ── Lazy pages ── */
 const Login         = lazy(() => import('./pages/auth/Login'));
-const SignUp = lazy(() => import('./pages/auth/Signup'));
+const SignUp        = lazy(() => import('./pages/auth/Signup'));
 const Home          = lazy(() => import('./pages/feed/Home'));
 const Discover      = lazy(() => import('./pages/discover/Discover'));
 const Notifications = lazy(() => import('./pages/notifications/Notifications'));
@@ -16,69 +14,89 @@ const EditProfile   = lazy(() => import('./pages/profile/EditProfile'));
 const PostDetail    = lazy(() => import('./pages/feed/PostDetail'));
 const CreatePost    = lazy(() => import('./pages/feed/CreatePost'));
 const AdminPanel    = lazy(() => import('./pages/admin/AdminPanel'));
-const Chats = lazy(() => import('./pages/chat/ChatList'));
-const ChatDetail = lazy(() => import('./pages/chat/ChatRoom'));
+const Chats         = lazy(() => import('./pages/chat/ChatList'));
+const ChatDetail    = lazy(() => import('./pages/chat/ChatRoom'));
 
-/* ── Page spinner (shown while lazy chunk loads) ── */
-function PageSpinner() {
+/* ── Minimal inline splash — no extra file needed ── */
+function Splash() {
   return (
-    <div className="min-h-screen bg-[#0A1628] flex items-center justify-center">
-      <div className="w-7 h-7 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" />
+    <div className="fixed inset-0 bg-[#0A1628] flex flex-col items-center justify-center z-50">
+      <div className="w-20 h-20 rounded-[24px] bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center shadow-2xl shadow-[#1E6FFF]/40 mb-4"
+        style={{ animation: 'splashIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both' }}>
+        <span className="text-white font-black text-3xl">B</span>
+      </div>
+      <p className="text-white font-black text-2xl tracking-tight"
+        style={{ animation: 'fadeInUp 0.3s ease 0.15s both' }}>B-Link</p>
+      <p className="text-white/40 text-xs mt-1"
+        style={{ animation: 'fadeInUp 0.3s ease 0.25s both' }}>Africa's GenZ Platform</p>
+      <div className="w-5 h-5 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin mt-8" />
+      <style>{`
+        @keyframes splashIn { from{opacity:0;transform:scale(0.5)} to{opacity:1;transform:scale(1)} }
+        @keyframes fadeInUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+      `}</style>
     </div>
   );
 }
 
-/* ── Protected route ── */
+/* ── Page loader (between lazy chunks) ── */
+function PageLoader() {
+  return (
+    <div className="min-h-screen bg-[#0A1628] flex items-center justify-center">
+      <div className="w-6 h-6 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
+
+/* ── Route guards ── */
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
-  if (loading) return <PageSpinner />;
-  if (!user)   return <Navigate to="/welcome" replace />;
+  if (loading) return <PageLoader />;
+  if (!user)   return <Navigate to="/login" replace />;
   return children;
 }
 
-/* ── Public route (redirect away if logged in) ── */
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
-  if (loading) return <PageSpinner />;
+  if (loading) return <PageLoader />;
   if (user)    return <Navigate to="/" replace />;
   return children;
 }
 
-/* ── Bottom nav visibility ── */
-const NAV_ROUTES = ['/', '/discover', '/notifications', '/chats', '/profile'];
+/* ── Nav visibility ── */
+const NAV_PATHS = ['/', '/discover', '/notifications', '/chats', '/profile'];
 
 function AppShell() {
   const { user, loading }     = useAuth();
   const location              = useLocation();
-  const [showSplash, setShowSplash] = useState(() => {
-    // Only show splash on first load per session
-    const shown = sessionStorage.getItem('blink_splash');
-    if (shown) return false;
-    sessionStorage.setItem('blink_splash', '1');
-    return true;
-  });
+  const [splashDone, setSplashDone] = useState(() => !!sessionStorage.getItem('blink_started'));
 
   useEffect(() => {
-    if (showSplash) {
-      const t = setTimeout(() => setShowSplash(false), 1700);
+    if (!splashDone) {
+      const t = setTimeout(() => {
+        setSplashDone(true);
+        sessionStorage.setItem('blink_started', '1');
+      }, 1500);
       return () => clearTimeout(t);
     }
-  }, [showSplash]);
+  }, [splashDone]);
 
-  const showNav = user && NAV_ROUTES.some(r => location.pathname === r || location.pathname.startsWith('/profile/'));
+  // Show splash only on very first load, and only while auth is resolving
+  if (!splashDone && loading) return <Splash />;
+
+  const showNav = !!user && (
+    NAV_PATHS.includes(location.pathname) ||
+    location.pathname.startsWith('/profile/')
+  );
 
   return (
     <>
-      {showSplash && <SplashScreen />}
-
-      <Suspense fallback={<PageSpinner />}>
+      <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* Public */}
-          <Route path="/welcome"       element={<PublicRoute><LandingPage /></PublicRoute>} />
-          <Route path="/login"         element={<PublicRoute><Login /></PublicRoute>} />
-          <Route path="/signup"        element={<PublicRoute><SignUp /></PublicRoute>} />
+          {/* Auth */}
+          <Route path="/login"  element={<PublicRoute><Login  /></PublicRoute>} />
+          <Route path="/signup" element={<PublicRoute><SignUp /></PublicRoute>} />
 
-          {/* Protected */}
+          {/* App */}
           <Route path="/"              element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/discover"      element={<ProtectedRoute><Discover /></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
@@ -91,11 +109,10 @@ function AppShell() {
           <Route path="/edit-profile"  element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
           <Route path="/admin"         element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to={user ? '/' : '/welcome'} replace />} />
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to={user ? '/' : '/login'} replace />} />
         </Routes>
       </Suspense>
-
       {showNav && <BottomNav />}
     </>
   );

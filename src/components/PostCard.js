@@ -12,6 +12,7 @@ import {
   Play, Quote, X,
 } from 'lucide-react';
 import Avatar from './Avatar';
+import ImageViewer from './ImageViewer';
 
 const flagMap = {
   KE:'🇰🇪',NG:'🇳🇬',GH:'🇬🇭',UG:'🇺🇬',
@@ -42,15 +43,15 @@ function RichCaption({ text, onHashtag, onMention }) {
   );
 }
 
-function MediaGrid({ images }) {
+function MediaGrid({ images, onImageClick }) {
   if (!images?.length) return null;
   const n = images.length;
   return (
     <div className="mb-2 overflow-hidden rounded-2xl border border-white/10">
-      {n === 1 && <img src={images[0]} alt="" className="w-full object-cover" style={{ maxHeight:420 }} loading="lazy" />}
+      {n === 1 && <img src={images[0]} alt="" className="w-full object-cover cursor-pointer" style={{ maxHeight:420 }} loading="lazy" onClick={e => { e.stopPropagation(); onImageClick?.(0); }} />}
       {n === 2 && (
         <div className="grid grid-cols-2 gap-[2px]">
-          {images.map((img,i) => <img key={i} src={img} alt="" className="w-full object-cover" style={{ aspectRatio:'1/1' }} loading="lazy" />)}
+          {images.map((img,i) => <img key={i} src={img} alt="" className="w-full object-cover cursor-pointer" style={{ aspectRatio:'1/1' }} loading="lazy" onClick={e => { e.stopPropagation(); onImageClick?.(i); }} />)}
         </div>
       )}
       {n === 3 && (
@@ -236,6 +237,7 @@ export default function PostCard({ post, currentUser, onRefresh }) {
   const [quoteText,          setQuoteText]          = useState('');
   const [quotedPost,         setQuotedPost]         = useState(null);
   const [muted,              setMuted]              = useState(true);
+  const [imgViewer,          setImgViewer]          = useState({ open:false, idx:0 });
   const [playing,            setPlaying]            = useState(false);
 
   const uid     = currentUser?.id || user?.id;
@@ -435,6 +437,17 @@ export default function PostCard({ post, currentUser, onRefresh }) {
         />
       )}
 
+      {/* Fullscreen image viewer */}
+      {imgViewer.open && images.length > 0 && (
+        <ImageViewer
+          images={images}
+          index={imgViewer.idx}
+          onClose={() => setImgViewer({ open:false, idx:0 })}
+          onPrev={() => setImgViewer(v => ({ ...v, idx: Math.max(0, v.idx-1) }))}
+          onNext={() => setImgViewer(v => ({ ...v, idx: Math.min(images.length-1, v.idx+1) }))}
+        />
+      )}
+
       {/* Main card */}
       <div
         className="border-b border-white/[0.07] hover:bg-white/[0.015] transition-colors cursor-pointer"
@@ -551,7 +564,7 @@ export default function PostCard({ post, currentUser, onRefresh }) {
             )}
 
             {/* Images */}
-            <div onClick={e => e.stopPropagation()}><MediaGrid images={images} /></div>
+            <div onClick={e => e.stopPropagation()}><MediaGrid images={images} onImageClick={(idx) => setImgViewer({ open:true, idx })} /></div>
 
             {/* Location */}
             {post.location && <p className="text-[#6B7280] text-xs mb-1.5">📍 {post.location}</p>}

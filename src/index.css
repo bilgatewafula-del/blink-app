@@ -2,43 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Base resets for performance ── */
+/* ── Reset ── */
 *, *::before, *::after {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
 
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  height: 100%;
 }
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
   background-color: #0A1628;
   color: white;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior: none;
+  overflow-x: hidden;
+  min-height: 100%;
 }
 
-/* ── Hide scrollbars globally (mobile feel) ── */
+#root {
+  min-height: 100dvh;
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* ── No horizontal overflow anywhere ── */
+* { max-width: 100%; }
+img, video { max-width: 100%; height: auto; }
+
+/* ── Hide scrollbars ── */
 .scrollbar-none::-webkit-scrollbar { display: none; }
 .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* ── Safe area for notched phones ── */
-.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
-.safe-top    { padding-top:    env(safe-area-inset-top);    }
+/* ── GPU acceleration for animated elements ── */
+.animate-spin,
+.animate-pulse,
+.animate-ping,
+.animate-bounce {
+  will-change: transform, opacity;
+}
 
 /* ── Animations ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
 @keyframes slideUpPicker {
   from { opacity: 0; transform: translateY(8px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+  to   { opacity: 1; transform: translateY(0) scale(1);      }
 }
 @keyframes slideDownPicker {
   from { opacity: 0; transform: translateY(-8px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+  to   { opacity: 1; transform: translateY(0) scale(1);       }
 }
 @keyframes slideUpSheet {
   from { transform: translateY(100%); }
@@ -48,14 +75,6 @@ body {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0);   }
 }
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-@keyframes bounce {
-  0%, 60%, 100% { transform: translateY(0);    }
-  30%           { transform: translateY(-6px); }
-}
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -63,53 +82,97 @@ body {
   0%, 100% { opacity: 1;   }
   50%       { opacity: 0.5; }
 }
-
-/* ── Performance: GPU-accelerate animated elements ── */
-.animate-spin,
-.animate-pulse,
-.animate-ping,
-.animate-bounce {
-  will-change: transform, opacity;
+@keyframes splashIn {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1);   }
+}
+@keyframes splashFade {
+  from { opacity: 1; }
+  to   { opacity: 0; pointer-events: none; }
 }
 
-/* ── Image optimization ── */
-img {
-  loading: lazy;
-  decoding: async;
+/* ── Input autofill dark theme ── */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #0d1f3c inset !important;
+  -webkit-text-fill-color: white !important;
+  caret-color: white !important;
+  transition: background-color 9999s ease-in-out 0s;
 }
 
-/* ── Input fixes ── */
-input, textarea, select {
+/* ── Select dark ── */
+select option { background: #0d1f3c; color: white; }
+
+/* ── Input & textarea base ── */
+input, textarea, select, button {
   font-family: inherit;
+}
+input, textarea {
   color: white;
 }
 
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0px 1000px #111827 inset;
-  -webkit-text-fill-color: white;
-  caret-color: white;
-  transition: background-color 5000s ease-in-out 0s;
+/* ── Safe areas ── */
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-top    { padding-top:    env(safe-area-inset-top);    }
+.pb-nav      { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+
+/* ── Story bottom input constrained ── */
+.story-reply-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
-/* ── Bottom nav spacing ── */
-.pb-nav { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
-
-/* ── Story viewer ── */
-.story-progress-bar {
-  transition: width 30ms linear;
-}
-
-/* ── Emoji picker dark theme override ── */
+/* ── Emoji picker dark theme ── */
 .EmojiPickerReact {
-  --epr-bg-color:            #111827 !important;
-  --epr-category-label-bg-color: #0d1f3c !important;
-  --epr-hover-bg-color:      rgba(255,255,255,0.08) !important;
-  --epr-search-input-bg-color: rgba(255,255,255,0.08) !important;
-  --epr-text-color:          #ffffff !important;
-  --epr-search-input-text-color: #ffffff !important;
-  --epr-search-border-color: rgba(255,255,255,0.15) !important;
+  --epr-bg-color:                 #111827 !important;
+  --epr-category-label-bg-color:  #0d1f3c !important;
+  --epr-hover-bg-color:           rgba(255,255,255,0.08) !important;
+  --epr-search-input-bg-color:    rgba(255,255,255,0.08) !important;
+  --epr-text-color:               #ffffff !important;
+  --epr-search-input-text-color:  #ffffff !important;
+  --epr-search-border-color:      rgba(255,255,255,0.15) !important;
+  --epr-picker-border-color:      rgba(255,255,255,0.1) !important;
   border: 1px solid rgba(255,255,255,0.1) !important;
   border-radius: 16px !important;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.6) !important;
+}
+
+/* ── Image viewer ── */
+.image-viewer-overlay {
+  animation: fadeIn 0.15s ease;
+}
+
+/* ── Modal backdrop ── */
+.modal-backdrop {
+  animation: fadeIn 0.2s ease;
+}
+
+/* ── Skeleton pulse ── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+/* ── Bottom nav ── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 30;
+  background: rgba(10, 22, 40, 0.97);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding-bottom: env(safe-area-inset-bottom);
 }

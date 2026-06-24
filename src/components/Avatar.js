@@ -1,33 +1,44 @@
-const Avatar = ({ url, name, size = 10, className = '' }) => {
-  const initials = name?.charAt(0)?.toUpperCase() || 'B';
-  const px = {
-    8: 'w-8 h-8 text-sm',
-    9: 'w-9 h-9 text-sm',
-    10: 'w-10 h-10 text-base',
-    12: 'w-12 h-12 text-lg',
-    14: 'w-14 h-14 text-xl',
-    16: 'w-16 h-16 text-xl',
-    20: 'w-20 h-20 text-2xl',
-    24: 'w-24 h-24 text-3xl',
-  };
+// src/components/Avatar.js
+// Consistent avatar used everywhere
+export default function Avatar({ url, name, size = 10, className = '', onClick }) {
+  const px = size * 4; // tailwind unit to px (size-10 = 40px)
 
-  const sizeClass = px[size] || 'w-10 h-10 text-base';
+  const style = {
+    width:  px,
+    height: px,
+    borderRadius: '50%',
+    flexShrink: 0,
+    cursor: onClick ? 'pointer' : 'default',
+    overflow: 'hidden',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'linear-gradient(135deg, #1E6FFF, #7B2FFF)',
+    userSelect: 'none',
+  };
 
   if (url) {
     return (
       <img
         src={url}
-        alt={name}
-        className={`${sizeClass} rounded-full object-cover flex-shrink-0 ${className}`}
+        alt={name || ''}
+        style={{ ...style, objectFit: 'cover' }}
+        className={className}
+        onClick={onClick}
+        loading="lazy"
+        decoding="async"
       />
     );
   }
 
+  const initial = (name || '?')[0]?.toUpperCase();
+  const fontSize = Math.max(10, Math.round(px * 0.4));
+
   return (
-    <div className={`${sizeClass} rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold flex-shrink-0 ${className}`}>
-      {initials}
+    <div style={style} className={className} onClick={onClick}>
+      <span style={{ color: 'white', fontWeight: 800, fontSize, lineHeight: 1 }}>
+        {initial}
+      </span>
     </div>
   );
-};
-
-export default Avatar;
+}
