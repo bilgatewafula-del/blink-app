@@ -211,7 +211,7 @@ const Profile = () => {
     🔗 {profile.website.replace('https://', '')}
   </a>
 )}
-<div className="flex gap-3 mb-4">
+<div className="flex gap-3 mb-3">
   <button
     onClick={() => navigate('/subscription')}
     className="flex-1 bg-gradient-to-r from-[#FFD700] to-[#FFB800] text-[#0A1628] font-bold px-4 py-3 rounded-xl"
@@ -226,6 +226,22 @@ const Profile = () => {
     🪙 Buy Coins
   </button>
 </div>
+
+<button
+  onClick={() => navigate('/premium')}
+  className="w-full bg-gradient-to-r from-[#7B2FFF] to-[#1E6FFF] text-white font-bold px-4 py-3 rounded-xl mb-3"
+>
+  ⭐ B-Link Premium
+</button>
+
+{['blink', 'admin'].includes(profile?.role) && (
+  <button
+    onClick={() => navigate('/admin/payments')}
+    className="w-full bg-gradient-to-r from-[#16A34A] to-[#15803D] text-white font-bold px-4 py-3 rounded-xl mb-4"
+  >
+    💰 Payments Dashboard
+  </button>
+)}
         {/* Story status */}
         {myStories.length > 0 && (
           <button

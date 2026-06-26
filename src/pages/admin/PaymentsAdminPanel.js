@@ -1,159 +1,133 @@
-import { useState, useEffect } from 'react';
+// src/pages/admin/PaymentsAdminPanel.js
+// Real payment verification dashboard
+// Admin verifies on M-Pesa FIRST, then clicks confirm here
+// Confirmation triggers actual service activation in DB
+
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
-import { formatKES } from '../../utils/paymentUtils';
-import { PLANS } from '../../utils/paymentUtils';
-import {
-  CheckCircle, XCircle, Clock, RefreshCw,
-  DollarSign, Zap, Coins, Users, TrendingUp,
-  AlertCircle, Search,
-} from 'lucide-react';
+import { formatKES, PLANS, COIN_PACKAGES } from '../../utils/paymentUtils';
 import { formatTime } from '../../utils/formatTime';
 import { formatNumber } from '../../utils/formatNumber';
+import {
+  ArrowLeft, RefreshCw, CheckCircle, XCircle,
+  Search, DollarSign, Clock, TrendingUp,
+  Users, Zap, AlertTriangle, Eye,
+} from 'lucide-react';
 
-/* ─── Stat card ─────────────────────────────── */
-function StatCard({ icon: Icon, label, value, color, sub }) {
+/* ── Small stat card ── */
+function Stat({ label, value, color, sub }) {
   return (
-    <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 flex items-center gap-3">
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-        style={{ background: color + '20' }}>
-        <Icon size={20} style={{ color }} />
-      </div>
-      <div>
-        <p className="text-white font-bold text-xl leading-none">{value}</p>
-        <p className="text-[#6B7280] text-xs mt-0.5">{label}</p>
-        {sub && <p className="text-white/40 text-[10px] mt-0.5">{sub}</p>}
-      </div>
+    <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4">
+      <p className="text-white font-black text-xl leading-none">{value}</p>
+      <p className="text-[#6B7280] text-xs mt-1">{label}</p>
+      {sub && <p className="text-white/30 text-[10px] mt-0.5">{sub}</p>}
     </div>
   );
 }
 
-/* ─── Payment row ───────────────────────────── */
-function PaymentRow({ payment, onConfirm, onReject, loading }) {
-  const typeIcon = payment.payment_type === 'subscription' ? '⭐' :
-                   payment.payment_type === 'boost'        ? '⚡' :
-                   payment.payment_type === 'coins'        ? '🪙' : '💳';
-
-  const typeColor = payment.payment_type === 'subscription' ? '#1E6FFF' :
-                    payment.payment_type === 'boost'        ? '#FF6B35' :
-                    payment.payment_type === 'coins'        ? '#FFD700' : '#6B7280';
+/* ── Payment detail modal — shows full info before admin confirms ── */
+function PaymentDetailModal({ payment, onClose, onConfirm, onReject, busy }) {
+  const typeLabel =
+    payment.payment_type === 'subscription'   ? `${PLANS[payment.plan]?.label || payment.plan} Subscription` :
+    payment.payment_type === 'boost'          ? `Post Boost (${payment.boost_days} days)` :
+    payment.payment_type === 'coins'          ? `${formatNumber(payment.coins_amount || 0)} B-Link Coins` :
+    payment.payment_type === 'verification'   ? 'Verified Badge' :
+    payment.payment_type === 'business_page'  ? 'Business Page' :
+    payment.payment_type;
 
   return (
-    <div className={`border rounded-2xl p-4 transition-all ${
-      payment.status === 'pending'   ? 'border-yellow-500/25 bg-yellow-500/[0.04]' :
-      payment.status === 'confirmed' ? 'border-green-500/20 bg-green-500/[0.03]'  :
-      payment.status === 'failed'    ? 'border-red-500/20 bg-red-500/[0.03]'      :
-      'border-white/[0.07] bg-white/[0.02]'
-    }`}>
-      {/* Top row */}
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-1">
-            <span className="text-lg">{typeIcon}</span>
-            <span className="text-white font-bold text-[14px] capitalize">
-              {payment.payment_type === 'subscription'
-                ? (PLANS[payment.plan]?.label || payment.plan) + ' Plan'
-                : payment.payment_type === 'boost'
-                  ? 'Post Boost'
-                  : payment.payment_type === 'coins'
-                    ? `${(payment.coins_amount || 0).toLocaleString()} Coins`
-                    : payment.payment_type}
-            </span>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-              payment.status === 'pending'   ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
-              payment.status === 'confirmed' ? 'bg-green-500/20 text-green-400 border-green-500/30'   :
-              payment.status === 'failed'    ? 'bg-red-500/20 text-red-400 border-red-500/30'         :
-              'bg-[#6B7280]/20 text-[#6B7280] border-[#6B7280]/30'
-            }`}>
-              {payment.status === 'pending'   ? '⏳ Pending'    :
-               payment.status === 'confirmed' ? '✓ Confirmed'  :
-               payment.status === 'failed'    ? '✗ Rejected'   : payment.status}
-            </span>
-            {payment.service_granted && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1E6FFF]/20 text-[#1E6FFF] border border-[#1E6FFF]/30">
-                ✓ Service Active
-              </span>
-            )}
-          </div>
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" onClick={onClose}>
+      <div className="w-full max-w-[540px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl p-5 pb-8 max-h-[85vh] overflow-y-auto"
+        onClick={e => e.stopPropagation()}>
 
-          {/* User info */}
-          {payment.user && (
-            <p className="text-white/60 text-[12px]">
-              <span className="font-semibold text-white/80">{payment.user.display_name}</span>
-              {' · '}@{payment.user.username}
-            </p>
-          )}
-
-          {/* Reference + phone */}
-          <div className="flex items-center gap-3 mt-1 flex-wrap">
-            <span className="text-[#6B7280] text-[11px] font-mono font-bold">{payment.reference_code}</span>
-            {payment.mpesa_number && (
-              <span className="text-[#6B7280] text-[11px]">📱 {payment.mpesa_number}</span>
-            )}
-            <span className="text-[#6B7280] text-[11px]">{formatTime(payment.created_at)}</span>
-          </div>
-
-          {payment.notes && (
-            <p className="text-white/40 text-[11px] mt-1 italic">"{payment.notes}"</p>
-          )}
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-white font-black text-base">Verify Payment</h3>
+          <button onClick={onClose} className="text-[#6B7280] hover:text-white"><XCircle size={20} /></button>
         </div>
 
-        <div className="text-right flex-shrink-0">
-          <p className="text-white font-black text-[17px]">{formatKES(payment.amount)}</p>
+        {/* Admin instruction */}
+        <div className="bg-[#1E6FFF]/10 border border-[#1E6FFF]/20 rounded-2xl p-4 mb-4">
+          <p className="text-[#1E6FFF] font-bold text-sm mb-1">📱 Before confirming</p>
+          <p className="text-white/60 text-xs leading-relaxed">
+            Open M-Pesa on your phone → Go to <strong className="text-white">My Account → Statement</strong> or <strong className="text-white">Transaction History</strong> → Search for reference <strong className="text-yellow-400 font-mono">{payment.reference_code}</strong> and verify the amount is <strong className="text-white">{formatKES(payment.amount_kes)}</strong> from <strong className="text-white">{payment.mpesa_phone}</strong>.
+          </p>
         </div>
-      </div>
 
-      {/* Action buttons — only for pending */}
-      {payment.status === 'pending' && (
-        <div className="flex gap-2 mt-1">
+        {/* Payment info */}
+        <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 mb-4 space-y-3">
+          {[
+            { label: 'Service',         value: typeLabel },
+            { label: 'Amount',          value: formatKES(payment.amount_kes), highlight: true },
+            { label: 'Reference Code',  value: payment.reference_code, mono: true, highlight: true },
+            { label: 'M-Pesa Phone',    value: payment.mpesa_phone },
+            { label: 'M-Pesa Name',     value: payment.mpesa_name || '—' },
+            { label: 'User',            value: `${payment.user?.display_name} (@${payment.user?.username})` },
+            { label: 'Submitted at',    value: new Date(payment.created_at).toLocaleString('en-KE', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) },
+          ].map(row => (
+            <div key={row.label} className="flex items-center justify-between gap-3">
+              <p className="text-[#6B7280] text-[12px] flex-shrink-0">{row.label}</p>
+              <p className={`text-right text-[13px] font-bold truncate max-w-[200px] ${
+                row.highlight ? 'text-yellow-400' : 'text-white/80'
+              } ${row.mono ? 'font-mono' : ''}`}>
+                {row.value}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Confirm / Reject buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={() => onReject(payment)}
+            disabled={busy}
+            className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white/70 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 disabled:opacity-40 active:scale-95 transition-all"
+          >
+            ✗ Reject Payment
+          </button>
           <button
             onClick={() => onConfirm(payment)}
-            disabled={loading}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-sm text-white disabled:opacity-50 active:scale-95 transition-all"
-            style={{ background: 'linear-gradient(135deg, #2ECC71, #16A34A)' }}
+            disabled={busy}
+            className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white disabled:opacity-40 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+            style={{ background: 'linear-gradient(135deg, #2ECC71, #16A34A)', boxShadow: '0 4px 16px rgba(46,204,113,0.3)' }}
           >
-            {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            {busy
+              ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               : <><CheckCircle size={14} /> Confirm & Activate</>
             }
           </button>
-          <button
-            onClick={() => onReject(payment)}
-            disabled={loading}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-sm text-white/70 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 disabled:opacity-50 active:scale-95 transition-all"
-          >
-            <XCircle size={14} className="text-red-400" /> Reject
-          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
 
 /* ═══════════════════════════════════════════════
    PAYMENTS ADMIN PANEL
-   Only accessible by blink/admin role
 ═══════════════════════════════════════════════ */
 export default function PaymentsAdminPanel() {
+  const navigate          = useNavigate();
   const { user, profile } = useAuth();
 
-  const [tab,       setTab]      = useState('pending'); // pending | all | revenue
-  const [payments,  setPayments] = useState([]);
-  const [loading,   setLoading]  = useState(true);
-  const [actionId,  setActionId] = useState(null);  // which payment is being processed
-  const [stats,     setStats]    = useState({});
-  const [search,    setSearch]   = useState('');
-  const [feedback,  setFeedback] = useState('');
+  const [tab,         setTab]         = useState('pending');
+  const [payments,    setPayments]    = useState([]);
+  const [loading,     setLoading]     = useState(true);
+  const [busy,        setBusy]        = useState(false);
+  const [stats,       setStats]       = useState({});
+  const [search,      setSearch]      = useState('');
+  const [selected,    setSelected]    = useState(null);
+  const [feedback,    setFeedback]    = useState(null); // { type, msg }
 
   const isAdmin = ['blink','admin'].includes(profile?.role);
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!isAdmin) { navigate('/'); return; }
     fetchPayments();
     fetchStats();
 
-    // Real-time: new payment submitted
-    const ch = supabase.channel('payments:admin')
-      .on('postgres_changes', { event:'INSERT', schema:'public', table:'payments' },
+    const ch = supabase.channel('payments:rt')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'payments' },
         () => { fetchPayments(); fetchStats(); })
       .subscribe();
     return () => supabase.removeChannel(ch);
@@ -166,122 +140,188 @@ export default function PaymentsAdminPanel() {
       .order('created_at', { ascending: false })
       .limit(100);
 
-    if (tab === 'pending') q = q.eq('status', 'pending');
-    else if (tab === 'confirmed') q = q.eq('status', 'confirmed');
+    if (tab === 'pending')   q = q.eq('status', 'pending');
+    if (tab === 'confirmed') q = q.eq('status', 'confirmed');
+    if (tab === 'rejected')  q = q.in('status', ['rejected','failed']);
 
-    const { data } = await q;
+    const { data, error } = await q;
+    if (error) console.error('fetchPayments:', error.message);
     setPayments(data || []);
     setLoading(false);
   };
 
   const fetchStats = async () => {
-    const [pending, confirmed, totalRevenue, activeSubscriptions, activeBoosts] = await Promise.all([
+    const [pending, confirmed, rejected, revenue, subscribers, boosts] = await Promise.all([
       supabase.from('payments').select('id',{count:'exact',head:true}).eq('status','pending'),
       supabase.from('payments').select('id',{count:'exact',head:true}).eq('status','confirmed'),
-      supabase.from('payments').select('amount').eq('status','confirmed'),
+      supabase.from('payments').select('id',{count:'exact',head:true}).in('status',['rejected','failed']),
+      supabase.from('payments').select('amount_kes').eq('status','confirmed'),
       supabase.from('users').select('id',{count:'exact',head:true}).neq('subscription_plan','free'),
       supabase.from('boosts').select('id',{count:'exact',head:true}).eq('status','active'),
     ]);
 
-    const total = (totalRevenue.data || []).reduce((s, p) => s + (p.amount || 0), 0);
-
+    const totalRevenue = (revenue.data || []).reduce((s, p) => s + (p.amount_kes || 0), 0);
     setStats({
-      pending:              pending.count             || 0,
-      confirmed:            confirmed.count           || 0,
-      totalRevenue:         total,
-      activeSubscriptions:  activeSubscriptions.count || 0,
-      activeBoosts:         activeBoosts.count        || 0,
+      pending:     pending.count     || 0,
+      confirmed:   confirmed.count   || 0,
+      rejected:    rejected.count    || 0,
+      revenue:     totalRevenue,
+      subscribers: subscribers.count || 0,
+      boosts:      boosts.count      || 0,
     });
   };
 
-  /* ── CONFIRM PAYMENT — grants the service ── */
+  /* ── CONFIRM PAYMENT ──────────────────────────
+     This is the ONLY place services are activated.
+     Admin must have verified on M-Pesa first.
+  ─────────────────────────────────────────────── */
   const handleConfirm = async (payment) => {
-    setActionId(payment.id);
-    setFeedback('');
+    setBusy(true);
+    setSelected(null);
+    setFeedback(null);
 
     try {
       const now = new Date();
 
-      // 1. Mark payment confirmed
-      await supabase.from('payments').update({
-        status:           'confirmed',
-        service_granted:  true,
-        admin_confirmed_by: user.id,
-        confirmed_at:     now.toISOString(),
+      // 1. Update payment status to confirmed
+      const { error: payErr } = await supabase.from('payments').update({
+        status:             'confirmed',
+        service_active:     true,
+        service_activated_at: now.toISOString(),
+        verified_by:        user.id,
+        verified_at:        now.toISOString(),
       }).eq('id', payment.id);
 
-      // 2. Grant the service based on type
+      if (payErr) throw new Error('Payment update failed: ' + payErr.message);
+
+      // 2. Grant the actual service based on type
       if (payment.payment_type === 'subscription') {
+        // Subscription: 1 month from now
         const expiresAt = new Date(now);
         expiresAt.setMonth(expiresAt.getMonth() + 1);
 
-        await supabase.from('users').update({
+        const updateData = {
           subscription_plan:       payment.plan,
           subscription_expires_at: expiresAt.toISOString(),
-          // Grant verified badge for creator/business
-          is_verified: ['creator','business'].includes(payment.plan) ? true : undefined,
-        }).eq('id', payment.user_id);
+        };
+
+        // Grant verified badge for creator/business
+        if (['creator', 'business'].includes(payment.plan)) {
+          updateData.is_verified = true;
+        }
+        if (payment.plan === 'business') {
+          updateData.is_business = true;
+        }
+
+        const { error: subErr } = await supabase.from('users')
+          .update(updateData).eq('id', payment.user_id);
+        if (subErr) throw new Error('Subscription activation failed: ' + subErr.message);
+
+        // Update service_expires_at on payment
+        await supabase.from('payments').update({
+          service_expires_at: expiresAt.toISOString(),
+        }).eq('id', payment.id);
 
         // Notify user
         await supabase.from('notifications').insert({
           user_id:      payment.user_id,
           from_user_id: user.id,
           type:         'admin_action',
-          message:      `✅ Your ${PLANS[payment.plan]?.label} subscription is now active! Enjoy your new features. Expires ${expiresAt.toLocaleDateString('en-KE',{day:'numeric',month:'long'})}.`,
+          message:      `✅ Your ${PLANS[payment.plan]?.label} subscription is now ACTIVE! Expires ${expiresAt.toLocaleDateString('en-KE', { day:'numeric', month:'long', year:'numeric' })}. Enjoy your premium features!`,
           is_read:      false,
         });
 
       } else if (payment.payment_type === 'boost') {
+        // Boost: activate the pending boost record
         const expiresAt = new Date(now);
-        // Find the boost record
-        const { data: boost } = await supabase.from('boosts')
-          .select('*').eq('payment_id', payment.id).maybeSingle();
+        expiresAt.setDate(expiresAt.getDate() + (payment.boost_days || 1));
+
+        const { data: boost, error: bFetchErr } = await supabase
+          .from('boosts').select('*')
+          .eq('payment_id', payment.id).maybeSingle();
 
         if (boost) {
-          expiresAt.setDate(expiresAt.getDate() + boost.duration_days);
-          await supabase.from('boosts').update({
+          const { error: boostErr } = await supabase.from('boosts').update({
             status:    'active',
             starts_at: now.toISOString(),
             expires_at: expiresAt.toISOString(),
           }).eq('id', boost.id);
+          if (boostErr) throw new Error('Boost activation failed: ' + boostErr.message);
 
-          // Mark post as boosted
-          await supabase.from('posts').update({
-            is_boosted:      true,
+          // Mark the post as boosted
+          const { error: postErr } = await supabase.from('posts').update({
+            is_boosted:       true,
             boost_expires_at: expiresAt.toISOString(),
           }).eq('id', boost.post_id);
+          if (postErr) throw new Error('Post boost update failed: ' + postErr.message);
         }
 
         await supabase.from('notifications').insert({
           user_id:      payment.user_id,
           from_user_id: user.id,
           type:         'admin_action',
-          message:      `⚡ Your post boost is now LIVE! Your post is being promoted across B-Link.`,
+          message:      `⚡ Your post boost is now LIVE for ${payment.boost_days} day(s)! Your post is being promoted across B-Link feeds.`,
           is_read:      false,
         });
 
       } else if (payment.payment_type === 'coins') {
+        // Coins: credit user wallet
         const coins = payment.coins_amount || 0;
-        const { data: u } = await supabase.from('users').select('coins_balance').eq('id', payment.user_id).maybeSingle();
-        const newBalance = (u?.coins_balance || 0) + coins;
+        const { data: u, error: uFetchErr } = await supabase
+          .from('users').select('coins_balance').eq('id', payment.user_id).maybeSingle();
+        if (uFetchErr) throw new Error('User fetch failed: ' + uFetchErr.message);
 
-        await supabase.from('users').update({ coins_balance: newBalance }).eq('id', payment.user_id);
+        const balanceBefore = u?.coins_balance || 0;
+        const balanceAfter  = balanceBefore + coins;
 
-        // Log coin transaction
+        const { error: coinsErr } = await supabase.from('users')
+          .update({ coins_balance: balanceAfter }).eq('id', payment.user_id);
+        if (coinsErr) throw new Error('Coins credit failed: ' + coinsErr.message);
+
+        // Log the transaction
         await supabase.from('coin_transactions').insert({
           user_id:          payment.user_id,
           amount:           coins,
           transaction_type: 'purchase',
           payment_id:       payment.id,
-          description:      `Purchased ${coins.toLocaleString()} B-Link Coins`,
-          balance_after:    newBalance,
+          description:      `Purchased ${formatNumber(coins)} B-Link Coins`,
+          balance_before:   balanceBefore,
+          balance_after:    balanceAfter,
         });
 
         await supabase.from('notifications').insert({
           user_id:      payment.user_id,
           from_user_id: user.id,
           type:         'admin_action',
-          message:      `🪙 ${coins.toLocaleString()} coins have been added to your wallet! New balance: ${newBalance.toLocaleString()} coins.`,
+          message:      `🪙 ${formatNumber(coins)} coins have been credited to your wallet! New balance: ${formatNumber(balanceAfter)} coins.`,
+          is_read:      false,
+        });
+
+      } else if (payment.payment_type === 'verification') {
+        await supabase.from('users').update({ is_verified: true }).eq('id', payment.user_id);
+        await supabase.from('notifications').insert({
+          user_id:      payment.user_id,
+          from_user_id: user.id,
+          type:         'admin_action',
+          message:      `✅ Congratulations! Your account has been verified. The ✓ badge is now on your profile.`,
+          is_read:      false,
+        });
+
+      } else if (payment.payment_type === 'business_page') {
+        const expiresAt = new Date(now);
+        expiresAt.setMonth(expiresAt.getMonth() + 1);
+        await supabase.from('users').update({
+          is_business:             true,
+          is_verified:             true,
+          subscription_plan:       'business',
+          subscription_expires_at: expiresAt.toISOString(),
+        }).eq('id', payment.user_id);
+
+        await supabase.from('notifications').insert({
+          user_id:      payment.user_id,
+          from_user_id: user.id,
+          type:         'admin_action',
+          message:      `✅ Your Business Page is now active! Add your contact details in your profile settings.`,
           is_read:      false,
         });
       }
@@ -291,40 +331,46 @@ export default function PaymentsAdminPanel() {
         admin_id:       user.id,
         target_user_id: payment.user_id,
         action:         'confirm_payment',
-        details:        `${payment.payment_type} — ${payment.reference_code} — ${formatKES(payment.amount)}`,
+        details:        `Confirmed ${payment.payment_type} · Ref ${payment.reference_code} · ${formatKES(payment.amount_kes)}`,
       });
 
-      setFeedback('✅ Payment confirmed and service activated!');
+      setFeedback({ type: 'success', msg: `✅ Payment confirmed and service activated for ${payment.user?.display_name}` });
       fetchPayments();
       fetchStats();
 
     } catch (err) {
-      console.error('confirm payment error:', err.message);
-      setFeedback('❌ Error: ' + err.message);
+      console.error('Confirm payment error:', err.message);
+      setFeedback({ type: 'error', msg: '❌ Error: ' + err.message });
     }
 
-    setActionId(null);
+    setBusy(false);
   };
 
   /* ── REJECT PAYMENT ── */
   const handleReject = async (payment) => {
-    const reason = window.prompt('Rejection reason (shown to user):');
-    if (!reason) return;
+    const reason = window.prompt(
+      `Reject payment from ${payment.user?.display_name}?\n\nEnter rejection reason (shown to user):`
+    );
+    if (reason === null) return; // cancelled
+    if (!reason.trim()) { alert('Rejection reason is required.'); return; }
 
-    setActionId(payment.id);
+    setBusy(true);
+    setSelected(null);
 
-    await supabase.from('payments').update({
-      status:  'failed',
-      notes:   (payment.notes || '') + ' | REJECTED: ' + reason,
-      admin_confirmed_by: user.id,
-      confirmed_at: new Date().toISOString(),
+    const { error } = await supabase.from('payments').update({
+      status:           'rejected',
+      rejection_reason: reason.trim(),
+      verified_by:      user.id,
+      verified_at:      new Date().toISOString(),
     }).eq('id', payment.id);
+
+    if (error) { setFeedback({ type:'error', msg:'Rejection failed: ' + error.message }); setBusy(false); return; }
 
     await supabase.from('notifications').insert({
       user_id:      payment.user_id,
       from_user_id: user.id,
       type:         'admin_action',
-      message:      `❌ Your payment (${payment.reference_code}) was not confirmed: ${reason}. Please contact support if you believe this is an error.`,
+      message:      `❌ Your payment (Ref: ${payment.reference_code}) was not verified: ${reason.trim()}. Contact support if you believe this is an error.`,
       is_read:      false,
     });
 
@@ -332,11 +378,11 @@ export default function PaymentsAdminPanel() {
       admin_id:       user.id,
       target_user_id: payment.user_id,
       action:         'reject_payment',
-      details:        `${payment.reference_code} — ${reason}`,
+      details:        `Rejected ${payment.reference_code} — ${reason.trim()}`,
     });
 
-    setFeedback('Payment rejected and user notified.');
-    setActionId(null);
+    setFeedback({ type:'info', msg:`Payment rejected and user notified.` });
+    setBusy(false);
     fetchPayments();
     fetchStats();
   };
@@ -344,30 +390,34 @@ export default function PaymentsAdminPanel() {
   const filtered = payments.filter(p => {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
-    return p.reference_code?.toLowerCase().includes(q) ||
-      p.user?.username?.toLowerCase().includes(q) ||
+    return (
+      p.reference_code?.toLowerCase().includes(q) ||
+      p.user?.username?.toLowerCase().includes(q)  ||
       p.user?.display_name?.toLowerCase().includes(q) ||
-      p.mpesa_number?.includes(q);
+      p.mpesa_phone?.includes(q) ||
+      p.mpesa_name?.toLowerCase().includes(q)
+    );
   });
 
-  if (!isAdmin) return (
-    <div className="min-h-screen bg-[#0A1628] flex items-center justify-center">
-      <p className="text-[#6B7280]">Access denied.</p>
-    </div>
-  );
+  if (!isAdmin) return null;
+
+  const typeIcon = t =>
+    t === 'subscription' ? '⭐' : t === 'boost' ? '⚡' :
+    t === 'coins' ? '🪙' : t === 'verification' ? '✓' :
+    t === 'business_page' ? '💼' : '💳';
 
   return (
     <div className="min-h-screen bg-[#0A1628] pb-24">
 
       {/* Header */}
       <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-xl bg-green-500/20 flex items-center justify-center">
-            <DollarSign size={18} className="text-green-400" />
-          </div>
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white">
+            <ArrowLeft size={22} />
+          </button>
           <div>
             <p className="text-white font-bold text-[15px] leading-none">Payments Dashboard</p>
-            <p className="text-[#6B7280] text-xs">Till: 4766037 · BILGATE WAFULA MUKHAYO</p>
+            <p className="text-[#6B7280] text-[11px] mt-0.5">Till: 4766037 · BILGATE WAFULA MUKHAYO</p>
           </div>
         </div>
         <button onClick={() => { fetchPayments(); fetchStats(); }} className="text-[#6B7280] hover:text-white p-1">
@@ -377,50 +427,50 @@ export default function PaymentsAdminPanel() {
 
       <div className="px-4 pt-4 space-y-4">
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-3">
-          <StatCard icon={Clock}       label="Pending"       value={stats.pending || 0}             color="#FFD700" />
-          <StatCard icon={CheckCircle} label="Confirmed"     value={stats.confirmed || 0}           color="#2ECC71" />
-          <StatCard icon={DollarSign}  label="Total Revenue" value={formatKES(stats.totalRevenue||0)} color="#1E6FFF"
-            sub="All time" />
-          <StatCard icon={Users}       label="Subscribers"   value={stats.activeSubscriptions || 0} color="#7B2FFF" />
-          <StatCard icon={Zap}         label="Active Boosts" value={stats.activeBoosts || 0}        color="#FF6B35" />
-          <StatCard icon={TrendingUp}  label="This month"    value={formatKES(stats.totalRevenue||0)} color="#2ECC71"
-            sub="Revenue" />
+        {/* Stats grid */}
+        <div className="grid grid-cols-3 gap-2">
+          <Stat label="Pending"     value={stats.pending     || 0} color="#FFD700" />
+          <Stat label="Confirmed"   value={stats.confirmed   || 0} color="#2ECC71" />
+          <Stat label="Rejected"    value={stats.rejected    || 0} color="#EF4444" />
+          <Stat label="Revenue (KES)" value={formatKES(stats.revenue||0).replace('KES ','')} sub="Confirmed only" />
+          <Stat label="Subscribers" value={stats.subscribers || 0} />
+          <Stat label="Live Boosts" value={stats.boosts      || 0} />
         </div>
 
         {/* Feedback */}
         {feedback && (
-          <div className={`rounded-xl px-4 py-3 text-sm font-semibold flex items-center gap-2 ${
-            feedback.startsWith('✅') ? 'bg-green-500/10 border border-green-500/20 text-green-400' :
-            feedback.startsWith('❌') ? 'bg-red-500/10 border border-red-500/20 text-red-400' :
+          <div className={`rounded-xl px-4 py-3 text-sm font-semibold flex items-center justify-between gap-2 ${
+            feedback.type === 'success' ? 'bg-green-500/10 border border-green-500/20 text-green-400' :
+            feedback.type === 'error'   ? 'bg-red-500/10 border border-red-500/20 text-red-400' :
             'bg-[#1E6FFF]/10 border border-[#1E6FFF]/20 text-[#1E6FFF]'
           }`}>
-            {feedback}
-            <button onClick={() => setFeedback('')} className="ml-auto opacity-60 hover:opacity-100"><XCircle size={14} /></button>
+            <span>{feedback.msg}</span>
+            <button onClick={() => setFeedback(null)} className="flex-shrink-0 opacity-60 hover:opacity-100">
+              <XCircle size={16} />
+            </button>
           </div>
         )}
 
         {/* Pending alert */}
         {stats.pending > 0 && (
           <div className="bg-yellow-500/10 border border-yellow-500/25 rounded-2xl p-3 flex items-center gap-3">
-            <AlertCircle size={18} className="text-yellow-400 flex-shrink-0" />
-            <div>
-              <p className="text-yellow-400 font-bold text-sm">{stats.pending} payment{stats.pending > 1 ? 's' : ''} waiting for confirmation</p>
-              <p className="text-yellow-400/60 text-xs">Verify on M-Pesa then confirm below</p>
-            </div>
+            <AlertTriangle size={16} className="text-yellow-400 flex-shrink-0" />
+            <p className="text-yellow-400 text-sm">
+              <strong>{stats.pending}</strong> payment{stats.pending !== 1 ? 's' : ''} waiting. Verify on M-Pesa before confirming.
+            </p>
           </div>
         )}
 
-        {/* Tabs */}
+        {/* Tab bar */}
         <div className="flex bg-white/[0.05] rounded-2xl p-1 gap-1">
           {[
             { key:'pending',   label:`Pending (${stats.pending||0})` },
             { key:'confirmed', label:'Confirmed' },
+            { key:'rejected',  label:'Rejected' },
             { key:'all',       label:'All' },
           ].map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
-              className={'flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ' +
+              className={'flex-1 py-2 rounded-xl text-[11px] font-bold transition-all ' +
                 (tab === t.key ? 'bg-[#1E6FFF] text-white shadow-lg shadow-[#1E6FFF]/30' : 'text-[#6B7280] hover:text-white')}>
               {t.label}
             </button>
@@ -428,12 +478,12 @@ export default function PaymentsAdminPanel() {
         </div>
 
         {/* Search */}
-        <div className="flex items-center gap-3 bg-white/[0.05] border border-white/10 rounded-2xl px-4 py-3">
+        <div className="flex items-center gap-3 bg-white/[0.05] border border-white/10 rounded-2xl px-4 py-2.5">
           <Search size={15} className="text-[#6B7280] flex-shrink-0" />
           <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search by ref, username, phone..."
+            placeholder="Search by ref, username, phone, name..."
             className="flex-1 bg-transparent text-white text-sm placeholder-[#6B7280] focus:outline-none" />
-          {search && <button onClick={() => setSearch('')} className="text-[#6B7280] hover:text-white"><XCircle size={15} /></button>}
+          {search && <button onClick={() => setSearch('')} className="text-[#6B7280] hover:text-white flex-shrink-0"><XCircle size={15} /></button>}
         </div>
 
         {/* Payment list */}
@@ -444,27 +494,94 @@ export default function PaymentsAdminPanel() {
         ) : filtered.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-3xl mb-2">{tab === 'pending' ? '✅' : '💳'}</p>
-            <p className="text-white font-bold">
-              {tab === 'pending' ? 'No pending payments' : 'No payments found'}
-            </p>
-            <p className="text-[#6B7280] text-sm mt-1">
-              {tab === 'pending' ? 'You\'re all caught up!' : 'Try a different search'}
-            </p>
+            <p className="text-white font-bold">{tab === 'pending' ? 'No pending payments' : 'No payments found'}</p>
           </div>
         ) : (
-          <div className="space-y-3 pb-4">
+          <div className="space-y-2 pb-4">
             {filtered.map(pay => (
-              <PaymentRow
+              <div
                 key={pay.id}
-                payment={pay}
-                onConfirm={handleConfirm}
-                onReject={handleReject}
-                loading={actionId === pay.id}
-              />
+                className={`border rounded-2xl p-4 transition-all ${
+                  pay.status === 'pending'   ? 'border-yellow-500/25 bg-yellow-500/[0.04]' :
+                  pay.status === 'confirmed' ? 'border-green-500/15 bg-green-500/[0.02]'   :
+                  'border-red-500/15 bg-red-500/[0.02]'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-xl flex-shrink-0 mt-0.5">{typeIcon(pay.payment_type)}</span>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                          <span className="text-white font-bold text-[13px] capitalize">
+                            {pay.payment_type === 'subscription' ? `${PLANS[pay.plan]?.label} Plan` :
+                             pay.payment_type === 'boost' ? `${pay.boost_days}d Boost` :
+                             pay.payment_type === 'coins' ? `${formatNumber(pay.coins_amount||0)} Coins` :
+                             pay.payment_type}
+                          </span>
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${
+                            pay.status === 'pending'   ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                            pay.status === 'confirmed' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                            'bg-red-500/20 text-red-400 border-red-500/30'
+                          }`}>
+                            {pay.status === 'pending' ? '⏳ Pending' : pay.status === 'confirmed' ? '✓ Confirmed' : '✗ Rejected'}
+                          </span>
+                        </div>
+
+                        <p className="text-white/70 text-[12px]">
+                          <strong>{pay.user?.display_name}</strong> · @{pay.user?.username}
+                        </p>
+                        <p className="text-[#6B7280] text-[11px] font-mono mt-0.5">
+                          {pay.reference_code} · {pay.mpesa_phone}
+                          {pay.mpesa_name ? ` · ${pay.mpesa_name}` : ''}
+                        </p>
+                        <p className="text-[#6B7280] text-[11px] mt-0.5">{formatTime(pay.created_at)}</p>
+                        {pay.rejection_reason && (
+                          <p className="text-red-400/70 text-[11px] mt-1">Reason: {pay.rejection_reason}</p>
+                        )}
+                      </div>
+
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-white font-black text-[16px]">{formatKES(pay.amount_kes)}</p>
+                      </div>
+                    </div>
+
+                    {pay.status === 'pending' && (
+                      <div className="flex gap-2 mt-3">
+                        <button
+                          onClick={() => setSelected(pay)}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white active:scale-95 transition-all"
+                          style={{ background: 'linear-gradient(135deg, #2ECC71, #16A34A)' }}
+                        >
+                          <Eye size={13} /> Review & Confirm
+                        </button>
+                        <button
+                          onClick={() => handleReject(pay)}
+                          className="px-4 py-2.5 rounded-xl text-xs font-bold text-red-400 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 active:scale-95 transition-all"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Detail modal */}
+      {selected && (
+        <PaymentDetailModal
+          payment={selected}
+          onClose={() => setSelected(null)}
+          onConfirm={handleConfirm}
+          onReject={handleReject}
+          busy={busy}
+        />
+      )}
     </div>
   );
 }
