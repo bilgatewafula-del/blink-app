@@ -3,30 +3,59 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AuthProvider, useAuth } from './context/AuthContext';
 import BottomNav from './components/BottomNav';
 
-/* ── Lazy-loaded pages ── */
-const Login              = lazy(() => import('./pages/auth/Login'));
+/* ── Lazy pages — paths match REAL folder structure ── */
+const Login = lazy(() => import('./pages/auth/Login'));
 const SignUp = lazy(() => import('./pages/auth/Signup'));
-const Home               = lazy(() => import('./pages/feed/Home'));
-const Discover           = lazy(() => import('./pages/discover/Discover'));
-const Notifications      = lazy(() => import('./pages/notifications/Notifications'));
-const Profile            = lazy(() => import('./pages/profile/Profile'));
-const EditProfile        = lazy(() => import('./pages/profile/EditProfile'));
-const PostDetail         = lazy(() => import('./pages/feed/PostDetail'));
-const CreatePost         = lazy(() => import('./pages/feed/CreatePost'));
-const AdminPanel         = lazy(() => import('./pages/admin/AdminPanel'));
+
+const Home = lazy(() => import('./pages/feed/Home'));
+const Discover = lazy(() => import('./pages/discover/Discover'));
+const Notifications = lazy(() => import('./pages/notifications/Notifications'));
+const Profile = lazy(() => import('./pages/profile/Profile'));
+const EditProfile = lazy(() => import('./pages/profile/EditProfile'));
+const PostDetail = lazy(() => import('./pages/feed/PostDetail'));
+const CreatePost = lazy(() => import('./pages/feed/CreatePost'));
+
+const AdminPanel = lazy(() => import('./pages/admin/AdminPanel'));
 const PaymentsAdminPanel = lazy(() => import('./pages/admin/PaymentsAdminPanel'));
-const ChatList = lazy(() => import('./pages/chat/ChatList'));
-const ChatRoom = lazy(() => import('./pages/chat/ChatRoom'));
 
-/* Monetisation */
-const MonetisationHub  = lazy(() => import('./pages/monetisation/MonetisationHub'));
+const Chats = lazy(() => import('./pages/chat/ChatList'));
+const ChatDetail = lazy(() => import('./pages/chat/ChatRoom'));
+
+const MonetisationHub = lazy(() => import('./pages/monetisation/MonetisationHub'));
 const SubscriptionPage = lazy(() => import('./pages/monetisation/SubscriptionPage'));
-const CoinsPage        = lazy(() => import('./pages/monetisation/CoinsPage'));
-const BoostPost        = lazy(() => import('./pages/monetisation/BoostPost'));
+const CoinsPage = lazy(() => import('./pages/monetisation/CoinsPage'));
+const BoostPost = lazy(() => import('./pages/monetisation/BoostPost'));
 const VerificationPage = lazy(() => import('./pages/monetisation/VerificationPage'));
-const BusinessPage     = lazy(() => import('./pages/monetisation/BusinessPage'));
+const BusinessPage = lazy(() => import('./pages/monetisation/BusinessPage'));
 
-/* ── Page loader ── */
+/* ── Placeholder pages for Drawer items not yet built ── */
+function ComingSoon({ title }) {
+  const navigate = useNavigate?.() || null;
+  return (
+    <div className="min-h-screen bg-[#0A1628] flex flex-col items-center justify-center gap-4 px-6">
+      <p className="text-5xl">🚧</p>
+      <p className="text-white font-bold text-xl">{title}</p>
+      <p className="text-[#6B7280] text-sm text-center">Coming soon! We're building this feature.</p>
+      <button
+        onClick={() => window.history.back()}
+        className="mt-2 bg-[#1E6FFF] text-white px-6 py-2.5 rounded-full font-bold text-sm"
+      >
+        ← Go Back
+      </button>
+    </div>
+  );
+}
+function useNavigate() { return require('react-router-dom').useNavigate(); }
+
+const SavedPosts  = () => <ComingSoon title="Saved Posts"  />;
+const BLinkAI     = () => <ComingSoon title="B-Link AI"    />;
+const NewsPage    = () => <ComingSoon title="News"          />;
+const SettingsPage= () => <ComingSoon title="Settings"     />;
+const HelpPage    = () => <ComingSoon title="Help Center"  />;
+const AboutPage   = () => <ComingSoon title="About B-Link" />;
+const VibesPage   = () => <ComingSoon title="Vibes"        />;
+
+/* ── Loaders ── */
 function PageLoader() {
   return (
     <div className="min-h-screen bg-[#0A1628] flex items-center justify-center">
@@ -35,7 +64,6 @@ function PageLoader() {
   );
 }
 
-/* ── Inline splash — shown only once per session ── */
 function Splash() {
   return (
     <div className="fixed inset-0 bg-[#0A1628] flex flex-col items-center justify-center z-50">
@@ -56,14 +84,13 @@ function Splash() {
   );
 }
 
-/* ── Route guards ── */
+/* ── Guards ── */
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <PageLoader />;
   if (!user)   return <Navigate to="/login" replace />;
   return children;
 }
-
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <PageLoader />;
@@ -71,60 +98,61 @@ function PublicRoute({ children }) {
   return children;
 }
 
-/* ── Bottom nav visibility ── */
+/* ── Nav ── */
 const NAV_PATHS = ['/', '/discover', '/notifications', '/chats', '/profile'];
 
 function AppShell() {
   const { user, loading } = useAuth();
   const location          = useLocation();
-
-  const [splashDone, setSplashDone] = useState(
-    () => !!sessionStorage.getItem('blink_started')
-  );
+  const [splashDone, setSplashDone] = useState(() => !!sessionStorage.getItem('blink_started'));
 
   useEffect(() => {
     if (!splashDone) {
-      const t = setTimeout(() => {
-        setSplashDone(true);
-        sessionStorage.setItem('blink_started', '1');
-      }, 1600);
+      const t = setTimeout(() => { setSplashDone(true); sessionStorage.setItem('blink_started','1'); }, 1600);
       return () => clearTimeout(t);
     }
   }, [splashDone]);
 
-  // Show splash only on first load while auth resolves
   if (!splashDone && loading) return <Splash />;
 
   const showNav = !!user && (
-    NAV_PATHS.includes(location.pathname) ||
-    location.pathname.startsWith('/profile/')
+    NAV_PATHS.includes(location.pathname) || location.pathname.startsWith('/profile/')
   );
 
   return (
     <>
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* ── Auth ── */}
+          {/* Auth */}
           <Route path="/login"  element={<PublicRoute><Login  /></PublicRoute>} />
           <Route path="/signup" element={<PublicRoute><SignUp /></PublicRoute>} />
 
-          {/* ── Core app ── */}
+          {/* Core */}
           <Route path="/"              element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/discover"      element={<ProtectedRoute><Discover /></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-         <Route path="/chats" element={<ProtectedRoute><ChatList /></ProtectedRoute>} />
-<Route path="/chats/:id" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />
+          <Route path="/chats"         element={<ProtectedRoute><Chats /></ProtectedRoute>} />
+          <Route path="/chats/:id"     element={<ProtectedRoute><ChatDetail /></ProtectedRoute>} />
           <Route path="/post/:id"      element={<ProtectedRoute><PostDetail /></ProtectedRoute>} />
           <Route path="/create"        element={<ProtectedRoute><CreatePost /></ProtectedRoute>} />
           <Route path="/profile"       element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/profile/:username" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/edit-profile"  element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
 
-          {/* ── Admin ── */}
+          {/* Drawer routes */}
+          <Route path="/saved"    element={<ProtectedRoute><SavedPosts /></ProtectedRoute>} />
+          <Route path="/ai"       element={<ProtectedRoute><BLinkAI /></ProtectedRoute>} />
+          <Route path="/news"     element={<ProtectedRoute><NewsPage /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          <Route path="/help"     element={<ProtectedRoute><HelpPage /></ProtectedRoute>} />
+          <Route path="/about"    element={<ProtectedRoute><AboutPage /></ProtectedRoute>} />
+          <Route path="/vibes"    element={<ProtectedRoute><VibesPage /></ProtectedRoute>} />
+
+          {/* Admin */}
           <Route path="/admin"          element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
           <Route path="/admin/payments" element={<ProtectedRoute><PaymentsAdminPanel /></ProtectedRoute>} />
 
-          {/* ── Monetisation ── */}
+          {/* Monetisation */}
           <Route path="/premium"       element={<ProtectedRoute><MonetisationHub /></ProtectedRoute>} />
           <Route path="/subscription"  element={<ProtectedRoute><SubscriptionPage /></ProtectedRoute>} />
           <Route path="/coins"         element={<ProtectedRoute><CoinsPage /></ProtectedRoute>} />
@@ -135,7 +163,6 @@ function AppShell() {
           <Route path="*" element={<Navigate to={user ? '/' : '/login'} replace />} />
         </Routes>
       </Suspense>
-
       {showNav && <BottomNav />}
     </>
   );

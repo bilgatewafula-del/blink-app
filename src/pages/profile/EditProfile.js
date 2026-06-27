@@ -1,207 +1,240 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
-import { uploadToCloudinary } from '../../lib/cloudinary';
-import { ArrowLeft, Camera } from 'lucide-react';
-import { COUNTRIES } from '../../utils/constants';
+import { ArrowLeft, Camera, Check } from 'lucide-react';
 
-const EditProfile = () => {
-  const { profile, fetchProfile, user } = useAuth();
+const COUNTRIES = [
+  {code:'KE',name:'Kenya 🇰🇪'},{code:'NG',name:'Nigeria 🇳🇬'},{code:'GH',name:'Ghana 🇬🇭'},
+  {code:'UG',name:'Uganda 🇺🇬'},{code:'TZ',name:'Tanzania 🇹🇿'},{code:'ZA',name:'South Africa 🇿🇦'},
+  {code:'ET',name:'Ethiopia 🇪🇹'},{code:'RW',name:'Rwanda 🇷🇼'},{code:'GB',name:'UK 🇬🇧'},
+  {code:'US',name:'USA 🇺🇸'},{code:'CA',name:'Canada 🇨🇦'},{code:'OTHER',name:'Other 🌍'},
+];
+
+export default function EditProfile() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({
-    display_name: profile?.display_name || '',
-    username: profile?.username || '',
-    bio: profile?.bio || '',
-    website: profile?.website || '',
-    country: profile?.country || 'KE',
-  });
-  const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const { user, profile, refreshProfile } = useAuth();
+  const fileRef = useRef();
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const [displayName, setDisplayName] = useState(profile?.display_name || '');
+  const [username,    setUsername]    = useState(profile?.username     || '');
+  const [bio,         setBio]         = useState(profile?.bio          || '');
+  const [country,     setCountry]     = useState(profile?.country      || 'KE');
+  const [website,     setWebsite]     = useState(profile?.website      || '');
+  const [avatarFile,  setAvatarFile]  = useState(null);
+  const [avatarPreview,setAvatarPreview]= useState(profile?.avatar_url || '');
+  const [saving,      setSaving]      = useState(false);
+  const [uploading,   setUploading]   = useState(false);
+  const [error,       setError]       = useState('');
+  const [success,     setSuccess]     = useState(false);
+
+  // Load latest profile data
+  useEffect(() => {
+    if (profile) {
+      setDisplayName(profile.display_name || '');
+      setUsername(profile.username || '');
+      setBio(profile.bio || '');
+      setCountry(profile.country || 'KE');
+      setWebsite(profile.website || '');
+      setAvatarPreview(profile.avatar_url || '');
+    }
+  }, [profile?.id]);
+
+  const handleAvatarChange = (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { setError('Image must be under 5MB.'); return; }
+    setAvatarFile(f);
+    setAvatarPreview(URL.createObjectURL(f));
     setError('');
   };
 
-  const handleAvatarUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const uploadAvatar = async () => {
+    if (!avatarFile) return profile?.avatar_url || null;
     setUploading(true);
-    try {
-      const url = await uploadToCloudinary(file, 'profiles');
-      await supabase.from('users').update({ avatar_url: url }).eq('id', user.id);
-      await fetchProfile(user.id);
-      setSuccess('Avatar updated!');
-    } catch (err) {
-      setError('Failed to upload avatar.');
-    }
-    setUploading(false);
-  };
 
-  const handleCoverUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      const url = await uploadToCloudinary(file, 'profiles');
-      await supabase.from('users').update({ cover_url: url }).eq('id', user.id);
-      await fetchProfile(user.id);
-      setSuccess('Cover updated!');
-    } catch (err) {
-      setError('Failed to upload cover.');
-    }
+    const formData = new FormData();
+    formData.append('file',           avatarFile);
+    formData.append('upload_preset',  'blink_uploads');
+    formData.append('cloud_name',     process.env.REACT_APP_CLOUDINARY_CLOUD_NAME);
+
+    const res  = await fetch(
+      `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      { method:'POST', body:formData }
+    );
+    const data = await res.json();
     setUploading(false);
+
+    if (!data.secure_url) throw new Error(data.error?.message || 'Upload failed');
+    return data.secure_url;
   };
 
   const handleSave = async () => {
-    setLoading(true);
-    setError('');
-
-    const { error } = await supabase
-      .from('users')
-      .update({
-        display_name: form.display_name,
-        username: form.username.toLowerCase(),
-        bio: form.bio,
-        website: form.website,
-        country: form.country,
-      })
-      .eq('id', user.id);
-
-    if (error) {
-      setError(error.message);
-    } else {
-      await fetchProfile(user.id);
-      setSuccess('Profile updated successfully!');
-      setTimeout(() => navigate('/profile'), 1000);
+    if (!displayName.trim()) { setError('Display name is required.'); return; }
+    if (!username.trim())    { setError('Username is required.');     return; }
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+      setError('Username: 3-20 chars, letters/numbers/underscores only.');
+      return;
     }
-    setLoading(false);
+
+    setSaving(true); setError('');
+
+    // Check username conflict (not own username)
+    if (username.toLowerCase() !== profile?.username?.toLowerCase()) {
+      const { data: existing } = await supabase.from('users')
+        .select('id').eq('username', username.toLowerCase()).maybeSingle();
+      if (existing) { setError('Username already taken.'); setSaving(false); return; }
+    }
+
+    try {
+      const avatarUrl = await uploadAvatar();
+
+      const updates = {
+        display_name: displayName.trim(),
+        username:     username.trim().toLowerCase(),
+        bio:          bio.trim() || null,
+        country,
+        website:      website.trim() || null,
+        updated_at:   new Date().toISOString(),
+      };
+      if (avatarUrl) updates.avatar_url = avatarUrl;
+
+      const { error: dbErr } = await supabase.from('users')
+        .update(updates).eq('id', user.id);
+
+      if (dbErr) throw new Error(dbErr.message);
+
+      await refreshProfile();
+      setSuccess(true);
+      setTimeout(() => { setSuccess(false); navigate('/profile'); }, 1200);
+    } catch (err) {
+      setError(err.message || 'Save failed. Try again.');
+    }
+
+    setSaving(false);
   };
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-20">
+    <div className="min-h-screen bg-[#0A1628] pb-24">
+
       {/* Top bar */}
-      <div className="sticky top-0 z-30 bg-[#0A1628]/95 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between">
-        <button onClick={() => navigate('/profile')} className="text-[#6B7280] hover:text-white">
+      <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between">
+        <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white transition-colors">
           <ArrowLeft size={22} />
         </button>
-        <h1 className="text-white font-bold text-lg">Edit Profile</h1>
+        <h1 className="text-white font-bold text-[15px]">Edit Profile</h1>
         <button
           onClick={handleSave}
-          disabled={loading}
-          className="text-[#1E6FFF] font-semibold text-sm disabled:opacity-50"
+          disabled={saving || uploading}
+          className="flex items-center gap-1.5 bg-[#1E6FFF] text-white text-sm font-bold px-4 py-2 rounded-full disabled:opacity-50 active:scale-95 transition-all"
         >
-          {loading ? 'Saving...' : 'Save'}
+          {saving || uploading
+            ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            : success
+              ? <><Check size={14} /> Saved!</>
+              : 'Save'
+          }
         </button>
       </div>
 
-      {/* Cover photo */}
-      <div className="relative">
-        <div className="h-32 bg-gradient-to-br from-[#1E6FFF]/40 via-[#7B2FFF]/30 to-[#00D4C8]/20">
-          {profile?.cover_url && (
-            <img src={profile.cover_url} alt="cover" className="w-full h-full object-cover" />
-          )}
-          <label className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer">
-            <div className="bg-black/50 rounded-full p-2">
-              <Camera size={20} className="text-white" />
-            </div>
-            <input type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
-          </label>
-        </div>
+      <div className="px-4 pt-6 space-y-5">
 
         {/* Avatar */}
-        <div className="absolute -bottom-12 left-4">
+        <div className="flex flex-col items-center">
           <div className="relative">
-            <div className="p-1 bg-[#0A1628] rounded-full">
-              {profile?.avatar_url ? (
-                <img src={profile.avatar_url} alt="avatar" className="w-20 h-20 rounded-full object-cover border-2 border-[#1E6FFF]" />
-              ) : (
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-2xl border-2 border-[#1E6FFF]">
-                  {profile?.display_name?.[0]?.toUpperCase() || 'B'}
-                </div>
-              )}
+            {avatarPreview ? (
+              <img src={avatarPreview} alt="" className="w-24 h-24 rounded-full object-cover border-2 border-white/20" />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-black text-3xl border-2 border-white/20">
+                {displayName?.[0]?.toUpperCase() || 'B'}
+              </div>
+            )}
+            <button
+              onClick={() => fileRef.current?.click()}
+              className="absolute -bottom-1 -right-1 w-9 h-9 bg-[#1E6FFF] rounded-full flex items-center justify-center border-2 border-[#0A1628] shadow-lg hover:bg-[#1565cc] transition-colors"
+            >
+              <Camera size={15} color="white" />
+            </button>
+          </div>
+          <button onClick={() => fileRef.current?.click()} className="text-[#1E6FFF] text-sm font-bold mt-3">
+            Change profile photo
+          </button>
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+        </div>
+
+        {/* Fields */}
+        <div className="space-y-3">
+          {/* Display name */}
+          <div>
+            <label className="text-white/60 text-[11px] font-bold uppercase tracking-wider block mb-1.5">Display Name *</label>
+            <input type="text" value={displayName} onChange={e => { setDisplayName(e.target.value); setError(''); }}
+              placeholder="Your name" maxLength={40}
+              className="w-full bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60 transition-all" />
+          </div>
+
+          {/* Username */}
+          <div>
+            <label className="text-white/60 text-[11px] font-bold uppercase tracking-wider block mb-1.5">Username *</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6B7280] font-bold text-[15px] pointer-events-none">@</span>
+              <input type="text" value={username}
+                onChange={e => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,'')); setError(''); }}
+                placeholder="username" maxLength={20}
+                className="w-full bg-white/[0.06] border border-white/10 rounded-2xl pl-9 pr-4 py-3.5 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60 transition-all" />
             </div>
-            <label className="absolute bottom-1 right-1 bg-[#1E6FFF] rounded-full p-1.5 cursor-pointer">
-              <Camera size={12} className="text-white" />
-              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-            </label>
+          </div>
+
+          {/* Bio */}
+          <div>
+            <label className="text-white/60 text-[11px] font-bold uppercase tracking-wider block mb-1.5">Bio</label>
+            <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Tell people about yourself..." rows={3} maxLength={160}
+              className="w-full bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60 resize-none transition-all" />
+            <div className="flex justify-end mt-0.5">
+              <span className={`text-xs ${bio.length > 140 ? 'text-orange-400' : 'text-[#6B7280]'}`}>{bio.length}/160</span>
+            </div>
+          </div>
+
+          {/* Country */}
+          <div>
+            <label className="text-white/60 text-[11px] font-bold uppercase tracking-wider block mb-1.5">Country</label>
+            <select value={country} onChange={e => setCountry(e.target.value)}
+              className="w-full bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[15px] focus:outline-none focus:border-[#1E6FFF]/60 appearance-none transition-all"
+              style={{ WebkitAppearance:'none' }}>
+              {COUNTRIES.map(c => (
+                <option key={c.code} value={c.code} style={{ background:'#0d1f3c' }}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Website */}
+          <div>
+            <label className="text-white/60 text-[11px] font-bold uppercase tracking-wider block mb-1.5">Website</label>
+            <input type="url" value={website} onChange={e => { setWebsite(e.target.value); setError(''); }}
+              placeholder="https://yourwebsite.com" maxLength={100}
+              className="w-full bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60 transition-all" />
           </div>
         </div>
-      </div>
 
-      {/* Form */}
-      <div className="mt-16 px-4 space-y-4">
+        {/* Error */}
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3">
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
             <p className="text-red-400 text-sm">{error}</p>
           </div>
         )}
-        {success && (
-          <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-3">
-            <p className="text-green-400 text-sm">{success}</p>
-          </div>
-        )}
-        {uploading && (
-          <div className="bg-[#1E6FFF]/10 border border-[#1E6FFF]/30 rounded-xl p-3">
-            <p className="text-[#1E6FFF] text-sm">Uploading image...</p>
-          </div>
-        )}
 
-        {[
-          { label: 'Display Name', name: 'display_name', placeholder: 'Your full name' },
-          { label: 'Username', name: 'username', placeholder: 'yourhandle' },
-          { label: 'Website', name: 'website', placeholder: 'https://yoursite.com' },
-        ].map(({ label, name, placeholder }) => (
-          <div key={name}>
-            <label className="text-white/70 text-xs mb-1 block">{label}</label>
-            <input
-              type="text"
-              name={name}
-              value={form[name]}
-              onChange={handleChange}
-              placeholder={placeholder}
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-[#6B7280] text-sm focus:outline-none focus:border-[#1E6FFF] transition-colors"
-            />
-          </div>
-        ))}
-
-        {/* Bio */}
-        <div>
-          <label className="text-white/70 text-xs mb-1 block">Bio</label>
-          <textarea
-            name="bio"
-            value={form.bio}
-            onChange={handleChange}
-            placeholder="Tell the world about yourself..."
-            rows={3}
-            maxLength={150}
-            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-[#6B7280] text-sm focus:outline-none focus:border-[#1E6FFF] transition-colors resize-none"
-          />
-          <p className="text-[#6B7280] text-xs text-right mt-1">{form.bio.length}/150</p>
-        </div>
-
-        {/* Country */}
-        <div>
-          <label className="text-white/70 text-xs mb-1 block">Country</label>
-          <select
-            name="country"
-            value={form.country}
-            onChange={handleChange}
-            className="w-full bg-[#0A1628] border border-white/10 rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:border-[#1E6FFF] transition-colors"
-          >
-            {COUNTRIES.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.flag} {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Save button */}
+        <button
+          onClick={handleSave}
+          disabled={saving || uploading}
+          className="w-full py-4 rounded-2xl font-bold text-white text-[15px] disabled:opacity-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          style={{ background:'linear-gradient(135deg,#1E6FFF,#7B2FFF)', boxShadow:'0 8px 24px rgba(30,111,255,0.3)' }}
+        >
+          {saving || uploading
+            ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {uploading ? 'Uploading photo...' : 'Saving...'}</>
+            : success ? '✅ Saved successfully!' : 'Save Changes'
+          }
+        </button>
       </div>
     </div>
   );
-};
-
-export default EditProfile;
+}
