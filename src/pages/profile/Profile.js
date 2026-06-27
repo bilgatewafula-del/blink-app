@@ -249,22 +249,41 @@ export default function Profile() {
 
         {/* Action buttons */}
         <div className="flex gap-2 mt-4">
-          {isOwnProfile ? (
-            <>
-              <button
-                onClick={() => navigate('/edit-profile')}
-                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-white/20 bg-white/[0.06] hover:bg-white/10 transition-colors active:scale-95"
-              >
-                Edit Profile
-              </button>
-              <button
-                onClick={() => navigate('/premium')}
-                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-[#1E6FFF]/40 bg-[#1E6FFF]/10 hover:bg-[#1E6FFF]/20 transition-colors active:scale-95"
-              >
-                ⭐ Premium
-              </button>
-            </>
-          ) : (
+         {isOwnProfile ? (
+  <div className="w-full space-y-3">
+    <div className="flex gap-2">
+      <button
+        onClick={() => navigate('/edit-profile')}
+        className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-white/20 bg-white/[0.06] hover:bg-white/10 transition-colors active:scale-95"
+      >
+        Edit Profile
+      </button>
+
+      <button
+        onClick={() => navigate('/premium')}
+        className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-[#1E6FFF]/40 bg-[#1E6FFF]/10 hover:bg-[#1E6FFF]/20 transition-colors active:scale-95"
+      >
+        ⭐ Premium
+      </button>
+    </div>
+
+    <div className="flex gap-2">
+      <button
+        onClick={() => navigate('/subscription')}
+        className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 text-white font-bold text-sm shadow-lg active:scale-95"
+      >
+        ⭐ Upgrade Plan
+      </button>
+
+      <button
+        onClick={() => navigate('/coins')}
+        className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#1E6FFF] to-[#7B2FFF] text-white font-bold text-sm shadow-lg active:scale-95"
+      >
+        🪙 Buy Coins
+      </button>
+    </div>
+  </div>
+) : (
             <>
               <button
                 onClick={handleFollow}
