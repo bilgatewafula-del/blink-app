@@ -1,436 +1,525 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import {
-  ArrowLeft, Image, Video, MapPin, Globe,
-  Users, Lock, X, SmilePlus,
+  ArrowLeft, Image, Video, MapPin, Hash,
+  X, Globe, Users, Lock, ChevronDown,
+  Loader, CheckCircle,
 } from 'lucide-react';
 import Avatar from '../../components/Avatar';
-import SmartEmojiPicker from '../../components/SmartEmojiPicker';
 
-const MAX_CHARS    = 500;
-const MAX_IMAGES   = 4;
-const MAX_VID_SECS = 300;   // 5 min
-const MIN_VID_SECS = 10;    // 10 s
-
-const AUDIENCE_OPTIONS = [
-  { value: 'public',    label: 'Everyone',  icon: Globe,  color: '#2ECC71' },
-  { value: 'followers', label: 'Followers', icon: Users,  color: '#1E6FFF' },
-  { value: 'private',   label: 'Only me',   icon: Lock,   color: '#6B7280' },
-];
-
-/* ── SVG character-count ring ──────────────────── */
-function CharRing({ value, max }) {
-  const pct    = value / max;
-  const danger = pct >= 1;
-  const warn   = pct >= 0.9;
-  const size   = 26;
-  const stroke = 2.6;
-  const r      = (size - stroke) / 2;
-  const circ   = 2 * Math.PI * r;
-  const dash   = circ * Math.min(pct, 1);
-  const color  = danger ? '#EF4444' : warn ? '#FF6B35' : '#1E6FFF';
-  const remaining = max - value;
-  if (value === 0) return null;
-  return (
-    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={stroke} />
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke}
-          strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
-          style={{ transition: 'stroke-dasharray 0.15s ease, stroke 0.15s ease' }} />
-      </svg>
-      {remaining <= 30 && remaining >= 0 && (
-        <span className="absolute text-[9px] font-bold" style={{ color }}>{remaining}</span>
-      )}
-    </div>
-  );
+/* ── Image compression ───────────────────────
+   Compresses image to target quality/size using
+   an offscreen canvas before uploading.
+─────────────────────────────────────────────── */
+async function compressImage(file, maxW = 1920, maxH = 1920, quality = 0.82) {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      let { width, height } = img;
+      // Scale down if larger than max
+      if (width > maxW || height > maxH) {
+        const ratio = Math.min(maxW / width, maxH / height);
+        width  = Math.round(width  * ratio);
+        height = Math.round(height * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width  = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      // Sharpen pass
+      ctx.imageSmoothingEnabled  = true;
+      ctx.imageSmoothingQuality  = 'high';
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(url);
+          // Use compressed only if smaller
+          if (blob && blob.size < file.size) {
+            resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+          } else {
+            resolve(file);
+          }
+        },
+        'image/jpeg',
+        quality
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
 }
 
+/* ── Upload a single file to Cloudinary ─────── */
+async function uploadToCloudinary(file, resourceType = 'image', onProgress) {
+  const cloud  = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
+  const preset = 'blink_uploads';
+  const formData = new FormData();
+  formData.append('file',           file);
+  formData.append('upload_preset',  preset);
+  formData.append('cloud_name',     cloud);
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloud}/${resourceType}/upload`);
+
+    xhr.upload.onprogress = (e) => {
+      if (onProgress && e.lengthComputable) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    };
+
+    xhr.onload = () => {
+      const data = JSON.parse(xhr.responseText);
+      if (data.secure_url) resolve(data);
+      else reject(new Error(data.error?.message || 'Upload failed'));
+    };
+    xhr.onerror = () => reject(new Error('Network error during upload'));
+    xhr.send(formData);
+  });
+}
+
+/* ── Audience options ── */
+const AUDIENCES = [
+  { key:'public',    icon: Globe,  label:'Everyone'         },
+  { key:'followers', icon: Users,  label:'Followers only'   },
+  { key:'private',   icon: Lock,   label:'Only me'          },
+];
+
+const HASHTAG_SUGGESTIONS = [
+  '#Kenya','#Nigeria','#Africa','#GenZ','#Nairobi','#Lagos',
+  '#Music','#Fashion','#Food','#Business','#Tech','#Sports',
+];
+
 export default function CreatePost() {
-  const navigate = useNavigate();
+  const navigate         = useNavigate();
+  const [searchParams]   = useSearchParams();
   const { user, profile } = useAuth();
+  const editPostId       = searchParams.get('edit');
 
-  const textRef      = useRef();
-  const imageInput   = useRef();
-  const videoInput   = useRef();
-  const emojiBtnRef  = useRef();      // trigger ref for SmartEmojiPicker
+  const fileInputRef  = useRef();
+  const videoInputRef = useRef();
+  const textareaRef   = useRef();
 
-  const [caption,       setCaption]      = useState('');
-  const [images,        setImages]       = useState([]);
-  const [video,         setVideo]        = useState(null);
-  const [videoError,    setVideoError]   = useState('');
-  const [location,      setLocation]     = useState('');
-  const [showLocation,  setShowLocation] = useState(false);
-  const [audience,      setAudience]     = useState('public');
-  const [showAudience,  setShowAudience] = useState(false);
-  const [showEmoji,     setShowEmoji]    = useState(false);
-  const [uploading,     setUploading]    = useState(false);
-  const [uploadPct,     setUploadPct]    = useState(0);
-  const [error,         setError]        = useState('');
+  const [caption,       setCaption]       = useState('');
+  const [location,      setLocation]      = useState('');
+  const [audience,      setAudience]      = useState('public');
+  const [hashtags,      setHashtags]      = useState([]);
+  const [showHashtags,  setShowHashtags]  = useState(false);
+  const [showAudience,  setShowAudience]  = useState(false);
+  const [mediaFiles,    setMediaFiles]    = useState([]); // [{file, preview, type}]
+  const [uploadProgress,setUploadProgress]= useState({}); // {idx: pct}
+  const [compressing,   setCompressing]   = useState(false);
+  const [submitting,    setSubmitting]    = useState(false);
+  const [submitPhase,   setSubmitPhase]   = useState(''); // compressing|uploading|saving
+  const [error,         setError]         = useState('');
+  const [success,       setSuccess]       = useState(false);
 
-  const charCount = caption.length;
-  const overLimit = charCount > MAX_CHARS;
-  const canPost   = (caption.trim() || images.length || video) && !overLimit && !uploading;
+  const charLimit = 500;
+  const hasMedia  = mediaFiles.length > 0;
 
-  /* auto-resize textarea */
+  /* Load post for editing */
   useEffect(() => {
-    if (textRef.current) {
-      textRef.current.style.height = 'auto';
-      textRef.current.style.height = textRef.current.scrollHeight + 'px';
-    }
-  }, [caption]);
+    if (!editPostId) return;
+    (async () => {
+      const { data } = await supabase.from('posts')
+        .select('*').eq('id', editPostId).eq('user_id', user.id).maybeSingle();
+      if (data) {
+        setCaption(data.caption || '');
+        setAudience(data.audience || 'public');
+        setHashtags(data.hashtags || []);
+        setLocation(data.location || '');
+      }
+    })();
+  }, [editPostId]);
 
-  /* ── Image picker ── */
-  const handleImagePick = (e) => {
+  const handleImageSelect = async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    if (video) { setError('Cannot mix images and video in one post.'); return; }
-    const remaining = MAX_IMAGES - images.length;
-    const picked = files.slice(0, remaining).map(file => ({
-      file, preview: URL.createObjectURL(file),
+    const remaining = 10 - mediaFiles.length;
+    const selected  = files.slice(0, remaining);
+    const previews  = selected.map(f => ({
+      file:    f,
+      preview: URL.createObjectURL(f),
+      type:    'image',
+      size:    f.size,
     }));
-    setImages(prev => [...prev, ...picked]);
-    setError('');
+    setMediaFiles(prev => [...prev, ...previews]);
     e.target.value = '';
   };
 
-  const removeImage = (idx) => {
-    setImages(prev => {
-      URL.revokeObjectURL(prev[idx].preview);
-      return prev.filter((_, i) => i !== idx);
-    });
-  };
-
-  /* ── Video picker ── */
-  const handleVideoPick = (e) => {
+  const handleVideoSelect = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (images.length) { setError('Cannot mix images and video in one post.'); return; }
-    setVideoError(''); setError('');
-    const url = URL.createObjectURL(file);
-    const el  = document.createElement('video');
-    el.preload = 'metadata'; el.src = url;
-    el.onloadedmetadata = () => {
-      const dur = el.duration;
-      if (dur < MIN_VID_SECS) { setVideoError(`Video too short. Minimum is ${MIN_VID_SECS}s.`); URL.revokeObjectURL(url); return; }
-      if (dur > MAX_VID_SECS) { setVideoError(`Video too long. Maximum is ${MAX_VID_SECS / 60} minutes.`); URL.revokeObjectURL(url); return; }
-      setVideo({ file, preview: url, duration: Math.round(dur) });
-    };
+    if (file.size > 100 * 1024 * 1024) { setError('Video must be under 100 MB.'); return; }
+    setMediaFiles(prev => [
+      ...prev,
+      { file, preview: URL.createObjectURL(file), type: 'video', size: file.size },
+    ]);
     e.target.value = '';
   };
 
-  const removeVideo = () => {
-    if (video?.preview) URL.revokeObjectURL(video.preview);
-    setVideo(null); setVideoError('');
+  const removeMedia = (idx) => {
+    const updated = mediaFiles.filter((_, i) => i !== idx);
+    setMediaFiles(updated);
   };
 
-  /* ── Cloudinary upload ── */
-  const uploadToCloudinary = async (file, resourceType = 'image') => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', 'blink_uploads');
-    formData.append('cloud_name', process.env.REACT_APP_CLOUDINARY_CLOUD_NAME);
-    const xhr = new XMLHttpRequest();
-    return new Promise((resolve, reject) => {
-      xhr.upload.onprogress = (ev) => {
-        if (ev.lengthComputable) setUploadPct(Math.round((ev.loaded / ev.total) * 100));
-      };
-      xhr.onload = () => {
-        const res = JSON.parse(xhr.responseText);
-        if (res.secure_url) resolve(res.secure_url);
-        else reject(new Error(res.error?.message || 'Upload failed'));
-      };
-      xhr.onerror = () => reject(new Error('Network error during upload'));
-      xhr.open('POST', `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`);
-      xhr.send(formData);
-    });
+  const toggleHashtag = (tag) => {
+    const clean = tag.replace('#', '');
+    const exists = hashtags.includes(clean);
+    if (exists) {
+      setHashtags(h => h.filter(t => t !== clean));
+      setCaption(c => c.replace(' #' + clean, '').replace('#' + clean, '').trim());
+    } else {
+      setHashtags(h => [...h, clean]);
+      setCaption(c => (c ? c + ' ' : '') + '#' + clean);
+      textareaRef.current?.focus();
+    }
+    setShowHashtags(false);
   };
 
-  const extractHashtags = (text) =>
-    [...new Set((text.match(/#(\w+)/g) || []).map(h => h.slice(1).toLowerCase()))];
+  const extractHashtags = (text) => {
+    const matches = text.match(/#(\w+)/g) || [];
+    return matches.map(h => h.slice(1));
+  };
 
-  /* ── Submit ── */
-  const handlePost = async () => {
-    if (!canPost) return;
-    setUploading(true); setUploadPct(0); setError('');
+  const handleSubmit = async () => {
+    if (!caption.trim() && !hasMedia) { setError('Add a caption or media.'); return; }
+    if (caption.length > charLimit)   { setError(`Caption too long (max ${charLimit} chars).`); return; }
+
+    setSubmitting(true); setError('');
+
     try {
-      let imageUrls = [], videoUrl = null, videoDuration = null, videoThumb = null;
+      let mediaUrls  = [];
+      let videoUrl   = null;
+      let videoDuration = null;
+      let videoThumb = null;
+      const postType = mediaFiles.some(m => m.type === 'video') ? 'video' : hasMedia ? 'image' : 'text';
 
-      if (images.length) {
-        for (let i = 0; i < images.length; i++) {
-          const url = await uploadToCloudinary(images[i].file, 'image');
-          imageUrls.push(url);
-          setUploadPct(Math.round(((i + 1) / images.length) * 80));
+      if (hasMedia) {
+        /* ── Phase 1: compress images ── */
+        setSubmitPhase('compressing');
+        const ready = [];
+        for (let i = 0; i < mediaFiles.length; i++) {
+          const m = mediaFiles[i];
+          if (m.type === 'image') {
+            const compressed = await compressImage(m.file);
+            ready.push({ ...m, file: compressed });
+          } else {
+            ready.push(m);
+          }
+        }
+
+        /* ── Phase 2: upload ── */
+        setSubmitPhase('uploading');
+        for (let i = 0; i < ready.length; i++) {
+          const m = ready[i];
+          const result = await uploadToCloudinary(
+            m.file,
+            m.type === 'video' ? 'video' : 'image',
+            (pct) => setUploadProgress(prev => ({ ...prev, [i]: pct }))
+          );
+          if (m.type === 'video') {
+            videoUrl      = result.secure_url;
+            videoDuration = result.duration ? Math.round(result.duration) : null;
+            videoThumb    = result.eager?.[0]?.secure_url || null;
+          } else {
+            mediaUrls.push(result.secure_url);
+          }
         }
       }
-      if (video) {
-        setUploadPct(10);
-        videoUrl      = await uploadToCloudinary(video.file, 'video');
-        videoDuration = video.duration;
-        videoThumb    = videoUrl.replace('/video/upload/', '/video/upload/so_0/').replace(/\.\w+$/, '.jpg');
-        setUploadPct(90);
+
+      /* ── Phase 3: save to DB ── */
+      setSubmitPhase('saving');
+      const allHashtags = [...new Set([...hashtags, ...extractHashtags(caption)])];
+
+      if (editPostId) {
+        // Editing existing post
+        const { error: dbErr } = await supabase.from('posts').update({
+          caption:   caption.trim(),
+          audience,
+          hashtags:  allHashtags,
+          location:  location.trim() || null,
+          ...(hasMedia && mediaUrls.length > 0 ? { media_urls: mediaUrls, post_type: postType } : {}),
+          ...(videoUrl ? { video_url: videoUrl, video_duration: videoDuration, video_thumbnail: videoThumb, post_type:'video' } : {}),
+        }).eq('id', editPostId).eq('user_id', user.id);
+        if (dbErr) throw new Error(dbErr.message);
+      } else {
+        // New post
+        const { error: dbErr } = await supabase.from('posts').insert({
+          user_id:         user.id,
+          caption:         caption.trim(),
+          audience,
+          post_type:       postType,
+          hashtags:        allHashtags,
+          location:        location.trim() || null,
+          media_urls:      mediaUrls.length > 0 ? mediaUrls : null,
+          video_url:       videoUrl,
+          video_duration:  videoDuration,
+          video_thumbnail: videoThumb,
+          is_draft:        false,
+          status:          'active',
+          likes_count:     0,
+          comments_count:  0,
+          reposts_count:   0,
+          views_count:     0,
+          shares_count:    0,
+        });
+        if (dbErr) throw new Error(dbErr.message);
+
+        // Update user post count
+        await supabase.from('users').update({ posts_count: (profile?.posts_count||0)+1 }).eq('id', user.id);
       }
 
-      const hashtags = extractHashtags(caption);
-      const postType = video ? 'video' : images.length ? 'image' : 'text';
+      setSuccess(true);
+      setTimeout(() => navigate('/'), 800);
 
-      const { error: dbError } = await supabase.from('posts').insert({
-        user_id: user.id, caption: caption.trim(),
-        media_urls: imageUrls.length ? imageUrls : null,
-        video_url: videoUrl, video_duration: videoDuration, video_thumbnail: videoThumb,
-        post_type: postType,
-        hashtags: hashtags.length ? hashtags : null,
-        location: location.trim() || null,
-        audience, is_draft: false,
-        likes_count: 0, comments_count: 0, reposts_count: 0, views_count: 0, shares_count: 0,
-      });
-
-      if (dbError) throw dbError;
-      setUploadPct(100);
-      navigate('/');
     } catch (err) {
-      setError(err.message || 'Failed to post. Please try again.');
-      setUploading(false);
+      console.error('CreatePost error:', err.message);
+      setError(err.message || 'Post failed. Try again.');
     }
+
+    setSubmitting(false);
+    setSubmitPhase('');
+    setUploadProgress({});
   };
 
-  /* ── Insert emoji at cursor ── */
-  const insertEmoji = useCallback((emojiData) => {
-    const el = textRef.current;
-    if (el) {
-      const start = el.selectionStart ?? caption.length;
-      const end   = el.selectionEnd   ?? caption.length;
-      const next  = caption.slice(0, start) + emojiData.emoji + caption.slice(end);
-      setCaption(next);
-      setTimeout(() => {
-        el.focus();
-        el.setSelectionRange(start + emojiData.emoji.length, start + emojiData.emoji.length);
-      }, 0);
-    } else {
-      setCaption(t => t + emojiData.emoji);
-    }
-  }, [caption]);
-
-  const AudienceIcon  = AUDIENCE_OPTIONS.find(o => o.value === audience)?.icon  || Globe;
-  const audienceColor = AUDIENCE_OPTIONS.find(o => o.value === audience)?.color || '#2ECC71';
-  const audienceLabel = AUDIENCE_OPTIONS.find(o => o.value === audience)?.label || 'Everyone';
+  const aud = AUDIENCES.find(a => a.key === audience) || AUDIENCES[0];
 
   return (
     <div className="min-h-screen bg-[#0A1628] flex flex-col">
 
       {/* Top bar */}
-      <div className="sticky top-0 z-30 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between flex-shrink-0">
+      <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between">
         <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white transition-colors">
           <ArrowLeft size={22} />
         </button>
-        <h1 className="text-white font-bold text-base">New Post</h1>
+        <h1 className="text-white font-bold text-[15px]">
+          {editPostId ? 'Edit Post' : 'Create Post'}
+        </h1>
+        <button
+          onClick={handleSubmit}
+          disabled={submitting || (!caption.trim() && !hasMedia)}
+          className="flex items-center gap-1.5 bg-[#1E6FFF] text-white text-sm font-bold px-4 py-2 rounded-full disabled:opacity-50 active:scale-95 transition-all"
+          style={{ boxShadow: '0 4px 16px rgba(30,111,255,0.35)' }}
+        >
+          {submitting
+            ? <><Loader size={14} className="animate-spin" /> {submitPhase === 'compressing' ? 'Compressing...' : submitPhase === 'uploading' ? 'Uploading...' : 'Saving...'}</>
+            : success
+              ? <><CheckCircle size={14} /> Posted!</>
+              : editPostId ? 'Save' : 'Post'
+          }
+        </button>
+      </div>
 
-        <div className="flex items-center gap-2">
-          {/* Audience picker */}
-          <div className="relative">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-32">
+
+        {/* Author */}
+        <div className="flex items-center gap-3 mb-4">
+          <Avatar url={profile?.avatar_url} name={profile?.display_name} size={10} />
+          <div>
+            <p className="text-white font-bold text-[14px]">{profile?.display_name}</p>
+            {/* Audience selector */}
             <button
               onClick={() => setShowAudience(!showAudience)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold transition-colors"
-              style={{ borderColor: audienceColor + '50', color: audienceColor, background: audienceColor + '15' }}
+              className="flex items-center gap-1 bg-white/10 hover:bg-white/15 px-2.5 py-1 rounded-full mt-0.5 transition-colors"
             >
-              <AudienceIcon size={12} /> {audienceLabel}
+              <aud.icon size={11} className="text-white/60" />
+              <span className="text-white/70 text-[11px] font-semibold">{aud.label}</span>
+              <ChevronDown size={11} className="text-white/40" />
             </button>
-            {showAudience && (
-              <div className="absolute right-0 top-9 bg-[#111827] border border-white/10 rounded-2xl overflow-hidden z-50 w-44 shadow-2xl">
-                {AUDIENCE_OPTIONS.map(opt => (
-                  <button key={opt.value} onClick={() => { setAudience(opt.value); setShowAudience(false); }}
-                    className={'w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ' + (audience === opt.value ? 'bg-white/10' : 'hover:bg-white/5')}
-                    style={{ color: audience === opt.value ? opt.color : 'white' }}>
-                    <opt.icon size={15} style={{ color: opt.color }} /> {opt.label}
+          </div>
+        </div>
+
+        {/* Audience dropdown */}
+        {showAudience && (
+          <div className="bg-[#111827] border border-white/10 rounded-2xl overflow-hidden mb-4 shadow-xl">
+            {AUDIENCES.map(a => (
+              <button
+                key={a.key}
+                onClick={() => { setAudience(a.key); setShowAudience(false); }}
+                className={'w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-left transition-colors ' +
+                  (audience === a.key ? 'bg-[#1E6FFF]/10' : '')}
+              >
+                <a.icon size={16} className={audience === a.key ? 'text-[#1E6FFF]' : 'text-[#6B7280]'} />
+                <span className={`text-[14px] font-medium ${audience === a.key ? 'text-[#1E6FFF]' : 'text-white/80'}`}>{a.label}</span>
+                {audience === a.key && <CheckCircle size={14} className="text-[#1E6FFF] ml-auto" />}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Caption */}
+        <textarea
+          ref={textareaRef}
+          value={caption}
+          onChange={e => setCaption(e.target.value)}
+          placeholder="What's on your mind? Use # for hashtags, @ to mention..."
+          rows={5}
+          maxLength={charLimit + 50}
+          className="w-full bg-transparent text-white text-[17px] placeholder-[#6B7280] focus:outline-none resize-none leading-relaxed mb-2"
+          style={{ minHeight: 120 }}
+        />
+        <div className="flex justify-end mb-3">
+          <span className={`text-xs font-semibold ${caption.length > charLimit ? 'text-red-400' : caption.length > charLimit * 0.85 ? 'text-orange-400' : 'text-[#6B7280]'}`}>
+            {caption.length}/{charLimit}
+          </span>
+        </div>
+
+        {/* Media preview */}
+        {mediaFiles.length > 0 && (
+          <div className="mb-4">
+            <div className={`grid gap-2 ${mediaFiles.length === 1 ? 'grid-cols-1' : mediaFiles.length === 2 ? 'grid-cols-2' : 'grid-cols-2'}`}>
+              {mediaFiles.map((m, i) => (
+                <div key={i} className="relative rounded-2xl overflow-hidden bg-black/40 border border-white/10">
+                  {m.type === 'video'
+                    ? <video src={m.preview} className="w-full object-cover" style={{ maxHeight:200, aspectRatio:'16/9' }} muted playsInline />
+                    : <img src={m.preview} alt="" className="w-full object-cover" style={{ maxHeight: mediaFiles.length === 1 ? 300 : 180, aspectRatio:'1/1' }} />
+                  }
+                  {/* Upload progress */}
+                  {uploadProgress[i] !== undefined && uploadProgress[i] < 100 && (
+                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2">
+                      <div className="w-3/4 h-1.5 bg-white/20 rounded-full overflow-hidden">
+                        <div className="h-full bg-[#1E6FFF] rounded-full transition-all duration-300" style={{ width: uploadProgress[i] + '%' }} />
+                      </div>
+                      <p className="text-white text-xs font-bold">{uploadProgress[i]}%</p>
+                    </div>
+                  )}
+                  {/* File size badge */}
+                  <div className="absolute bottom-1.5 left-1.5 bg-black/60 rounded-full px-2 py-0.5">
+                    <p className="text-white/70 text-[10px]">{(m.size / 1024 / 1024).toFixed(1)} MB</p>
+                  </div>
+                  {/* Remove button */}
+                  <button
+                    onClick={() => removeMedia(i)}
+                    className="absolute top-1.5 right-1.5 w-7 h-7 bg-black/70 rounded-full flex items-center justify-center hover:bg-red-500/70 transition-colors"
+                  >
+                    <X size={14} color="white" />
                   </button>
-                ))}
-              </div>
-            )}
+                </div>
+              ))}
+            </div>
           </div>
+        )}
 
-          <button onClick={handlePost} disabled={!canPost}
-            className="bg-[#1E6FFF] text-white text-sm font-bold px-5 py-2 rounded-full disabled:opacity-40 hover:bg-[#1565cc] transition-colors shadow-lg shadow-[#1E6FFF]/30">
-            {uploading ? (uploadPct < 100 ? uploadPct + '%' : 'Posting…') : 'Post'}
-          </button>
-        </div>
-      </div>
-
-      {/* Upload progress */}
-      {uploading && (
-        <div className="h-1 bg-white/10 flex-shrink-0">
-          <div className="h-full bg-[#1E6FFF] transition-all duration-300" style={{ width: uploadPct + '%' }} />
-        </div>
-      )}
-
-      {/* Body */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="flex gap-3 px-4 pt-4">
-          <div className="flex-shrink-0">
-            <Avatar url={profile?.avatar_url} name={profile?.display_name} size={11} />
+        {/* Compressing indicator */}
+        {submitting && submitPhase === 'compressing' && (
+          <div className="mb-4 flex items-center gap-3 bg-[#1E6FFF]/10 border border-[#1E6FFF]/20 rounded-xl px-4 py-3">
+            <Loader size={16} className="text-[#1E6FFF] animate-spin flex-shrink-0" />
+            <div>
+              <p className="text-white text-sm font-bold">Optimising media...</p>
+              <p className="text-[#6B7280] text-xs">Compressing images for best quality & speed</p>
+            </div>
           </div>
+        )}
 
-          <div className="flex-1 min-w-0">
-            <p className="text-white font-bold text-[15px] mb-2">{profile?.display_name}</p>
-
-            {/* Caption textarea */}
-            <textarea
-              ref={textRef}
-              value={caption}
-              onChange={e => setCaption(e.target.value)}
-              placeholder="What's happening?"
-              className="w-full bg-transparent text-white text-[17px] placeholder-[#6B7280] focus:outline-none resize-none leading-relaxed min-h-[80px]"
-              style={{ color: overLimit ? '#EF4444' : 'white' }}
-              disabled={uploading}
+        {/* Location */}
+        {location !== undefined && (
+          <div className="flex items-center gap-2 bg-white/[0.05] border border-white/10 rounded-xl px-3 py-2.5 mb-3">
+            <MapPin size={14} className="text-[#6B7280] flex-shrink-0" />
+            <input
+              type="text"
+              value={location}
+              onChange={e => setLocation(e.target.value)}
+              placeholder="Add location..."
+              className="flex-1 bg-transparent text-white text-sm placeholder-[#6B7280] focus:outline-none"
             />
-
-            {/* Image previews — Twitter grid */}
-            {images.length > 0 && (
-              <div className={
-                'rounded-2xl overflow-hidden mb-3 ' +
-                (images.length === 1 ? 'block' : 'grid grid-cols-2 gap-[2px]')
-              }>
-                {images.map((img, i) => (
-                  <div key={i} className="relative"
-                    style={images.length === 3 && i === 0 ? { gridRow: 'span 2' } : {}}>
-                    <img src={img.preview} alt="" className="w-full h-full object-cover"
-                      style={{
-                        aspectRatio: images.length === 1 ? 'auto' : '1/1',
-                        maxHeight: images.length === 1 ? 400 : undefined,
-                      }} />
-                    <button onClick={() => removeImage(i)}
-                      className="absolute top-2 right-2 w-7 h-7 bg-black/70 rounded-full flex items-center justify-center hover:bg-black/90 transition-colors">
-                      <X size={14} color="white" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+            {location && (
+              <button onClick={() => setLocation('')} className="text-[#6B7280] hover:text-white">
+                <X size={14} />
+              </button>
             )}
+          </div>
+        )}
 
-            {/* Video preview */}
-            {video && (
-              <div className="relative rounded-2xl overflow-hidden border border-white/10 mb-3" style={{ aspectRatio: '16/9' }}>
-                <video src={video.preview} className="w-full h-full object-cover" controls playsInline />
-                <button onClick={removeVideo}
-                  className="absolute top-2 right-2 w-7 h-7 bg-black/70 rounded-full flex items-center justify-center hover:bg-black/90 transition-colors">
-                  <X size={14} color="white" />
-                </button>
-                {video.duration && (
-                  <div className="absolute bottom-2 left-2 bg-black/60 rounded-full px-2 py-0.5">
-                    <span className="text-white text-xs font-medium">
-                      {Math.floor(video.duration / 60)}:{String(video.duration % 60).padStart(2, '0')}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Errors */}
-            {videoError && (
-              <div className="mb-3 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-xl">
-                <p className="text-red-400 text-sm">{videoError}</p>
-              </div>
-            )}
-            {error && (
-              <div className="mb-3 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-xl">
-                <p className="text-red-400 text-sm">{error}</p>
-              </div>
-            )}
-
-            {/* Location input */}
-            {showLocation && (
-              <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-white/5 border border-white/10 rounded-xl">
-                <MapPin size={15} className="text-[#1E6FFF] flex-shrink-0" />
-                <input type="text" value={location} onChange={e => setLocation(e.target.value)}
-                  placeholder="Add location..." maxLength={80}
-                  className="flex-1 bg-transparent text-white text-sm placeholder-[#6B7280] focus:outline-none" />
-                {location && (
-                  <button onClick={() => { setLocation(''); setShowLocation(false); }} className="text-[#6B7280] hover:text-white">
-                    <X size={14} />
+        {/* Hashtag suggestions */}
+        {showHashtags && (
+          <div className="mb-3">
+            <p className="text-[#6B7280] text-[11px] font-bold uppercase tracking-wider mb-2">Popular Hashtags</p>
+            <div className="flex flex-wrap gap-2">
+              {HASHTAG_SUGGESTIONS.map(tag => {
+                const clean = tag.replace('#','');
+                const active = hashtags.includes(clean);
+                return (
+                  <button
+                    key={tag}
+                    onClick={() => toggleHashtag(tag)}
+                    className={'px-3 py-1.5 rounded-full text-xs font-bold border transition-all ' +
+                      (active ? 'bg-[#1E6FFF] text-white border-[#1E6FFF]' : 'bg-white/5 text-white/60 border-white/15 hover:bg-white/10')}
+                  >
+                    {tag}
                   </button>
-                )}
-              </div>
-            )}
-
-            <div className="border-t border-white/[0.07] mt-2" />
-
-            {/* Toolbar */}
-            <div className="flex items-center justify-between py-3">
-              <div className="flex items-center gap-1 -ml-1">
-                {/* Images */}
-                <button onClick={() => imageInput.current?.click()}
-                  disabled={!!video || images.length >= MAX_IMAGES || uploading}
-                  className="text-[#1E6FFF] p-2 rounded-full hover:bg-[#1E6FFF]/10 transition-colors disabled:opacity-30" title="Add images">
-                  <Image size={20} />
-                </button>
-                <input ref={imageInput} type="file" accept="image/*" multiple className="hidden" onChange={handleImagePick} />
-
-                {/* Video */}
-                <button onClick={() => videoInput.current?.click()}
-                  disabled={images.length > 0 || !!video || uploading}
-                  className="text-[#1E6FFF] p-2 rounded-full hover:bg-[#1E6FFF]/10 transition-colors disabled:opacity-30" title="Add video (10s–5min)">
-                  <Video size={20} />
-                </button>
-                <input ref={videoInput} type="file" accept="video/*" className="hidden" onChange={handleVideoPick} />
-
-                {/* Location */}
-                <button onClick={() => setShowLocation(!showLocation)}
-                  className={'p-2 rounded-full transition-colors ' + (showLocation ? 'text-[#1E6FFF] bg-[#1E6FFF]/10' : 'text-[#6B7280] hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10')}
-                  title="Add location">
-                  <MapPin size={20} />
-                </button>
-
-                {/* Emoji — trigger button, ref passed to SmartEmojiPicker */}
-                <button
-                  ref={emojiBtnRef}
-                  type="button"
-                  onMouseDown={e => { e.preventDefault(); setShowEmoji(v => !v); }}
-                  className={'p-2 rounded-full transition-colors ' + (showEmoji ? 'text-[#FFD700] bg-yellow-400/10' : 'text-[#6B7280] hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10')}
-                  title="Emoji"
-                >
-                  <SmilePlus size={20} />
-                </button>
-              </div>
-
-              {/* Right: image count + char ring */}
-              <div className="flex items-center gap-3">
-                {images.length > 0 && (
-                  <span className="text-[#6B7280] text-xs">{images.length}/{MAX_IMAGES}</span>
-                )}
-                {charCount > 0 && (
-                  <>
-                    <div className="w-px h-5 bg-white/10" />
-                    <CharRing value={charCount} max={MAX_CHARS} />
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Hints */}
-            <div className="pb-4">
-              {!video && images.length === 0 && (
-                <p className="text-[#6B7280] text-xs">📷 Up to {MAX_IMAGES} photos · 🎬 Video 10s–5min</p>
-              )}
-              {video && (
-                <p className="text-[#2ECC71] text-xs">
-                  ✓ Video ready ({Math.floor(video.duration / 60)}:{String(video.duration % 60).padStart(2, '0')})
-                </p>
-              )}
+                );
+              })}
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Error */}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 mb-3">
+            <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        )}
       </div>
 
-      {/* Smart emoji picker — renders in a portal-like fixed position */}
-      <SmartEmojiPicker
-        open={showEmoji}
-        onClose={() => setShowEmoji(false)}
-        onEmojiClick={(emojiData) => { insertEmoji(emojiData); }}
-        triggerRef={emojiBtnRef}
-        width={300}
-        height={350}
-      />
+      {/* Bottom toolbar */}
+      <div className="fixed bottom-0 left-0 right-0 max-w-[620px] mx-auto bg-[#0d1f3c] border-t border-white/[0.08]"
+        style={{ paddingBottom:'max(12px, env(safe-area-inset-bottom))' }}>
+        <div className="flex items-center gap-1 px-4 py-2">
+
+          {/* Photo */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={submitting}
+            className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-white/60 hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10 transition-all disabled:opacity-40"
+          >
+            <Image size={20} />
+            <span className="text-sm font-semibold">Photo</span>
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
+
+          {/* Video */}
+          <button
+            onClick={() => videoInputRef.current?.click()}
+            disabled={submitting || mediaFiles.some(m => m.type === 'video')}
+            className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-white/60 hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10 transition-all disabled:opacity-40"
+          >
+            <Video size={20} />
+            <span className="text-sm font-semibold">Video</span>
+          </button>
+          <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={handleVideoSelect} />
+
+          {/* Hashtag */}
+          <button
+            onClick={() => setShowHashtags(!showHashtags)}
+            disabled={submitting}
+            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all disabled:opacity-40 ${showHashtags ? 'text-[#1E6FFF] bg-[#1E6FFF]/10' : 'text-white/60 hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10'}`}
+          >
+            <Hash size={20} />
+            <span className="text-sm font-semibold">Tags</span>
+          </button>
+
+          {/* Location */}
+          <button
+            onClick={() => { textareaRef.current?.focus(); }}
+            disabled={submitting}
+            className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-white/60 hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10 transition-all disabled:opacity-40"
+          >
+            <MapPin size={20} />
+            <span className="text-sm font-semibold">Location</span>
+          </button>
+
+          {/* Media count */}
+          {mediaFiles.length > 0 && (
+            <div className="ml-auto bg-[#1E6FFF]/20 px-2.5 py-1 rounded-full">
+              <p className="text-[#1E6FFF] text-[12px] font-bold">{mediaFiles.length}/10</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
