@@ -4,56 +4,51 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import BottomNav from './components/BottomNav';
 
 /* ── Lazy pages — paths match REAL folder structure ── */
-const Login = lazy(() => import('./pages/auth/Login'));
+const Login              = lazy(() => import('./pages/auth/Login'));
 const SignUp = lazy(() => import('./pages/auth/Signup'));
-
-const Home = lazy(() => import('./pages/feed/Home'));
-const Discover = lazy(() => import('./pages/discover/Discover'));
-const Notifications = lazy(() => import('./pages/notifications/Notifications'));
-const Profile = lazy(() => import('./pages/profile/Profile'));
-const EditProfile = lazy(() => import('./pages/profile/EditProfile'));
-const PostDetail = lazy(() => import('./pages/feed/PostDetail'));
-const CreatePost = lazy(() => import('./pages/feed/CreatePost'));
-
-const AdminPanel = lazy(() => import('./pages/admin/AdminPanel'));
+const Home               = lazy(() => import('./pages/feed/Home'));
+const Discover           = lazy(() => import('./pages/discover/Discover'));
+const Notifications      = lazy(() => import('./pages/notifications/Notifications'));
+const Profile            = lazy(() => import('./pages/profile/Profile'));
+const EditProfile        = lazy(() => import('./pages/profile/EditProfile'));
+const PostDetail         = lazy(() => import('./pages/feed/PostDetail'));
+const CreatePost         = lazy(() => import('./pages/feed/CreatePost'));
+const AdminPanel         = lazy(() => import('./pages/admin/AdminPanel'));
 const PaymentsAdminPanel = lazy(() => import('./pages/admin/PaymentsAdminPanel'));
 
+/* ── Chat — adjust these TWO lines to match YOUR actual file names ── */
 const Chats = lazy(() => import('./pages/chat/ChatList'));
 const ChatDetail = lazy(() => import('./pages/chat/ChatRoom'));
 
-const MonetisationHub = lazy(() => import('./pages/monetisation/MonetisationHub'));
-const SubscriptionPage = lazy(() => import('./pages/monetisation/SubscriptionPage'));
-const CoinsPage = lazy(() => import('./pages/monetisation/CoinsPage'));
-const BoostPost = lazy(() => import('./pages/monetisation/BoostPost'));
-const VerificationPage = lazy(() => import('./pages/monetisation/VerificationPage'));
-const BusinessPage = lazy(() => import('./pages/monetisation/BusinessPage'));
+/* ── Monetisation ── */
+const MonetisationHub    = lazy(() => import('./pages/monetisation/MonetisationHub'));
+const SubscriptionPage   = lazy(() => import('./pages/monetisation/SubscriptionPage'));
+const CoinsPage          = lazy(() => import('./pages/monetisation/CoinsPage'));
+const BoostPost          = lazy(() => import('./pages/monetisation/BoostPost'));
+const VerificationPage   = lazy(() => import('./pages/monetisation/VerificationPage'));
+const BusinessPage       = lazy(() => import('./pages/monetisation/BusinessPage'));
 
-/* ── Placeholder pages for Drawer items not yet built ── */
+/* ── Real drawer pages ── */
+const SettingsPage = lazy(() => import('./pages/settings/SettingsPage'));
+const HelpPage     = lazy(() => import('./pages/help/HelpCenter'));
+const AboutPage    = lazy(() => import('./pages/about/AboutPage'));
+
+/* ── Still coming soon ── */
 function ComingSoon({ title }) {
-  const navigate = useNavigate?.() || null;
+  const nav = typeof window !== 'undefined' ? null : null;
   return (
     <div className="min-h-screen bg-[#0A1628] flex flex-col items-center justify-center gap-4 px-6">
       <p className="text-5xl">🚧</p>
       <p className="text-white font-bold text-xl">{title}</p>
-      <p className="text-[#6B7280] text-sm text-center">Coming soon! We're building this feature.</p>
-      <button
-        onClick={() => window.history.back()}
-        className="mt-2 bg-[#1E6FFF] text-white px-6 py-2.5 rounded-full font-bold text-sm"
-      >
-        ← Go Back
-      </button>
+      <p className="text-[#6B7280] text-sm text-center">Coming soon!</p>
+      <button onClick={() => window.history.back()} className="mt-2 bg-[#1E6FFF] text-white px-6 py-2.5 rounded-full font-bold text-sm">← Go Back</button>
     </div>
   );
 }
-function useNavigate() { return require('react-router-dom').useNavigate(); }
-
-const SavedPosts  = () => <ComingSoon title="Saved Posts"  />;
-const BLinkAI     = () => <ComingSoon title="B-Link AI"    />;
-const NewsPage    = () => <ComingSoon title="News"          />;
-const SettingsPage= () => <ComingSoon title="Settings"     />;
-const HelpPage    = () => <ComingSoon title="Help Center"  />;
-const AboutPage   = () => <ComingSoon title="About B-Link" />;
-const VibesPage   = () => <ComingSoon title="Vibes"        />;
+const SavedPosts = () => <ComingSoon title="Saved Posts" />;
+const BLinkAI    = () => <ComingSoon title="B-Link AI"   />;
+const NewsPage   = () => <ComingSoon title="News"         />;
+const VibesPage  = () => <ComingSoon title="Vibes"        />;
 
 /* ── Loaders ── */
 function PageLoader() {
