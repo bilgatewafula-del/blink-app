@@ -6,9 +6,12 @@ import { formatNumber } from '../../utils/formatNumber';
 import { formatTime } from '../../utils/formatTime';
 import PostCard from '../../components/PostCard';
 import ImageViewer from '../../components/ImageViewer';
+import VerifiedBadge from '../../components/VerifiedBadge';
+import { getActivePlan, PLANS, formatKES } from '../../utils/paymentUtils';
 import {
   ArrowLeft, Settings, UserPlus, UserCheck,
   Grid, List, MoreHorizontal, MessageCircle,
+  Coins, ChevronRight, Zap,
 } from 'lucide-react';
 
 const POST_SELECT = `
@@ -33,6 +36,7 @@ export default function Profile() {
   const [viewLayout,  setViewLayout]  = useState('list'); // list | grid
   const [imgViewer,   setImgViewer]   = useState(false);
   const [stats,       setStats]       = useState({ followers: 0, following: 0, posts: 0 });
+  const [fetchError,  setFetchError]  = useState('');
 
   // Are we viewing our own profile?
   const isOwnProfile = !username || username === myProfile?.username;
@@ -45,50 +49,78 @@ export default function Profile() {
   const loadProfile = async () => {
     setLoading(true);
     setPostsLoading(true);
+    setFetchError('');
 
-    let profileData;
+    // Hard timeout — loading MUST resolve within 8s no matter what
+    const hardTimeout = setTimeout(() => {
+      setLoading(false);
+      setFetchError(prev => prev || 'Taking longer than expected. Pull down or tap retry.');
+    }, 8000);
 
-    if (isOwnProfile) {
-      // Viewing own profile
-      const { data } = await supabase.from('users').select('*').eq('id', user.id).maybeSingle();
-      profileData = data;
-    } else {
-      // Viewing someone else's profile by username
-      const { data } = await supabase.from('users').select('*').eq('username', username).maybeSingle();
-      profileData = data;
+    try {
+      let profileData = null;
+
+      if (isOwnProfile) {
+        const { data, error } = await supabase.from('users').select('*').eq('id', user.id).maybeSingle();
+        if (error) throw error;
+        profileData = data;
+      } else {
+        const { data, error } = await supabase.from('users').select('*').eq('username', username).maybeSingle();
+        if (error) throw error;
+        profileData = data;
+      }
+
+      if (!profileData) {
+        clearTimeout(hardTimeout);
+        setLoading(false);
+        setPostsLoading(false);
+        return;
+      }
+
+      setProfile(profileData);
+
+      // Fetch real counts — each wrapped so one failure doesn't block the rest
+      const safeCount = async (query) => {
+        try { const { count } = await query; return count || 0; }
+        catch { return null; }
+      };
+
+      const [followers, following, posts, isFollowingRes] = await Promise.all([
+        safeCount(supabase.from('follows').select('id', { count:'exact', head:true }).eq('following_id', profileData.id)),
+        safeCount(supabase.from('follows').select('id', { count:'exact', head:true }).eq('follower_id', profileData.id)),
+        safeCount(supabase.from('posts').select('id', { count:'exact', head:true }).eq('user_id', profileData.id).eq('is_draft', false).neq('status','deleted')),
+        !isOwnProfile
+          ? supabase.from('follows').select('id').eq('follower_id', user.id).eq('following_id', profileData.id).maybeSingle().catch(() => ({ data:null }))
+          : Promise.resolve({ data: null }),
+      ]);
+
+      setStats({
+        followers: followers ?? profileData.followers_count ?? 0,
+        following: following ?? 0,
+        posts:     posts     ?? profileData.posts_count ?? 0,
+      });
+
+      if (!isOwnProfile && isFollowingRes?.data) setFollowing(true);
+
+      // Best-effort cache write — never blocks the UI if it fails
+      if (followers !== null || posts !== null) {
+        supabase.from('users').update({
+          ...(followers !== null ? { followers_count: followers } : {}),
+          ...(posts     !== null ? { posts_count: posts }         : {}),
+        }).eq('id', profileData.id).then(() => {}).catch(() => {});
+      }
+
+      clearTimeout(hardTimeout);
+      setLoading(false);
+      loadPosts(profileData.id);
+
+    } catch (err) {
+      console.error('loadProfile error:', err.message);
+      clearTimeout(hardTimeout);
+      setLoading(false);
+      setPostsLoading(false);
+      setFetchError(err.message || 'Could not load profile.');
     }
-
-    if (!profileData) { setLoading(false); return; }
-    setProfile(profileData);
-
-    // Fetch REAL follower/following/posts counts from actual data
-    const [followersRes, followingRes, postsRes, isFollowingRes] = await Promise.all([
-      supabase.from('follows').select('id',{count:'exact',head:true}).eq('following_id', profileData.id),
-      supabase.from('follows').select('id',{count:'exact',head:true}).eq('follower_id', profileData.id),
-      supabase.from('posts').select('id',{count:'exact',head:true})
-        .eq('user_id', profileData.id).eq('is_draft', false).neq('status','deleted'),
-      // Check if current user follows this profile
-      !isOwnProfile
-        ? supabase.from('follows').select('id').eq('follower_id', user.id).eq('following_id', profileData.id).maybeSingle()
-        : Promise.resolve({ data: null }),
-    ]);
-
-    setStats({
-      followers: followersRes.count || 0,
-      following: followingRes.count || 0,
-      posts:     postsRes.count     || 0,
-    });
-
-    if (!isOwnProfile && isFollowingRes.data) setFollowing(true);
-
-    // Update cached counts in DB (keeps profile counts accurate)
-    await supabase.from('users').update({
-      followers_count: followersRes.count || 0,
-      posts_count:     postsRes.count     || 0,
-    }).eq('id', profileData.id);
-
-    setLoading(false);
-    loadPosts(profileData.id);
   };
 
   const loadPosts = async (uid) => {
@@ -141,6 +173,18 @@ export default function Profile() {
   if (loading) return (
     <div className="min-h-screen bg-[#0A1628] flex items-center justify-center">
       <div className="w-7 h-7 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+
+  if (fetchError && !profile) return (
+    <div className="min-h-screen bg-[#0A1628] flex flex-col items-center justify-center gap-3 px-6">
+      <p className="text-5xl">⚠️</p>
+      <p className="text-white font-bold text-lg">Could not load profile</p>
+      <p className="text-[#6B7280] text-sm text-center">{fetchError}</p>
+      <button onClick={loadProfile} className="mt-2 bg-[#1E6FFF] text-white px-5 py-2.5 rounded-full font-bold text-sm">
+        Try again
+      </button>
+      <button onClick={() => navigate(-1)} className="text-[#6B7280] text-sm">← Go back</button>
     </div>
   );
 
@@ -201,9 +245,9 @@ export default function Profile() {
                 {profile.display_name?.[0]?.toUpperCase()}
               </div>
             )}
-            {(profile.is_verified || profile.is_business) && (
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#1E6FFF] rounded-full flex items-center justify-center border-2 border-[#0A1628]">
-                <span className="text-white text-[10px] font-black">✓</span>
+            {profile.is_verified && (
+              <div className="absolute -bottom-1 -right-1 bg-[#0A1628] rounded-full p-0.5">
+                <VerifiedBadge size={20} />
               </div>
             )}
           </button>
@@ -227,9 +271,7 @@ export default function Profile() {
         <div className="mt-3">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-white font-black text-[17px]">{profile.display_name}</p>
-            {profile.is_verified && (
-              <span className="bg-[#1E6FFF] text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold">✓ Verified</span>
-            )}
+            {profile.is_verified && <VerifiedBadge size={16} />}
             {roleIcon && <span className="text-base">{roleIcon}</span>}
             {profile.is_business && (
               <span className="bg-yellow-500/20 text-yellow-400 text-[9px] px-1.5 py-0.5 rounded-full font-bold border border-yellow-500/30">💼 Business</span>
@@ -249,41 +291,22 @@ export default function Profile() {
 
         {/* Action buttons */}
         <div className="flex gap-2 mt-4">
-         {isOwnProfile ? (
-  <div className="w-full space-y-3">
-    <div className="flex gap-2">
-      <button
-        onClick={() => navigate('/edit-profile')}
-        className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-white/20 bg-white/[0.06] hover:bg-white/10 transition-colors active:scale-95"
-      >
-        Edit Profile
-      </button>
-
-      <button
-        onClick={() => navigate('/premium')}
-        className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-[#1E6FFF]/40 bg-[#1E6FFF]/10 hover:bg-[#1E6FFF]/20 transition-colors active:scale-95"
-      >
-        ⭐ Premium
-      </button>
-    </div>
-
-    <div className="flex gap-2">
-      <button
-        onClick={() => navigate('/subscription')}
-        className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 text-white font-bold text-sm shadow-lg active:scale-95"
-      >
-        ⭐ Upgrade Plan
-      </button>
-
-      <button
-        onClick={() => navigate('/coins')}
-        className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#1E6FFF] to-[#7B2FFF] text-white font-bold text-sm shadow-lg active:scale-95"
-      >
-        🪙 Buy Coins
-      </button>
-    </div>
-  </div>
-) : (
+          {isOwnProfile ? (
+            <>
+              <button
+                onClick={() => navigate('/edit-profile')}
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-white/20 bg-white/[0.06] hover:bg-white/10 transition-colors active:scale-95"
+              >
+                Edit Profile
+              </button>
+              <button
+                onClick={() => navigate('/premium')}
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-[#1E6FFF]/40 bg-[#1E6FFF]/10 hover:bg-[#1E6FFF]/20 transition-colors active:scale-95"
+              >
+                ⭐ Premium
+              </button>
+            </>
+          ) : (
             <>
               <button
                 onClick={handleFollow}
@@ -309,6 +332,64 @@ export default function Profile() {
             </>
           )}
         </div>
+
+        {/* ── Monetisation panel — own profile only ── */}
+        {isOwnProfile && (() => {
+          const activePlan = getActivePlan(profile);
+          const planInfo    = PLANS[activePlan];
+          return (
+            <div className="mt-4 rounded-2xl border overflow-hidden"
+              style={{ borderColor: planInfo?.color + '30', background: planInfo?.color + '08' }}>
+
+              {/* Plan + coins row */}
+              <button
+                onClick={() => navigate('/premium')}
+                className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-white/[0.04] transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{planInfo?.badge || '⭐'}</span>
+                  <div className="text-left">
+                    <p className="text-white font-bold text-[14px]">{planInfo?.label || 'Free'} Plan</p>
+                    {activePlan !== 'free' && profile?.subscription_expires_at ? (
+                      <p className="text-[#6B7280] text-[11px]">
+                        Renews {new Date(profile.subscription_expires_at).toLocaleDateString('en-KE',{day:'numeric',month:'short'})}
+                      </p>
+                    ) : (
+                      <p className="text-[#6B7280] text-[11px]">Tap to upgrade</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 bg-yellow-500/15 border border-yellow-500/25 rounded-full px-2.5 py-1">
+                    <Coins size={12} className="text-yellow-400" />
+                    <span className="text-yellow-400 font-bold text-[12px]">{formatNumber(profile?.coins_balance || 0)}</span>
+                  </div>
+                  <ChevronRight size={16} className="text-[#6B7280]" />
+                </div>
+              </button>
+
+              {/* Quick links row */}
+              <div className="grid grid-cols-4 border-t border-white/[0.06]">
+                {[
+                  { icon: '⭐', label: 'Plans',   path: '/subscription'  },
+                  { icon: '🪙', label: 'Coins',   path: '/coins'         },
+                  { icon: '✓',  label: 'Verify',  path: '/verification', active: profile?.is_verified },
+                  { icon: '💼', label: 'Business',path: '/business-page', active: profile?.is_business },
+                ].map(item => (
+                  <button
+                    key={item.path}
+                    onClick={() => navigate(item.path)}
+                    className="flex flex-col items-center gap-1 py-3 hover:bg-white/[0.04] transition-colors border-r border-white/[0.06] last:border-r-0"
+                  >
+                    <span className="text-lg">{item.icon}</span>
+                    <span className="text-[10px] font-semibold text-white/60">{item.label}</span>
+                    {item.active && <div className="w-1 h-1 rounded-full bg-[#1E6FFF]" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Posts tab header */}

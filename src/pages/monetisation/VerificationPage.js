@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { VERIFICATION_PRICE, formatKES } from '../../utils/paymentUtils';
 import PaymentModal from '../../components/PaymentModal';
 import { ArrowLeft, Check, Clock } from 'lucide-react';
+import VerifiedBadge from '../../components/VerifiedBadge';
 
 export default function VerificationPage() {
   const navigate = useNavigate();
@@ -59,11 +60,22 @@ export default function VerificationPage() {
 
         {/* Already verified */}
         {isVerified && (
-          <div className="bg-[#1E6FFF]/10 border border-[#1E6FFF]/25 rounded-2xl p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#1E6FFF] flex items-center justify-center text-white font-black">✓</div>
+          <div className="bg-[#1E6FFF]/10 border border-[#1E6FFF]/25 rounded-2xl p-5 flex flex-col items-center text-center gap-3">
+            <VerifiedBadge size={48} />
             <div>
-              <p className="text-white font-bold">You are already verified!</p>
-              <p className="text-[#6B7280] text-xs mt-0.5">Your blue badge is active on your profile.</p>
+              <p className="text-white font-black text-lg">Verified Account ✓</p>
+              <p className="text-[#6B7280] text-xs mt-1">
+                Your B-Link verified badge is live and visible on your profile, posts, and comments.
+              </p>
+              {profile?.verified_at && (
+                <p className="text-white/30 text-[11px] mt-2">
+                  Verified since {new Date(profile.verified_at).toLocaleDateString('en-KE',{day:'numeric',month:'long',year:'numeric'})}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-2 bg-white/[0.05] rounded-xl px-4 py-2.5 mt-1">
+              <span className="text-white/70 text-sm font-semibold">{profile?.display_name}</span>
+              <VerifiedBadge size={16} />
             </div>
           </div>
         )}
@@ -81,8 +93,8 @@ export default function VerificationPage() {
 
         {/* Hero */}
         <div className="bg-gradient-to-br from-[#1E6FFF]/15 to-[#7B2FFF]/15 border border-[#1E6FFF]/20 rounded-2xl p-5 text-center">
-          <div className="w-16 h-16 rounded-full bg-[#1E6FFF] flex items-center justify-center text-white font-black text-2xl mx-auto mb-3">
-            ✓
+          <div className="flex justify-center mb-3">
+            <VerifiedBadge size={56} />
           </div>
           <p className="text-white font-black text-xl mb-1">B-Link Verified Badge</p>
           <p className="text-white/50 text-sm mb-3">One-time fee — badge stays forever</p>

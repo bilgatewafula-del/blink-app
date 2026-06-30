@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import { formatTime } from '../../utils/formatTime';
 import { formatNumber } from '../../utils/formatNumber';
+import VerifiedBadge from '../../components/VerifiedBadge';
 import {
   Shield, Users, AlertTriangle, Ban, Clock,
   XCircle, ArrowLeft, Trash2, Search,
@@ -942,23 +943,10 @@ export default function AdminPanel() {
                   { label:'Open Reports',   key:'reports', color:'#EF4444', count: stats.pendingReports },
                   { label:'Moderate Posts', key:'content', color:'#FF6B35' },
                   { label:'View Logs',      key:'logs',    color:'#2ECC71' },
-                  { label:'Payments Dashboard',  key:'payments',        color:'#10B981' },
                 ].map(a => (
                   <button
                     key={a.key}
-                    onClick={() => {
-  if (a.key === 'payments') {
-    navigate('/admin/payments');
-    return;
-  }
-
-  setSection(a.key);
-
-  if (a.key === 'content') {
-    fetchPosts();
-    fetchComments();
-  }
-}}
+                    onClick={() => { setSection(a.key); if (a.key === 'content') { fetchPosts(); fetchComments(); } }}
                     className="py-3 px-4 rounded-xl text-sm font-bold transition-all hover:opacity-80 relative"
                     style={{ background: a.color + '18', border: '1px solid ' + a.color + '35', color: a.color }}
                   >
@@ -1021,6 +1009,7 @@ export default function AdminPanel() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <p className="text-white font-bold text-[13px] truncate">{u.display_name}</p>
+                        {u.is_verified && <VerifiedBadge size={13} />}
                         <RoleBadge role={u.role} />
                       </div>
                       <p className="text-[#6B7280] text-[12px]">@{u.username}</p>

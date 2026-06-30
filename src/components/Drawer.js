@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { formatNumber } from '../utils/formatNumber';
 import { getActivePlan, PLANS } from '../utils/paymentUtils';
+import VerifiedBadge from './VerifiedBadge';
 import {
   X, Home, Compass, Bell, MessageCircle, User,
   Settings, HelpCircle, Info, Bookmark, Zap,
@@ -90,9 +91,7 @@ export default function Drawer({ isOpen, onClose }) {
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <p className="text-white font-bold text-[15px] truncate">{profile?.display_name || 'B-Link User'}</p>
-                {profile?.is_verified && (
-                  <span className="bg-[#1E6FFF] text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">✓</span>
-                )}
+                {profile?.is_verified && <VerifiedBadge size={14} />}
                 {profile?.role === 'blink' && <span className="text-[13px]">👑</span>}
               </div>
               <p className="text-[#6B7280] text-xs truncate">@{profile?.username || 'user'}</p>

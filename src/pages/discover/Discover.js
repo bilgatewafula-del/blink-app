@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import VerifiedBadge from '../../components/VerifiedBadge';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
@@ -97,7 +98,7 @@ function PeopleCard({ u, currentUserId }) {
       <div className="flex-1 min-w-0" onClick={goToProfile}>
         <div className="flex items-center gap-1.5 flex-wrap">
           <p className="text-white font-bold text-[14px] truncate max-w-[150px]">{u.display_name}</p>
-          {u.is_verified && <span className="bg-[#1E6FFF] text-white text-[7px] px-1.5 py-0.5 rounded-full font-bold">✓</span>}
+          {u.is_verified && <VerifiedBadge size={15} />}
         </div>
         <p className="text-[#6B7280] text-[12px]">@{u.username}</p>
         {u.bio && <p className="text-white/40 text-[11px] mt-0.5 truncate">{u.bio}</p>}
@@ -340,7 +341,7 @@ export default function Discover() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <p className="text-white font-bold text-[14px] truncate">{u.display_name}</p>
-                        {u.is_verified && <span className="bg-[#1E6FFF] text-white text-[7px] px-1 py-0.5 rounded-full font-bold">✓</span>}
+                        {u.is_verified && <VerifiedBadge size={15} />}
                       </div>
                       <p className="text-[#6B7280] text-[12px]">@{u.username} · {formatNumber(u.followers_count||0)} followers</p>
                     </div>

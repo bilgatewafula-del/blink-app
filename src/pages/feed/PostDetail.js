@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import VerifiedBadge from '../../components/VerifiedBadge';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
@@ -135,7 +136,7 @@ function CommentRow({ c, postAuthorId, currentUserId, onReply, onDelete, navigat
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-1 flex-wrap">
           <button onClick={() => navigate('/profile/' + cUser.username)} className="text-white font-bold text-[13px] hover:underline">{cUser.display_name}</button>
-          {cUser.is_verified && <span className="bg-[#1E6FFF] text-white text-[7px] px-1 py-0.5 rounded-full font-bold">✓</span>}
+          {cUser.is_verified && <VerifiedBadge size={14} />}
           {isAuthor && <span className="bg-[#1E6FFF]/20 text-[#1E6FFF] text-[9px] px-1.5 py-0.5 rounded-full font-bold">Author</span>}
           <span className="text-[#6B7280] text-[12px]">@{cUser.username}</span>
           <span className="text-[#6B7280] text-[12px]">·</span>
@@ -551,7 +552,7 @@ export default function PostDetail() {
               <div>
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <button onClick={() => navigate('/profile/' + author?.username)} className="text-white font-bold text-[15px] hover:underline">{author?.display_name}</button>
-                  {author?.is_verified && <span className="bg-[#1E6FFF] text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold">✓</span>}
+                  {author?.is_verified && <VerifiedBadge size={15} />}
                   {author?.role === 'blink' && <span className="text-[13px]">👑</span>}
                 </div>
                 <p className="text-[#6B7280] text-sm">@{author?.username} {flagMap[author?.country]||''}</p>

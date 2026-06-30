@@ -10,6 +10,7 @@ import {
   Info, Zap, Gift, Wrench, ChevronRight,
 } from 'lucide-react';
 import Avatar from '../../components/Avatar';
+import VerifiedBadge from '../../components/VerifiedBadge';
 
 /* ── Notification type config ──────────────────── */
 const TYPE_CONFIG = {
@@ -712,7 +713,11 @@ export default function Notifications() {
                           {/* Main text — Twitter style: bold name + action */}
                           <p className="text-[14px] leading-snug text-white/90">
                             {!isSystem && (
-                              <span className="font-bold">{names[0] || 'Someone'} </span>
+                              <span className="font-bold inline-flex items-center gap-1">
+                                {names[0] || 'Someone'}
+                                {n.from_user?.is_verified && <VerifiedBadge size={13} />}
+                                {' '}
+                              </span>
                             )}
                             <span className={isSystem ? 'font-medium' : ''}>
                               {buildText(n).replace(names[0] || '', '').trimStart()}

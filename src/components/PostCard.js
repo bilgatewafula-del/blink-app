@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import VerifiedBadge from './VerifiedBadge';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -278,7 +279,7 @@ function QuotedPost({ quotedPost, navigate }) {
           : <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">{a?.display_name?.[0]?.toUpperCase()}</div>
         }
         <span className="text-white font-bold text-[13px] truncate max-w-[100px]">{a?.display_name}</span>
-        {a?.is_verified && <span className="bg-[#1E6FFF] text-white text-[7px] px-1 py-0.5 rounded-full font-bold">✓</span>}
+        {a?.is_verified && <VerifiedBadge size={14} />}
         <span className="text-[#6B7280] text-[12px]">@{a?.username}</span>
         <span className="text-[#6B7280] text-[12px]">· {formatTime(quotedPost.created_at)}</span>
       </div>
@@ -874,7 +875,7 @@ export default function PostCard({ post: initialPost, currentUser, onRefresh }) 
                   className="text-white font-bold text-[14px] hover:underline truncate max-w-[120px]">
                   {author?.display_name}
                 </button>
-                {author?.is_verified && <span className="bg-[#1E6FFF] text-white text-[7px] px-1 py-0.5 rounded-full font-bold flex-shrink-0">✓</span>}
+                {author?.is_verified && <VerifiedBadge size={15} />}
                 {author?.role === 'blink'  && <span className="text-[10px] flex-shrink-0">👑</span>}
                 {author?.role === 'admin'  && <span className="text-[10px] flex-shrink-0">🛡️</span>}
                 <span className="text-[#6B7280] text-[13px] truncate max-w-[80px]">@{author?.username}</span>

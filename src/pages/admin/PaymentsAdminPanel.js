@@ -208,6 +208,7 @@ export default function PaymentsAdminPanel() {
         // Grant verified badge for creator/business
         if (['creator', 'business'].includes(payment.plan)) {
           updateData.is_verified = true;
+          updateData.verified_at = now.toISOString();
         }
         if (payment.plan === 'business') {
           updateData.is_business = true;
@@ -298,12 +299,18 @@ export default function PaymentsAdminPanel() {
         });
 
       } else if (payment.payment_type === 'verification') {
-        await supabase.from('users').update({ is_verified: true }).eq('id', payment.user_id);
+        // Per spec: ONLY admin confirmation sets is_verified + verified_at
+        const { error: vErr } = await supabase.from('users').update({
+          is_verified: true,
+          verified_at: now.toISOString(),
+        }).eq('id', payment.user_id);
+        if (vErr) throw new Error('Verification activation failed: ' + vErr.message);
+
         await supabase.from('notifications').insert({
           user_id:      payment.user_id,
           from_user_id: user.id,
           type:         'admin_action',
-          message:      `✅ Congratulations! Your account has been verified. The ✓ badge is now on your profile.`,
+          message:      `✅ Congratulations! Your account has been verified. Your B-Link verified badge is now live on your profile.`,
           is_read:      false,
         });
 
@@ -313,6 +320,7 @@ export default function PaymentsAdminPanel() {
         await supabase.from('users').update({
           is_business:             true,
           is_verified:             true,
+          verified_at:             now.toISOString(),
           subscription_plan:       'business',
           subscription_expires_at: expiresAt.toISOString(),
         }).eq('id', payment.user_id);
