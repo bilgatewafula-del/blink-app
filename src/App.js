@@ -2,6 +2,7 @@ import { Suspense, lazy, useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import BottomNav from './components/BottomNav';
+import NetworkBanner from './components/NetworkBanner';
 
 /* ── Lazy pages — paths match REAL folder structure ── */
 const Login              = lazy(() => import('./pages/auth/Login'));
@@ -116,6 +117,7 @@ function AppShell() {
 
   return (
     <>
+      <NetworkBanner />
       <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Auth */}
