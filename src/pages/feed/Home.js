@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Bell, RefreshCw, Feather, Menu } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Bell, RefreshCw, Feather, Menu, WifiOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
@@ -8,12 +8,13 @@ import PostCard from '../../components/PostCard';
 import Stories from '../../components/Stories';
 
 const POSTS_PER_PAGE = 15;
+// Hard timeout for any single feed load — prevents skeleton stuck forever
+const LOAD_TIMEOUT_MS = 12000;
 
-/* ─────────────────────────────────────────────
-   Explicit FK hint — the ONLY way to avoid the
-   "ambiguous relationship" Supabase error.
-   NEVER change this to   .select('*, users(*)')
-───────────────────────────────────────────── */
+// Cache-busting version — increment this on every deployment
+// so browsers immediately fetch the new JS bundle
+export const FEED_VERSION = '2.1.0';
+
 const POST_SELECT = `
   id, caption, media_urls, video_url, video_duration, video_thumbnail,
   post_type, hashtags, location, bg_color, audience, status, is_draft,
@@ -28,26 +29,26 @@ const normalise = (p) => ({
 });
 
 const flagMap = {
-  KE:'🇰🇪',NG:'🇳🇬',GH:'🇬🇭',UG:'🇺🇬',
-  TZ:'🇹🇿',ZA:'🇿🇦',ET:'🇪🇹',RW:'🇷🇼',
-  GB:'🇬🇧',US:'🇺🇸',CA:'🇨🇦',
+  KE:'🇰🇪', NG:'🇳🇬', GH:'🇬🇭', UG:'🇺🇬',
+  TZ:'🇹🇿', ZA:'🇿🇦', ET:'🇪🇹', RW:'🇷🇼',
+  GB:'🇬🇧', US:'🇺🇸', CA:'🇨🇦',
 };
 
 function PostSkeleton() {
   return (
-    <div className="border-b border-white/[0.07] px-4 py-3 animate-pulse">
+    <div className="border-b border-white/[0.07] px-4 py-3">
       <div className="flex gap-3">
-        <div className="w-10 h-10 rounded-full bg-white/10 flex-shrink-0" />
+        <div className="w-10 h-10 rounded-full skeleton flex-shrink-0" />
         <div className="flex-1 space-y-2 pt-1">
           <div className="flex gap-2">
-            <div className="h-3 bg-white/10 rounded-full w-24" />
-            <div className="h-3 bg-white/10 rounded-full w-16" />
+            <div className="h-3 skeleton rounded-full w-24" />
+            <div className="h-3 skeleton rounded-full w-16" />
           </div>
-          <div className="h-3 bg-white/10 rounded-full w-full" />
-          <div className="h-3 bg-white/10 rounded-full w-4/5" />
-          <div className="h-3 bg-white/10 rounded-full w-3/5" />
+          <div className="h-3 skeleton rounded-full w-full" />
+          <div className="h-3 skeleton rounded-full w-4/5" />
+          <div className="h-3 skeleton rounded-full w-3/5" />
           <div className="flex gap-6 mt-2">
-            {[1,2,3,4].map(i => <div key={i} className="h-3 bg-white/10 rounded-full w-8" />)}
+            {[1,2,3,4].map(i => <div key={i} className="h-3 skeleton rounded-full w-8" />)}
           </div>
         </div>
       </div>
@@ -59,38 +60,57 @@ export default function Home() {
   const { profile, user } = useAuth();
   const navigate           = useNavigate();
 
-  const [drawerOpen,   setDrawerOpen]   = useState(false);
-  const [activeTab,    setActiveTab]    = useState('foryou');
-  const [posts,        setPosts]        = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [loadingMore,  setLoadingMore]  = useState(false);
-  const [hasMore,      setHasMore]      = useState(true);
-  const [page,         setPage]         = useState(0);
-  const [unread,       setUnread]       = useState(0);
-  const [refreshing,   setRefreshing]   = useState(false);
-  const [pullDist,     setPullDist]     = useState(0);
-  const [isPulling,    setIsPulling]    = useState(false);
+  const [drawerOpen,     setDrawerOpen]     = useState(false);
+  const [activeTab,      setActiveTab]      = useState('foryou');
+  const [posts,          setPosts]          = useState([]);
+  const [loading,        setLoading]        = useState(true);
+  const [loadingMore,    setLoadingMore]    = useState(false);
+  const [hasMore,        setHasMore]        = useState(true);
+  const [page,           setPage]           = useState(0);
+  const [unread,         setUnread]         = useState(0);
+  const [refreshing,     setRefreshing]     = useState(false);
+  const [pullDist,       setPullDist]       = useState(0);
+  const [isPulling,      setIsPulling]      = useState(false);
   const [newPostsBanner, setNewPostsBanner] = useState(false);
-  const [fetchError,   setFetchError]   = useState('');
-  const [lastFetch,    setLastFetch]    = useState(Date.now());
+  const [fetchError,     setFetchError]     = useState('');
+  const [isOffline,      setIsOffline]      = useState(!navigator.onLine);
+  const [retryCount,     setRetryCount]     = useState(0);
 
-  const loadMoreRef  = useRef();
-  const observerRef  = useRef();
-  const touchStartY  = useRef(null);
-  const feedRef      = useRef();
+  const loadMoreRef   = useRef();
+  const observerRef   = useRef();
+  const touchStartY   = useRef(null);
+  const feedRef       = useRef();
+  const loadTimerRef  = useRef(null); // Hard timeout ref
   const PULL_THRESHOLD = 70;
 
-  /* ── Smart auto-refresh every 3 min if tab is visible ── */
+  // ── 1. OFFLINE / ONLINE detection ────────────────────────────
+  useEffect(() => {
+    const handleOffline = () => { setIsOffline(true); };
+    const handleOnline  = () => {
+      setIsOffline(false);
+      // Auto-retry when connection is restored
+      setPosts([]); setPage(0); setHasMore(true);
+      loadPosts(0, true);
+    };
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online',  handleOnline);
+    return () => {
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online',  handleOnline);
+    };
+  }, [activeTab]);
+
+  // ── 2. Smart auto-refresh every 3 min when visible ───────────
   useEffect(() => {
     const autoRefresh = setInterval(() => {
-      if (document.visibilityState === 'visible' && Date.now() - lastFetch > 180000) {
-        loadPosts(0, true, true); // silent refresh
+      if (document.visibilityState === 'visible' && !loading && !isOffline) {
+        loadPosts(0, true, true); // silent background refresh
       }
-    }, 60000);
+    }, 180000);
     return () => clearInterval(autoRefresh);
-  }, [lastFetch, activeTab]);
+  }, [activeTab, loading, isOffline]);
 
-  /* ── Reload on tab change ── */
+  // ── 3. Reload on tab change ───────────────────────────────────
   useEffect(() => {
     setNewPostsBanner(false);
     setPosts([]);
@@ -100,7 +120,7 @@ export default function Home() {
     loadPosts(0, true);
   }, [activeTab]);
 
-  /* ── Infinite scroll observer ── */
+  // ── 4. Infinite scroll observer ──────────────────────────────
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
       entries => {
@@ -114,7 +134,7 @@ export default function Home() {
     return () => observerRef.current?.disconnect();
   }, [hasMore, loadingMore, loading, page]);
 
-  /* ── Real-time new posts banner ── */
+  // ── 5. Real-time new posts banner ────────────────────────────
   useEffect(() => {
     const ch = supabase.channel('home:new:' + user?.id)
       .on('postgres_changes',
@@ -125,26 +145,31 @@ export default function Home() {
     return () => supabase.removeChannel(ch);
   }, [loading]);
 
-  /* ── Unread notifications ── */
+  // ── 6. Unread notifications badge ────────────────────────────
   useEffect(() => {
     if (!user?.id) return;
     const fetchUnread = async () => {
-      const { count } = await supabase.from('notifications')
-        .select('id', { count:'exact', head:true })
-        .eq('user_id', user.id).eq('is_read', false);
-      setUnread(count || 0);
+      try {
+        const { count } = await supabase.from('notifications')
+          .select('id', { count:'exact', head:true })
+          .eq('user_id', user.id).eq('is_read', false);
+        setUnread(count || 0);
+      } catch (_) {}
     };
     fetchUnread();
     const ch = supabase.channel('nav:unread:' + user.id)
       .on('postgres_changes',
-        { event:'*', schema:'public', table:'notifications', filter:'user_id=eq.'+user.id },
+        { event:'*', schema:'public', table:'notifications',
+          filter:'user_id=eq.'+user.id },
         fetchUnread
       ).subscribe();
     return () => supabase.removeChannel(ch);
   }, [user?.id]);
 
-  /* ── Build query — explicit FK always ── */
-  const buildQuery = useCallback(async (pageNum) => {
+  // ── Build query with explicit FK hint ────────────────────────
+  // Returns the Supabase query builder (not a promise) so we can
+  // call .then() on it inside a racing timeout.
+  const buildQuery = useCallback((pageNum) => {
     const from = pageNum * POSTS_PER_PAGE;
     const to   = from + POSTS_PER_PAGE - 1;
 
@@ -155,61 +180,126 @@ export default function Home() {
       .neq('status', 'deleted')
       .neq('status', 'hidden');
 
-    if (activeTab === 'following') {
-      const { data: follows } = await supabase.from('follows')
-        .select('following_id').eq('follower_id', user.id);
-      const ids = (follows || []).map(f => f.following_id);
-      if (ids.length === 0) {
-        // No follows yet — fall through to foryou
-        return base()
-          .order('created_at', { ascending: false })
-          .range(from, to);
-      }
-      return base()
-        .in('user_id', [...ids, user.id])
-        .order('created_at', { ascending: false })
-        .range(from, to);
-    }
-
     if (activeTab === 'foryou') {
-      // Boosted posts first, then by engagement
       return base()
-        .order('is_boosted',    { ascending: false })
-        .order('likes_count',   { ascending: false })
-        .order('comments_count',{ ascending: false })
-        .order('created_at',    { ascending: false })
+        .order('is_boosted',     { ascending: false })
+        .order('likes_count',    { ascending: false })
+        .order('comments_count', { ascending: false })
+        .order('created_at',     { ascending: false })
         .range(from, to);
     }
 
-    if (activeTab === 'country') {
-      const userCountry = profile?.country || 'KE';
-      const { data: countryUsers } = await supabase.from('users')
-        .select('id').eq('country', userCountry);
-      const ids = (countryUsers || []).map(u => u.id);
-      if (ids.length === 0) {
-        return base().order('created_at', { ascending: false }).range(from, to);
-      }
-      return base()
-        .in('user_id', ids)
-        .order('created_at', { ascending: false })
-        .range(from, to);
-    }
-  }, [activeTab, user?.id, profile?.country]);
+    // 'following' and 'country' need async pre-queries — handled inside loadPosts
+    return null;
+  }, [activeTab]);
 
-  const loadPosts = async (pageNum, reset = false, silent = false) => {
+  // ── Core feed loader with hard 12s timeout ───────────────────
+  const loadPosts = useCallback(async (pageNum, reset = false, silent = false) => {
     if (reset && !silent) setLoading(true);
     else if (!reset)      setLoadingMore(true);
 
-    try {
-      const query = await buildQuery(pageNum);
-      if (!query) { setLoading(false); setLoadingMore(false); return; }
+    // Clear any existing timeout
+    if (loadTimerRef.current) clearTimeout(loadTimerRef.current);
 
-      const { data, error } = await query;
+    // HARD TIMEOUT — if Supabase doesn't respond in 12s,
+    // give up gracefully instead of staying on skeleton forever
+    loadTimerRef.current = setTimeout(() => {
+      setLoading(false);
+      setLoadingMore(false);
+      setRefreshing(false);
+      if (!silent) {
+        setFetchError(navigator.onLine
+          ? 'Feed is taking too long to load. Check your connection and pull down to retry.'
+          : 'You appear to be offline. Check your connection and try again.');
+      }
+    }, LOAD_TIMEOUT_MS);
+
+    try {
+      const from = pageNum * POSTS_PER_PAGE;
+      const to   = from + POSTS_PER_PAGE - 1;
+
+      let data = null, error = null;
+
+      if (activeTab === 'foryou') {
+        const res = await supabase.from('posts')
+          .select(POST_SELECT)
+          .eq('is_draft', false)
+          .eq('audience', 'public')
+          .neq('status', 'deleted')
+          .neq('status', 'hidden')
+          .order('is_boosted',     { ascending: false })
+          .order('likes_count',    { ascending: false })
+          .order('comments_count', { ascending: false })
+          .order('created_at',     { ascending: false })
+          .range(from, to);
+        data  = res.data;
+        error = res.error;
+
+      } else if (activeTab === 'following') {
+        const { data: follows, error: fErr } = await supabase
+          .from('follows').select('following_id').eq('follower_id', user.id);
+
+        if (fErr) throw fErr;
+
+        const ids = (follows || []).map(f => f.following_id);
+        const userIds = ids.length > 0 ? [...ids, user.id] : [user.id];
+
+        const res = await supabase.from('posts')
+          .select(POST_SELECT)
+          .in('user_id', userIds)
+          .eq('is_draft', false)
+          .eq('audience', 'public')
+          .neq('status', 'deleted')
+          .neq('status', 'hidden')
+          .order('created_at', { ascending: false })
+          .range(from, to);
+        data  = res.data;
+        error = res.error;
+
+      } else if (activeTab === 'country') {
+        const userCountry = profile?.country || 'KE';
+        const { data: cUsers, error: cErr } = await supabase
+          .from('users').select('id').eq('country', userCountry);
+
+        if (cErr) throw cErr;
+
+        const ids = (cUsers || []).map(u => u.id);
+
+        const res = ids.length > 0
+          ? await supabase.from('posts')
+              .select(POST_SELECT)
+              .in('user_id', ids)
+              .eq('is_draft', false)
+              .eq('audience', 'public')
+              .neq('status', 'deleted')
+              .neq('status', 'hidden')
+              .order('created_at', { ascending: false })
+              .range(from, to)
+          : await supabase.from('posts')
+              .select(POST_SELECT)
+              .eq('is_draft', false)
+              .eq('audience', 'public')
+              .neq('status', 'deleted')
+              .neq('status', 'hidden')
+              .order('created_at', { ascending: false })
+              .range(from, to);
+        data  = res.data;
+        error = res.error;
+      }
+
+      clearTimeout(loadTimerRef.current);
 
       if (error) {
-        console.error('Feed query error:', error.message);
-        setFetchError('Feed failed to load. Pull down to retry.');
-        setLoading(false); setLoadingMore(false);
+        console.error('Feed query error:', error.message, error.code);
+        // 6. Surface useful error instead of silent skeleton
+        setFetchError(
+          error.message?.includes('JWT')
+            ? 'Session expired — please sign out and sign in again.'
+            : error.message?.includes('ambiguous') || error.message?.includes('relationship')
+              ? 'A database configuration issue is preventing posts from loading. Contact support.'
+              : 'Feed failed to load. Pull down to retry.'
+        );
+        setLoading(false); setLoadingMore(false); setRefreshing(false);
         return;
       }
 
@@ -226,32 +316,38 @@ export default function Home() {
 
       setHasMore(newPosts.length === POSTS_PER_PAGE);
       setFetchError('');
-      setLastFetch(Date.now());
-    } catch (err) {
-      console.error('loadPosts exception:', err.message);
-      setFetchError(err.message);
-    }
+      setNewPostsBanner(false);
 
-    setLoading(false);
-    setLoadingMore(false);
-    setRefreshing(false);
-    setPullDist(0);
-    setIsPulling(false);
-    setNewPostsBanner(false);
-  };
+    } catch (err) {
+      clearTimeout(loadTimerRef.current);
+      console.error('loadPosts error:', err.message);
+      setFetchError(
+        err.message?.includes('timeout') || err.name === 'AbortError'
+          ? 'Request timed out. Check your connection and try again.'
+          : err.message || 'Feed failed to load. Pull down to retry.'
+      );
+    } finally {
+      clearTimeout(loadTimerRef.current);
+      setLoading(false);
+      setLoadingMore(false);
+      setRefreshing(false);
+      setPullDist(0);
+      setIsPulling(false);
+    }
+  }, [activeTab, user?.id, profile?.country]);
 
   const handleLoadMore = useCallback(() => {
     const next = page + 1;
     setPage(next);
     loadPosts(next, false);
-  }, [page, buildQuery]);
+  }, [page, loadPosts]);
 
-  /* ── Pull-to-refresh ── */
-  const handleTouchStart = e => {
+  // ── Pull-to-refresh ──────────────────────────────────────────
+  const handleTouchStart = (e) => {
     if (feedRef.current?.scrollTop === 0)
       touchStartY.current = e.touches[0].clientY;
   };
-  const handleTouchMove = e => {
+  const handleTouchMove = (e) => {
     if (!touchStartY.current) return;
     const diff = e.touches[0].clientY - touchStartY.current;
     if (diff > 0) { setIsPulling(true); setPullDist(Math.min(diff * 0.5, PULL_THRESHOLD + 25)); }
@@ -259,6 +355,7 @@ export default function Home() {
   const handleTouchEnd = () => {
     if (pullDist >= PULL_THRESHOLD && !refreshing) {
       setRefreshing(true);
+      setPage(0);
       loadPosts(0, true);
     } else {
       setIsPulling(false);
@@ -283,7 +380,6 @@ export default function Home() {
       {/* ── Top bar ── */}
       <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07]">
         <div className="flex items-center justify-between px-4 py-3">
-          {/* Hamburger */}
           <button
             onClick={() => setDrawerOpen(true)}
             className="w-9 h-9 rounded-xl hover:bg-white/10 flex items-center justify-center transition-colors"
@@ -291,7 +387,6 @@ export default function Home() {
             <Menu size={22} className="text-white" />
           </button>
 
-          {/* Logo */}
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center shadow-lg shadow-[#1E6FFF]/30">
               <span className="text-white font-black text-base">B</span>
@@ -299,7 +394,6 @@ export default function Home() {
             <span className="text-white font-extrabold text-lg tracking-tight">B-Link</span>
           </div>
 
-          {/* Notifications */}
           <button
             onClick={() => navigate('/notifications')}
             className="relative w-9 h-9 flex items-center justify-center"
@@ -334,14 +428,22 @@ export default function Home() {
       {/* Stories strip */}
       <Stories />
 
+      {/* Offline banner */}
+      {isOffline && (
+        <div className="mx-4 mt-3 flex items-center gap-3 bg-red-500/10 border border-red-500/20 rounded-2xl px-4 py-3">
+          <WifiOff size={16} className="text-red-400 flex-shrink-0" />
+          <p className="text-red-400 text-sm font-semibold flex-1">You're offline — showing cached content</p>
+        </div>
+      )}
+
       {/* New posts banner */}
       {newPostsBanner && !loading && (
         <div className="flex justify-center py-2 sticky top-[106px] z-10">
           <button
-            onClick={() => loadPosts(0, true)}
-            className="bg-[#1E6FFF] text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-[#1E6FFF]/40 flex items-center gap-2 hover:bg-[#1565cc] transition-colors"
+            onClick={() => { setPage(0); loadPosts(0, true); }}
+            className="bg-[#1E6FFF] text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-[#1E6FFF]/40 flex items-center gap-2"
           >
-            <RefreshCw size={12} /> New posts available
+            <RefreshCw size={12} /> New posts — tap to refresh
           </button>
         </div>
       )}
@@ -364,20 +466,37 @@ export default function Home() {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Error */}
+        {/* Error state — not silent skeleton anymore */}
         {fetchError && !loading && (
           <div className="mx-4 mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
-            <p className="text-red-400 text-sm font-semibold mb-1">Feed failed to load</p>
-            <p className="text-red-300/70 text-xs mb-3">{fetchError}</p>
-            <button onClick={() => loadPosts(0, true)} className="text-xs font-bold text-[#1E6FFF] flex items-center gap-1">
-              <RefreshCw size={12} /> Try again
-            </button>
+            <p className="text-red-400 text-sm font-semibold mb-1">Feed couldn't load</p>
+            <p className="text-red-300/70 text-xs mb-3 leading-relaxed">{fetchError}</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setFetchError(''); setPage(0); loadPosts(0, true); }}
+                className="flex items-center gap-1.5 text-xs font-bold text-[#1E6FFF]"
+              >
+                <RefreshCw size={12} /> Try again
+              </button>
+              {fetchError.includes('sign') && (
+                <button
+                  onClick={() => navigate('/login')}
+                  className="text-xs font-bold text-orange-400 ml-3"
+                >
+                  Sign in again →
+                </button>
+              )}
+            </div>
           </div>
         )}
 
-        {loading ? (
+        {/* Loading skeletons */}
+        {loading && (
           <>{Array(5).fill(0).map((_, i) => <PostSkeleton key={i} />)}</>
-        ) : posts.length === 0 && !fetchError ? (
+        )}
+
+        {/* Empty state */}
+        {!loading && !fetchError && posts.length === 0 && (
           <div className="flex flex-col items-center justify-center mt-20 gap-4 px-6">
             <p className="text-6xl">🐦</p>
             <h2 className="text-white font-bold text-xl text-center">
@@ -397,7 +516,10 @@ export default function Home() {
               </button>
             </div>
           </div>
-        ) : (
+        )}
+
+        {/* Posts */}
+        {!loading && posts.length > 0 && (
           <>
             {posts.map(post => (
               <PostCard key={post.id} post={post} currentUser={user} onRefresh={() => loadPosts(0, true)} />
@@ -409,7 +531,7 @@ export default function Home() {
                   <span className="text-sm">Loading more...</span>
                 </div>
               )}
-              {!hasMore && !loadingMore && posts.length > 0 && (
+              {!hasMore && !loadingMore && (
                 <p className="text-[#6B7280] text-xs">You're all caught up! 🎉</p>
               )}
             </div>
