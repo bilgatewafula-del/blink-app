@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
-import { ArrowLeft, Camera, Check } from 'lucide-react';
+import { ArrowLeft, Camera, Check, Clock } from 'lucide-react';
+import { validateUsername, validateDisplayName, getNameChangeCooldownRemaining, NAME_CHANGE_COOLDOWN_DAYS } from '../../utils/usernameValidation';
 
 const COUNTRIES = [
   {code:'KE',name:'Kenya 🇰🇪'},{code:'NG',name:'Nigeria 🇳🇬'},{code:'GH',name:'Ghana 🇬🇭'},
@@ -69,11 +70,26 @@ export default function EditProfile() {
     return data.secure_url;
   };
 
+  // Cooldown — how many days until name change is allowed again
+  const usernameCooldownDays    = getNameChangeCooldownRemaining(profile?.username_changed_at);
+  const displayNameCooldownDays = getNameChangeCooldownRemaining(profile?.display_name_changed_at);
+  const usernameChanged    = username.trim().toLowerCase()    !== (profile?.username || '').toLowerCase();
+  const displayNameChanged = displayName.trim()                !== (profile?.display_name || '');
+
   const handleSave = async () => {
-    if (!displayName.trim()) { setError('Display name is required.'); return; }
-    if (!username.trim())    { setError('Username is required.');     return; }
-    if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-      setError('Username: 3-20 chars, letters/numbers/underscores only.');
+    const displayErr = validateDisplayName(displayName);
+    if (displayErr) { setError(displayErr); return; }
+
+    const usernameErr = validateUsername(username);
+    if (usernameErr) { setError(usernameErr); return; }
+
+    // Client-side cooldown check (instant feedback — DB trigger is the real enforcement)
+    if (usernameChanged && usernameCooldownDays > 0) {
+      setError(`You can change your username again in ${usernameCooldownDays} day${usernameCooldownDays !== 1 ? 's' : ''}.`);
+      return;
+    }
+    if (displayNameChanged && displayNameCooldownDays > 0) {
+      setError(`You can change your display name again in ${displayNameCooldownDays} day${displayNameCooldownDays !== 1 ? 's' : ''}.`);
       return;
     }
 
@@ -102,7 +118,14 @@ export default function EditProfile() {
       const { error: dbErr } = await supabase.from('users')
         .update(updates).eq('id', user.id);
 
-      if (dbErr) throw new Error(dbErr.message);
+      if (dbErr) {
+        // Surface DB trigger messages (reserved name, cooldown, gibberish) cleanly
+        const msg = dbErr.message || '';
+        if (msg.includes('not allowed') || msg.includes('once every') || msg.includes('reserved')) {
+          throw new Error(msg.replace(/^.*?:\s*/, ''));
+        }
+        throw new Error(msg);
+      }
 
       await refreshProfile();
       setSuccess(true);
@@ -169,7 +192,13 @@ export default function EditProfile() {
             <label className="text-white/60 text-[11px] font-bold uppercase tracking-wider block mb-1.5">Display Name *</label>
             <input type="text" value={displayName} onChange={e => { setDisplayName(e.target.value); setError(''); }}
               placeholder="Your name" maxLength={40}
-              className="w-full bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60 transition-all" />
+              disabled={displayNameCooldownDays > 0}
+              className="w-full bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60 transition-all disabled:opacity-50" />
+            {displayNameCooldownDays > 0 && (
+              <p className="text-orange-400 text-[11px] mt-1.5 flex items-center gap-1">
+                <Clock size={11} /> Locked for {displayNameCooldownDays} more day{displayNameCooldownDays !== 1 ? 's' : ''}
+              </p>
+            )}
           </div>
 
           {/* Username */}
@@ -180,8 +209,16 @@ export default function EditProfile() {
               <input type="text" value={username}
                 onChange={e => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,'')); setError(''); }}
                 placeholder="username" maxLength={20}
-                className="w-full bg-white/[0.06] border border-white/10 rounded-2xl pl-9 pr-4 py-3.5 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60 transition-all" />
+                disabled={usernameCooldownDays > 0}
+                className="w-full bg-white/[0.06] border border-white/10 rounded-2xl pl-9 pr-4 py-3.5 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60 transition-all disabled:opacity-50" />
             </div>
+            {usernameCooldownDays > 0 ? (
+              <p className="text-orange-400 text-[11px] mt-1.5 flex items-center gap-1">
+                <Clock size={11} /> Locked for {usernameCooldownDays} more day{usernameCooldownDays !== 1 ? 's' : ''} (changes allowed every {NAME_CHANGE_COOLDOWN_DAYS} days)
+              </p>
+            ) : (
+              <p className="text-[#6B7280] text-[11px] mt-1.5">Use a real, recognisable name. Reserved or fake-looking names are blocked.</p>
+            )}
           </div>
 
           {/* Bio */}

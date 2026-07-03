@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { Eye, EyeOff, Mail, Lock, User, Globe, ArrowLeft } from 'lucide-react';
+import { validateUsername, validateDisplayName } from '../../utils/usernameValidation';
 
 const COUNTRIES = [
   {code:'KE',name:'Kenya 🇰🇪'},{code:'NG',name:'Nigeria 🇳🇬'},{code:'GH',name:'Ghana 🇬🇭'},
@@ -9,9 +10,6 @@ const COUNTRIES = [
   {code:'ET',name:'Ethiopia 🇪🇹'},{code:'RW',name:'Rwanda 🇷🇼'},{code:'GB',name:'UK 🇬🇧'},
   {code:'US',name:'USA 🇺🇸'},{code:'CA',name:'Canada 🇨🇦'},{code:'OTHER',name:'Other 🌍'},
 ];
-
-const RESERVED = ['admin','administrator','ceo','owner','superadmin','support','system',
-  'blink','blinksupport','blinkofficial','moderator','mod','root','staff','team'];
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -35,10 +33,10 @@ export default function SignUp() {
   };
 
   const validateStep2 = () => {
-    if (!displayName.trim())               return 'Enter your display name.';
-    if (!username.trim())                  return 'Choose a username.';
-    if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) return 'Username: 3-20 chars, letters/numbers/underscores only.';
-    if (RESERVED.includes(username.toLowerCase())) return 'That username is reserved.';
+    const nameErr = validateDisplayName(displayName);
+    if (nameErr) return nameErr;
+    const userErr = validateUsername(username);
+    if (userErr) return userErr;
     return null;
   };
 

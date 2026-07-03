@@ -8,6 +8,7 @@ import {
   Loader, CheckCircle,
 } from 'lucide-react';
 import Avatar from '../../components/Avatar';
+import { DAILY_POST_LIMIT } from '../../utils/usernameValidation';
 
 /* ── Image compression ───────────────────────
    Compresses image to target quality/size using
@@ -117,8 +118,12 @@ export default function CreatePost() {
   const [error,         setError]         = useState('');
   const [success,       setSuccess]       = useState(false);
 
-  const charLimit = 500;
-  const hasMedia  = mediaFiles.length > 0;
+  const charLimit   = 500;
+  const hasMedia    = mediaFiles.length > 0;
+  // Today's post count — from profile (DB-tracked per day, resets at midnight)
+  const postsToday  = (profile?.posts_today_date === new Date().toISOString().slice(0,10))
+    ? (profile?.posts_today || 0) : 0;
+  const atDailyLimit = postsToday >= DAILY_POST_LIMIT;
 
   /* Load post for editing */
   useEffect(() => {
@@ -278,7 +283,16 @@ export default function CreatePost() {
 
     } catch (err) {
       console.error('CreatePost error:', err.message);
-      setError(err.message || 'Post failed. Try again.');
+      const raw = err.message || '';
+      if (raw.includes('Daily post limit')) {
+        setError('🚫 Daily post limit reached (10 posts/day). Come back tomorrow!');
+      } else if (raw.includes('Duplicate post')) {
+        setError('⚠️ You already posted this. Wait a bit before reposting the same content.');
+      } else if (raw.includes('too quickly')) {
+        setError('⏱ Posting too fast — please wait a few seconds and try again.');
+      } else {
+        setError(raw || 'Post failed. Try again.');
+      }
     }
 
     setSubmitting(false);
@@ -296,12 +310,23 @@ export default function CreatePost() {
         <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white transition-colors">
           <ArrowLeft size={22} />
         </button>
-        <h1 className="text-white font-bold text-[15px]">
-          {editPostId ? 'Edit Post' : 'Create Post'}
-        </h1>
+        <div className="flex flex-col items-center">
+          <h1 className="text-white font-bold text-[15px]">
+            {editPostId ? 'Edit Post' : 'Create Post'}
+          </h1>
+          {!editPostId && (
+            <p className={`text-[11px] font-semibold ${
+              atDailyLimit ? 'text-red-400' :
+              postsToday >= DAILY_POST_LIMIT - 2 ? 'text-orange-400' :
+              'text-[#6B7280]'
+            }`}>
+              {postsToday}/{DAILY_POST_LIMIT} posts today
+            </p>
+          )}
+        </div>
         <button
           onClick={handleSubmit}
-          disabled={submitting || (!caption.trim() && !hasMedia)}
+          disabled={submitting || (!caption.trim() && !hasMedia) || (atDailyLimit && !editPostId)}
           className="flex items-center gap-1.5 bg-[#1E6FFF] text-white text-sm font-bold px-4 py-2 rounded-full disabled:opacity-50 active:scale-95 transition-all"
           style={{ boxShadow: '0 4px 16px rgba(30,111,255,0.35)' }}
         >
@@ -313,6 +338,19 @@ export default function CreatePost() {
           }
         </button>
       </div>
+
+      {/* Daily limit reached banner */}
+      {atDailyLimit && !editPostId && (
+        <div className="mx-4 mt-3 bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex items-start gap-3">
+          <span className="text-2xl flex-shrink-0">🚫</span>
+          <div>
+            <p className="text-red-400 font-bold text-sm">Daily post limit reached</p>
+            <p className="text-red-400/70 text-xs mt-0.5">
+              You've used all {DAILY_POST_LIMIT} posts for today. Come back tomorrow to post again. This keeps B-Link spam-free and professional.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-32">
 
