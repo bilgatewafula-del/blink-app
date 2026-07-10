@@ -8,12 +8,9 @@ import PostCard from '../../components/PostCard';
 import Stories from '../../components/Stories';
 
 const POSTS_PER_PAGE = 15;
-// Hard timeout for any single feed load — prevents skeleton stuck forever
 const LOAD_TIMEOUT_MS = 12000;
 
-// Cache-busting version — increment this on every deployment
-// so browsers immediately fetch the new JS bundle
-export const FEED_VERSION = '2.1.0';
+export const FEED_VERSION = '2.1.1';
 
 const POST_SELECT = `
   id, caption, media_urls, video_url, video_duration, video_thumbnail,
@@ -80,17 +77,22 @@ export default function Home() {
   const observerRef   = useRef();
   const touchStartY   = useRef(null);
   const feedRef       = useRef();
-  const loadTimerRef  = useRef(null); // Hard timeout ref
+  const loadTimerRef  = useRef(null);
   const PULL_THRESHOLD = 70;
+
+  // Always-current refs so effects with narrow deps never read stale state
+  const loadingRef   = useRef(loading);
+  const isOfflineRef = useRef(isOffline);
+  useEffect(() => { loadingRef.current = loading; }, [loading]);
+  useEffect(() => { isOfflineRef.current = isOffline; }, [isOffline]);
 
   // ── 1. OFFLINE / ONLINE detection ────────────────────────────
   useEffect(() => {
     const handleOffline = () => { setIsOffline(true); };
     const handleOnline  = () => {
       setIsOffline(false);
-      // Auto-retry when connection is restored
       setPosts([]); setPage(0); setHasMore(true);
-      loadPosts(0, true);
+      loadPostsRef.current(0, true);
     };
     window.addEventListener('offline', handleOffline);
     window.addEventListener('online',  handleOnline);
@@ -98,17 +100,17 @@ export default function Home() {
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('online',  handleOnline);
     };
-  }, [activeTab]);
+  }, []);
 
   // ── 2. Smart auto-refresh every 3 min when visible ───────────
   useEffect(() => {
     const autoRefresh = setInterval(() => {
-      if (document.visibilityState === 'visible' && !loading && !isOffline) {
-        loadPosts(0, true, true); // silent background refresh
+      if (document.visibilityState === 'visible' && !loadingRef.current && !isOfflineRef.current) {
+        loadPostsRef.current(0, true, true);
       }
     }, 180000);
     return () => clearInterval(autoRefresh);
-  }, [activeTab, loading, isOffline]);
+  }, []);
 
   // ── 3. Reload on tab change ───────────────────────────────────
   useEffect(() => {
@@ -118,6 +120,7 @@ export default function Home() {
     setHasMore(true);
     setFetchError('');
     loadPosts(0, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   // ── 4. Infinite scroll observer ──────────────────────────────
@@ -135,15 +138,22 @@ export default function Home() {
   }, [hasMore, loadingMore, loading, page]);
 
   // ── 5. Real-time new posts banner ────────────────────────────
+  // FIXED: deps changed from [loading] to [user?.id] — channel is created
+  // once per user session instead of on every loading state flip.
   useEffect(() => {
-    const ch = supabase.channel('home:new:' + user?.id)
+    if (!user?.id) return;
+    console.log('[RT] Subscribing to home:new:' + user.id);
+    const ch = supabase.channel('home:new:' + user.id)
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'posts' },
-        () => { if (!loading) setNewPostsBanner(true); }
+        () => { if (!loadingRef.current) setNewPostsBanner(true); }
       )
       .subscribe();
-    return () => supabase.removeChannel(ch);
-  }, [loading]);
+    return () => {
+      console.log('[RT] Unsubscribing from home:new:' + user.id);
+      supabase.removeChannel(ch);
+    };
+  }, [user?.id]);
 
   // ── 6. Unread notifications badge ────────────────────────────
   useEffect(() => {
@@ -166,43 +176,13 @@ export default function Home() {
     return () => supabase.removeChannel(ch);
   }, [user?.id]);
 
-  // ── Build query with explicit FK hint ────────────────────────
-  // Returns the Supabase query builder (not a promise) so we can
-  // call .then() on it inside a racing timeout.
-  const buildQuery = useCallback((pageNum) => {
-    const from = pageNum * POSTS_PER_PAGE;
-    const to   = from + POSTS_PER_PAGE - 1;
-
-    const base = () => supabase.from('posts')
-      .select(POST_SELECT)
-      .eq('is_draft', false)
-      .eq('audience', 'public')
-      .neq('status', 'deleted')
-      .neq('status', 'hidden');
-
-    if (activeTab === 'foryou') {
-      return base()
-        .order('is_boosted',     { ascending: false })
-        .order('likes_count',    { ascending: false })
-        .order('comments_count', { ascending: false })
-        .order('created_at',     { ascending: false })
-        .range(from, to);
-    }
-
-    // 'following' and 'country' need async pre-queries — handled inside loadPosts
-    return null;
-  }, [activeTab]);
-
   // ── Core feed loader with hard 12s timeout ───────────────────
   const loadPosts = useCallback(async (pageNum, reset = false, silent = false) => {
     if (reset && !silent) setLoading(true);
     else if (!reset)      setLoadingMore(true);
 
-    // Clear any existing timeout
     if (loadTimerRef.current) clearTimeout(loadTimerRef.current);
 
-    // HARD TIMEOUT — if Supabase doesn't respond in 12s,
-    // give up gracefully instead of staying on skeleton forever
     loadTimerRef.current = setTimeout(() => {
       setLoading(false);
       setLoadingMore(false);
@@ -291,7 +271,6 @@ export default function Home() {
 
       if (error) {
         console.error('Feed query error:', error.message, error.code);
-        // 6. Surface useful error instead of silent skeleton
         setFetchError(
           error.message?.includes('JWT')
             ? 'Session expired — please sign out and sign in again.'
@@ -336,6 +315,10 @@ export default function Home() {
     }
   }, [activeTab, user?.id, profile?.country]);
 
+  // Always-current ref to loadPosts, used by effects with narrow deps
+  const loadPostsRef = useRef(loadPosts);
+  useEffect(() => { loadPostsRef.current = loadPosts; }, [loadPosts]);
+
   const handleLoadMore = useCallback(() => {
     const next = page + 1;
     setPage(next);
@@ -377,7 +360,6 @@ export default function Home() {
     <div className="min-h-screen bg-[#0A1628] pb-20">
       <Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
-      {/* ── Top bar ── */}
       <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07]">
         <div className="flex items-center justify-between px-4 py-3">
           <button
@@ -407,7 +389,6 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Feed tabs */}
         <div className="flex">
           {tabs.map(tab => (
             <button
@@ -425,10 +406,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Stories strip */}
       <Stories />
 
-      {/* Offline banner */}
       {isOffline && (
         <div className="mx-4 mt-3 flex items-center gap-3 bg-red-500/10 border border-red-500/20 rounded-2xl px-4 py-3">
           <WifiOff size={16} className="text-red-400 flex-shrink-0" />
@@ -436,7 +415,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* New posts banner */}
       {newPostsBanner && !loading && (
         <div className="flex justify-center py-2 sticky top-[106px] z-10">
           <button
@@ -448,7 +426,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Pull-to-refresh indicator */}
       <div
         className="overflow-hidden flex items-center justify-center transition-all"
         style={{ height: isPulling || refreshing ? Math.max(pullDist, refreshing ? 44 : 0) : 0 }}
@@ -459,14 +436,12 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Feed */}
       <div
         ref={feedRef}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Error state — not silent skeleton anymore */}
         {fetchError && !loading && (
           <div className="mx-4 mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
             <p className="text-red-400 text-sm font-semibold mb-1">Feed couldn't load</p>
@@ -490,12 +465,10 @@ export default function Home() {
           </div>
         )}
 
-        {/* Loading skeletons */}
         {loading && (
           <>{Array(5).fill(0).map((_, i) => <PostSkeleton key={i} />)}</>
         )}
 
-        {/* Empty state */}
         {!loading && !fetchError && posts.length === 0 && (
           <div className="flex flex-col items-center justify-center mt-20 gap-4 px-6">
             <p className="text-6xl">🐦</p>
@@ -518,7 +491,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Posts */}
         {!loading && posts.length > 0 && (
           <>
             {posts.map(post => (
@@ -539,7 +511,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* FAB */}
       <button
         onClick={() => navigate('/create')}
         className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-[#1E6FFF] flex items-center justify-center shadow-xl shadow-[#1E6FFF]/40 hover:bg-[#1565cc] transition-colors z-20"

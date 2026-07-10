@@ -2,7 +2,7 @@
 // B-Link Service Worker — Network First strategy
 // Bump CACHE_NAME on every deployment to force cache invalidation
 
-const CACHE_NAME = 'blink-v2.1.0';
+const CACHE_NAME = 'blink-v2.1.1';
 const OFFLINE_FALLBACK = '/index.html';
 
 const PRECACHE = ['/', '/index.html', '/manifest.json'];
@@ -23,6 +23,10 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // FIXED: never intercept non-GET requests — POST/PUT/DELETE can't be
+  // cached and were previously falling through to the cache-write logic.
+  if (event.request.method !== 'GET') return;
+
   const url = new URL(event.request.url);
 
   // Never intercept API/auth/realtime calls — always go to network
