@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
+import { sanitiseAuthError } from '../../utils/securityUtils';
 import { useAuth } from '../../context/AuthContext';
 import { Eye, EyeOff, Mail, Lock, Wifi, WifiOff } from 'lucide-react';
 
@@ -15,7 +16,6 @@ export default function Login() {
   const [busy,     setBusy]     = useState(false);
   const [tab,      setTab]      = useState('login'); // login | signup
 
-  // Redirect if already logged in
   useEffect(() => {
     if (!loading && user) navigate('/', { replace: true });
   }, [user, loading]);
@@ -30,7 +30,13 @@ export default function Login() {
     });
 
     if (err) {
-      setError(err.message.includes('Invalid') ? 'Wrong email or password.' : err.message);
+      // F11 fix: was `err.message.includes('Invalid') ? '...' : err.message`
+      // — the else-branch leaked raw Supabase error text (e.g. "Email
+      // not confirmed"), which tells an attacker the email exists.
+      // sanitiseAuthError() (already in securityUtils.js, just unused
+      // here before) returns one generic message for every case that
+      // would otherwise reveal account existence.
+      setError(sanitiseAuthError(err));
       setBusy(false);
     }
     // on success, onAuthStateChange fires → user set → useEffect navigates
@@ -43,16 +49,17 @@ export default function Login() {
       redirectTo: window.location.origin + '/login',
     });
     setBusy(false);
-    if (err) setError(err.message);
-    else setError('✅ Reset link sent to ' + email);
+    // Always show the same success message regardless of whether the
+    // email exists — resetPasswordForEmail itself doesn't reveal
+    // existence, but a raw `err.message` here still could.
+    if (err) setError(sanitiseAuthError(err));
+    else setError('✅ If an account exists for ' + email + ', a reset link has been sent.');
   };
 
   return (
     <div className="min-h-screen bg-[#0A1628] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
 
-      {/* ── HERO TOP ── */}
       <div className="flex flex-col items-center pt-14 pb-8 px-6">
-        {/* Logo */}
         <div className="w-20 h-20 rounded-[24px] bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center shadow-2xl shadow-[#1E6FFF]/40 mb-5">
           <span className="text-white font-black text-3xl">B</span>
         </div>
@@ -60,7 +67,6 @@ export default function Login() {
         <p className="text-white/40 text-sm text-center">Africa's GenZ Social Platform</p>
       </div>
 
-      {/* ── TAB SWITCHER ── */}
       <div className="flex mx-5 mb-6 bg-white/[0.06] rounded-2xl p-1">
         <button
           onClick={() => { setTab('login');  setError(''); }}
@@ -73,10 +79,8 @@ export default function Login() {
         >Create Account</button>
       </div>
 
-      {/* ── FORM ── */}
       <form onSubmit={handleLogin} className="flex flex-col gap-3 px-5">
 
-        {/* Email */}
         <div className="relative">
           <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6B7280] pointer-events-none" />
           <input
@@ -90,7 +94,6 @@ export default function Login() {
           />
         </div>
 
-        {/* Password */}
         <div className="relative">
           <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6B7280] pointer-events-none" />
           <input
@@ -108,7 +111,6 @@ export default function Login() {
           </button>
         </div>
 
-        {/* Forgot */}
         <div className="flex justify-end -mt-1">
           <button type="button" onClick={handleForgot}
             className="text-[#1E6FFF] text-sm font-semibold">
@@ -116,14 +118,12 @@ export default function Login() {
           </button>
         </div>
 
-        {/* Error */}
         {error && (
           <div className={`rounded-xl px-4 py-3 text-sm ${error.startsWith('✅') ? 'bg-green-500/10 border border-green-500/20 text-green-400' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
             {error}
           </div>
         )}
 
-        {/* Submit */}
         <button
           type="submit"
           disabled={busy}
@@ -137,14 +137,12 @@ export default function Login() {
         </button>
       </form>
 
-      {/* ── Divider ── */}
       <div className="flex items-center gap-3 px-5 my-5">
         <div className="flex-1 h-px bg-white/10" />
         <span className="text-white/25 text-xs font-semibold">NEW HERE?</span>
         <div className="flex-1 h-px bg-white/10" />
       </div>
 
-      {/* ── Create account link ── */}
       <div className="px-5">
         <button
           onClick={() => navigate('/signup')}
@@ -154,7 +152,6 @@ export default function Login() {
         </button>
       </div>
 
-      {/* Footer */}
       <div className="mt-auto pb-10 px-5 text-center">
         <p className="text-white/20 text-xs">Made with ❤️ for Africa</p>
       </div>

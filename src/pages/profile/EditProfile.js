@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import { ArrowLeft, Camera, Check, Clock } from 'lucide-react';
+import { sanitiseUserUpdate } from '../../utils/securityUtils';
 import { validateUsername, validateDisplayName, getNameChangeCooldownRemaining, NAME_CHANGE_COOLDOWN_DAYS } from '../../utils/usernameValidation';
 
 const COUNTRIES = [
@@ -116,7 +117,7 @@ export default function EditProfile() {
       if (avatarUrl) updates.avatar_url = avatarUrl;
 
       const { error: dbErr } = await supabase.from('users')
-        .update(updates).eq('id', user.id);
+        .update(sanitiseUserUpdate(updates)).eq('id', user.id);
 
       if (dbErr) {
         // Surface DB trigger messages (reserved name, cooldown, gibberish) cleanly

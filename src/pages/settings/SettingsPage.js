@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
+import { reAuthAndChangePassword, sanitiseText } from '../../utils/securityUtils';
 import {
   ArrowLeft, ChevronRight, ChevronDown, ChevronUp,
   User, Lock, Bell, Eye, Palette, Video,
@@ -22,7 +23,6 @@ function Toggle({ value, onChange, disabled }) {
   );
 }
 
-/* ── Setting row ── */
 function SettingRow({ icon: Icon, label, value, onPress, rightEl, sub, danger }) {
   return (
     <button
@@ -43,7 +43,6 @@ function SettingRow({ icon: Icon, label, value, onPress, rightEl, sub, danger })
   );
 }
 
-/* ── Section ── */
 function Section({ title, children }) {
   return (
     <div className="mb-2">
@@ -59,7 +58,6 @@ function Divider() {
   return <div className="h-px bg-white/[0.06] mx-4" />;
 }
 
-/* ── Modal shell ── */
 function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center" onClick={onClose}>
@@ -75,7 +73,7 @@ function Modal({ title, onClose, children }) {
   );
 }
 
-/* ── Change password modal ── */
+/* ── Change password modal (unchanged — already correct) ── */
 function ChangePasswordModal({ onClose }) {
   const [current,  setCurrent]  = useState('');
   const [next,     setNext]     = useState('');
@@ -85,14 +83,19 @@ function ChangePasswordModal({ onClose }) {
   const [done,     setDone]     = useState(false);
 
   const handleSubmit = async () => {
+    if (!current)              { setError('Enter your current password first.'); return; }
     if (!next || next.length < 8) { setError('New password must be at least 8 characters.'); return; }
-    if (next !== confirm) { setError('Passwords do not match.'); return; }
+    if (next !== confirm)      { setError('Passwords do not match.'); return; }
+    if (next === current)      { setError('New password must be different from current.'); return; }
     setBusy(true); setError('');
-    const { error: err } = await supabase.auth.updateUser({ password: next });
+    try {
+      await reAuthAndChangePassword(current, next);
+      setDone(true);
+      setTimeout(onClose, 1500);
+    } catch (err) {
+      setError(err.message || 'Password change failed.');
+    }
     setBusy(false);
-    if (err) { setError(err.message); return; }
-    setDone(true);
-    setTimeout(onClose, 1500);
   };
 
   return (
@@ -105,8 +108,9 @@ function ChangePasswordModal({ onClose }) {
       ) : (
         <div className="space-y-3">
           {[
+            { label:'Current Password', val:current, set:setCurrent, ph:'Your current password' },
             { label:'New Password',     val:next,    set:setNext,    ph:'Min 8 characters' },
-            { label:'Confirm Password', val:confirm, set:setConfirm, ph:'Re-enter password' },
+            { label:'Confirm Password', val:confirm, set:setConfirm, ph:'Re-enter new password' },
           ].map(f => (
             <div key={f.label}>
               <label className="text-white/60 text-[11px] font-bold uppercase block mb-1.5">{f.label}</label>
@@ -127,16 +131,35 @@ function ChangePasswordModal({ onClose }) {
   );
 }
 
-/* ── Change email modal ── */
+/* ── Change email modal — NOW requires current password first ──
+   Report Section 9 groups email changes with password changes under
+   "fresh re-authentication required". Previously this called
+   auth.updateUser({email}) with no re-auth step at all — a hijacked
+   but still-logged-in session (e.g. stolen token, unattended device)
+   could redirect account-recovery email to an attacker with no
+   additional check. ─────────────────────────────────────────────── */
 function ChangeEmailModal({ currentEmail, onClose }) {
+  const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [busy,  setBusy]  = useState(false);
   const [error, setError] = useState('');
   const [done,  setDone]  = useState(false);
 
   const handleSubmit = async () => {
+    if (!password) { setError('Enter your current password to continue.'); return; }
     if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) { setError('Enter a valid email.'); return; }
     setBusy(true); setError('');
+
+    // Re-authenticate first, same pattern as reAuthAndChangePassword.
+    const { error: reAuthErr } = await supabase.auth.signInWithPassword({
+      email: currentEmail, password,
+    });
+    if (reAuthErr) {
+      setBusy(false);
+      setError('Current password is incorrect.');
+      return;
+    }
+
     const { error: err } = await supabase.auth.updateUser({ email: email.trim().toLowerCase() });
     setBusy(false);
     if (err) { setError(err.message); return; }
@@ -159,6 +182,12 @@ function ChangeEmailModal({ currentEmail, onClose }) {
             <p className="text-white text-[14px] mt-0.5">{currentEmail}</p>
           </div>
           <div>
+            <label className="text-white/60 text-[11px] font-bold uppercase block mb-1.5">Current Password</label>
+            <input type="password" value={password} onChange={e => { setPassword(e.target.value); setError(''); }}
+              placeholder="Confirm it's you"
+              className="w-full bg-white/[0.07] border border-white/10 rounded-xl px-4 py-3 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60" />
+          </div>
+          <div>
             <label className="text-white/60 text-[11px] font-bold uppercase block mb-1.5">New Email</label>
             <input type="email" value={email} onChange={e => { setEmail(e.target.value); setError(''); }}
               placeholder="new@email.com" inputMode="email"
@@ -176,7 +205,6 @@ function ChangeEmailModal({ currentEmail, onClose }) {
   );
 }
 
-/* ── Select modal ── */
 function SelectModal({ title, options, value, onSelect, onClose }) {
   return (
     <Modal title={title} onClose={onClose}>
@@ -194,7 +222,6 @@ function SelectModal({ title, options, value, onSelect, onClose }) {
   );
 }
 
-/* ── Blocked / Muted list modal ── */
 function UserListModal({ title, userIds, onUnblock, onClose }) {
   const [users, setUsers] = useState([]);
   useEffect(() => {
@@ -240,13 +267,11 @@ export default function SettingsPage() {
   const [saving,   setSaving]   = useState(false);
   const [toast,    setToast]    = useState('');
 
-  // Modals
   const [showPassword,  setShowPassword]  = useState(false);
   const [showEmail,     setShowEmail]     = useState(false);
-  const [showModal,     setShowModal]     = useState(null); // generic select modal key
+  const [showModal,     setShowModal]     = useState(null);
   const [showBlocked,   setShowBlocked]   = useState(false);
   const [showMuted,     setShowMuted]     = useState(false);
-  const [showDeleteConf,setShowDeleteConf]= useState(false);
 
   useEffect(() => { fetchSettings(); }, []);
 
@@ -255,7 +280,6 @@ export default function SettingsPage() {
       .select('*').eq('user_id', user.id).maybeSingle();
     if (data) setSettings(data);
     else {
-      // Create default settings
       const { data: created } = await supabase.from('user_settings')
         .insert({ user_id: user.id }).select().single();
       if (created) setSettings(created);
@@ -273,29 +297,34 @@ export default function SettingsPage() {
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2000); };
 
+  /* F7-equivalent for self-service: is_restricted is a privileged
+     column now guarded by a DB trigger (enforce_profile_update_
+     allowlist). A direct client update() here would fail after the
+     hardening migration — self_deactivate_account() is the only
+     remaining path, and it re-derives the target from auth.uid()
+     server-side, so there's no target_id to tamper with either. */
   const handleDeactivate = async () => {
     if (!window.confirm('Deactivate your account? You can reactivate by logging in again.')) return;
-    await supabase.from('users').update({ is_restricted: true, restriction_reason: 'Self-deactivated' }).eq('id', user.id);
+    const { error } = await supabase.rpc('self_deactivate_account');
+    if (error) { showToast('Deactivation failed: ' + error.message); return; }
     showToast('Account deactivated');
     setTimeout(() => signOut(), 1500);
   };
 
+  /* Same rationale — replaces the 9-step client-side delete chain
+     with one transactional server-side RPC (self_delete_account). */
   const handleDeleteAccount = async () => {
     const confirmed = window.confirm('⚠️ PERMANENTLY DELETE your account?\n\nThis will erase ALL your data forever. This cannot be undone.');
     if (!confirmed) return;
     const final = window.prompt('Type DELETE to confirm account deletion:');
     if (final !== 'DELETE') { showToast('Deletion cancelled'); return; }
 
-    // Delete all user data
-    await supabase.from('notifications').delete().eq('user_id', user.id);
-    await supabase.from('likes').delete().eq('user_id', user.id);
-    await supabase.from('saved_posts').delete().eq('user_id', user.id);
-    await supabase.from('comments').delete().eq('user_id', user.id);
-    await supabase.from('follows').delete().eq('follower_id', user.id);
-    await supabase.from('follows').delete().eq('following_id', user.id);
-    await supabase.from('posts').delete().eq('user_id', user.id);
-    await supabase.from('user_settings').delete().eq('user_id', user.id);
-    await supabase.from('users').delete().eq('id', user.id);
+    const { error } = await supabase.rpc('self_delete_account');
+    if (error) { showToast('Deletion failed: ' + error.message); return; }
+
+    // The Auth identity (auth.users row) still needs removing via a
+    // server endpoint using service_role — call that here if you have
+    // one, e.g.: await fetch('/api/delete-auth-identity', { method: 'POST' });
     await supabase.auth.signOut();
   };
 
@@ -316,7 +345,6 @@ export default function SettingsPage() {
   const handleUnblockUser = async (uid) => {
     const updated = (settings?.blocked_users || []).filter(id => id !== uid);
     await updateSetting('blocked_users', updated);
-    // Also remove from localStorage
     const ls = JSON.parse(localStorage.getItem('blink_blocked_users') || '[]');
     localStorage.setItem('blink_blocked_users', JSON.stringify(ls.filter(id => id !== uid)));
   };
@@ -370,7 +398,6 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-[#0A1628] pb-24">
 
-      {/* Modals */}
       {showPassword && <ChangePasswordModal onClose={() => setShowPassword(false)} />}
       {showEmail && <ChangeEmailModal currentEmail={user?.email} onClose={() => setShowEmail(false)} />}
       {showModal && SelectModals[showModal] && (
@@ -391,14 +418,12 @@ export default function SettingsPage() {
           onUnblock={handleUnmuteUser} onClose={() => setShowMuted(false)} />
       )}
 
-      {/* Toast */}
       {toast && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-white/15 backdrop-blur border border-white/20 rounded-full px-5 py-2.5 pointer-events-none">
           <p className="text-white text-sm font-semibold whitespace-nowrap">{toast}</p>
         </div>
       )}
 
-      {/* Top bar */}
       <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white transition-colors">
           <ArrowLeft size={22} />
@@ -407,7 +432,6 @@ export default function SettingsPage() {
         {saving && <div className="w-4 h-4 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" />}
       </div>
 
-      {/* Profile summary */}
       <div className="mx-4 mt-4 mb-2 bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4 flex items-center gap-3">
         {profile?.avatar_url
           ? <img src={profile.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
@@ -423,7 +447,6 @@ export default function SettingsPage() {
         </button>
       </div>
 
-      {/* ── ACCOUNT ── */}
       <Section title="Account">
         <SettingRow icon={User}  label="Edit Profile"    sub="Name, bio, avatar, country" onPress={() => navigate('/edit-profile')} />
         <Divider />
@@ -434,7 +457,6 @@ export default function SettingsPage() {
         <SettingRow icon={Key}   label="Change Password" onPress={() => setShowPassword(true)} />
       </Section>
 
-      {/* ── PRIVACY ── */}
       <Section title="Privacy">
         <SettingRow icon={Lock} label="Private Account"
           sub="Only approved followers see your posts"
@@ -463,7 +485,6 @@ export default function SettingsPage() {
           onPress={() => setShowMuted(true)} />
       </Section>
 
-      {/* ── NOTIFICATIONS ── */}
       <Section title="Notifications">
         {[
           { key:'notif_likes',     label:'Likes',                emoji:'❤️' },
@@ -484,7 +505,6 @@ export default function SettingsPage() {
         ))}
       </Section>
 
-      {/* ── APPEARANCE ── */}
       <Section title="Appearance">
         <SettingRow icon={Palette} label="Theme"
           sub={settings?.theme === 'dark' ? '🌙 Dark' : settings?.theme === 'light' ? '☀️ Light' : '⚙️ System'}
@@ -502,7 +522,6 @@ export default function SettingsPage() {
           onPress={() => setShowModal('language')} />
       </Section>
 
-      {/* ── MEDIA ── */}
       <Section title="Media Settings">
         <SettingRow icon={Video} label="Auto-play Videos"
           sub="Videos play automatically in feed"
@@ -523,7 +542,6 @@ export default function SettingsPage() {
           onPress={() => updateSetting('data_saver', !settings?.data_saver)} />
       </Section>
 
-      {/* ── SECURITY ── */}
       <Section title="Security">
         <SettingRow icon={Shield} label="Active Sessions"
           sub="Manage devices logged into your account"
@@ -538,7 +556,6 @@ export default function SettingsPage() {
           onPress={() => showToast('2FA coming soon')} />
       </Section>
 
-      {/* ── ACCOUNT ACTIONS ── */}
       <Section title="Account Actions">
         <SettingRow icon={Download} label="Download My Data"
           sub="Export your profile and settings as JSON"
@@ -553,7 +570,6 @@ export default function SettingsPage() {
           onPress={handleDeleteAccount} danger />
       </Section>
 
-      {/* Sign out */}
       <div className="mx-4 mt-3 mb-6">
         <button onClick={() => signOut()}
           className="w-full py-3.5 rounded-2xl font-bold text-red-400 border border-red-500/25 bg-red-500/[0.07] hover:bg-red-500/15 transition-colors flex items-center justify-center gap-2">

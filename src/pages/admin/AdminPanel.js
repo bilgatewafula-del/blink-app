@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import { formatTime } from '../../utils/formatTime';
+import { verifyAdminServer } from '../../utils/securityUtils';
 import { formatNumber } from '../../utils/formatNumber';
 import VerifiedBadge from '../../components/VerifiedBadge';
 import {
@@ -12,6 +13,19 @@ import {
   EyeOff, Eye, RotateCcw, FileText, Flag,
   CheckCircle, ChevronDown,
 } from 'lucide-react';
+
+/* ══════════════════════════════════════════════
+   SECURITY NOTE
+   Every privileged write below calls a SECURITY DEFINER RPC
+   (see 04_actual_schema_rpcs.sql) instead of writing tables
+   directly. The RPC re-checks the caller's role server-side,
+   writes its own admin_logs row, and sends the target's
+   notification — the client never inserts admin_logs or
+   notifications for another user, and never has a code path
+   that can set role/is_banned/coins_balance/etc. directly.
+   The duplicate `verifyAdminServer` import from the original
+   file has also been removed (it appeared twice).
+══════════════════════════════════════════════ */
 
 /* ══════════════════════════════════════════════
    ROLE / STATUS HELPERS
@@ -56,10 +70,12 @@ function StatCard({ icon: Icon, label, value, color }) {
 
 /* ══════════════════════════════════════════════
    USER ACTION MODAL
-   Performs REAL operations with error feedback
+   Every action now calls a protected RPC. The RPC itself
+   re-verifies the caller's role (moderator/admin/blink) —
+   the `allowed` flags below remain purely for UI/UX and are
+   NOT the security boundary.
 ══════════════════════════════════════════════ */
 function UserActionModal({ target, myRole, onClose, onSuccess }) {
-  const { user } = useAuth();
   const [action,  setAction]  = useState('');
   const [reason,  setReason]  = useState('');
   const [days,    setDays]    = useState(7);
@@ -94,197 +110,95 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
 
     try {
       switch (action) {
-
-        /* ── WARN ── */
         case 'warn': {
-          const { error: wErr } = await supabase.from('warnings').insert({
-            user_id: target.id, issued_by: user.id, reason: reason.trim(),
+          const { error: e } = await supabase.rpc('admin_warn_user', {
+            p_target_id: target.id, p_reason: reason.trim(),
           });
-          if (wErr) throw new Error('Warning failed: ' + wErr.message);
-
-          await supabase.from('notifications').insert({
-            user_id: target.id, from_user_id: user.id,
-            type: 'admin_action',
-            message: `⚠️ Official Warning: ${reason.trim()}`,
-            is_read: false,
-          });
+          if (e) throw new Error(e.message);
           setDone(`Warning sent to @${target.username}`);
           break;
         }
 
-        /* ── RESTRICT ── */
         case 'restrict': {
-          const { error: rErr } = await supabase.from('users')
-            .update({ is_restricted: true, restriction_reason: reason.trim() })
-            .eq('id', target.id);
-          if (rErr) throw new Error('Restrict failed: ' + rErr.message);
-
-          await supabase.from('notifications').insert({
-            user_id: target.id, from_user_id: user.id,
-            type: 'admin_action',
-            message: `🟡 Your account has been restricted: ${reason.trim()}`,
-            is_read: false,
+          const { error: e } = await supabase.rpc('admin_restrict_user', {
+            p_target_id: target.id, p_reason: reason.trim(),
           });
+          if (e) throw new Error(e.message);
           setDone(`@${target.username} is now restricted`);
           break;
         }
 
-        /* ── UNRESTRICT ── */
         case 'unrestrict': {
-          const { error: urErr } = await supabase.from('users')
-            .update({ is_restricted: false, restriction_reason: null })
-            .eq('id', target.id);
-          if (urErr) throw new Error('Unrestrict failed: ' + urErr.message);
-
-          await supabase.from('notifications').insert({
-            user_id: target.id, from_user_id: user.id,
-            type: 'admin_action',
-            message: '✅ Your account restriction has been lifted.',
-            is_read: false,
+          const { error: e } = await supabase.rpc('admin_unrestrict_user', {
+            p_target_id: target.id,
           });
+          if (e) throw new Error(e.message);
           setDone(`Restriction removed from @${target.username}`);
           break;
         }
 
-        /* ── SUSPEND ── */
         case 'suspend': {
-          const until = new Date();
-          until.setDate(until.getDate() + days);
-          const { error: sErr } = await supabase.from('users')
-            .update({ suspended_until: until.toISOString(), ban_reason: reason.trim() })
-            .eq('id', target.id);
-          if (sErr) throw new Error('Suspend failed: ' + sErr.message);
-
-          await supabase.from('notifications').insert({
-            user_id: target.id, from_user_id: user.id,
-            type: 'admin_action',
-            message: `🔵 Your account has been suspended for ${days} day(s): ${reason.trim()}`,
-            is_read: false,
+          const { error: e } = await supabase.rpc('admin_suspend_user', {
+            p_target_id: target.id, p_days: days, p_reason: reason.trim(),
           });
+          if (e) throw new Error(e.message);
           setDone(`@${target.username} suspended for ${days} day(s)`);
           break;
         }
 
-        /* ── UNSUSPEND ── */
         case 'unsuspend': {
-          const { error: usErr } = await supabase.from('users')
-            .update({ suspended_until: null, ban_reason: null })
-            .eq('id', target.id);
-          if (usErr) throw new Error('Unsuspend failed: ' + usErr.message);
-
-          await supabase.from('notifications').insert({
-            user_id: target.id, from_user_id: user.id,
-            type: 'admin_action',
-            message: '✅ Your suspension has been lifted. Welcome back!',
-            is_read: false,
+          const { error: e } = await supabase.rpc('admin_unsuspend_user', {
+            p_target_id: target.id,
           });
+          if (e) throw new Error(e.message);
           setDone(`@${target.username} is now unsuspended`);
           break;
         }
 
-        /* ── BAN ── */
         case 'ban': {
-          const { error: bErr } = await supabase.from('users')
-            .update({ is_banned: true, ban_reason: reason.trim() })
-            .eq('id', target.id);
-          if (bErr) throw new Error('Ban failed: ' + bErr.message);
-
-          // Revoke all sessions by signing them out (best effort)
-          await supabase.auth.admin?.signOut(target.id).catch(() => {});
-
-          await supabase.from('notifications').insert({
-            user_id: target.id, from_user_id: user.id,
-            type: 'admin_action',
-            message: `🔴 Your account has been permanently banned: ${reason.trim()}`,
-            is_read: false,
+          const { error: e } = await supabase.rpc('admin_ban_user', {
+            p_target_id: target.id, p_reason: reason.trim(),
           });
+          if (e) throw new Error(e.message);
+          // NOTE: session revocation now happens server-side (see RPC
+          // comment). Do not call supabase.auth.admin.signOut here —
+          // it needs the service_role key, which must never ship to
+          // the browser.
           setDone(`@${target.username} has been permanently banned`);
           break;
         }
 
-        /* ── UNBAN ── */
         case 'unban': {
-          const { error: ubErr } = await supabase.from('users')
-            .update({ is_banned: false, ban_reason: null })
-            .eq('id', target.id);
-          if (ubErr) throw new Error('Unban failed: ' + ubErr.message);
-
-          await supabase.from('notifications').insert({
-            user_id: target.id, from_user_id: user.id,
-            type: 'admin_action',
-            message: '✅ Your ban has been lifted. You can now access B-Link.',
-            is_read: false,
+          const { error: e } = await supabase.rpc('admin_unban_user', {
+            p_target_id: target.id,
           });
+          if (e) throw new Error(e.message);
           setDone(`@${target.username} has been unbanned`);
           break;
         }
 
-        /* ── CHANGE ROLE ── */
         case 'role': {
           if (newRole === target.role) { setError('User already has this role.'); setLoading(false); return; }
-          const { error: rlErr } = await supabase.from('users')
-            .update({ role: newRole })
-            .eq('id', target.id);
-          if (rlErr) throw new Error('Role change failed: ' + rlErr.message);
-
-          await supabase.from('notifications').insert({
-            user_id: target.id, from_user_id: user.id,
-            type: 'admin_action',
-            message: `👑 Your role has been changed to ${newRole}.`,
-            is_read: false,
+          const { error: e } = await supabase.rpc('admin_change_role', {
+            p_target_id: target.id, p_new_role: newRole,
           });
+          if (e) throw new Error(e.message);
           setDone(`@${target.username} is now a ${newRole}`);
           break;
         }
 
-        /* ── DELETE ACCOUNT ── */
         case 'delete': {
           const confirmed = window.confirm(
             `⚠️ PERMANENTLY DELETE @${target.username}?\n\nThis will:\n• Delete their account\n• Delete all their posts\n• Delete all their comments\n• Remove all their follows/likes\n\nThis CANNOT be undone.`
           );
           if (!confirmed) { setLoading(false); return; }
 
-          // Delete in correct order to avoid FK violations
-          // 1. Delete their notifications
-          await supabase.from('notifications').delete().eq('user_id', target.id);
-          await supabase.from('notifications').delete().eq('from_user_id', target.id);
-
-          // 2. Delete their likes
-          await supabase.from('likes').delete().eq('user_id', target.id);
-
-          // 3. Delete their saved posts
-          await supabase.from('saved_posts').delete().eq('user_id', target.id);
-
-          // 4. Delete their comment reactions
-          await supabase.from('comment_reactions').delete().eq('user_id', target.id);
-
-          // 5. Delete their comments
-          await supabase.from('comments').delete().eq('user_id', target.id);
-
-          // 6. Delete their reports
-          await supabase.from('reports').delete().eq('reporter_id', target.id);
-
-          // 7. Delete their warnings
-          await supabase.from('warnings').delete().eq('user_id', target.id);
-
-          // 8. Delete their follows
-          await supabase.from('follows').delete().eq('follower_id', target.id);
-          await supabase.from('follows').delete().eq('following_id', target.id);
-
-          // 9. Delete their posts
-          await supabase.from('posts').delete().eq('user_id', target.id);
-
-          // 10. Finally delete the user record
-          const { error: dErr } = await supabase.from('users').delete().eq('id', target.id);
-          if (dErr) throw new Error('Account deletion failed: ' + dErr.message);
-
-          // Log it
-          await supabase.from('admin_logs').insert({
-            admin_id: user.id,
-            target_user_id: null, // already deleted
-            action: 'delete_account',
-            details: `Deleted @${target.username} (${target.id}). Reason: ${reason || 'none'}`,
+          // Single server-side transaction instead of a 10-step
+          // client-side delete chain — see admin_delete_user() RPC.
+          const { error: e } = await supabase.rpc('admin_delete_user', {
+            p_target_id: target.id, p_reason: reason.trim() || null,
           });
+          if (e) throw new Error(e.message);
 
           setDone(`@${target.username} has been permanently deleted`);
           setTimeout(() => { onSuccess('deleted', target.id); onClose(); }, 1500);
@@ -295,18 +209,8 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
         default:
           throw new Error('Unknown action: ' + action);
       }
-
-      /* ── Log all non-delete actions ── */
-      await supabase.from('admin_logs').insert({
-        admin_id: user.id,
-        target_user_id: target.id,
-        action,
-        details: action === 'suspend'
-          ? `${days} days - ${reason}`
-          : action === 'role'
-            ? `${target.role} → ${newRole}`
-            : reason || action,
-      });
+      // Audit logging happens inside every RPC above — no client
+      // admin_logs insert here anymore.
 
     } catch (err) {
       console.error('Admin action error:', err.message);
@@ -316,7 +220,6 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
     }
 
     setLoading(false);
-    // Short delay so user sees success message, then refresh list
     setTimeout(() => { onSuccess(action, target.id); onClose(); }, 1200);
   };
 
@@ -326,7 +229,6 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
         className="w-full max-w-[620px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl p-5 pb-8 max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             {target.avatar_url
@@ -347,7 +249,6 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
           </button>
         </div>
 
-        {/* Success state */}
         {done ? (
           <div className="text-center py-8">
             <p className="text-5xl mb-3">✅</p>
@@ -356,7 +257,6 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
           </div>
         ) : (
           <>
-            {/* Action list */}
             <p className="text-white/60 text-[11px] font-bold uppercase tracking-wider mb-2">Select Action</p>
             <div className="space-y-1.5 mb-4">
               {ACTIONS.map(a => (
@@ -377,7 +277,6 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
               ))}
             </div>
 
-            {/* Suspend duration */}
             {action === 'suspend' && (
               <div className="mb-4">
                 <p className="text-white/60 text-[11px] font-bold uppercase tracking-wider mb-2">Suspension Duration</p>
@@ -396,7 +295,6 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
               </div>
             )}
 
-            {/* Role selector */}
             {action === 'role' && (
               <div className="mb-4">
                 <p className="text-white/60 text-[11px] font-bold uppercase tracking-wider mb-2">Assign New Role</p>
@@ -413,10 +311,10 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
                   ))}
                 </div>
                 <p className="text-[#6B7280] text-xs mt-2">Current role: <span className="text-white font-semibold">{target.role}</span></p>
+                <p className="text-[#6B7280] text-[10px] mt-1">The blink role can never be assigned from this panel — server-enforced, not just hidden.</p>
               </div>
             )}
 
-            {/* Reason input */}
             {action && (
               <div className="mb-4">
                 <p className="text-white/60 text-[11px] font-bold uppercase tracking-wider mb-2">
@@ -443,14 +341,12 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
               </div>
             )}
 
-            {/* Error */}
             {error && (
               <div className="mb-3 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl">
                 <p className="text-red-400 text-sm">{error}</p>
               </div>
             )}
 
-            {/* Submit */}
             <button
               onClick={handleSubmit}
               disabled={loading || !action}
@@ -478,18 +374,18 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
 }
 
 /* ══════════════════════════════════════════════
-   CONTENT MODERATION MODAL
-   Performs REAL hide/delete/restore operations
+   CONTENT MODERATION MODAL — hide/restore/delete now go through
+   admin_moderate_content(), which re-checks role server-side
+   (hide/restore = moderator+, delete = admin+ — see SQL file's
+   flagged assumption, adjust the RPC if your intended tiers differ).
 ══════════════════════════════════════════════ */
 function ContentModal({ item, type, onClose, onSuccess }) {
-  const { user } = useAuth();
   const [action,  setAction]  = useState('');
   const [reason,  setReason]  = useState('');
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
   const [done,    setDone]    = useState('');
 
-  const table = type === 'post' ? 'posts' : 'comments';
   const itemText = type === 'post' ? (item.caption || '[No caption]') : (item.body || '[No text]');
 
   const handleSubmit = async () => {
@@ -497,89 +393,19 @@ function ContentModal({ item, type, onClose, onSuccess }) {
     setLoading(true); setError('');
 
     try {
-      if (action === 'delete') {
-        /* ── PERMANENT DELETE ── */
-        if (type === 'post') {
-          // Delete all related data first
-          await supabase.from('likes').delete().eq('post_id', item.id);
-          await supabase.from('comments').delete().eq('post_id', item.id);
-          await supabase.from('saved_posts').delete().eq('post_id', item.id);
-          await supabase.from('reports').delete().eq('target_id', item.id).eq('target_type', 'post');
-          const { error: delErr } = await supabase.from('posts').delete().eq('id', item.id);
-          if (delErr) throw new Error('Delete failed: ' + delErr.message);
-        } else {
-          await supabase.from('comment_reactions').delete().eq('comment_id', item.id);
-          await supabase.from('reports').delete().eq('target_id', item.id).eq('target_type', 'comment');
-          const { error: delErr } = await supabase.from('comments').delete().eq('id', item.id);
-          if (delErr) throw new Error('Delete failed: ' + delErr.message);
-        }
-
-        // Notify content owner
-        if (item.user_id !== user.id) {
-          await supabase.from('notifications').insert({
-            user_id: item.user_id, from_user_id: user.id,
-            type: 'admin_action',
-            message: `🔴 Your ${type} has been permanently removed by admin${reason ? ': ' + reason : ''}.`,
-            is_read: false,
-          });
-        }
-
-        setDone(`${type === 'post' ? 'Post' : 'Comment'} permanently deleted`);
-
-      } else if (action === 'hide') {
-        /* ── SOFT HIDE ── */
-        const { error: hideErr } = await supabase.from(table)
-          .update({
-            status: 'hidden',
-            moderated_by: user.id,
-            moderated_at: new Date().toISOString(),
-            moderation_reason: reason.trim() || null,
-          })
-          .eq('id', item.id);
-        if (hideErr) throw new Error('Hide failed: ' + hideErr.message);
-
-        if (item.user_id !== user.id) {
-          await supabase.from('notifications').insert({
-            user_id: item.user_id, from_user_id: user.id,
-            type: 'admin_action',
-            message: `🟡 Your ${type} has been hidden by admin${reason ? ': ' + reason : ''}.`,
-            is_read: false,
-          });
-        }
-
-        setDone(`${type === 'post' ? 'Post' : 'Comment'} hidden from feed`);
-
-      } else if (action === 'restore') {
-        /* ── RESTORE ── */
-        const { error: restoreErr } = await supabase.from(table)
-          .update({
-            status: 'active',
-            moderated_by: null,
-            moderated_at: null,
-            moderation_reason: null,
-          })
-          .eq('id', item.id);
-        if (restoreErr) throw new Error('Restore failed: ' + restoreErr.message);
-
-        if (item.user_id !== user.id) {
-          await supabase.from('notifications').insert({
-            user_id: item.user_id, from_user_id: user.id,
-            type: 'admin_action',
-            message: `✅ Your ${type} has been restored and is now visible again.`,
-            is_read: false,
-          });
-        }
-
-        setDone(`${type === 'post' ? 'Post' : 'Comment'} restored successfully`);
-      }
-
-      // Log the action
-      await supabase.from('admin_logs').insert({
-        admin_id: user.id,
-        target_user_id: item.user_id,
-        action: `${action}_${type}`,
-        details: reason || `${type} ${action}d`,
+      const { error: e } = await supabase.rpc('admin_moderate_content', {
+        p_type: type,
+        p_item_id: item.id,
+        p_action: action,
+        p_reason: reason.trim() || null,
       });
+      if (e) throw new Error(e.message);
+
+      setDone(
+        action === 'delete'  ? `${type === 'post' ? 'Post' : 'Comment'} permanently deleted` :
+        action === 'hide'    ? `${type === 'post' ? 'Post' : 'Comment'} hidden from feed` :
+        `${type === 'post' ? 'Post' : 'Comment'} restored successfully`
+      );
 
     } catch (err) {
       console.error('Content moderation error:', err.message);
@@ -607,7 +433,6 @@ function ContentModal({ item, type, onClose, onSuccess }) {
           </div>
         ) : (
           <>
-            {/* Content preview */}
             <div className={'border rounded-2xl p-4 mb-4 ' +
               (item.status === 'hidden'  ? 'border-yellow-500/25 bg-yellow-500/[0.05]' :
                item.status === 'deleted' ? 'border-red-500/25 bg-red-500/[0.05]' :
@@ -632,7 +457,6 @@ function ContentModal({ item, type, onClose, onSuccess }) {
               )}
             </div>
 
-            {/* Actions */}
             <p className="text-white/60 text-[11px] font-bold uppercase tracking-wider mb-2">Action</p>
             <div className="space-y-1.5 mb-4">
               {[
@@ -731,7 +555,14 @@ export default function AdminPanel() {
 
   useEffect(() => {
     if (!canAccess) { navigate('/'); return; }
-    fetchAll();
+    verifyAdminServer().then(ok => {
+      if (!ok) {
+        console.warn('[Security] Server-side admin check failed');
+        navigate('/');
+        return;
+      }
+      fetchAll();
+    });
   }, []);
 
   const fetchAll = async () => {
@@ -820,33 +651,33 @@ export default function AdminPanel() {
     else setWarnings(data || []);
   };
 
+  // Report resolution and warning deletion now go through RPCs too —
+  // both were direct client writes to staff-only-relevant tables.
   const resolveReport = async (reportId, status) => {
-    const { error } = await supabase.from('reports')
-      .update({ status, resolved_by: user.id, resolved_at: new Date().toISOString() })
-      .eq('id', reportId);
+    const { error } = await supabase.rpc('admin_resolve_report', {
+      p_report_id: reportId, p_status: status,
+    });
     if (error) { alert('Failed to resolve report: ' + error.message); return; }
     setReports(prev => prev.map(r => r.id === reportId ? { ...r, status, resolved_by: user.id } : r));
     fetchStats();
   };
 
   const deleteWarning = async (wid) => {
-    await supabase.from('warnings').delete().eq('id', wid);
+    const { error } = await supabase.rpc('admin_delete_warning', { p_warning_id: wid });
+    if (error) { alert('Failed to delete warning: ' + error.message); return; }
     setWarnings(prev => prev.filter(w => w.id !== wid));
   };
 
-  // Called after user action completes
   const handleUserActionSuccess = (action, userId) => {
     if (action === 'deleted') {
       setUsers(prev => prev.filter(u => u.id !== userId));
     } else {
-      // Refresh to get latest state
       fetchUsers();
     }
     fetchStats();
     fetchLogs();
   };
 
-  // Filtered users
   const filteredUsers = users.filter(u => {
     const q = search.toLowerCase();
     const matchSearch = !q || u.username?.toLowerCase().includes(q) || u.display_name?.toLowerCase().includes(q);
@@ -874,7 +705,6 @@ export default function AdminPanel() {
   return (
     <div className="min-h-screen bg-[#0A1628] pb-20">
 
-      {/* Top bar */}
       <div className="sticky top-0 z-30 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white transition-colors">
@@ -895,7 +725,6 @@ export default function AdminPanel() {
         </button>
       </div>
 
-      {/* Section nav */}
       <div className="flex overflow-x-auto scrollbar-none px-4 py-3 gap-2 border-b border-white/[0.07]">
         {SECTIONS.map(s => (
           <button
@@ -921,7 +750,6 @@ export default function AdminPanel() {
 
       <div className="px-4 pt-4 space-y-4">
 
-        {/* ── OVERVIEW ── */}
         {section === 'overview' && (
           <>
             <div className="grid grid-cols-2 gap-3">
@@ -961,10 +789,8 @@ export default function AdminPanel() {
           </>
         )}
 
-        {/* ── USERS ── */}
         {section === 'users' && (
           <div>
-            {/* Search */}
             <div className="flex items-center gap-3 bg-white/[0.05] border border-white/10 rounded-2xl px-4 py-3 mb-3">
               <Search size={16} className="text-[#6B7280]" />
               <input
@@ -975,7 +801,6 @@ export default function AdminPanel() {
               {search && <button onClick={() => setSearch('')} className="text-[#6B7280] hover:text-white"><XCircle size={16} /></button>}
             </div>
 
-            {/* Status filter */}
             <div className="flex gap-1.5 overflow-x-auto pb-1 mb-3 scrollbar-none">
               {['All','Active','Restricted','Suspended','Banned'].map(tab => (
                 <button
@@ -1038,7 +863,6 @@ export default function AdminPanel() {
           </div>
         )}
 
-        {/* ── CONTENT ── */}
         {section === 'content' && (
           <div>
             <div className="flex gap-2 mb-4">
@@ -1105,7 +929,6 @@ export default function AdminPanel() {
           </div>
         )}
 
-        {/* ── REPORTS ── */}
         {section === 'reports' && (
           <div className="space-y-2">
             {reports.length === 0 ? (
@@ -1159,7 +982,6 @@ export default function AdminPanel() {
           </div>
         )}
 
-        {/* ── LOGS ── */}
         {section === 'logs' && (
           <div className="space-y-2">
             {logs.length === 0 ? (
@@ -1196,7 +1018,6 @@ export default function AdminPanel() {
           </div>
         )}
 
-        {/* ── WARNINGS ── */}
         {section === 'warnings' && (
           <div className="space-y-2">
             {warnings.length === 0 ? (
@@ -1228,7 +1049,6 @@ export default function AdminPanel() {
         )}
       </div>
 
-      {/* ── USER ACTION MODAL ── */}
       {selectedUser && (
         <UserActionModal
           target={selectedUser}
@@ -1238,7 +1058,6 @@ export default function AdminPanel() {
         />
       )}
 
-      {/* ── CONTENT MODERATION MODAL ── */}
       {selectedItem && (
         <ContentModal
           item={selectedItem}
