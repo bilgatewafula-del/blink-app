@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { formatNumber } from '../utils/formatNumber';
-import { X, Plus, Send, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Plus, Send, Eye, Pause, Volume2, VolumeX, Trash2 } from 'lucide-react';
 
 /* ── Story reaction options ─────────────────── */
 const STORY_REACTIONS = [
@@ -22,6 +22,114 @@ const STORY_REACTIONS = [
 ];
 
 const STORY_DURATION = 5000; // 5 seconds per story
+const MAX_STORY_IMAGE_MB = 10;
+const MAX_STORY_VIDEO_MB = 50;
+
+/* ── Cloudinary delivery-time optimization — inserts f_auto,q_auto
+   into the delivery URL as a safety net on top of client-side
+   compression. No-op for non-Cloudinary URLs. ──────────────────── */
+function optimizeCloudinaryUrl(url, { width } = {}) {
+  if (!url || !url.includes('/upload/')) return url;
+  const params = ['f_auto', 'q_auto', width ? `w_${width}` : null].filter(Boolean).join(',');
+  return url.replace('/upload/', `/upload/${params}/`);
+}
+
+/* ── Client-side image compression before upload — mirrors the
+   approach already used correctly in CreatePost.jsx. Stories
+   previously uploaded the raw, uncompressed file directly, which is
+   the root cause of the blur/enlarge/low-quality complaint: a large
+   or oddly-sized source image with no resizing, then force-cropped
+   full-bleed with `object-cover`. Fixed on two fronts — this
+   compresses/caps resolution before upload, and the display layer
+   below now uses a contain+blurred-backdrop treatment instead of
+   cover-cropping. ─────────────────────────────────────────────── */
+async function compressStoryImage(file, maxW = 1080, maxH = 1920, quality = 0.85) {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxW || height > maxH) {
+        const ratio = Math.min(maxW / width, maxH / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(url);
+          if (blob && blob.size < file.size) resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+          else resolve(file);
+        },
+        'image/jpeg', quality
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
+/* ── Shared media display: blurred cover backdrop behind a sharp
+   contained foreground. This is the actual fix for "blurred,
+   enlarged, fills screen and extends" — any image or video,
+   regardless of native resolution or aspect ratio, now displays at
+   its correct proportions instead of being force-stretched/cropped
+   to fill an arbitrary container. Used by both the full-screen
+   viewer and the pre-upload preview so what you see before posting
+   matches what viewers will see. ──────────────────────────────── */
+function StoryMediaFrame({ mediaType, mediaUrl, videoRef, muted, onToggleMute, onEnded, className = '' }) {
+  return (
+    <div className={`relative w-full h-full overflow-hidden bg-black ${className}`}>
+      {/* Blurred backdrop fill */}
+      {mediaType === 'video' ? (
+        <video src={mediaUrl} muted loop autoPlay playsInline
+          className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-50" />
+      ) : (
+        <img src={optimizeCloudinaryUrl(mediaUrl, { width: 100 })} alt=""
+          className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-50" aria-hidden="true" />
+      )}
+
+      {/* Sharp foreground, never upscaled beyond its own resolution's
+          display size, never cropped */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        {mediaType === 'video' ? (
+          <video
+            ref={videoRef}
+            src={mediaUrl}
+            className="max-w-full max-h-full object-contain"
+            autoPlay
+            muted={muted}
+            playsInline
+            loop={false}
+            onEnded={onEnded}
+          />
+        ) : (
+          <img
+            src={optimizeCloudinaryUrl(mediaUrl, { width: 1080 })}
+            alt=""
+            className="max-w-full max-h-full object-contain"
+            draggable={false}
+          />
+        )}
+      </div>
+
+      {mediaType === 'video' && onToggleMute && (
+        <button
+          onClick={e => { e.stopPropagation(); onToggleMute(); }}
+          aria-label={muted ? 'Unmute' : 'Mute'}
+          className="absolute bottom-3 right-3 z-20 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center"
+        >
+          {muted ? <VolumeX size={15} color="white" /> : <Volume2 size={15} color="white" />}
+        </button>
+      )}
+    </div>
+  );
+}
 
 /* ══════════════════════════════════════════════
    STORY VIEWER
@@ -36,10 +144,13 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
   const [replyText,    setReplyText]        = useState('');
   const [myReaction,   setMyReaction]       = useState(null);
   const [viewCount,    setViewCount]        = useState(0);
+  const [reactionsCount,setReactionsCount]  = useState(0);
   const [viewers,      setViewers]          = useState([]);
   const [showViewers,  setShowViewers]      = useState(false);
   const [sending,      setSending]          = useState(false);
   const [sentFeedback, setSentFeedback]     = useState('');
+  const [videoMuted,   setVideoMuted]       = useState(true); // was false — likely blocked by browser autoplay policy
+  const [actionError,  setActionError]      = useState('');
 
   const progressTimer  = useRef(null);
   const progressStart  = useRef(null);
@@ -54,34 +165,30 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
   const story   = stories[currentIndex];
   const isOwner = story?.user_id === user?.id;
 
-  /* ── Record view ── */
   useEffect(() => {
     if (!story || !user?.id) return;
     recordView();
     fetchMyReaction();
+    setReactionsCount(story.reactions_count || 0);
     if (isOwner) fetchViewers();
     else setViewCount(story.views_count || 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex]);
 
-  /* ── Progress timer ── */
   useEffect(() => {
     startProgress();
     return () => stopProgress();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex, paused]);
 
+  // Was: upsert + a separate COUNT(*) query, every single view. Now
+  // one atomic RPC call — see record_story_view() in the SQL file.
   const recordView = async () => {
     try {
-      await supabase.from('story_views').upsert(
-        { story_id: story.id, viewer_id: user.id },
-        { onConflict: 'story_id,viewer_id' }
-      );
-      // Fetch real count
-      const { count } = await supabase
-        .from('story_views')
-        .select('id', { count: 'exact', head: true })
-        .eq('story_id', story.id);
-      setViewCount(count || 0);
-    } catch (_) {}
+      const { data, error } = await supabase.rpc('record_story_view', { p_story_id: story.id });
+      if (error) throw error;
+      if (isOwner) setViewCount(data ?? 0);
+    } catch (_) { /* view recording failure shouldn't block viewing */ }
   };
 
   const fetchMyReaction = async () => {
@@ -110,7 +217,6 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
     setViewCount(rows.length);
   };
 
-  /* ── Progress control ── */
   const startProgress = useCallback(() => {
     if (paused) return;
     stopProgress();
@@ -128,6 +234,7 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
         goNext();
       }
     }, 30);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paused, currentIndex]);
 
   const stopProgress = () => {
@@ -145,13 +252,12 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
   }, []);
 
   const resumeStory = useCallback(() => {
-    if (showReactions || replyText) return; // keep paused if typing/reacting
+    if (showReactions || replyText) return;
     setPaused(false);
     progressStart.current = Date.now();
     if (videoRef.current) videoRef.current.play().catch(() => {});
   }, [showReactions, replyText]);
 
-  /* ── Navigation ── */
   const goNext = useCallback(() => {
     stopProgress();
     progressElapsed.current = 0;
@@ -163,6 +269,7 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
     } else {
       onClose();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex, stories.length]);
 
   const goPrev = useCallback(() => {
@@ -176,15 +283,10 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
     }
   }, [currentIndex]);
 
-  /* ── Touch handlers ── */
   const handleTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
-
-    // Hold to pause
-    holdTimer.current = setTimeout(() => {
-      pauseStory();
-    }, 150);
+    holdTimer.current = setTimeout(() => { pauseStory(); }, 150);
   };
 
   const handleTouchEnd = (e) => {
@@ -194,24 +296,20 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
     const dy = e.changedTouches[0].clientY - touchStartY.current;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    // Resume if was holding
     if (paused && !showReactions && !replyText) {
       resumeStory();
     }
 
-    // Swipe left/right for navigation (only if not dragging vertically)
     if (dist > 50 && Math.abs(dx) > Math.abs(dy)) {
       if (dx < 0) goNext();
       else goPrev();
       return;
     }
 
-    // Double tap — show reactions
     if (dist < 10) {
       const now = Date.now();
       const timeSinceLastTap = now - lastTap.current;
       if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
-        // Double tap!
         pauseStory();
         setShowReactions(true);
         lastTap.current = 0;
@@ -219,7 +317,6 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
       }
       lastTap.current = now;
 
-      // Single tap — left/right navigation
       const screenW = window.innerWidth;
       const tapX = e.changedTouches[0].clientX;
       if (tapX < screenW * 0.35) goPrev();
@@ -227,7 +324,6 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
     }
   };
 
-  /* ── Mouse hold (desktop) ── */
   const handleMouseDown = () => {
     holdTimer.current = setTimeout(() => pauseStory(), 150);
   };
@@ -236,94 +332,81 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
     if (paused && !showReactions && !replyText) resumeStory();
   };
 
-  /* ── Reply ── */
-  const handleReplyFocus = () => {
-    pauseStory();
-  };
-
-  const handleReplyBlur = () => {
-    if (!replyText.trim()) resumeStory();
-  };
+  const handleReplyFocus = () => { pauseStory(); };
+  const handleReplyBlur = () => { if (!replyText.trim()) resumeStory(); };
 
   const sendReply = async () => {
     if (!replyText.trim() || sending) return;
     setSending(true);
+    setActionError('');
+    const text = replyText.trim();
 
     try {
-      // Insert reply
-      await supabase.from('story_replies').insert({
-        story_id:  story.id,
-        sender_id: user.id,
-        message:   replyText.trim(),
+      const { error } = await supabase.from('story_replies').insert({
+        story_id: story.id, sender_id: user.id, message: text,
       });
+      if (error) throw error;
 
-      // Notify story owner
       if (story.user_id !== user.id) {
         await supabase.from('notifications').insert({
-          user_id:      story.user_id,
-          from_user_id: user.id,
-          type:         'message',
-          message:      `${profile?.display_name} replied to your status: "${replyText.slice(0, 60)}"`,
-          ref_id:       story.id,
-          preview_text: replyText.trim(),
-          preview_image: story.media_url,
-          is_read:      false,
+          user_id: story.user_id, from_user_id: user.id, type: 'message',
+          message: `${profile?.display_name} replied to your status: "${text.slice(0, 60)}"`,
+          ref_id: story.id, preview_text: text, preview_image: story.media_url, is_read: false,
         });
       }
 
       setReplyText('');
       setSentFeedback('Reply sent ✓');
-      setTimeout(() => {
-        setSentFeedback('');
-        resumeStory();
-      }, 1500);
+      setTimeout(() => { setSentFeedback(''); resumeStory(); }, 1500);
     } catch (err) {
-      console.error('reply error:', err.message);
+      setActionError('Couldn\u2019t send reply — try again');
+      setTimeout(() => setActionError(''), 2500);
     }
     setSending(false);
   };
 
-  /* ── Reaction ── */
+  // Was a direct table upsert/delete with no rollback and a live
+  // recount never persisted anywhere. Now one atomic RPC — see
+  // toggle_story_reaction() in the SQL file — with optimistic UI and
+  // rollback on failure, consistent with PostCard's like handler.
   const sendReaction = async (emoji) => {
     setShowReactions(false);
+    const prevReaction = myReaction, prevCount = reactionsCount;
+    const willRemove = myReaction === emoji;
+
+    setMyReaction(willRemove ? null : emoji);
+    setReactionsCount(c => willRemove ? Math.max(0, c - 1) : (myReaction ? c : c + 1));
 
     try {
-      if (myReaction === emoji) {
-        // Toggle off
-        await supabase.from('story_reactions')
-          .delete().eq('story_id', story.id).eq('user_id', user.id);
-        setMyReaction(null);
-      } else {
-        await supabase.from('story_reactions').upsert(
-          { story_id: story.id, user_id: user.id, emoji },
-          { onConflict: 'story_id,user_id' }
-        );
-        setMyReaction(emoji);
+      const { data, error } = await supabase.rpc('toggle_story_reaction', { p_story_id: story.id, p_emoji: emoji });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (row) { setMyReaction(row.my_reaction); setReactionsCount(row.reactions_count); }
 
-        // Notify story owner
-        if (story.user_id !== user.id) {
-          await supabase.from('notifications').insert({
-            user_id:       story.user_id,
-            from_user_id:  user.id,
-            type:          'message',
-            message:       `${profile?.display_name} reacted ${emoji} to your status`,
-            ref_id:        story.id,
-            preview_image: story.media_url,
-            is_read:       false,
-          });
-        }
-
+      if (!willRemove) {
         setSentFeedback(emoji + ' Reaction sent');
-        setTimeout(() => {
-          setSentFeedback('');
-          resumeStory();
-        }, 1200);
+        setTimeout(() => { setSentFeedback(''); resumeStory(); }, 1200);
       }
     } catch (err) {
-      console.error('reaction error:', err.message);
+      setMyReaction(prevReaction); setReactionsCount(prevCount);
+      setActionError('Couldn\u2019t react — try again');
+      setTimeout(() => setActionError(''), 2500);
     }
 
     if (!replyText) resumeStory();
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Delete this status?')) return;
+    try {
+      const { error } = await supabase.from('stories').delete().eq('id', story.id).eq('user_id', user.id);
+      if (error) throw error;
+      if (stories.length <= 1) onClose();
+      else goNext();
+    } catch (err) {
+      setActionError('Delete failed — try again');
+      setTimeout(() => setActionError(''), 2500);
+    }
   };
 
   if (!story) return null;
@@ -333,21 +416,17 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
       className="fixed inset-0 z-50 bg-black flex flex-col select-none"
       style={{ touchAction: 'none' }}
     >
-      {/* ── Progress bars ── */}
       <div className="absolute top-0 left-0 right-0 z-20 flex gap-1 px-2 pt-2">
         {stories.map((_, i) => (
           <div key={i} className="flex-1 h-[2.5px] bg-white/30 rounded-full overflow-hidden">
             <div
               className="h-full bg-white rounded-full transition-none"
-              style={{
-                width: i < currentIndex ? '100%' : i === currentIndex ? progress + '%' : '0%',
-              }}
+              style={{ width: i < currentIndex ? '100%' : i === currentIndex ? progress + '%' : '0%' }}
             />
           </div>
         ))}
       </div>
 
-      {/* ── Author bar ── */}
       <div className="absolute top-5 left-0 right-0 z-20 flex items-center justify-between px-4 pt-3">
         <div className="flex items-center gap-2">
           {story.users?.avatar_url
@@ -364,11 +443,11 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* View count — real, only shown to story owner */}
+        <div className="flex items-center gap-2">
           {isOwner && (
             <button
               onClick={() => { pauseStory(); setShowViewers(true); }}
+              aria-label={`${viewCount} views`}
               className="flex items-center gap-1 bg-black/40 rounded-full px-2.5 py-1"
             >
               <Eye size={13} color="white" />
@@ -376,36 +455,22 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
             </button>
           )}
 
-          {/* Delete (owner only) */}
           {isOwner && (
             <button
-              onClick={async () => {
-                if (!window.confirm('Delete this status?')) return;
-                await supabase.from('stories').delete().eq('id', story.id);
-                if (stories.length <= 1) onClose();
-                else goNext();
-              }}
-              style={{
-                background:'rgba(239,68,68,0.25)', border:'1px solid rgba(239,68,68,0.4)',
-                borderRadius:8, padding:'4px 10px', cursor:'pointer',
-                color:'#EF4444', fontSize:11, fontWeight:700,
-              }}
+              onClick={handleDelete}
+              aria-label="Delete status"
+              className="flex items-center gap-1.5 bg-red-500/25 border border-red-500/40 rounded-lg px-2.5 py-1 text-red-400 text-[11px] font-bold hover:bg-red-500/35 transition-colors"
             >
-              🗑️ Delete
+              <Trash2 size={12} /> Delete
             </button>
           )}
 
-          {/* Close */}
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-black/40"
-          >
+          <button onClick={onClose} aria-label="Close" className="w-8 h-8 flex items-center justify-center rounded-full bg-black/40">
             <X size={18} color="white" />
           </button>
         </div>
       </div>
 
-      {/* ── Media — touch area ── */}
       <div
         className="absolute inset-0 z-10"
         onTouchStart={handleTouchStart}
@@ -414,44 +479,24 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
       >
-        {story.media_type === 'video' ? (
-          <video
-            ref={videoRef}
-            src={story.media_url}
-            className="w-full h-full object-cover"
-            autoPlay
-            muted={false}
-            playsInline
-            loop={false}
-            onEnded={goNext}
-          />
-        ) : (
-          <img
-            src={story.media_url}
-            alt=""
-            className="w-full h-full object-cover"
-            draggable={false}
-          />
-        )}
+        <StoryMediaFrame
+          mediaType={story.media_type}
+          mediaUrl={story.media_url}
+          videoRef={videoRef}
+          muted={videoMuted}
+          onToggleMute={() => setVideoMuted(m => !m)}
+          onEnded={goNext}
+        />
 
-        {/* Dim overlay when paused */}
         {paused && !showReactions && (
-          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/20 flex items-center justify-center pointer-events-none">
             <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center">
-              <div className="w-4 h-4 border-l-2 border-r-2 border-white" style={{ height:18, borderLeftWidth:4, borderRightWidth:4 }} />
+              <Pause size={20} color="white" fill="white" />
             </div>
           </div>
         )}
-
-        {/* Navigation taps visual */}
-        <div className="absolute inset-0 flex">
-          <div className="w-1/3 h-full" /> {/* left tap zone */}
-          <div className="w-1/3 h-full" /> {/* center */}
-          <div className="w-1/3 h-full" /> {/* right tap zone */}
-        </div>
       </div>
 
-      {/* ── Caption ── */}
       {story.caption && (
         <div className="absolute bottom-32 left-0 right-0 z-20 px-4">
           <p className="text-white text-[15px] font-medium leading-snug drop-shadow-lg text-center"
@@ -461,7 +506,6 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
         </div>
       )}
 
-      {/* ── My reaction indicator ── */}
       {myReaction && !showReactions && (
         <div className="absolute bottom-36 right-4 z-20">
           <div className="bg-black/50 rounded-full px-3 py-1.5 flex items-center gap-1.5">
@@ -471,26 +515,22 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
         </div>
       )}
 
-      {/* ── Sent feedback ── */}
-      {sentFeedback && (
+      {(sentFeedback || actionError) && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 bg-black/70 rounded-2xl px-6 py-3">
-          <p className="text-white font-bold text-center">{sentFeedback}</p>
+          <p className="text-white font-bold text-center">{sentFeedback || actionError}</p>
         </div>
       )}
 
-      {/* ── REACTION PICKER (double tap) ── */}
       {showReactions && (
         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/60"
           onClick={() => { setShowReactions(false); resumeStory(); }}>
           <p className="text-white/80 text-sm font-semibold mb-4 drop-shadow">React to this status</p>
-          <div
-            className="grid grid-cols-4 gap-3 px-6"
-            onClick={e => e.stopPropagation()}
-          >
+          <div className="grid grid-cols-4 gap-3 px-6" onClick={e => e.stopPropagation()}>
             {STORY_REACTIONS.map(r => (
               <button
                 key={r.emoji}
                 onClick={() => sendReaction(r.emoji)}
+                aria-label={r.label}
                 className={`flex flex-col items-center gap-1 p-3 rounded-2xl transition-all active:scale-90 ${
                   myReaction === r.emoji ? 'bg-white/30 scale-110' : 'bg-white/15 hover:bg-white/25'
                 }`}
@@ -500,31 +540,21 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
               </button>
             ))}
           </div>
-          <button
-            className="mt-6 text-white/60 text-sm"
-            onClick={() => { setShowReactions(false); resumeStory(); }}
-          >
+          <button className="mt-6 text-white/60 text-sm" onClick={() => { setShowReactions(false); resumeStory(); }}>
             Cancel
           </button>
         </div>
       )}
 
-      {/* ── VIEWER LIST (owner only) ── */}
       {showViewers && isOwner && (
-        <div
-          className="absolute inset-0 z-30 bg-black/80 flex flex-col"
-          onClick={() => { setShowViewers(false); resumeStory(); }}
-        >
-          <div
-            className="absolute bottom-0 left-0 right-0 bg-[#0d1f3c] rounded-t-3xl max-h-[60vh] overflow-y-auto"
-            onClick={e => e.stopPropagation()}
-          >
+        <div className="absolute inset-0 z-30 bg-black/80 flex flex-col" onClick={() => { setShowViewers(false); resumeStory(); }}>
+          <div className="absolute bottom-0 left-0 right-0 bg-[#0d1f3c] rounded-t-3xl max-h-[60vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-white/10">
               <div>
                 <p className="text-white font-bold">Viewed by</p>
                 <p className="text-[#6B7280] text-sm">{formatNumber(viewCount)} view{viewCount !== 1 ? 's':''}</p>
               </div>
-              <button onClick={() => { setShowViewers(false); resumeStory(); }} className="text-[#6B7280] hover:text-white">
+              <button onClick={() => { setShowViewers(false); resumeStory(); }} aria-label="Close" className="text-[#6B7280] hover:text-white">
                 <X size={20} />
               </button>
             </div>
@@ -554,50 +584,30 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
         </div>
       )}
 
-      {/* ── BOTTOM — Reply / React bar — constrained, no overflow ── */}
       {!showReactions && !showViewers && (
-        <div
+        <div className="absolute bottom-0 left-0 right-0 z-20 px-3 pt-4"
           style={{
-            position:'absolute', bottom:0, left:0, right:0, zIndex:20,
             background:'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)',
-            paddingLeft:12, paddingRight:12,
             paddingBottom:'max(24px, env(safe-area-inset-bottom))',
-            paddingTop:16,
-            boxSizing:'border-box',
-            width:'100%',
-            maxWidth:'100vw',
-            overflow:'hidden',
-          }}
-        >
+          }}>
           {!isOwner ? (
-            /* ── Reply input (non-owner) — fully constrained ── */
-            <div style={{ display:'flex', alignItems:'center', gap:8, width:'100%', minWidth:0 }}>
-              {/* Quick reactions */}
-              <div style={{ display:'flex', gap:6, flexShrink:0 }}>
+            <div className="flex items-center gap-2 w-full min-w-0">
+              <div className="flex gap-1.5 flex-shrink-0">
                 {['❤️','😂','🔥','😮'].map(emoji => (
                   <button
                     key={emoji}
                     onClick={() => sendReaction(emoji)}
-                    style={{
-                      width:36, height:36, borderRadius:'50%',
-                      background: myReaction === emoji ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.15)',
-                      border:'none', cursor:'pointer', fontSize:18,
-                      display:'flex', alignItems:'center', justifyContent:'center',
-                      flexShrink:0, transform: myReaction === emoji ? 'scale(1.15)' : 'scale(1)',
-                      transition:'transform 0.15s',
-                    }}
-                  >{emoji}</button>
+                    aria-label={'React ' + emoji}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-lg flex-shrink-0 transition-transform ${
+                      myReaction === emoji ? 'bg-white/40 scale-110' : 'bg-white/15 hover:bg-white/25'
+                    }`}
+                  >
+                    {emoji}
+                  </button>
                 ))}
               </div>
 
-              {/* Text input — flex-1 with min-width:0 to prevent overflow */}
-              <div style={{
-                flex:'1 1 0', minWidth:0,
-                display:'flex', alignItems:'center', gap:6,
-                background:'rgba(255,255,255,0.15)',
-                border:'1px solid rgba(255,255,255,0.25)',
-                borderRadius:24, paddingLeft:14, paddingRight:8, paddingTop:8, paddingBottom:8,
-              }}>
+              <div className="flex-1 min-w-0 flex items-center gap-1.5 bg-white/15 border border-white/25 rounded-full pl-3.5 pr-2 py-1.5">
                 <input
                   ref={replyInputRef}
                   type="text"
@@ -607,60 +617,44 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
                   onBlur={handleReplyBlur}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); sendReply(); } }}
                   placeholder="Reply to status..."
-                  style={{
-                    flex:'1 1 0', minWidth:0,
-                    background:'transparent', border:'none', outline:'none',
-                    color:'white', fontSize:14, fontFamily:'inherit',
-                    width:'100%',
-                  }}
+                  className="flex-1 min-w-0 bg-transparent border-none outline-none text-white text-sm placeholder-white/50"
                 />
                 {replyText.trim() && (
                   <button
                     onClick={sendReply}
                     disabled={sending}
-                    style={{
-                      width:30, height:30, borderRadius:'50%', flexShrink:0,
-                      background:'#1E6FFF', border:'none', cursor:'pointer',
-                      display:'flex', alignItems:'center', justifyContent:'center',
-                    }}
+                    aria-label="Send reply"
+                    className="w-7 h-7 rounded-full bg-[#1E6FFF] flex items-center justify-center flex-shrink-0 disabled:opacity-60"
                   >
                     {sending
-                      ? <div style={{ width:12, height:12, border:'2px solid rgba(255,255,255,0.3)', borderTopColor:'white', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
-                      : <Send size={12} color="white" style={{ marginLeft:1 }} />
+                      ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      : <Send size={12} color="white" className="ml-0.5" />
                     }
                   </button>
                 )}
               </div>
 
-              {/* More reactions button */}
               <button
                 onClick={() => { pauseStory(); setShowReactions(true); }}
-                style={{
-                  width:36, height:36, borderRadius:'50%', flexShrink:0,
-                  background:'rgba(255,255,255,0.15)', border:'none', cursor:'pointer',
-                  fontSize:18, display:'flex', alignItems:'center', justifyContent:'center',
-                }}
+                aria-label="More reactions"
+                className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-lg flex-shrink-0"
               >
                 {myReaction || '😊'}
               </button>
             </div>
           ) : (
-            /* ── Owner: view count + hint ── */
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:12 }}>
+            <div className="flex items-center justify-center gap-3">
               <button
                 onClick={() => { pauseStory(); setShowViewers(true); }}
-                style={{
-                  display:'flex', alignItems:'center', gap:8,
-                  background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.25)',
-                  borderRadius:24, padding:'8px 16px', cursor:'pointer',
-                }}
+                className="flex items-center gap-2 bg-white/15 border border-white/25 rounded-full px-4 py-2"
               >
                 <Eye size={15} color="white" />
-                <span style={{ color:'white', fontSize:14, fontWeight:600 }}>
-                  {formatNumber(viewCount)} view{viewCount !== 1 ? 's':''}
-                </span>
+                <span className="text-white text-sm font-semibold">{formatNumber(viewCount)} view{viewCount !== 1 ? 's':''}</span>
               </button>
-              <span style={{ color:'rgba(255,255,255,0.45)', fontSize:12 }}>Double tap to react</span>
+              {reactionsCount > 0 && (
+                <span className="text-white/70 text-sm">{formatNumber(reactionsCount)} reaction{reactionsCount !== 1 ? 's' : ''}</span>
+              )}
+              <span className="text-white/45 text-xs hidden sm:inline">Double tap to react</span>
             </div>
           )}
         </div>
@@ -672,38 +666,59 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
 /* ══════════════════════════════════════════════
    STORY RING (thumbnail in home feed)
 ══════════════════════════════════════════════ */
-function StoryRing({ storyGroup, onPress, isOwn, hasUnviewed }) {
+function StoryRing({ storyGroup, onPress, onAddPress, isOwn, hasUnviewed, hasStories }) {
   const u = storyGroup.user;
   return (
-    <button
-      onClick={onPress}
-      className="flex flex-col items-center gap-1 flex-shrink-0"
-      style={{ width: 68 }}
-    >
-      <div className={`w-14 h-14 rounded-full p-[2px] ${
-        hasUnviewed
-          ? 'bg-gradient-to-tr from-[#FFD700] via-[#FF6B35] to-[#7B2FFF]'
-          : 'bg-white/20'
-      }`}>
-        <div className="w-full h-full rounded-full overflow-hidden bg-[#0A1628] p-[2px]">
-          {isOwn && !storyGroup.stories?.length ? (
-            /* Add story button */
-            <div className="w-full h-full rounded-full bg-[#1E6FFF]/20 flex items-center justify-center border-2 border-dashed border-[#1E6FFF]/60">
-              <Plus size={20} className="text-[#1E6FFF]" />
-            </div>
-          ) : u?.avatar_url ? (
-            <img src={u.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
-          ) : (
-            <div className="w-full h-full rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-lg">
-              {u?.display_name?.[0]?.toUpperCase()}
-            </div>
-          )}
+    <div className="flex flex-col items-center gap-1 flex-shrink-0 relative" style={{ width: 68 }}>
+      <button onClick={onPress} aria-label={isOwn ? 'Your status' : `${u?.display_name}'s status`} className="relative">
+        <div className={`w-14 h-14 rounded-full p-[2px] ${
+          hasUnviewed
+            ? 'bg-gradient-to-tr from-[#FFD700] via-[#FF6B35] to-[#7B2FFF]'
+            : 'bg-white/20'
+        }`}>
+          <div className="w-full h-full rounded-full overflow-hidden bg-[#0A1628] p-[2px]">
+            {isOwn && !hasStories ? (
+              <div className="w-full h-full rounded-full bg-[#1E6FFF]/20 flex items-center justify-center border-2 border-dashed border-[#1E6FFF]/60">
+                <Plus size={20} className="text-[#1E6FFF]" />
+              </div>
+            ) : u?.avatar_url ? (
+              <img src={u.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+            ) : (
+              <div className="w-full h-full rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-lg">
+                {u?.display_name?.[0]?.toUpperCase()}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+
+        {/* "+" badge to add another status even when some already
+            exist — previously there was no way to do this once you
+            had at least one active story; the strip's add-status
+            fallback only appeared with zero stories. */}
+        {isOwn && hasStories && (
+          <span
+            onClick={e => { e.stopPropagation(); onAddPress(); }}
+            role="button"
+            aria-label="Add another status"
+            className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-[#1E6FFF] border-2 border-[#0A1628] flex items-center justify-center"
+          >
+            <Plus size={11} color="white" strokeWidth={3} />
+          </span>
+        )}
+      </button>
       <p className="text-white/80 text-[10px] font-medium text-center leading-tight truncate w-full px-1">
         {isOwn ? 'Your Status' : u?.display_name?.split(' ')[0]}
       </p>
-    </button>
+    </div>
+  );
+}
+
+function StoryRingSkeleton() {
+  return (
+    <div className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: 68 }}>
+      <div className="w-14 h-14 rounded-full skeleton" />
+      <div className="h-2.5 w-10 rounded-full skeleton" />
+    </div>
   );
 }
 
@@ -711,20 +726,37 @@ function StoryRing({ storyGroup, onPress, isOwn, hasUnviewed }) {
    CREATE STORY (upload)
 ══════════════════════════════════════════════ */
 export function StoryCreator({ onClose, onCreated }) {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const fileRef  = useRef();
   const [file,    setFile]    = useState(null);
   const [preview, setPreview] = useState(null);
+  const [mediaType, setMediaType] = useState(null);
   const [caption, setCaption] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [compressing, setCompressing] = useState(false);
   const [error,   setError]   = useState('');
+  const CAPTION_LIMIT = 150;
+
+  // Object URLs must be revoked or they leak for the life of the tab.
+  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
 
   const handleFile = (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
+
+    const isVideo = f.type.startsWith('video');
+    const maxBytes = (isVideo ? MAX_STORY_VIDEO_MB : MAX_STORY_IMAGE_MB) * 1024 * 1024;
+    if (f.size > maxBytes) {
+      setError(`${isVideo ? 'Video' : 'Image'} must be under ${isVideo ? MAX_STORY_VIDEO_MB : MAX_STORY_IMAGE_MB} MB.`);
+      e.target.value = '';
+      return;
+    }
+
+    setError('');
     const url = URL.createObjectURL(f);
     setFile(f);
     setPreview(url);
+    setMediaType(isVideo ? 'video' : 'image');
   };
 
   const handleUpload = async () => {
@@ -732,9 +764,17 @@ export function StoryCreator({ onClose, onCreated }) {
     setUploading(true); setError('');
 
     try {
-      const isVideo  = file.type.startsWith('video');
+      const isVideo = mediaType === 'video';
+      let uploadFile = file;
+
+      if (!isVideo) {
+        setCompressing(true);
+        uploadFile = await compressStoryImage(file);
+        setCompressing(false);
+      }
+
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', uploadFile);
       formData.append('upload_preset', 'blink_uploads');
       formData.append('cloud_name', process.env.REACT_APP_CLOUDINARY_CLOUD_NAME);
 
@@ -761,6 +801,7 @@ export function StoryCreator({ onClose, onCreated }) {
       setError(err.message);
     }
     setUploading(false);
+    setCompressing(false);
   };
 
   return (
@@ -768,7 +809,7 @@ export function StoryCreator({ onClose, onCreated }) {
       <div className="w-full max-w-[620px] bg-[#0d1f3c] rounded-t-3xl p-5 pb-8" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-white font-bold text-base">Add Status</h3>
-          <button onClick={onClose} className="text-[#6B7280] hover:text-white"><X size={20} /></button>
+          <button onClick={onClose} aria-label="Close" className="text-[#6B7280] hover:text-white"><X size={20} /></button>
         </div>
 
         {!preview ? (
@@ -782,17 +823,21 @@ export function StoryCreator({ onClose, onCreated }) {
               <p className="text-[#6B7280] text-sm">Disappears after 24 hours</p>
             </button>
             <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleFile} />
+            {error && <p className="text-red-400 text-sm mt-3 text-center">{error}</p>}
           </div>
         ) : (
           <div>
-            <div className="relative rounded-2xl overflow-hidden mb-4" style={{ aspectRatio:'9/16', maxHeight:360 }}>
-              {file?.type.startsWith('video')
-                ? <video src={preview} className="w-full h-full object-cover" autoPlay muted loop playsInline />
-                : <img src={preview} alt="" className="w-full h-full object-cover" />
-              }
+            {/* Preview now uses the same contain+blurred-backdrop
+                treatment as the real viewer, at near-fullscreen size —
+                previously this was a small object-cover box capped at
+                360px, which didn't represent what viewers would
+                actually see. */}
+            <div className="relative rounded-2xl overflow-hidden mb-4" style={{ aspectRatio:'9/16', maxHeight:420 }}>
+              <StoryMediaFrame mediaType={mediaType} mediaUrl={preview} muted={true} />
               <button
-                onClick={() => { setFile(null); setPreview(null); }}
-                className="absolute top-2 right-2 w-7 h-7 bg-black/60 rounded-full flex items-center justify-center"
+                onClick={() => { setFile(null); setPreview(null); setMediaType(null); }}
+                aria-label="Remove"
+                className="absolute top-2 right-2 w-7 h-7 bg-black/60 rounded-full flex items-center justify-center z-30"
               >
                 <X size={14} color="white" />
               </button>
@@ -801,11 +846,14 @@ export function StoryCreator({ onClose, onCreated }) {
             <input
               type="text"
               value={caption}
-              onChange={e => setCaption(e.target.value)}
+              onChange={e => setCaption(e.target.value.slice(0, CAPTION_LIMIT))}
               placeholder="Add a caption... (optional)"
-              maxLength={150}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-[#6B7280] focus:outline-none mb-4"
+              maxLength={CAPTION_LIMIT}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-[#6B7280] focus:outline-none mb-1.5"
             />
+            <div className="flex justify-end mb-3">
+              <span className="text-[#6B7280] text-[11px]">{caption.length}/{CAPTION_LIMIT}</span>
+            </div>
 
             {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
 
@@ -816,7 +864,7 @@ export function StoryCreator({ onClose, onCreated }) {
               style={{ background:'linear-gradient(135deg, #1E6FFF, #7B2FFF)' }}
             >
               {uploading
-                ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Uploading...</>
+                ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {compressing ? 'Optimising...' : 'Uploading...'}</>
                 : '🚀 Share Status'
               }
             </button>
@@ -832,24 +880,36 @@ export function StoryCreator({ onClose, onCreated }) {
 ══════════════════════════════════════════════ */
 export default function Stories() {
   const { user } = useAuth();
-  const navigate = useNavigate();
 
   const [storyGroups,  setStoryGroups]  = useState([]);
+  const [loading,      setLoading]      = useState(true);
   const [viewerOpen,   setViewerOpen]   = useState(false);
   const [viewerStories,setViewerStories]= useState([]);
   const [viewerStart,  setViewerStart]  = useState(0);
   const [createOpen,   setCreateOpen]   = useState(false);
   const [viewedIds,    setViewedIds]    = useState(new Set());
 
+  const refetchTimerRef = useRef(null);
+
   useEffect(() => {
     fetchStories();
     fetchViewedIds();
 
+    // Debounced — previously every INSERT/DELETE from any user
+    // triggered an immediate full refetch with no coalescing, so a
+    // burst of activity (several people posting stories at once)
+    // meant a burst of redundant refetches.
+    const debouncedRefetch = () => {
+      clearTimeout(refetchTimerRef.current);
+      refetchTimerRef.current = setTimeout(fetchStories, 800);
+    };
+
     const ch = supabase.channel('stories:rt')
-      .on('postgres_changes', { event:'INSERT', schema:'public', table:'stories' }, fetchStories)
-      .on('postgres_changes', { event:'DELETE',  schema:'public', table:'stories' }, fetchStories)
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'stories' }, debouncedRefetch)
+      .on('postgres_changes', { event:'DELETE',  schema:'public', table:'stories' }, debouncedRefetch)
       .subscribe();
-    return () => supabase.removeChannel(ch);
+    return () => { supabase.removeChannel(ch); clearTimeout(refetchTimerRef.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchViewedIds = async () => {
@@ -861,7 +921,6 @@ export default function Stories() {
   };
 
   const fetchStories = async () => {
-    // Only fetch non-expired stories
     const { data, error } = await supabase
       .from('stories')
       .select(`
@@ -872,14 +931,13 @@ export default function Stories() {
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false });
 
-    if (error) { console.error('fetchStories:', error.message); return; }
+    if (error) { console.error('fetchStories:', error.message); setLoading(false); return; }
 
     const rows = (data || []).map(s => ({
       ...s,
       users: s['users!stories_user_id_fkey'] || s.users,
     }));
 
-    // Group by user_id
     const groupMap = {};
     rows.forEach(s => {
       if (!groupMap[s.user_id]) {
@@ -888,7 +946,6 @@ export default function Stories() {
       groupMap[s.user_id].stories.push(s);
     });
 
-    // Put own stories first, then others
     const groups = Object.values(groupMap).sort((a, b) => {
       if (a.userId === user.id) return -1;
       if (b.userId === user.id) return 1;
@@ -896,6 +953,7 @@ export default function Stories() {
     });
 
     setStoryGroups(groups);
+    setLoading(false);
   };
 
   const openViewer = (group, startIdx = 0) => {
@@ -913,46 +971,35 @@ export default function Stories() {
   };
 
   const hasUnviewed = (group) => {
-    if (group.userId === user.id) return false; // own stories always grey
+    if (group.userId === user.id) return false;
     return group.stories.some(s => !viewedIds.has(s.id));
   };
 
-  // Always show own slot (even if no stories yet)
   const ownGroup = storyGroups.find(g => g.userId === user.id) || { userId: user.id, user: null, stories: [] };
   const otherGroups = storyGroups.filter(g => g.userId !== user.id);
   const allGroups = [ownGroup, ...otherGroups];
 
   return (
     <>
-      {/* Story strip */}
       <div className="flex gap-3 overflow-x-auto scrollbar-none px-4 py-3 border-b border-white/[0.06]"
         style={{ WebkitOverflowScrolling: 'touch' }}>
-        {allGroups.map(group => (
-          <StoryRing
-            key={group.userId}
-            storyGroup={group}
-            onPress={() => handleStoryRingPress(group)}
-            isOwn={group.userId === user.id}
-            hasUnviewed={hasUnviewed(group)}
-          />
-        ))}
-
-        {/* Add status button if no own stories */}
-        {!storyGroups.find(g => g.userId === user.id) && (
-          <button
-            onClick={() => setCreateOpen(true)}
-            className="flex flex-col items-center gap-1 flex-shrink-0"
-            style={{ width: 68 }}
-          >
-            <div className="w-14 h-14 rounded-full bg-[#1E6FFF]/20 border-2 border-dashed border-[#1E6FFF]/50 flex items-center justify-center">
-              <Plus size={22} className="text-[#1E6FFF]" />
-            </div>
-            <p className="text-white/80 text-[10px] font-medium">Add Status</p>
-          </button>
+        {loading ? (
+          Array(6).fill(0).map((_, i) => <StoryRingSkeleton key={i} />)
+        ) : (
+          allGroups.map(group => (
+            <StoryRing
+              key={group.userId}
+              storyGroup={group}
+              onPress={() => handleStoryRingPress(group)}
+              onAddPress={() => setCreateOpen(true)}
+              isOwn={group.userId === user.id}
+              hasStories={group.stories?.length > 0}
+              hasUnviewed={hasUnviewed(group)}
+            />
+          ))
         )}
       </div>
 
-      {/* Story viewer */}
       {viewerOpen && (
         <StoryViewer
           stories={viewerStories}
@@ -965,13 +1012,12 @@ export default function Stories() {
         />
       )}
 
-      {/* Create story sheet */}
-     {createOpen && (
-  <StoryCreator
-    onClose={() => setCreateOpen(false)}
-    onCreated={() => { fetchStories(); setCreateOpen(false); }}
-  />
-)}
+      {createOpen && (
+        <StoryCreator
+          onClose={() => setCreateOpen(false)}
+          onCreated={() => { fetchStories(); setCreateOpen(false); }}
+        />
+      )}
     </>
   );
 }

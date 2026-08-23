@@ -10,17 +10,13 @@ import {
 import Avatar from '../../components/Avatar';
 import { DAILY_POST_LIMIT } from '../../utils/usernameValidation';
 
-/* ── Image compression ───────────────────────
-   Compresses image to target quality/size using
-   an offscreen canvas before uploading.
-─────────────────────────────────────────────── */
+/* ── Image compression — unchanged, already solid ── */
 async function compressImage(file, maxW = 1920, maxH = 1920, quality = 0.82) {
   return new Promise((resolve) => {
     const img = new window.Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
       let { width, height } = img;
-      // Scale down if larger than max
       if (width > maxW || height > maxH) {
         const ratio = Math.min(maxW / width, maxH / height);
         width  = Math.round(width  * ratio);
@@ -30,14 +26,12 @@ async function compressImage(file, maxW = 1920, maxH = 1920, quality = 0.82) {
       canvas.width  = width;
       canvas.height = height;
       const ctx = canvas.getContext('2d');
-      // Sharpen pass
       ctx.imageSmoothingEnabled  = true;
       ctx.imageSmoothingQuality  = 'high';
       ctx.drawImage(img, 0, 0, width, height);
       canvas.toBlob(
         (blob) => {
           URL.revokeObjectURL(url);
-          // Use compressed only if smaller
           if (blob && blob.size < file.size) {
             resolve(new File([blob], file.name, { type: 'image/jpeg' }));
           } else {
@@ -53,7 +47,7 @@ async function compressImage(file, maxW = 1920, maxH = 1920, quality = 0.82) {
   });
 }
 
-/* ── Upload a single file to Cloudinary ─────── */
+/* ── Upload a single file to Cloudinary — unchanged ── */
 async function uploadToCloudinary(file, resourceType = 'image', onProgress) {
   const cloud  = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
   const preset = 'blink_uploads';
@@ -82,7 +76,15 @@ async function uploadToCloudinary(file, resourceType = 'image', onProgress) {
   });
 }
 
-/* ── Audience options ── */
+// Fallback thumbnail when Cloudinary's eager transform isn't
+// configured on the upload preset — Cloudinary can derive a still
+// frame from a video by swapping the delivery extension to an image
+// format, a standard trick that needs no extra upload-time config.
+function deriveVideoThumbnail(videoUrl) {
+  if (!videoUrl) return null;
+  return videoUrl.replace(/\.\w+$/, '.jpg');
+}
+
 const AUDIENCES = [
   { key:'public',    icon: Globe,  label:'Everyone'         },
   { key:'followers', icon: Users,  label:'Followers only'   },
@@ -103,29 +105,35 @@ export default function CreatePost() {
   const fileInputRef  = useRef();
   const videoInputRef = useRef();
   const textareaRef   = useRef();
+  const locationInputRef = useRef();
+  const audienceMenuRef  = useRef();
+  const hashtagMenuRef   = useRef();
 
   const [caption,       setCaption]       = useState('');
   const [location,      setLocation]      = useState('');
+  const [showLocation,  setShowLocation]  = useState(false);
   const [audience,      setAudience]      = useState('public');
   const [hashtags,      setHashtags]      = useState([]);
   const [showHashtags,  setShowHashtags]  = useState(false);
   const [showAudience,  setShowAudience]  = useState(false);
-  const [mediaFiles,    setMediaFiles]    = useState([]); // [{file, preview, type}]
-  const [uploadProgress,setUploadProgress]= useState({}); // {idx: pct}
-  const [compressing,   setCompressing]   = useState(false);
+  const [mediaFiles,    setMediaFiles]    = useState([]); // newly selected: [{file, preview, type, size}]
+  const [existingMedia, setExistingMedia] = useState({ images: [], video: null, videoThumb: null }); // when editing
+  const [uploadProgress,setUploadProgress]= useState({});
   const [submitting,    setSubmitting]    = useState(false);
-  const [submitPhase,   setSubmitPhase]   = useState(''); // compressing|uploading|saving
+  const [submitPhase,   setSubmitPhase]   = useState('');
   const [error,         setError]         = useState('');
   const [success,       setSuccess]       = useState(false);
 
   const charLimit   = 500;
-  const hasMedia    = mediaFiles.length > 0;
-  // Today's post count — from profile (DB-tracked per day, resets at midnight)
+  const hasNewMedia = mediaFiles.length > 0;
+  const hasMedia    = hasNewMedia || existingMedia.images.length > 0 || !!existingMedia.video;
   const postsToday  = (profile?.posts_today_date === new Date().toISOString().slice(0,10))
     ? (profile?.posts_today || 0) : 0;
   const atDailyLimit = postsToday >= DAILY_POST_LIMIT;
 
-  /* Load post for editing */
+  /* Load post for editing — now also restores existing media so the
+     editor doesn't misleadingly look empty for a post that has images
+     or video. */
   useEffect(() => {
     if (!editPostId) return;
     (async () => {
@@ -136,20 +144,43 @@ export default function CreatePost() {
         setAudience(data.audience || 'public');
         setHashtags(data.hashtags || []);
         setLocation(data.location || '');
+        setShowLocation(!!data.location);
+        setExistingMedia({
+          images: data.media_urls || [],
+          video: data.video_url || null,
+          videoThumb: data.video_thumbnail || null,
+        });
       }
     })();
-  }, [editPostId]);
+  }, [editPostId, user.id]);
+
+  // Object URLs from local previews must be revoked or they leak for
+  // the life of the tab — previously never cleaned up on remove or
+  // unmount.
+  useEffect(() => {
+    return () => { mediaFiles.forEach(m => URL.revokeObjectURL(m.preview)); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Click-outside closes the audience/hashtag dropdowns — previously
+  // the only way to close them was picking an option; tapping
+  // anywhere else on the screen did nothing.
+  useEffect(() => {
+    const onClickOutside = (e) => {
+      if (showAudience && audienceMenuRef.current && !audienceMenuRef.current.contains(e.target)) setShowAudience(false);
+      if (showHashtags && hashtagMenuRef.current && !hashtagMenuRef.current.contains(e.target)) setShowHashtags(false);
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [showAudience, showHashtags]);
 
   const handleImageSelect = async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    const remaining = 10 - mediaFiles.length;
-    const selected  = files.slice(0, remaining);
+    const remaining = 10 - mediaFiles.length - existingMedia.images.length;
+    const selected  = files.slice(0, Math.max(0, remaining));
     const previews  = selected.map(f => ({
-      file:    f,
-      preview: URL.createObjectURL(f),
-      type:    'image',
-      size:    f.size,
+      file: f, preview: URL.createObjectURL(f), type: 'image', size: f.size,
     }));
     setMediaFiles(prev => [...prev, ...previews]);
     e.target.value = '';
@@ -167,8 +198,18 @@ export default function CreatePost() {
   };
 
   const removeMedia = (idx) => {
-    const updated = mediaFiles.filter((_, i) => i !== idx);
-    setMediaFiles(updated);
+    setMediaFiles(prev => {
+      URL.revokeObjectURL(prev[idx].preview);
+      return prev.filter((_, i) => i !== idx);
+    });
+  };
+
+  const removeExistingImage = (idx) => {
+    setExistingMedia(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== idx) }));
+  };
+
+  const removeExistingVideo = () => {
+    setExistingMedia(prev => ({ ...prev, video: null, videoThumb: null }));
   };
 
   const toggleHashtag = (tag) => {
@@ -185,6 +226,15 @@ export default function CreatePost() {
     setShowHashtags(false);
   };
 
+  const handleLocationToggle = () => {
+    setShowLocation(v => {
+      const next = !v;
+      if (next) setTimeout(() => locationInputRef.current?.focus(), 50);
+      else setLocation('');
+      return next;
+    });
+  };
+
   const extractHashtags = (text) => {
     const matches = text.match(/#(\w+)/g) || [];
     return matches.map(h => h.slice(1));
@@ -197,14 +247,14 @@ export default function CreatePost() {
     setSubmitting(true); setError('');
 
     try {
-      let mediaUrls  = [];
-      let videoUrl   = null;
+      let mediaUrls  = [...existingMedia.images];
+      let videoUrl   = existingMedia.video;
       let videoDuration = null;
-      let videoThumb = null;
-      const postType = mediaFiles.some(m => m.type === 'video') ? 'video' : hasMedia ? 'image' : 'text';
+      let videoThumb = existingMedia.videoThumb;
+      const newVideo = mediaFiles.find(m => m.type === 'video');
+      const postType = (newVideo || videoUrl) ? 'video' : hasMedia ? 'image' : 'text';
 
-      if (hasMedia) {
-        /* ── Phase 1: compress images ── */
+      if (hasNewMedia) {
         setSubmitPhase('compressing');
         const ready = [];
         for (let i = 0; i < mediaFiles.length; i++) {
@@ -217,7 +267,6 @@ export default function CreatePost() {
           }
         }
 
-        /* ── Phase 2: upload ── */
         setSubmitPhase('uploading');
         for (let i = 0; i < ready.length; i++) {
           const m = ready[i];
@@ -229,31 +278,38 @@ export default function CreatePost() {
           if (m.type === 'video') {
             videoUrl      = result.secure_url;
             videoDuration = result.duration ? Math.round(result.duration) : null;
-            videoThumb    = result.eager?.[0]?.secure_url || null;
+            videoThumb    = result.eager?.[0]?.secure_url || deriveVideoThumbnail(result.secure_url);
           } else {
             mediaUrls.push(result.secure_url);
           }
         }
       }
 
-      /* ── Phase 3: save to DB ── */
       setSubmitPhase('saving');
       const allHashtags = [...new Set([...hashtags, ...extractHashtags(caption)])];
+      let createdPost = null;
 
       if (editPostId) {
-        // Editing existing post
         const { error: dbErr } = await supabase.from('posts').update({
           caption:   caption.trim(),
           audience,
           hashtags:  allHashtags,
           location:  location.trim() || null,
-          ...(hasMedia && mediaUrls.length > 0 ? { media_urls: mediaUrls, post_type: postType } : {}),
-          ...(videoUrl ? { video_url: videoUrl, video_duration: videoDuration, video_thumbnail: videoThumb, post_type:'video' } : {}),
+          media_urls: mediaUrls.length > 0 ? mediaUrls : null,
+          video_url: videoUrl,
+          video_duration: videoDuration,
+          video_thumbnail: videoThumb,
+          post_type: postType,
         }).eq('id', editPostId).eq('user_id', user.id);
         if (dbErr) throw new Error(dbErr.message);
       } else {
-        // New post
-        const { error: dbErr } = await supabase.from('posts').insert({
+        // .select().single() so we can hand the finished post straight
+        // to Home.js for an optimistic insert — previously this just
+        // fired the insert and navigated home with no post data, so
+        // the feed's optimistic-insert path (added earlier) had
+        // nothing to prepend and the user had to pull-to-refresh to
+        // see their own post.
+        const { data: inserted, error: dbErr } = await supabase.from('posts').insert({
           user_id:         user.id,
           caption:         caption.trim(),
           audience,
@@ -271,15 +327,23 @@ export default function CreatePost() {
           reposts_count:   0,
           views_count:     0,
           shares_count:    0,
-        });
+        }).select('*').single();
         if (dbErr) throw new Error(dbErr.message);
 
-        // Update user post count
-        await supabase.from('users').update({ posts_count: (profile?.posts_count||0)+1 }).eq('id', user.id);
+        // posts_count is now maintained by a DB trigger
+        // (sync_user_posts_count) instead of this client-side
+        // read-then-write, which raced under concurrent posting —
+        // see 22_stories_createpost_rpcs.sql. No client call needed.
+
+        createdPost = inserted
+          ? { ...inserted, users: profile } // profile already has the author fields PostCard needs
+          : null;
       }
 
       setSuccess(true);
-      setTimeout(() => navigate('/'), 800);
+      setTimeout(() => {
+        navigate('/', createdPost ? { state: { newPost: createdPost } } : undefined);
+      }, 800);
 
     } catch (err) {
       console.error('CreatePost error:', err.message);
@@ -301,13 +365,13 @@ export default function CreatePost() {
   };
 
   const aud = AUDIENCES.find(a => a.key === audience) || AUDIENCES[0];
+  const totalMediaCount = mediaFiles.length + existingMedia.images.length + (existingMedia.video ? 1 : 0);
 
   return (
     <div className="min-h-screen bg-[#0A1628] flex flex-col">
 
-      {/* Top bar */}
       <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between">
-        <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white transition-colors">
+        <button onClick={() => navigate(-1)} aria-label="Back" className="text-[#6B7280] hover:text-white transition-colors">
           <ArrowLeft size={22} />
         </button>
         <div className="flex flex-col items-center">
@@ -339,7 +403,6 @@ export default function CreatePost() {
         </button>
       </div>
 
-      {/* Daily limit reached banner */}
       {atDailyLimit && !editPostId && (
         <div className="mx-4 mt-3 bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex items-start gap-3">
           <span className="text-2xl flex-shrink-0">🚫</span>
@@ -354,42 +417,40 @@ export default function CreatePost() {
 
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-32">
 
-        {/* Author */}
         <div className="flex items-center gap-3 mb-4">
           <Avatar url={profile?.avatar_url} name={profile?.display_name} size={10} />
           <div>
             <p className="text-white font-bold text-[14px]">{profile?.display_name}</p>
-            {/* Audience selector */}
-            <button
-              onClick={() => setShowAudience(!showAudience)}
-              className="flex items-center gap-1 bg-white/10 hover:bg-white/15 px-2.5 py-1 rounded-full mt-0.5 transition-colors"
-            >
-              <aud.icon size={11} className="text-white/60" />
-              <span className="text-white/70 text-[11px] font-semibold">{aud.label}</span>
-              <ChevronDown size={11} className="text-white/40" />
-            </button>
+            <div className="relative" ref={audienceMenuRef}>
+              <button
+                onClick={() => setShowAudience(!showAudience)}
+                className="flex items-center gap-1 bg-white/10 hover:bg-white/15 px-2.5 py-1 rounded-full mt-0.5 transition-colors"
+              >
+                <aud.icon size={11} className="text-white/60" />
+                <span className="text-white/70 text-[11px] font-semibold">{aud.label}</span>
+                <ChevronDown size={11} className="text-white/40" />
+              </button>
+
+              {showAudience && (
+                <div className="absolute left-0 top-full mt-1 bg-[#111827] border border-white/10 rounded-2xl overflow-hidden shadow-xl z-30" style={{ minWidth: 200 }}>
+                  {AUDIENCES.map(a => (
+                    <button
+                      key={a.key}
+                      onClick={() => { setAudience(a.key); setShowAudience(false); }}
+                      className={'w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-left transition-colors ' +
+                        (audience === a.key ? 'bg-[#1E6FFF]/10' : '')}
+                    >
+                      <a.icon size={16} className={audience === a.key ? 'text-[#1E6FFF]' : 'text-[#6B7280]'} />
+                      <span className={`text-[14px] font-medium ${audience === a.key ? 'text-[#1E6FFF]' : 'text-white/80'}`}>{a.label}</span>
+                      {audience === a.key && <CheckCircle size={14} className="text-[#1E6FFF] ml-auto" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Audience dropdown */}
-        {showAudience && (
-          <div className="bg-[#111827] border border-white/10 rounded-2xl overflow-hidden mb-4 shadow-xl">
-            {AUDIENCES.map(a => (
-              <button
-                key={a.key}
-                onClick={() => { setAudience(a.key); setShowAudience(false); }}
-                className={'w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-left transition-colors ' +
-                  (audience === a.key ? 'bg-[#1E6FFF]/10' : '')}
-              >
-                <a.icon size={16} className={audience === a.key ? 'text-[#1E6FFF]' : 'text-[#6B7280]'} />
-                <span className={`text-[14px] font-medium ${audience === a.key ? 'text-[#1E6FFF]' : 'text-white/80'}`}>{a.label}</span>
-                {audience === a.key && <CheckCircle size={14} className="text-[#1E6FFF] ml-auto" />}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Caption */}
         <textarea
           ref={textareaRef}
           value={caption}
@@ -406,34 +467,28 @@ export default function CreatePost() {
           </span>
         </div>
 
-        {/* Media preview */}
-        {mediaFiles.length > 0 && (
-          <div className="mb-4">
-            <div className={`grid gap-2 ${mediaFiles.length === 1 ? 'grid-cols-1' : mediaFiles.length === 2 ? 'grid-cols-2' : 'grid-cols-2'}`}>
-              {mediaFiles.map((m, i) => (
-                <div key={i} className="relative rounded-2xl overflow-hidden bg-black/40 border border-white/10">
-                  {m.type === 'video'
-                    ? <video src={m.preview} className="w-full object-cover" style={{ maxHeight:200, aspectRatio:'16/9' }} muted playsInline />
-                    : <img src={m.preview} alt="" className="w-full object-cover" style={{ maxHeight: mediaFiles.length === 1 ? 300 : 180, aspectRatio:'1/1' }} />
-                  }
-                  {/* Upload progress */}
-                  {uploadProgress[i] !== undefined && uploadProgress[i] < 100 && (
-                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2">
-                      <div className="w-3/4 h-1.5 bg-white/20 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#1E6FFF] rounded-full transition-all duration-300" style={{ width: uploadProgress[i] + '%' }} />
-                      </div>
-                      <p className="text-white text-xs font-bold">{uploadProgress[i]}%</p>
-                    </div>
-                  )}
-                  {/* File size badge */}
-                  <div className="absolute bottom-1.5 left-1.5 bg-black/60 rounded-full px-2 py-0.5">
-                    <p className="text-white/70 text-[10px]">{(m.size / 1024 / 1024).toFixed(1)} MB</p>
-                  </div>
-                  {/* Remove button */}
-                  <button
-                    onClick={() => removeMedia(i)}
-                    className="absolute top-1.5 right-1.5 w-7 h-7 bg-black/70 rounded-full flex items-center justify-center hover:bg-red-500/70 transition-colors"
-                  >
+        {/* Existing media (edit mode) — previously this was simply
+            never loaded, so editing a post with images/video looked
+            like it had none. Shown separately from newly-added local
+            files since one's already uploaded and one isn't. */}
+        {(existingMedia.images.length > 0 || existingMedia.video) && (
+          <div className="mb-3">
+            <p className="text-[#6B7280] text-[11px] font-bold uppercase tracking-wider mb-2">Current media</p>
+            <div className="grid grid-cols-2 gap-2">
+              {existingMedia.video && (
+                <div className="relative rounded-2xl overflow-hidden bg-black/40 border border-white/10 col-span-2">
+                  <video src={existingMedia.video} poster={existingMedia.videoThumb} className="w-full object-cover" style={{ maxHeight:200 }} muted playsInline />
+                  <button onClick={removeExistingVideo} aria-label="Remove video"
+                    className="absolute top-1.5 right-1.5 w-7 h-7 bg-black/70 rounded-full flex items-center justify-center hover:bg-red-500/70 transition-colors">
+                    <X size={14} color="white" />
+                  </button>
+                </div>
+              )}
+              {existingMedia.images.map((url, i) => (
+                <div key={url} className="relative rounded-2xl overflow-hidden bg-black/40 border border-white/10">
+                  <img src={url} alt="" className="w-full object-cover" style={{ maxHeight:180, aspectRatio:'1/1' }} />
+                  <button onClick={() => removeExistingImage(i)} aria-label="Remove image"
+                    className="absolute top-1.5 right-1.5 w-7 h-7 bg-black/70 rounded-full flex items-center justify-center hover:bg-red-500/70 transition-colors">
                     <X size={14} color="white" />
                   </button>
                 </div>
@@ -442,7 +497,39 @@ export default function CreatePost() {
           </div>
         )}
 
-        {/* Compressing indicator */}
+        {mediaFiles.length > 0 && (
+          <div className="mb-4">
+            {existingMedia.images.length > 0 && (
+              <p className="text-[#6B7280] text-[11px] font-bold uppercase tracking-wider mb-2">New media</p>
+            )}
+            <div className={`grid gap-2 ${mediaFiles.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+              {mediaFiles.map((m, i) => (
+                <div key={i} className="relative rounded-2xl overflow-hidden bg-black/40 border border-white/10">
+                  {m.type === 'video'
+                    ? <video src={m.preview} className="w-full object-cover" style={{ maxHeight:200, aspectRatio:'16/9' }} muted playsInline />
+                    : <img src={m.preview} alt="" className="w-full object-cover" style={{ maxHeight: mediaFiles.length === 1 ? 300 : 180, aspectRatio:'1/1' }} />
+                  }
+                  {uploadProgress[i] !== undefined && uploadProgress[i] < 100 && (
+                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2">
+                      <div className="w-3/4 h-1.5 bg-white/20 rounded-full overflow-hidden">
+                        <div className="h-full bg-[#1E6FFF] rounded-full transition-all duration-300" style={{ width: uploadProgress[i] + '%' }} />
+                      </div>
+                      <p className="text-white text-xs font-bold">{uploadProgress[i]}%</p>
+                    </div>
+                  )}
+                  <div className="absolute bottom-1.5 left-1.5 bg-black/60 rounded-full px-2 py-0.5">
+                    <p className="text-white/70 text-[10px]">{(m.size / 1024 / 1024).toFixed(1)} MB</p>
+                  </div>
+                  <button onClick={() => removeMedia(i)} aria-label="Remove"
+                    className="absolute top-1.5 right-1.5 w-7 h-7 bg-black/70 rounded-full flex items-center justify-center hover:bg-red-500/70 transition-colors">
+                    <X size={14} color="white" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {submitting && submitPhase === 'compressing' && (
           <div className="mb-4 flex items-center gap-3 bg-[#1E6FFF]/10 border border-[#1E6FFF]/20 rounded-xl px-4 py-3">
             <Loader size={16} className="text-[#1E6FFF] animate-spin flex-shrink-0" />
@@ -453,28 +540,29 @@ export default function CreatePost() {
           </div>
         )}
 
-        {/* Location */}
-        {location !== undefined && (
+        {/* Location — was always rendered regardless of the toolbar
+            button (which used to just focus the caption box instead
+            of doing anything location-related). Now toggled by that
+            button, matching the hashtag panel's pattern. */}
+        {showLocation && (
           <div className="flex items-center gap-2 bg-white/[0.05] border border-white/10 rounded-xl px-3 py-2.5 mb-3">
             <MapPin size={14} className="text-[#6B7280] flex-shrink-0" />
             <input
+              ref={locationInputRef}
               type="text"
               value={location}
               onChange={e => setLocation(e.target.value)}
               placeholder="Add location..."
               className="flex-1 bg-transparent text-white text-sm placeholder-[#6B7280] focus:outline-none"
             />
-            {location && (
-              <button onClick={() => setLocation('')} className="text-[#6B7280] hover:text-white">
-                <X size={14} />
-              </button>
-            )}
+            <button onClick={handleLocationToggle} aria-label="Remove location" className="text-[#6B7280] hover:text-white">
+              <X size={14} />
+            </button>
           </div>
         )}
 
-        {/* Hashtag suggestions */}
         {showHashtags && (
-          <div className="mb-3">
+          <div className="mb-3" ref={hashtagMenuRef}>
             <p className="text-[#6B7280] text-[11px] font-bold uppercase tracking-wider mb-2">Popular Hashtags</p>
             <div className="flex flex-wrap gap-2">
               {HASHTAG_SUGGESTIONS.map(tag => {
@@ -495,7 +583,6 @@ export default function CreatePost() {
           </div>
         )}
 
-        {/* Error */}
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 mb-3">
             <p className="text-red-400 text-sm">{error}</p>
@@ -503,15 +590,14 @@ export default function CreatePost() {
         )}
       </div>
 
-      {/* Bottom toolbar */}
       <div className="fixed bottom-0 left-0 right-0 max-w-[620px] mx-auto bg-[#0d1f3c] border-t border-white/[0.08]"
         style={{ paddingBottom:'max(12px, env(safe-area-inset-bottom))' }}>
         <div className="flex items-center gap-1 px-4 py-2">
 
-          {/* Photo */}
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={submitting}
+            aria-label="Add photo"
             className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-white/60 hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10 transition-all disabled:opacity-40"
           >
             <Image size={20} />
@@ -519,10 +605,10 @@ export default function CreatePost() {
           </button>
           <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
 
-          {/* Video */}
           <button
             onClick={() => videoInputRef.current?.click()}
-            disabled={submitting || mediaFiles.some(m => m.type === 'video')}
+            disabled={submitting || mediaFiles.some(m => m.type === 'video') || !!existingMedia.video}
+            aria-label="Add video"
             className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-white/60 hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10 transition-all disabled:opacity-40"
           >
             <Video size={20} />
@@ -530,30 +616,29 @@ export default function CreatePost() {
           </button>
           <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={handleVideoSelect} />
 
-          {/* Hashtag */}
           <button
             onClick={() => setShowHashtags(!showHashtags)}
             disabled={submitting}
+            aria-label="Hashtags"
             className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all disabled:opacity-40 ${showHashtags ? 'text-[#1E6FFF] bg-[#1E6FFF]/10' : 'text-white/60 hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10'}`}
           >
             <Hash size={20} />
             <span className="text-sm font-semibold">Tags</span>
           </button>
 
-          {/* Location */}
           <button
-            onClick={() => { textareaRef.current?.focus(); }}
+            onClick={handleLocationToggle}
             disabled={submitting}
-            className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-white/60 hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10 transition-all disabled:opacity-40"
+            aria-label="Add location"
+            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all disabled:opacity-40 ${showLocation ? 'text-[#1E6FFF] bg-[#1E6FFF]/10' : 'text-white/60 hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10'}`}
           >
             <MapPin size={20} />
             <span className="text-sm font-semibold">Location</span>
           </button>
 
-          {/* Media count */}
-          {mediaFiles.length > 0 && (
+          {totalMediaCount > 0 && (
             <div className="ml-auto bg-[#1E6FFF]/20 px-2.5 py-1 rounded-full">
-              <p className="text-[#1E6FFF] text-[12px] font-bold">{mediaFiles.length}/10</p>
+              <p className="text-[#1E6FFF] text-[12px] font-bold">{totalMediaCount}/10</p>
             </div>
           )}
         </div>
