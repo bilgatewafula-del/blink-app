@@ -44,7 +44,7 @@ const REACTIONS = [
 ];
 
 /* ═══════════════════════════════════════════════
-   RICH CAPTION
+   RICH CAPTION — unchanged
 ═══════════════════════════════════════════════ */
 function RichCaption({ text, onHashtag, onMention }) {
   if (!text) return null;
@@ -62,47 +62,80 @@ function RichCaption({ text, onHashtag, onMention }) {
 }
 
 /* ═══════════════════════════════════════════════
-   MEDIA GRID — existing layout preserved
+   MEDIA GRID — now supports double-tap-to-like
 ═══════════════════════════════════════════════ */
-function MediaGrid({ images, onImageClick }) {
+function MediaGrid({ images, onImageClick, onDoubleTapLike }) {
+  const [burst, setBurst] = useState(false);
+  const lastTapRef = useRef(0);
+
   if (!images?.length) return null;
   const n = images.length;
+
+  const handleTap = (e, idx) => {
+    e.stopPropagation();
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      // double tap
+      onDoubleTapLike?.();
+      setBurst(true);
+      setTimeout(() => setBurst(false), 700);
+      lastTapRef.current = 0;
+    } else {
+      lastTapRef.current = now;
+      setTimeout(() => {
+        // if no second tap arrived, treat as a normal single click
+        if (Date.now() - lastTapRef.current >= 300) onImageClick?.(idx);
+      }, 300);
+    }
+  };
+
+  const HeartBurst = () => burst ? (
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      <Heart size={72} className="text-white drop-shadow-lg animate-heartBurst" fill="currentColor" />
+    </div>
+  ) : null;
+
   return (
-    <div className="mb-2 overflow-hidden rounded-2xl border border-white/10">
+    <div className="mb-2 overflow-hidden rounded-2xl border border-white/10 relative">
       {n === 1 && (
-        <img src={images[0]} alt="" className="w-full object-cover cursor-pointer"
-          style={{ maxHeight:420 }} loading="lazy" decoding="async"
-          onClick={e => { e.stopPropagation(); onImageClick?.(0); }} />
+        <div className="relative">
+          <img src={images[0]} alt="" className="w-full object-cover cursor-pointer"
+            style={{ maxHeight:420 }} loading="lazy" decoding="async"
+            onClick={e => handleTap(e, 0)} />
+          <HeartBurst />
+        </div>
       )}
       {n === 2 && (
-        <div className="grid grid-cols-2 gap-[2px]">
+        <div className="grid grid-cols-2 gap-[2px] relative">
           {images.map((img,i) => (
             <img key={i} src={img} alt="" className="w-full object-cover cursor-pointer"
               style={{ aspectRatio:'1/1' }} loading="lazy" decoding="async"
-              onClick={e => { e.stopPropagation(); onImageClick?.(i); }} />
+              onClick={e => handleTap(e, i)} />
           ))}
+          <HeartBurst />
         </div>
       )}
       {n === 3 && (
-        <div className="grid gap-[2px]" style={{ gridTemplateColumns:'1fr 1fr', gridTemplateRows:'1fr 1fr' }}>
+        <div className="grid gap-[2px] relative" style={{ gridTemplateColumns:'1fr 1fr', gridTemplateRows:'1fr 1fr' }}>
           <img src={images[0]} alt="" className="row-span-2 w-full h-full object-cover cursor-pointer"
             style={{ aspectRatio:'1/2' }} loading="lazy" decoding="async"
-            onClick={e => { e.stopPropagation(); onImageClick?.(0); }} />
+            onClick={e => handleTap(e, 0)} />
           <img src={images[1]} alt="" className="w-full object-cover cursor-pointer"
             style={{ aspectRatio:'1/1' }} loading="lazy" decoding="async"
-            onClick={e => { e.stopPropagation(); onImageClick?.(1); }} />
+            onClick={e => handleTap(e, 1)} />
           <img src={images[2]} alt="" className="w-full object-cover cursor-pointer"
             style={{ aspectRatio:'1/1' }} loading="lazy" decoding="async"
-            onClick={e => { e.stopPropagation(); onImageClick?.(2); }} />
+            onClick={e => handleTap(e, 2)} />
+          <HeartBurst />
         </div>
       )}
       {n >= 4 && (
-        <div className="grid grid-cols-2 gap-[2px]">
+        <div className="grid grid-cols-2 gap-[2px] relative">
           {images.slice(0,4).map((img,i) => (
             <div key={i} className="relative">
               <img src={img} alt="" className="w-full object-cover cursor-pointer"
                 style={{ aspectRatio:'1/1' }} loading="lazy" decoding="async"
-                onClick={e => { e.stopPropagation(); onImageClick?.(i); }} />
+                onClick={e => handleTap(e, i)} />
               {i === 3 && n > 4 && (
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer"
                   onClick={e => { e.stopPropagation(); onImageClick?.(3); }}>
@@ -111,6 +144,7 @@ function MediaGrid({ images, onImageClick }) {
               )}
             </div>
           ))}
+          <HeartBurst />
         </div>
       )}
     </div>
@@ -118,7 +152,7 @@ function MediaGrid({ images, onImageClick }) {
 }
 
 /* ═══════════════════════════════════════════════
-   VIDEO PLAYER — auto-pause + visibility
+   VIDEO PLAYER — unchanged, already solid
 ═══════════════════════════════════════════════ */
 function VideoPlayer({ src, poster, duration }) {
   const videoRef       = useRef();
@@ -130,7 +164,6 @@ function VideoPlayer({ src, poster, duration }) {
   const [error,        setError]        = useState(false);
   const [progress,     setProgress]     = useState(0);
 
-  /* Auto-pause when another video plays */
   useEffect(() => {
     const cb = (activeId) => {
       if (activeId !== videoId.current && videoRef.current && playing) {
@@ -142,7 +175,6 @@ function VideoPlayer({ src, poster, duration }) {
     return () => videoListeners.delete(cb);
   }, [playing]);
 
-  /* IntersectionObserver — pause when scrolled out */
   useEffect(() => {
     const el  = containerRef.current;
     if (!el) return;
@@ -159,7 +191,6 @@ function VideoPlayer({ src, poster, duration }) {
     return () => obs.disconnect();
   }, [playing]);
 
-  /* Page visibility — pause when tab hidden */
   useEffect(() => {
     const handleVis = () => {
       if (document.hidden && videoRef.current && playing) {
@@ -179,7 +210,7 @@ function VideoPlayer({ src, poster, duration }) {
       v.pause();
       setPlaying(false);
     } else {
-      setGlobalActiveVideo(videoId.current); // pause all others
+      setGlobalActiveVideo(videoId.current);
       v.play().then(() => setPlaying(true)).catch(() => setError(true));
     }
   };
@@ -218,7 +249,6 @@ function VideoPlayer({ src, poster, duration }) {
         onError={() => setError(true)}
       />
 
-      {/* Play/pause overlay */}
       <div className="absolute inset-0 flex items-center justify-center cursor-pointer" onClick={toggle}>
         {buffering && (
           <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
@@ -232,10 +262,8 @@ function VideoPlayer({ src, poster, duration }) {
         )}
       </div>
 
-      {/* Controls bar */}
       <div className="absolute bottom-0 left-0 right-0 px-3 pb-2 pt-4"
         style={{ background:'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)' }}>
-        {/* Progress bar */}
         <div className="w-full h-[3px] bg-white/20 rounded-full mb-2 cursor-pointer"
           onClick={e => {
             e.stopPropagation();
@@ -264,7 +292,7 @@ function VideoPlayer({ src, poster, duration }) {
 }
 
 /* ═══════════════════════════════════════════════
-   QUOTED POST
+   QUOTED POST — unchanged
 ═══════════════════════════════════════════════ */
 function QuotedPost({ quotedPost, navigate }) {
   if (!quotedPost) return null;
@@ -295,7 +323,7 @@ function QuotedPost({ quotedPost, navigate }) {
 }
 
 /* ═══════════════════════════════════════════════
-   REPORT MODAL
+   REPORT MODAL — unchanged
 ═══════════════════════════════════════════════ */
 function ReportModal({ postId, postUserId, currentUserId, onClose }) {
   const REASONS = [
@@ -370,14 +398,14 @@ function ReportModal({ postId, postUserId, currentUserId, onClose }) {
 }
 
 /* ═══════════════════════════════════════════════
-   OPTIONS MENU — full owner + other-user menus
+   OPTIONS MENU — delete/save/block now call the
+   atomic RPCs instead of multi-step client writes
 ═══════════════════════════════════════════════ */
 function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
   const navigate  = useNavigate();
-  const { user }  = useAuth();
-  const [busy,    setBusy]    = useState(null); // which action is loading
+  const [busy,    setBusy]    = useState(null);
   const [toast,   setToast]   = useState('');
-  const [confirm, setConfirm] = useState(null); // { label, fn }
+  const [confirm, setConfirm] = useState(null);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2500); };
 
@@ -388,7 +416,6 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
     setBusy(null);
   };
 
-  /* ── Owner actions ── */
   const handleEdit = () => {
     onClose();
     navigate('/create?edit=' + post.id);
@@ -436,30 +463,29 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
     onClose();
   });
 
+  // Was a 5-step client-side delete chain (likes, comments, saved_posts,
+  // reports, then the post). Now one atomic server-side call — see
+  // delete_own_post() in 17_post_interaction_rpcs.sql.
   const handleDelete = async () => {
     setBusy('delete');
-    await supabase.from('likes').delete().eq('post_id', post.id);
-    await supabase.from('comments').delete().eq('post_id', post.id);
-    await supabase.from('saved_posts').delete().eq('post_id', post.id);
-    await supabase.from('reports').delete().eq('target_id', post.id).eq('target_type','post');
-    await supabase.from('posts').delete().eq('id', post.id).eq('user_id', currentUserId);
+    try {
+      const { error } = await supabase.rpc('delete_own_post', { p_post_id: post.id });
+      if (error) throw error;
+      showToast('🗑️ Post deleted');
+      onActionDone('delete');
+      onClose();
+    } catch (err) {
+      showToast('Delete failed: ' + err.message);
+    }
     setBusy(null);
-    showToast('🗑️ Post deleted');
-    onActionDone('delete');
-    onClose();
   };
 
-  /* ── Other-user actions ── */
+  // Was a client read-then-write (select existing, then insert/delete) —
+  // now one atomic RPC call, consistent with the main card's handleSave.
   const handleSave = () => run('save', async () => {
-    const { data: existing } = await supabase.from('saved_posts')
-      .select('id').eq('post_id', post.id).eq('user_id', currentUserId).maybeSingle();
-    if (existing) {
-      await supabase.from('saved_posts').delete().eq('post_id', post.id).eq('user_id', currentUserId);
-      showToast('Removed from saved');
-    } else {
-      await supabase.from('saved_posts').upsert({ post_id: post.id, user_id: currentUserId, collection:'Saved Posts' }, { onConflict:'post_id,user_id' });
-      showToast('✅ Post saved!');
-    }
+    const { data, error } = await supabase.rpc('toggle_post_save', { p_post_id: post.id });
+    if (error) throw error;
+    showToast(data ? '✅ Post saved!' : 'Removed from saved');
     onActionDone('save');
   });
 
@@ -469,7 +495,6 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
   };
 
   const handleHide = () => run('hide', async () => {
-    // Client-side hide — store in local hidden list
     const hidden = JSON.parse(localStorage.getItem('blink_hidden_posts') || '[]');
     if (!hidden.includes(post.id)) hidden.push(post.id);
     localStorage.setItem('blink_hidden_posts', JSON.stringify(hidden));
@@ -487,9 +512,14 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
     onClose();
   });
 
+  // Was two client-side deletes; the reverse-direction delete needs
+  // permission on a row owned by someone else, which plain RLS would
+  // likely just silently skip — meaning "blocking" wouldn't actually
+  // stop them from seeing you. Now one atomic server-side call — see
+  // block_user() in 17_post_interaction_rpcs.sql.
   const handleBlock = () => run('block', async () => {
-    await supabase.from('follows').delete().eq('follower_id', currentUserId).eq('following_id', post.user_id);
-    await supabase.from('follows').delete().eq('follower_id', post.user_id).eq('following_id', currentUserId);
+    const { error } = await supabase.rpc('block_user', { p_target_id: post.user_id });
+    if (error) throw error;
     showToast('🚫 User blocked');
     onActionDone('block');
     onClose();
@@ -515,7 +545,7 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
     { key:'profile', icon: Avatar,    label:'View Profile',  action: handleViewProfile,danger: false, isAvatar: true },
     { key:'hide',    icon: EyeOff,    label:'Hide Post',     action: handleHide,       danger: false },
     { key:'mute',    icon: BellOff,   label:'Mute @' + (post.users?.username||'user'), action: handleMute, danger: false },
-    { key:'block',   icon: UserX,     label:'Block User',    action: handleBlock,      danger: true  },
+    { key:'block',   icon: UserX,     label:'Block User',    action: () => setConfirm({ label:`Block @${post.users?.username || 'this user'}? You will stop following each other and this can be undone later from Settings.`, fn: handleBlock }), danger: true },
     { key:'report',  icon: Flag,      label:'Report Post',   action: () => { onClose(); setTimeout(() => onActionDone('report'), 100); }, danger: true },
   ];
 
@@ -527,14 +557,12 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
         style={{ paddingBottom:'max(16px, env(safe-area-inset-bottom))' }}
         onClick={e => e.stopPropagation()}>
 
-        {/* Toast */}
         {toast && (
           <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-white/15 backdrop-blur border border-white/20 rounded-full px-4 py-2 z-10">
             <p className="text-white text-sm font-semibold">{toast}</p>
           </div>
         )}
 
-        {/* Confirm dialog */}
         {confirm && (
           <div className="p-5">
             <p className="text-white font-bold text-base mb-1">Are you sure?</p>
@@ -548,7 +576,9 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
                 className="flex-1 py-3 rounded-2xl font-bold text-sm text-white bg-red-500 hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5">
                 {busy === 'delete'
                   ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Deleting...</>
-                  : '🗑️ Delete'
+                  : busy === 'block'
+                    ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Blocking...</>
+                    : confirm.fn === handleDelete ? '🗑️ Delete' : '🚫 Block'
                 }
               </button>
             </div>
@@ -557,7 +587,6 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
 
         {!confirm && (
           <>
-            {/* Post preview */}
             <div className="px-5 pt-4 pb-3 border-b border-white/[0.07]">
               <div className="flex items-center gap-2">
                 <Avatar url={post.users?.avatar_url} name={post.users?.display_name} size={8} />
@@ -568,7 +597,6 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
               </div>
             </div>
 
-            {/* Menu items */}
             <div className="py-1 max-h-[60vh] overflow-y-auto">
               {items.map(item => {
                 const Icon = item.isAvatar ? null : item.icon;
@@ -594,7 +622,6 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
               })}
             </div>
 
-            {/* Cancel */}
             <div className="px-4 pt-1 pb-2">
               <button onClick={onClose}
                 className="w-full py-3.5 rounded-2xl font-bold text-sm text-white/60 bg-white/[0.06] hover:bg-white/10 transition-colors active:scale-[0.98]">
@@ -611,22 +638,29 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
 /* ═══════════════════════════════════════════════
    MAIN POSTCARD
 ═══════════════════════════════════════════════ */
-export default function PostCard({ post: initialPost, currentUser, onRefresh }) {
+export default function PostCard({
+  post: initialPost, currentUser, onRefresh,
+  // Optional — if the parent feed query already knows whether the
+  // current user liked/saved/reposted this post (e.g. via a joined
+  // query or a bulk lookup), pass it here to skip this card's own
+  // 3 network requests. Falls back to the existing per-card fetch
+  // when not provided, so nothing breaks if Home.js isn't updated yet.
+  initialLiked, initialReaction, initialSaved, initialReposted,
+}) {
   const navigate       = useNavigate();
   const { user }       = useAuth();
   const longPressTimer = useRef();
 
   const [post,        setPost]        = useState(initialPost);
-  const [liked,       setLiked]       = useState(false);
-  const [reaction,    setReaction]    = useState(null);
+  const [liked,       setLiked]       = useState(initialLiked ?? false);
+  const [reaction,    setReaction]    = useState(initialReaction ?? null);
   const [likesCount,  setLikesCount]  = useState(initialPost.likes_count || 0);
-  const [saved,       setSaved]       = useState(false);
-  const [reposted,    setReposted]    = useState(false);
+  const [saved,       setSaved]       = useState(initialSaved ?? false);
+  const [reposted,    setReposted]    = useState(initialReposted ?? false);
   const [repostCount, setRepostCount] = useState(initialPost.reposts_count || 0);
   const [quotedPost,  setQuotedPost]  = useState(null);
   const [imgViewer,   setImgViewer]   = useState({ open:false, idx:0 });
 
-  const [showMenu,           setShowMenu]           = useState(false);
   const [showOptionsMenu,    setShowOptionsMenu]     = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   const [showRepostMenu,     setShowRepostMenu]     = useState(false);
@@ -644,11 +678,16 @@ export default function PostCard({ post: initialPost, currentUser, onRefresh }) 
   const showToast = (msg) => { setActionToast(msg); setTimeout(() => setActionToast(''), 2000); };
 
   useEffect(() => {
-    checkLiked(); checkSaved(); checkReposted();
+    // Skip the per-card lookups entirely when the parent already
+    // supplied the answer — this is the opt-in fix for the N+1 query
+    // pattern; see the comment on the props above.
+    if (initialLiked === undefined) checkLiked();
+    if (initialSaved === undefined) checkSaved();
+    if (initialReposted === undefined) checkReposted();
     if (post.quoted_post_id) fetchQuotedPost();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [post.id]);
 
-  /* Update post state when parent refreshes */
   useEffect(() => { setPost(initialPost); setLikesCount(initialPost.likes_count || 0); }, [initialPost]);
 
   const fetchQuotedPost = async () => {
@@ -668,81 +707,102 @@ export default function PostCard({ post: initialPost, currentUser, onRefresh }) 
       .eq('post_id', post.id).eq('user_id', uid).maybeSingle();
     if (data) setSaved(true);
   };
+  // Fixed: was missing `.eq('is_repost', true)`, so quoting a post
+  // (which also sets quoted_post_id) incorrectly lit up the repost
+  // button as if you'd done a direct repost.
   const checkReposted = async () => {
     const { data } = await supabase.from('posts').select('id')
-      .eq('user_id', uid).eq('quoted_post_id', post.id).maybeSingle();
+      .eq('user_id', uid).eq('quoted_post_id', post.id).eq('is_repost', true).maybeSingle();
     if (data) setReposted(true);
   };
 
+  // Was: read likesCount from state, write likesCount+1 back — a lost
+  // update under concurrent likes. Now calls the atomic toggle_post_like
+  // RPC and trusts its returned count, with optimistic UI + rollback
+  // if the call fails (previously a failed request left the UI
+  // permanently out of sync with the database).
   const handleLike = async (type = 'like') => {
     setShowReactionPicker(false);
-    if (liked && reaction === type) {
-      setLiked(false); setReaction(null); setLikesCount(c => Math.max(0, c-1));
-      await supabase.from('likes').delete().eq('post_id', post.id).eq('user_id', uid);
-      await supabase.from('posts').update({ likes_count: Math.max(0, likesCount-1) }).eq('id', post.id);
-    } else {
-      if (!liked) {
-        setLikesCount(c => c+1);
-        await supabase.from('posts').update({ likes_count: likesCount+1 }).eq('id', post.id);
-        if (author?.id !== uid) {
-          await supabase.from('notifications').insert({
-            user_id: author?.id, from_user_id: uid, type,
-            message:'reacted to your post', ref_id: post.id,
-            preview_image: images[0]||null, preview_text: post.caption?.slice(0,60)||null, is_read: false,
-          });
-        }
+    const prevLiked = liked, prevReaction = reaction, prevCount = likesCount;
+
+    const willUnlike = liked && reaction === type;
+    setLiked(!willUnlike);
+    setReaction(willUnlike ? null : type);
+    setLikesCount(c => willUnlike ? Math.max(0, c - 1) : (liked ? c : c + 1));
+
+    try {
+      const { data, error } = await supabase.rpc('toggle_post_like', { p_post_id: post.id, p_reaction_type: type });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (row) {
+        setLiked(row.liked);
+        setReaction(row.reaction);
+        setLikesCount(row.likes_count);
       }
-      setLiked(true); setReaction(type);
-      await supabase.from('likes').upsert({ post_id: post.id, user_id: uid, reaction_type: type }, { onConflict:'post_id,user_id' });
+    } catch (err) {
+      setLiked(prevLiked); setReaction(prevReaction); setLikesCount(prevCount);
+      showToast('Couldn\u2019t update like — try again');
     }
   };
 
   const handleDirectRepost = async () => {
     setShowRepostMenu(false);
-    if (reposted) {
-      setReposted(false); setRepostCount(c => Math.max(0, c-1));
-      await supabase.from('posts').delete().eq('user_id', uid).eq('quoted_post_id', post.id).eq('is_repost', true);
-      await supabase.from('posts').update({ reposts_count: Math.max(0, repostCount-1) }).eq('id', post.id);
-    } else {
-      setReposted(true); setRepostCount(c => c+1);
-      await supabase.from('posts').insert({ user_id:uid, caption:'', quoted_post_id:post.id, audience:'public', is_draft:false, is_repost:true });
-      await supabase.from('posts').update({ reposts_count: repostCount+1 }).eq('id', post.id);
-      if (author?.id !== uid) {
-        await supabase.from('notifications').insert({ user_id:author?.id, from_user_id:uid, type:'repost', message:'reposted your post', ref_id:post.id, is_read:false });
-      }
+    const prevReposted = reposted, prevCount = repostCount;
+    setReposted(!reposted);
+    setRepostCount(c => reposted ? Math.max(0, c - 1) : c + 1);
+
+    try {
+      const { data, error } = await supabase.rpc('toggle_post_repost', { p_post_id: post.id });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (row) { setReposted(row.reposted); setRepostCount(row.reposts_count); }
+    } catch (err) {
+      setReposted(prevReposted); setRepostCount(prevCount);
+      showToast('Couldn\u2019t update repost — try again');
     }
   };
 
   const handleQuotePost = async () => {
     if (!quoteText.trim()) return;
     setShowQuoteModal(false);
-    await supabase.from('posts').insert({ user_id:uid, caption:quoteText.trim(), quoted_post_id:post.id, audience:'public', is_draft:false, is_repost:false });
-    await supabase.from('posts').update({ reposts_count: repostCount+1 }).eq('id', post.id);
-    setRepostCount(c => c+1); setQuoteText('');
-    if (author?.id !== uid) {
-      await supabase.from('notifications').insert({ user_id:author?.id, from_user_id:uid, type:'quote', message:'quoted your post', ref_id:post.id, is_read:false });
+    const text = quoteText.trim();
+    setQuoteText('');
+    try {
+      const { error } = await supabase.rpc('create_quote_post', { p_post_id: post.id, p_caption: text });
+      if (error) throw error;
+      setRepostCount(c => c + 1);
+      showToast('✅ Quoted!');
+    } catch (err) {
+      showToast('Quote failed — try again');
     }
   };
 
   const handleSave = async (e) => {
     e.stopPropagation();
-    if (saved) {
-      setSaved(false);
-      await supabase.from('saved_posts').delete().eq('post_id', post.id).eq('user_id', uid);
-      showToast('Removed from saved');
-    } else {
-      setSaved(true);
-      await supabase.from('saved_posts').upsert({ post_id:post.id, user_id:uid, collection:'Saved Posts' }, { onConflict:'post_id,user_id' });
-      showToast('✅ Post saved');
+    const prevSaved = saved;
+    setSaved(!saved);
+    try {
+      const { data, error } = await supabase.rpc('toggle_post_save', { p_post_id: post.id });
+      if (error) throw error;
+      setSaved(!!data);
+      showToast(data ? '✅ Post saved' : 'Removed from saved');
+    } catch (err) {
+      setSaved(prevSaved);
+      showToast('Couldn\u2019t update — try again');
     }
   };
 
   const handleShare = async (e) => {
     e.stopPropagation();
     const url = window.location.origin + '/post/' + post.id;
-    if (navigator.share) navigator.share({ title:'Check this on B-Link', url });
+    if (navigator.share) navigator.share({ title:'Check this on B-Link', url }).catch(() => {});
     else { navigator.clipboard.writeText(url); showToast('🔗 Link copied!'); }
-    await supabase.from('posts').update({ shares_count: (post.shares_count||0)+1 }).eq('id', post.id);
+    try { await supabase.rpc('increment_post_shares', { p_post_id: post.id }); } catch (_) { /* non-critical */ }
+  };
+
+  const handleViewInsights = (e) => {
+    e.stopPropagation();
+    navigate('/post/' + post.id + '?tab=insights');
   };
 
   const handleOptionsAction = (action, data) => {
@@ -762,17 +822,14 @@ export default function PostCard({ post: initialPost, currentUser, onRefresh }) 
   const getReactionEmoji = () => REACTIONS.find(r => r.type === reaction)?.emoji || null;
   const getReactionColor = () => REACTIONS.find(r => r.type === reaction)?.color || '#6B7280';
 
-  // Skip hidden posts
   const hiddenPosts = JSON.parse(localStorage.getItem('blink_hidden_posts') || '[]');
   if (hiddenPosts.includes(post.id)) return null;
 
-  // Skip muted users
   const mutedUsers = JSON.parse(localStorage.getItem('blink_muted_users') || '[]');
   if (mutedUsers.includes(post.user_id)) return null;
 
   return (
     <>
-      {/* Quote modal */}
       {showQuoteModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center" onClick={() => setShowQuoteModal(false)}>
           <div className="w-full max-w-[620px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl p-4 pb-8" onClick={e => e.stopPropagation()}>
@@ -797,12 +854,10 @@ export default function PostCard({ post: initialPost, currentUser, onRefresh }) 
         </div>
       )}
 
-      {/* Report modal */}
       {showReportModal && (
         <ReportModal postId={post.id} postUserId={author?.id} currentUserId={uid} onClose={() => setShowReportModal(false)} />
       )}
 
-      {/* Options menu */}
       {showOptionsMenu && (
         <OptionsMenu
           post={post}
@@ -813,7 +868,6 @@ export default function PostCard({ post: initialPost, currentUser, onRefresh }) 
         />
       )}
 
-      {/* Image viewer */}
       {imgViewer.open && images.length > 0 && (
         <ImageViewer
           images={images}
@@ -824,19 +878,16 @@ export default function PostCard({ post: initialPost, currentUser, onRefresh }) 
         />
       )}
 
-      {/* Toast */}
       {actionToast && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 bg-white/15 backdrop-blur border border-white/20 rounded-full px-5 py-2.5 pointer-events-none">
           <p className="text-white text-sm font-semibold whitespace-nowrap">{actionToast}</p>
         </div>
       )}
 
-      {/* ── MAIN CARD ── */}
       <div
         className="border-b border-white/[0.07] hover:bg-white/[0.015] transition-colors cursor-pointer relative"
         onClick={() => navigate('/post/' + post.id)}
       >
-        {/* Pin indicator */}
         {post.is_pinned && (
           <div className="flex items-center gap-1.5 px-4 pt-2">
             <Pin size={12} className="text-[#6B7280]" />
@@ -844,14 +895,12 @@ export default function PostCard({ post: initialPost, currentUser, onRefresh }) 
           </div>
         )}
 
-        {/* Boosted indicator */}
         {post.is_boosted && (
           <div className="flex items-center gap-1.5 px-4 pt-2">
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FF6B35]/15 text-[#FF6B35] border border-[#FF6B35]/25">⚡ Promoted</span>
           </div>
         )}
 
-        {/* Repost label */}
         {isRepost && !post.is_pinned && !post.is_boosted && (
           <div className="flex items-center gap-1.5 px-4 pt-2.5 pb-0">
             <Repeat2 size={13} className="text-[#6B7280]" />
@@ -860,7 +909,6 @@ export default function PostCard({ post: initialPost, currentUser, onRefresh }) 
         )}
 
         <div className="flex gap-3 px-4 pt-3 pb-2">
-          {/* Avatar */}
           <div className="flex-shrink-0">
             <button onClick={e => { e.stopPropagation(); navigate('/profile/' + author?.username); }}>
               <Avatar url={author?.avatar_url} name={author?.display_name} size={10} />
@@ -868,7 +916,6 @@ export default function PostCard({ post: initialPost, currentUser, onRefresh }) 
           </div>
 
           <div className="flex-1 min-w-0">
-            {/* Author row */}
             <div className="flex items-start justify-between gap-1 mb-0.5">
               <div className="flex items-center gap-1 flex-wrap min-w-0">
                 <button onClick={e => { e.stopPropagation(); navigate('/profile/' + author?.username); }}
@@ -884,16 +931,15 @@ export default function PostCard({ post: initialPost, currentUser, onRefresh }) 
                 {flagMap[author?.country] && <span className="text-[13px]">{flagMap[author?.country]}</span>}
               </div>
 
-              {/* ⋯ Options — opens full options menu */}
               <button
                 onClick={e => { e.stopPropagation(); setShowOptionsMenu(true); }}
+                aria-label="Post options"
                 className="text-[#6B7280] hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors flex-shrink-0"
               >
                 <MoreHorizontal size={16} />
               </button>
             </div>
 
-            {/* Caption */}
             {post.caption && !isRepost && (
               <div className="mb-2">
                 <RichCaption text={post.caption}
@@ -902,7 +948,6 @@ export default function PostCard({ post: initialPost, currentUser, onRefresh }) 
               </div>
             )}
 
-            {/* Quote post caption */}
             {post.caption && post.quoted_post_id && !post.is_repost && (
               <div className="mb-2">
                 <RichCaption text={post.caption}
@@ -911,47 +956,44 @@ export default function PostCard({ post: initialPost, currentUser, onRefresh }) 
               </div>
             )}
 
-            {/* Quoted post */}
             {post.quoted_post_id && quotedPost && (
               <div onClick={e => e.stopPropagation()}>
                 <QuotedPost quotedPost={quotedPost} navigate={navigate} />
               </div>
             )}
 
-            {/* Video */}
             {post.video_url && (
               <div onClick={e => e.stopPropagation()}>
                 <VideoPlayer src={post.video_url} poster={post.video_thumbnail} duration={post.video_duration} />
               </div>
             )}
 
-            {/* Images */}
             <div onClick={e => e.stopPropagation()}>
-              <MediaGrid images={images} onImageClick={(idx) => setImgViewer({ open:true, idx })} />
+              <MediaGrid
+                images={images}
+                onImageClick={(idx) => setImgViewer({ open:true, idx })}
+                onDoubleTapLike={() => { if (!liked) handleLike('like'); }}
+              />
             </div>
 
-            {/* Location */}
             {post.location && <p className="text-[#6B7280] text-xs mb-1.5">📍 {post.location}</p>}
 
-            {/* Comments disabled notice */}
             {post.comments_disabled && (
               <p className="text-[#6B7280] text-xs mb-1.5 flex items-center gap-1">
                 <MessageSquareOff size={11} /> Comments are turned off
               </p>
             )}
 
-            {/* ── ACTION BAR ── */}
             <div className="flex items-center justify-between mt-1 -ml-2 -mr-1" onClick={e => e.stopPropagation()}>
 
-              {/* Comment */}
               <button onClick={() => navigate('/post/' + post.id)}
+                aria-label="Comment"
                 className="flex items-center gap-1.5 text-[#6B7280] hover:text-[#1E6FFF] group px-2 py-1.5 rounded-full hover:bg-[#1E6FFF]/10 transition-all"
                 disabled={post.comments_disabled}>
                 <MessageCircle size={17} />
                 {(post.comments_count||0) > 0 && <span className="text-[13px]">{formatNumber(post.comments_count)}</span>}
               </button>
 
-              {/* Repost dropdown */}
               <div className="relative">
                 {showRepostMenu && (
                   <div className="absolute bottom-10 left-0 bg-[#111827] border border-white/10 rounded-2xl overflow-hidden z-30 shadow-2xl" style={{ minWidth:180 }}>
@@ -968,6 +1010,7 @@ export default function PostCard({ post: initialPost, currentUser, onRefresh }) 
                   </div>
                 )}
                 <button onClick={e => { e.stopPropagation(); setShowRepostMenu(!showRepostMenu); setShowReactionPicker(false); }}
+                  aria-label="Repost"
                   className={'flex items-center gap-1.5 px-2 py-1.5 rounded-full transition-all ' +
                     (reposted ? 'text-[#2ECC71] hover:bg-[#2ECC71]/10' : 'text-[#6B7280] hover:text-[#2ECC71] hover:bg-[#2ECC71]/10')}>
                   <Repeat2 size={17} />
@@ -975,7 +1018,6 @@ export default function PostCard({ post: initialPost, currentUser, onRefresh }) 
                 </button>
               </div>
 
-              {/* Like — long press for reactions */}
               <div className="relative">
                 {showReactionPicker && (
                   <div className="absolute bottom-10 left-0 bg-[#111827] border border-white/10 rounded-full px-2 py-2 flex gap-1 z-30 shadow-2xl" style={{ minWidth:'max-content' }}>
@@ -991,8 +1033,10 @@ export default function PostCard({ post: initialPost, currentUser, onRefresh }) 
                   onClick={e => { e.stopPropagation(); handleLike(reaction||'like'); }}
                   onMouseDown={() => { longPressTimer.current = setTimeout(() => setShowReactionPicker(true), 500); }}
                   onMouseUp={() => clearTimeout(longPressTimer.current)}
+                  onMouseLeave={() => clearTimeout(longPressTimer.current)}
                   onTouchStart={e => { e.stopPropagation(); longPressTimer.current = setTimeout(() => setShowReactionPicker(true), 500); }}
                   onTouchEnd={() => clearTimeout(longPressTimer.current)}
+                  aria-label="Like"
                   className="flex items-center gap-1.5 px-2 py-1.5 rounded-full transition-all hover:bg-red-500/10"
                   style={{ color: liked ? getReactionColor() : '#6B7280' }}>
                   {liked && reaction
@@ -1007,20 +1051,26 @@ export default function PostCard({ post: initialPost, currentUser, onRefresh }) 
                 </button>
               </div>
 
-              {/* Views */}
-              <button className="flex items-center gap-1.5 text-[#6B7280] hover:text-[#1E6FFF] px-2 py-1.5 rounded-full hover:bg-[#1E6FFF]/10 transition-all">
+              {/* Views — previously had no onClick at all (a dead
+                  interactive-looking button). Now opens the post's
+                  insights tab, same destination as the owner's
+                  Options → View Insights entry. */}
+              <button
+                onClick={isOwner ? handleViewInsights : undefined}
+                aria-label="View count"
+                className={'flex items-center gap-1.5 px-2 py-1.5 rounded-full transition-all ' +
+                  (isOwner ? 'text-[#6B7280] hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10 cursor-pointer' : 'text-[#6B7280] cursor-default')}>
                 <BarChart2 size={17} />
                 {(post.views_count||0) > 0 && <span className="text-[13px]">{formatNumber(post.views_count)}</span>}
               </button>
 
-              {/* Bookmark + Share */}
               <div className="flex items-center">
-                <button onClick={handleSave}
+                <button onClick={handleSave} aria-label={saved ? 'Remove from saved' : 'Save post'}
                   className={'px-2 py-1.5 rounded-full transition-all ' +
                     (saved ? 'text-[#1E6FFF] hover:bg-[#1E6FFF]/10' : 'text-[#6B7280] hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10')}>
                   <Bookmark size={17} fill={saved ? 'currentColor' : 'none'} />
                 </button>
-                <button onClick={handleShare}
+                <button onClick={handleShare} aria-label="Share post"
                   className="text-[#6B7280] hover:text-[#1E6FFF] px-2 py-1.5 rounded-full hover:bg-[#1E6FFF]/10 transition-all">
                   <Share2 size={17} />
                 </button>

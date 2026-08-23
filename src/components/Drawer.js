@@ -1,4 +1,5 @@
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { formatNumber } from '../utils/formatNumber';
 import { getActivePlan, PLANS } from '../utils/paymentUtils';
@@ -11,22 +12,75 @@ import {
 } from 'lucide-react';
 
 export default function Drawer({ isOpen, onClose }) {
-  const navigate          = useNavigate();
-  const { profile, signOut } = useAuth();
+  const navigate              = useNavigate();
+  const location               = useLocation();
+  const { profile, signOut }   = useAuth();
+  const touchStartX            = useRef(null);
+  const panelRef                = useRef(null);
+
+  // Keep the drawer mounted briefly after `isOpen` goes false so the
+  // slide-out animation can actually play — the original component
+  // did `if (!isOpen) return null`, which unmounts instantly and
+  // makes the drawer disappear with no exit transition at all.
+  const [mounted, setMounted]   = useState(isOpen);
+  const [closing, setClosing]   = useState(false);
+
+  useEffect(() => {
+    if (isOpen) { setMounted(true); setClosing(false); }
+  }, [isOpen]);
+
+  const requestClose = () => {
+    setClosing(true);
+    setTimeout(() => { setMounted(false); onClose(); }, 180); // matches slideOutLeft duration
+  };
+
+  // Lock body scroll while open — previously the page behind the
+  // backdrop could still scroll on mobile while the drawer was open.
+  useEffect(() => {
+    if (!mounted) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [mounted]);
+
+  // Close on Escape — wasn't wired up at all before.
+  useEffect(() => {
+    if (!mounted) return;
+    const onKey = (e) => { if (e.key === 'Escape') requestClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted]);
+
+  // Swipe-to-dismiss — a slide-in drawer with no drag-to-close reads
+  // unfinished on mobile, where it's the expected gesture.
+  const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchMove = (e) => {
+    if (touchStartX.current == null || !panelRef.current) return;
+    const diff = e.touches[0].clientX - touchStartX.current;
+    if (diff < 0) {
+      panelRef.current.style.transform = `translateX(${diff}px)`;
+    }
+  };
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current == null || !panelRef.current) return;
+    const diff = e.changedTouches[0].clientX - touchStartX.current;
+    panelRef.current.style.transform = '';
+    if (diff < -80) requestClose();
+    touchStartX.current = null;
+  };
 
   const activePlan  = getActivePlan(profile);
   const planInfo    = PLANS[activePlan];
   const isAdmin     = ['blink','admin','moderator'].includes(profile?.role);
-  const isBlink     = profile?.role === 'blink';
 
-  const go = (path) => { navigate(path); onClose(); };
+  const go = (path) => { requestClose(); setTimeout(() => navigate(path), 0); };
 
   const handleSignOut = async () => {
-    onClose();
+    requestClose();
     await signOut();
   };
 
-  /* ── Nav sections ── */
   const MAIN = [
     { icon: Home,         label: 'Home',           path: '/'              },
     { icon: Compass,      label: 'Discover',        path: '/discover'      },
@@ -59,23 +113,27 @@ export default function Drawer({ isOpen, onClose }) {
     { icon: Info,         label: 'About B-Link',    path: '/about'         },
   ];
 
-  if (!isOpen) return null;
+  if (!mounted) return null;
 
   return (
     <>
-      {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
-        onClick={onClose}
+        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 ${closing ? 'animate-fadeOut' : 'animate-fadeIn'}`}
+        onClick={requestClose}
       />
 
-      {/* Drawer panel */}
       <div
-        className="fixed top-0 left-0 bottom-0 z-50 flex flex-col bg-[#0d1f3c] border-r border-white/10 shadow-2xl"
-        style={{ width: 'min(85vw, 320px)', animation: 'slideInLeft 0.22s ease' }}
+        ref={panelRef}
+        className={`fixed top-0 left-0 bottom-0 z-50 flex flex-col bg-[#0d1f3c] border-r border-white/10 shadow-2xl transition-transform ${closing ? 'animate-slideOutLeft' : 'animate-slideInLeft'}`}
+        style={{ width: 'min(85vw, 320px)' }}
         onClick={e => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation menu"
       >
-        {/* ── Profile header ── */}
         <div className="flex items-center justify-between px-4 pt-5 pb-4 border-b border-white/[0.08]">
           <button
             onClick={() => go('/profile')}
@@ -105,12 +163,11 @@ export default function Drawer({ isOpen, onClose }) {
               </div>
             </div>
           </button>
-          <button onClick={onClose} className="text-[#6B7280] hover:text-white p-1 flex-shrink-0 ml-2">
+          <button onClick={requestClose} aria-label="Close menu" className="text-[#6B7280] hover:text-white p-1 flex-shrink-0 ml-2 active:scale-90 transition-transform">
             <X size={20} />
           </button>
         </div>
 
-        {/* ── Plan badge ── */}
         {activePlan !== 'free' && (
           <div
             className="mx-4 mt-3 px-3 py-2 rounded-xl flex items-center gap-2"
@@ -128,69 +185,54 @@ export default function Drawer({ isOpen, onClose }) {
           </div>
         )}
 
-        {/* ── Scrollable nav ── */}
         <div className="flex-1 overflow-y-auto py-2 scrollbar-none">
-
-          {/* Main nav */}
           <div className="px-2 mb-1">
             {MAIN.map(item => (
-              <NavItem key={item.path} item={item} onPress={() => go(item.path)} />
+              <NavItem key={item.path} item={item} onPress={() => go(item.path)} active={location.pathname === item.path} />
             ))}
           </div>
 
-          {/* Monetisation */}
           <SectionLabel label="Premium & Earnings" />
           <div className="px-2 mb-1">
             {MONETISE.map(item => (
-              <NavItem key={item.path} item={item} onPress={() => go(item.path)} />
+              <NavItem key={item.path} item={item} onPress={() => go(item.path)} active={location.pathname === item.path} />
             ))}
           </div>
 
-          {/* Admin */}
           {isAdmin && (
             <>
               <SectionLabel label="Administration" />
               <div className="px-2 mb-1">
                 {ADMIN_ITEMS.map(item => (
-                  <NavItem key={item.path} item={item} onPress={() => go(item.path)} admin />
+                  <NavItem key={item.path} item={item} onPress={() => go(item.path)} admin active={location.pathname === item.path} />
                 ))}
               </div>
             </>
           )}
 
-          {/* Support */}
           <SectionLabel label="Support" />
           <div className="px-2 mb-2">
             {SUPPORT.map(item => (
-              <NavItem key={item.path} item={item} onPress={() => go(item.path)} />
+              <NavItem key={item.path} item={item} onPress={() => go(item.path)} active={location.pathname === item.path} />
             ))}
           </div>
         </div>
 
-        {/* ── Sign out ── */}
         <div className="border-t border-white/[0.07] px-4 py-4" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-red-400 hover:bg-red-500/10 active:scale-[0.98] transition-all"
           >
             <LogOut size={18} />
             <span className="font-semibold text-[14px]">Sign Out</span>
           </button>
-          <p className="text-white/20 text-[10px] text-center mt-2">B-Link v2.0 · Made for Africa 🌍</p>
+          <p className="text-white/20 text-[10px] text-center mt-2">B-Link v2.0.0 · Made for Africa 🌍</p>
         </div>
       </div>
-
-      <style>{`
-        @keyframes slideInLeft {
-          from { transform: translateX(-100%); opacity: 0; }
-          to   { transform: translateX(0);     opacity: 1; }
-        }
-      `}</style>
     </>
   );
 }
 
-/* ── Sub-components ── */
 function SectionLabel({ label }) {
   return (
     <p className="text-[#6B7280] text-[10px] font-bold uppercase tracking-widest px-5 pt-3 pb-1">
@@ -199,18 +241,25 @@ function SectionLabel({ label }) {
   );
 }
 
-function NavItem({ item, onPress, admin }) {
+function NavItem({ item, onPress, admin, active }) {
   const Icon = item.icon;
   return (
     <button
       onClick={onPress}
+      aria-current={active ? 'page' : undefined}
       className={'w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all text-left active:scale-[0.98] ' +
-        (admin ? 'hover:bg-red-500/10' : 'hover:bg-white/[0.06]')}
+        (active
+          ? (admin ? 'bg-red-500/[0.08]' : 'bg-[#1E6FFF]/[0.10]')
+          : (admin ? 'hover:bg-red-500/10' : 'hover:bg-white/[0.06]'))}
     >
-      <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${admin ? 'bg-red-500/15' : 'bg-white/[0.06]'}`}>
-        <Icon size={16} className={admin ? 'text-red-400' : 'text-[#6B7280]'} />
+      <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
+        admin ? 'bg-red-500/15' : active ? 'bg-[#1E6FFF]/20' : 'bg-white/[0.06]'
+      }`}>
+        <Icon size={16} className={admin ? 'text-red-400' : active ? 'text-[#1E6FFF]' : 'text-[#6B7280]'} />
       </div>
-      <span className={`flex-1 font-semibold text-[14px] ${admin ? 'text-red-300' : 'text-white/80'}`}>
+      <span className={`flex-1 font-semibold text-[14px] ${
+        admin ? 'text-red-300' : active ? 'text-white' : 'text-white/80'
+      }`}>
         {item.label}
       </span>
       {item.badge && (
@@ -218,7 +267,10 @@ function NavItem({ item, onPress, admin }) {
           {item.badge}
         </span>
       )}
-      <ChevronRight size={14} className="text-[#6B7280] flex-shrink-0" />
+      {active
+        ? <div className="w-1.5 h-1.5 rounded-full bg-[#1E6FFF] flex-shrink-0" />
+        : <ChevronRight size={14} className="text-[#6B7280] flex-shrink-0" />
+      }
     </button>
   );
 }
