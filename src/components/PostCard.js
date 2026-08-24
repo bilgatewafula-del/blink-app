@@ -152,8 +152,16 @@ function MediaGrid({ images, onImageClick, onDoubleTapLike }) {
 }
 
 /* ═══════════════════════════════════════════════
-   VIDEO PLAYER — unchanged, already solid
+   VIDEO PLAYER
 ═══════════════════════════════════════════════ */
+// Aspect ratio bounds — matches how Twitter/X and Instagram clamp
+// feed video: a normal portrait phone video (9:16 ≈ 0.5625) displays
+// at its true shape, and only truly extreme aspect ratios (a
+// panorama, or an unusually tall/narrow clip) get gently constrained
+// instead of dominating or breaking the feed layout.
+const MIN_VIDEO_ASPECT = 0.5625; // 9:16 portrait
+const MAX_VIDEO_ASPECT = 1.91;   // ~16:9-ish landscape cap
+
 function VideoPlayer({ src, poster, duration }) {
   const videoRef       = useRef();
   const containerRef   = useRef();
@@ -163,6 +171,14 @@ function VideoPlayer({ src, poster, duration }) {
   const [buffering,    setBuffering]    = useState(false);
   const [error,        setError]        = useState(false);
   const [progress,     setProgress]     = useState(0);
+  // Was: a hardcoded aspectRatio:'16/9' container with object-cover on
+  // the <video> — any video that isn't roughly landscape (portrait
+  // phone videos especially, which are extremely common) got scaled
+  // up to fill that wide box and had its top and bottom cropped clean
+  // off. Now the container sizes itself to the video's actual
+  // dimensions (clamped to a sane range above) and the video uses
+  // object-contain, so nothing gets cut off — full frame, always.
+  const [aspect,       setAspect]       = useState(16/9);
 
   useEffect(() => {
     const cb = (activeId) => {
@@ -202,6 +218,13 @@ function VideoPlayer({ src, poster, duration }) {
     return () => document.removeEventListener('visibilitychange', handleVis);
   }, [playing]);
 
+  const handleLoadedMetadata = () => {
+    const v = videoRef.current;
+    if (!v || !v.videoWidth || !v.videoHeight) return;
+    const natural = v.videoWidth / v.videoHeight;
+    setAspect(Math.min(MAX_VIDEO_ASPECT, Math.max(MIN_VIDEO_ASPECT, natural)));
+  };
+
   const toggle = (e) => {
     e.stopPropagation();
     const v = videoRef.current;
@@ -232,7 +255,7 @@ function VideoPlayer({ src, poster, duration }) {
 
   return (
     <div ref={containerRef} className="relative rounded-2xl overflow-hidden bg-black mb-2 border border-white/10"
-      style={{ aspectRatio:'16/9' }}>
+      style={{ aspectRatio: aspect, maxHeight: '600px' }}>
       <video
         ref={videoRef}
         src={src}
@@ -241,7 +264,8 @@ function VideoPlayer({ src, poster, duration }) {
         playsInline
         preload="metadata"
         loop={false}
-        className="w-full h-full object-cover"
+        className="w-full h-full object-contain"
+        onLoadedMetadata={handleLoadedMetadata}
         onEnded={() => setPlaying(false)}
         onWaiting={() => setBuffering(true)}
         onCanPlay={() => setBuffering(false)}
