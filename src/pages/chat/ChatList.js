@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
@@ -6,6 +6,8 @@ import { Search, Edit, X, Trash2 } from 'lucide-react';
 import Avatar from '../../components/Avatar';
 import { formatTime } from '../../utils/formatTime';
 import { ChatListSkeleton } from '../../components/Skeleton';
+
+const ONLINE_THRESHOLD_MS = 2 * 60 * 1000; // matches AuthContext's heartbeat interval
 
 const ChatList = () => {
   const { user } = useAuth();
@@ -18,116 +20,146 @@ const ChatList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [swipedChat, setSwipedChat] = useState(null);
+  const [error, setError] = useState('');
+
+  const mountedRef   = useRef(true);
+  const chatIdsRef   = useRef(new Set());
+  const searchDebounceRef = useRef(null);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   useEffect(() => {
     fetchChats();
   }, []);
 
   useEffect(() => {
+    // Was two unfiltered subscriptions (`table: 'chats'` and
+    // `table: 'messages'` with NO filter at all) — meaning this
+    // component refetched the ENTIRE chat list, with its full N+1
+    // query cost, every single time ANY user on the whole platform
+    // sent ANY message or touched ANY chat, not just this user's own.
+    // Postgres realtime filters can't do an "array contains me" check
+    // server-side against a `participants uuid[]` column, so this
+    // filters client-side inside the callback instead — cheap, and it
+    // skips the refetch entirely for anything irrelevant.
     const channel = supabase
       .channel('chats:' + user.id)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'chats',
-      }, () => fetchChats())
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-      }, () => fetchChats())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'chats' }, (payload) => {
+        const row = payload.new || payload.old;
+        if (row?.participants?.includes(user.id)) fetchChats();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        if (chatIdsRef.current.has(payload.new?.chat_id)) fetchChats();
+      })
       .subscribe();
     return () => supabase.removeChannel(channel);
   }, [user]);
 
+  // Single RPC instead of: 1 query for chats, then for EACH chat, 2
+  // more queries (other_user lookup + unread count) run via
+  // Promise.all — for 20 chats that was 41 round trips on every load.
+  // See get_my_chats() in 33_chat_rpcs_and_rls.sql.
   const fetchChats = async () => {
-    const { data } = await supabase
-      .from('chats')
-      .select('*')
-      .contains('participants', [user.id])
-      .order('last_message_at', { ascending: false, nullsFirst: false });
+    setError('');
+    try {
+      const { data, error: err } = await supabase.rpc('get_my_chats');
+      if (err) throw err;
 
-    if (!data) { setLoading(false); return; }
+      const rows = (data || []).map(r => ({
+        id: r.chat_id,
+        last_message: r.last_message,
+        last_message_at: r.last_message_at,
+        unread: r.unread_count || 0,
+        other_user: {
+          id: r.other_user_id,
+          username: r.other_username,
+          display_name: r.other_display_name,
+          avatar_url: r.other_avatar_url,
+          is_verified: r.other_is_verified,
+          is_online: r.other_is_online,
+          last_seen: r.other_last_seen,
+        },
+      }));
 
-    const enriched = await Promise.all(
-      data.map(async (chat) => {
-        const otherId = chat.participants.find((id) => id !== user.id);
-        if (!otherId) return { ...chat, other_user: null, unread: 0 };
-        const { data: otherUser } = await supabase
-          .from('users')
-          .select('id, username, display_name, avatar_url, is_verified')
-          .eq('id', otherId)
-          .single();
-
-        // Count unread messages for this chat
-        const { count } = await supabase
-          .from('messages')
-          .select('id', { count: 'exact', head: true })
-          .eq('chat_id', chat.id)
-          .neq('sender_id', user.id)
-          .is('seen_at', null);
-
-        return { ...chat, other_user: otherUser, unread: count || 0 };
-      })
-    );
-
-    setChats(enriched);
-    setLoading(false);
-  };
-
-  const handleUserSearch = async (q) => {
-    setSearchQuery(q);
-    if (!q.trim()) { setSearchUsers([]); return; }
-    setSearching(true);
-    const { data } = await supabase
-      .from('users')
-      .select('id, username, display_name, avatar_url, is_verified')
-      .or('username.ilike.%' + q + '%,display_name.ilike.%' + q + '%')
-      .neq('id', user.id)
-      .limit(8);
-    setSearchUsers(data || []);
-    setSearching(false);
-  };
-
-  const startChat = async (otherUser) => {
-    const existing = chats.find((c) =>
-      c.participants.includes(otherUser.id) && c.participants.includes(user.id)
-    );
-    if (existing) {
-      navigate('/chats/' + existing.id);
-      setShowNewChat(false);
-      return;
+      if (!mountedRef.current) return;
+      chatIdsRef.current = new Set(rows.map(r => r.id));
+      setChats(rows);
+    } catch (err) {
+      console.error('fetchChats:', err.message);
+      if (mountedRef.current) setError('Could not load conversations.');
     }
-    const { data } = await supabase
-      .from('chats')
-      .insert({ participants: [user.id, otherUser.id] })
-      .select()
-      .single();
-    if (data) {
-      navigate('/chats/' + data.id);
+    if (mountedRef.current) setLoading(false);
+  };
+
+  const handleUserSearch = (q) => {
+    setSearchQuery(q);
+    clearTimeout(searchDebounceRef.current);
+    if (!q.trim()) { setSearchUsers([]); return; }
+    // Was firing a full pattern-match query on every keystroke.
+    searchDebounceRef.current = setTimeout(async () => {
+      setSearching(true);
+      const { data } = await supabase
+        .from('users')
+        .select('id, username, display_name, avatar_url, is_verified')
+        .or('username.ilike.%' + q + '%,display_name.ilike.%' + q + '%')
+        .neq('id', user.id)
+        .limit(8);
+      setSearchUsers(data || []);
+      setSearching(false);
+    }, 300);
+  };
+
+  // Atomic — was a client-side search through the (possibly stale)
+  // local `chats` list, then a plain insert with no de-duplication
+  // guarantee. Two people messaging each other for the first time at
+  // the same moment could each create their own chat row for the
+  // identical pair. get_or_create_chat() is unique-constraint-backed.
+  const startChat = async (otherUser) => {
+    try {
+      const { data: chatId, error: err } = await supabase.rpc('get_or_create_chat', { p_other_id: otherUser.id });
+      if (err) throw err;
+      navigate('/chats/' + chatId);
       setShowNewChat(false);
+    } catch (err) {
+      setError('Could not start conversation: ' + err.message);
     }
   };
 
   const handleDeleteChat = async (chatId) => {
     if (!window.confirm('Delete this conversation? This cannot be undone.')) return;
-    // Delete all messages in chat first
-    await supabase.from('messages').delete().eq('chat_id', chatId);
-    // Delete the chat
-    await supabase.from('chats').delete().eq('id', chatId);
-    setChats((prev) => prev.filter((c) => c.id !== chatId));
+    const prev = chats;
+    setChats(c => c.filter(x => x.id !== chatId)); // optimistic
     setSwipedChat(null);
+    try {
+      const { error: err } = await supabase.rpc('delete_chat', { p_chat_id: chatId });
+      if (err) throw err;
+    } catch (err) {
+      setChats(prev); // rollback — was previously unconditional, no
+                       // rollback path existed if the delete failed.
+      setError('Delete failed: ' + err.message);
+    }
   };
 
-  // Mark chat as read when opening
   const handleOpenChat = async (chat) => {
-    await supabase
-      .from('messages')
-      .update({ seen_at: new Date().toISOString() })
-      .eq('chat_id', chat.id)
-      .neq('sender_id', user.id)
-      .is('seen_at', null);
+    // Optimistic local unread-clear so the badge disappears instantly
+    // instead of waiting on the round trip.
+    setChats(prev => prev.map(c => c.id === chat.id ? { ...c, unread: 0 } : c));
     navigate('/chats/' + chat.id);
+    // Fire-and-forget — ChatRoom's own markRead() on mount is the
+    // real source of truth; this just keeps the list's badge in sync
+    // a beat sooner without blocking navigation on it.
+    supabase.from('messages').update({ seen_at: new Date().toISOString() })
+      .eq('chat_id', chat.id).neq('sender_id', user.id).is('seen_at', null)
+      .then(() => {});
+  };
+
+  const isOnline = (u) => {
+    if (u?.is_online) return true;
+    if (!u?.last_seen) return false;
+    return Date.now() - new Date(u.last_seen).getTime() < ONLINE_THRESHOLD_MS;
   };
 
   const filteredChats = chats.filter((c) =>
@@ -137,12 +169,12 @@ const ChatList = () => {
 
   return (
     <div className="min-h-screen bg-[#0A1628] pb-24">
-      {/* Top bar */}
       <div className="sticky top-0 z-20 bg-[#0A1628] border-b border-white/10 px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-white font-bold text-xl">Chats</h1>
           <button
             onClick={() => setShowNewChat(true)}
+            aria-label="New message"
             className="w-9 h-9 bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] rounded-full flex items-center justify-center shadow-lg shadow-[#1E6FFF]/30"
           >
             <Edit size={16} className="text-white" />
@@ -158,16 +190,17 @@ const ChatList = () => {
             className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-9 pr-4 text-white placeholder-[#6B7280] text-sm focus:outline-none focus:border-[#1E6FFF] transition-colors"
           />
         </div>
+        {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
       </div>
 
-      {/* New chat modal */}
       {showNewChat && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center">
-          <div className="w-full max-w-[620px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl p-5 max-h-[80vh] overflow-y-auto slide-up">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center" onClick={() => setShowNewChat(false)}>
+          <div className="w-full max-w-[620px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl p-5 max-h-[80vh] overflow-y-auto slide-up" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-white font-bold text-lg">New Message</h2>
               <button
                 onClick={() => { setShowNewChat(false); setSearchQuery(''); setSearchUsers([]); }}
+                aria-label="Close"
                 className="text-[#6B7280] hover:text-white"
               >
                 <X size={22} />
@@ -186,7 +219,7 @@ const ChatList = () => {
             </div>
             {searching && (
               <div className="flex justify-center py-4">
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] animate-pulse" />
+                <div className="w-5 h-5 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" />
               </div>
             )}
             <div className="space-y-2">
@@ -219,7 +252,6 @@ const ChatList = () => {
         </div>
       )}
 
-      {/* Chat list */}
       {loading ? (
         <ChatListSkeleton />
       ) : filteredChats.length === 0 ? (
@@ -237,14 +269,11 @@ const ChatList = () => {
       ) : (
         <div className="divide-y divide-white/5">
           {filteredChats.map((chat) => (
-            <div
-              key={chat.id}
-              className="relative overflow-hidden"
-            >
-              {/* Swipe actions revealed behind */}
+            <div key={chat.id} className="relative overflow-hidden">
               <div className="absolute right-0 top-0 bottom-0 flex items-center">
                 <button
                   onClick={() => handleDeleteChat(chat.id)}
+                  aria-label="Delete conversation"
                   className="w-20 h-full bg-red-500 flex flex-col items-center justify-center gap-1"
                 >
                   <Trash2 size={18} className="text-white" />
@@ -252,17 +281,13 @@ const ChatList = () => {
                 </button>
               </div>
 
-              {/* Chat row */}
               <div
                 className={'flex items-center gap-3 px-4 py-4 bg-[#0A1628] transition-transform duration-200 ' + (swipedChat === chat.id ? '-translate-x-20' : 'translate-x-0')}
                 onTouchStart={(e) => {
                   const startX = e.touches[0].clientX;
                   const handleMove = (me) => {
-                    if (me.touches[0].clientX < startX - 40) {
-                      setSwipedChat(chat.id);
-                    } else if (me.touches[0].clientX > startX + 10) {
-                      setSwipedChat(null);
-                    }
+                    if (me.touches[0].clientX < startX - 40) setSwipedChat(chat.id);
+                    else if (me.touches[0].clientX > startX + 10) setSwipedChat(null);
                   };
                   document.addEventListener('touchmove', handleMove, { once: true });
                 }}
@@ -273,7 +298,14 @@ const ChatList = () => {
                 >
                   <div className="relative flex-shrink-0">
                     <Avatar url={chat.other_user?.avatar_url} name={chat.other_user?.display_name} size={12} />
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#2ECC71] rounded-full border-2 border-[#0A1628]" />
+                    {/* Was unconditional — every avatar showed the
+                        green dot regardless of actual status. Now
+                        reflects the real is_online/last_seen values
+                        from get_my_chats(), same threshold logic as
+                        ChatRoom's own OnlineStatus component. */}
+                    {isOnline(chat.other_user) && (
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#2ECC71] rounded-full border-2 border-[#0A1628]" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0 text-left">
                     <div className="flex items-center justify-between mb-0.5">
@@ -302,15 +334,16 @@ const ChatList = () => {
                   </div>
                 </button>
 
-                {/* Desktop delete */}
                 <button
                   onClick={() => setSwipedChat(swipedChat === chat.id ? null : chat.id)}
+                  aria-label="More options"
                   className="lg:hidden text-[#6B7280] hover:text-red-400 transition-colors p-1 flex-shrink-0"
                 >
                   ···
                 </button>
                 <button
                   onClick={() => handleDeleteChat(chat.id)}
+                  aria-label="Delete conversation"
                   className="hidden lg:flex text-[#6B7280] hover:text-red-400 transition-colors p-1 flex-shrink-0"
                 >
                   <Trash2 size={16} />

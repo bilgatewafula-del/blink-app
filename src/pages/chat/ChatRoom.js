@@ -12,6 +12,7 @@ import {
   Download, Pin
 } from 'lucide-react';
 import Avatar from '../../components/Avatar';
+import ImageViewer from '../../components/ImageViewer';
 import { formatTime } from '../../utils/formatTime';
 
 const EMOJI_CATS = [
@@ -26,6 +27,7 @@ const EMOJI_CATS = [
 ];
 
 const QUICK_REACTIONS = ['❤️','😂','😮','😢','😡','👍','🔥','👏'];
+const MAX_CHAT_IMAGE_MB = 10;
 
 const MsgStatus = ({ msg, isMine }) => {
   if (!isMine) return null;
@@ -78,6 +80,7 @@ export default function ChatRoom() {
   const fileRef = useRef();
   const typingBroadcast = useRef();
   const typingTimer = useRef();
+  const mountedRef = useRef(true);
 
   const [messages, setMessages] = useState([]);
   const [msg, setMsg] = useState('');
@@ -101,24 +104,64 @@ export default function ChatRoom() {
   const [scheduler, setScheduler] = useState(false);
   const [schedTime, setSchedTime] = useState('');
   const [pinnedMsg, setPinnedMsg] = useState(null);
+  const [initError, setInitError] = useState('');
+  const [initLoading, setInitLoading] = useState(true);
+  const [viewerImage, setViewerImage] = useState(null);
+  const [showJumpToBottom, setShowJumpToBottom] = useState(false);
   const swipeX = useRef(null);
   const swipeY = useRef(null);
+  const scrollContainerRef = useRef();
+  const wasNearBottomRef = useRef(true);
 
-  // ── Init ──────────────────────────────────────────────────────────
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
+
+  // ── Init — was 5 fully sequential awaits (is_online update →
+  // fetchChatInfo → fetchMessages → markRead → fetchPinned), plus
+  // fetchChatInfo itself did 2 MORE sequential round trips inside it.
+  // That's up to 6 back-to-back network calls before anything
+  // rendered — on a slower connection this is exactly where a 5
+  // second open time comes from. None of these four actually depend
+  // on each other's results, so they now run together. The is_online
+  // write is gone entirely — presence is now a global heartbeat in
+  // AuthContext (being active anywhere in the app means "online", not
+  // just while a specific chat happens to be open, which was its own
+  // bug: closing a conversation instantly made you look offline even
+  // if you were still using the app elsewhere).
   useEffect(() => {
-    initChat();
-    return () => {
-      supabase.from('users').update({ is_online: false, last_seen: new Date().toISOString() }).eq('id', user.id);
-    };
-  }, [id]);
+    let cancelled = false;
+    setInitLoading(true);
+    setInitError('');
 
-  const initChat = async () => {
-    await supabase.from('users').update({ is_online: true, last_seen: new Date().toISOString() }).eq('id', user.id);
-    await fetchChatInfo();
-    await fetchMessages();
-    await markRead();
-    await fetchPinned();
-  };
+    (async () => {
+      try {
+        const [chatInfoRes] = await Promise.all([
+          supabase.rpc('get_chat_info', { p_chat_id: id }),
+          fetchMessages(),
+          markRead(),
+          fetchPinned(),
+        ]);
+        if (cancelled) return;
+
+        const { data: infoRows, error: infoErr } = chatInfoRes;
+        if (infoErr) throw infoErr;
+        const info = infoRows?.[0];
+        if (info) {
+          setOtherUser({
+            id: info.other_user_id, username: info.username, display_name: info.display_name,
+            avatar_url: info.avatar_url, is_verified: info.is_verified,
+            is_online: info.is_online, last_seen: info.last_seen, bio: info.bio,
+          });
+        }
+      } catch (err) {
+        if (!cancelled) setInitError(err.message || 'Could not load conversation.');
+      } finally {
+        if (!cancelled) setInitLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   // ── Real-time ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -129,7 +172,7 @@ export default function ChatRoom() {
             .select('*, sender:sender_id(id,username,display_name,avatar_url)')
             .eq('id', p.new.id).maybeSingle();
           if (data) {
-            setMessages((prev) => prev.find((m) => m.id === data.id) ? prev : [...prev, data]);
+            setMessages((prev) => prev.find((m) => m.id === data.id) ? prev : [...prev, { ...data, reactions: {} }]);
             if (data.sender_id !== user.id) {
               await supabase.from('messages').update({ delivered_at: new Date().toISOString(), seen_at: new Date().toISOString() }).eq('id', data.id);
             }
@@ -140,7 +183,6 @@ export default function ChatRoom() {
         (p) => setMessages((prev) => prev.map((m) => m.id === p.new.id ? { ...m, ...p.new } : m)))
       .subscribe();
 
-    // Typing channel
     const tc = supabase.channel('typing:' + id)
       .on('broadcast', { event: 'typing' }, (p) => {
         if (p.payload?.uid !== user.id) {
@@ -151,11 +193,10 @@ export default function ChatRoom() {
       }).subscribe();
     typingBroadcast.current = tc;
 
-    // Other user presence
     return () => { supabase.removeChannel(ch); supabase.removeChannel(tc); };
   }, [id, user.id]);
 
-  // Other user presence updates
+  // Other user's presence — unchanged, this was already correct.
   useEffect(() => {
     if (!otherUser?.id) return;
     const ch = supabase.channel('presence:' + otherUser.id)
@@ -165,31 +206,67 @@ export default function ChatRoom() {
     return () => supabase.removeChannel(ch);
   }, [otherUser?.id]);
 
-  useEffect(() => { scrollBot(); }, [messages, isTyping]);
-
-  // ── Fetch ─────────────────────────────────────────────────────────
-  const fetchChatInfo = async () => {
-    const { data } = await supabase.from('chats').select('*').eq('id', id).maybeSingle();
-    if (data) {
-      const oid = data.participants.find((p) => p !== user.id);
-      if (oid) {
-        const { data: u } = await supabase.from('users').select('*').eq('id', oid).maybeSingle();
-        setOtherUser(u);
-      }
-    }
+  // Was: scrollBot() fired on every message change unconditionally,
+  // which yanked you back to the bottom even while you'd scrolled up
+  // to read older messages. Now only auto-scrolls if you were already
+  // near the bottom; otherwise it leaves you where you are and shows
+  // a "New messages" button instead.
+  const isNearBottom = () => {
+    const el = scrollContainerRef.current;
+    if (!el) return true;
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 150;
   };
 
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    const onScroll = () => {
+      const near = isNearBottom();
+      wasNearBottomRef.current = near;
+      setShowJumpToBottom(!near);
+    };
+    el?.addEventListener('scroll', onScroll, { passive: true });
+    return () => el?.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (wasNearBottomRef.current) scrollBot();
+    else setShowJumpToBottom(true);
+  }, [messages, isTyping]);
+
+  // ── Fetch ─────────────────────────────────────────────────────────
   const fetchMessages = async () => {
-    const { data } = await supabase.from('messages')
+    const { data, error } = await supabase.from('messages')
       .select('*, sender:sender_id(id,username,display_name,avatar_url)')
       .eq('chat_id', id).order('created_at', { ascending: true }).limit(200);
-    setMessages((data || []).filter((m) => !m.deleted_for?.includes(user.id)));
+    if (error) throw error;
+
+    const rows = (data || []).filter((m) => !m.deleted_for?.includes(user.id));
+
+    // Reactions were stored correctly (message_reactions table upsert
+    // in react() below) but never actually fetched back — reload the
+    // chat and every reaction anyone ever added visually vanished,
+    // even though the rows were still sitting in the database the
+    // whole time. One extra query, batched for all messages at once.
+    if (rows.length > 0) {
+      const { data: reactionRows } = await supabase
+        .from('message_reactions')
+        .select('message_id, user_id, emoji')
+        .in('message_id', rows.map(m => m.id));
+      const byMessage = {};
+      (reactionRows || []).forEach(r => {
+        byMessage[r.message_id] = byMessage[r.message_id] || {};
+        byMessage[r.message_id][r.user_id] = r.emoji;
+      });
+      rows.forEach(m => { m.reactions = byMessage[m.id] || {}; });
+    }
+
+    if (mountedRef.current) setMessages(rows);
   };
 
   const fetchPinned = async () => {
     const { data } = await supabase.from('messages').select('*, sender:sender_id(id,username,display_name,avatar_url)')
       .eq('chat_id', id).eq('is_pinned', true).maybeSingle();
-    if (data) setPinnedMsg(data);
+    if (data && mountedRef.current) setPinnedMsg(data);
   };
 
   const markRead = async () => {
@@ -213,9 +290,25 @@ export default function ChatRoom() {
     }
 
     setSending(true);
+
+    // Optimistic: show the bubble immediately with a pending clock
+    // icon instead of waiting for the round trip — previously there
+    // was a visible dead gap after hitting send on a slow connection.
+    const tempId = 'temp-' + Date.now();
+    const optimisticMsg = {
+      id: tempId, chat_id: id, sender_id: user.id, body: text,
+      message_type: 'text', parent_message_id: replyTo?.id || null,
+      created_at: new Date().toISOString(), delivered_at: null, seen_at: null,
+      deleted_for: [], starred_by: [], reactions: {},
+      sender: { id: user.id, username: profile?.username, display_name: profile?.display_name, avatar_url: profile?.avatar_url },
+      _pending: true,
+    };
+    setMessages(prev => [...prev, optimisticMsg]);
     setMsg('');
     if (inputRef.current) inputRef.current.style.height = '24px';
     setShowEmoji(false);
+    wasNearBottomRef.current = true;
+    scrollBot();
 
     const { data } = await supabase.from('messages').insert({
       chat_id: id, sender_id: user.id, body: text, message_type: 'text',
@@ -225,13 +318,26 @@ export default function ChatRoom() {
     }).select('*, sender:sender_id(id,username,display_name,avatar_url)').single();
 
     if (data) {
-      setMessages((prev) => prev.find((m) => m.id === data.id) ? prev : [...prev, data]);
-      await supabase.from('chats').update({ last_message: text, last_message_at: new Date().toISOString() }).eq('id', id);
-      if (otherUser && !muted) {
-        await sendNotification({ to: otherUser.id, from: user.id, type: 'message', message: 'sent you a message: "' + text.slice(0, 50) + '"', refId: id });
-      }
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...data, reactions: {} } : m));
+    } else {
+      // Failed — remove the optimistic bubble and put the text back
+      // so nothing silently vanishes.
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+      setMsg(text);
     }
+    // chats.last_message/last_message_at is now maintained by a
+    // trigger (sync_chat_last_message) — the client no longer writes
+    // it, which removes both an extra blocking round trip here and
+    // the ability for a client to set the list preview to text that
+    // doesn't match what was actually sent.
     setReplyTo(null); setSending(false); scrollBot();
+
+    // Notification fires in the background — was awaited before
+    // clearing the sending state, adding latency to when the input
+    // re-enables for no benefit to the sender.
+    if (data && otherUser && !muted) {
+      sendNotification({ to: otherUser.id, from: user.id, type: 'message', message: 'sent you a message: "' + text.slice(0, 50) + '"', refId: id }).catch(() => {});
+    }
   };
 
   const broadcastTyping = () => {
@@ -240,32 +346,54 @@ export default function ChatRoom() {
 
   const handleImageSend = async (e) => {
     const file = e.target.files[0]; if (!file) return;
+    if (file.size > MAX_CHAT_IMAGE_MB * 1024 * 1024) {
+      alert(`Image must be under ${MAX_CHAT_IMAGE_MB}MB.`);
+      e.target.value = '';
+      return;
+    }
     setUploading(true);
-    const url = await uploadToCloudinary(file, 'chat_media');
-    const { data } = await supabase.from('messages').insert({
-      chat_id: id, sender_id: user.id, body: '', media_url: url, message_type: 'image',
-      delivered_at: new Date().toISOString(), deleted_for: [], starred_by: [],
-    }).select('*, sender:sender_id(id,username,display_name,avatar_url)').single();
-    if (data) {
-      setMessages((prev) => prev.find((m) => m.id === data.id) ? prev : [...prev, data]);
-      await supabase.from('chats').update({ last_message: '📷 Photo', last_message_at: new Date().toISOString() }).eq('id', id);
-      if (otherUser) await sendNotification({ to: otherUser.id, from: user.id, type: 'message', message: 'sent you a photo 📷', refId: id });
+    try {
+      const url = await uploadToCloudinary(file, 'chat_media');
+      const { data } = await supabase.from('messages').insert({
+        chat_id: id, sender_id: user.id, body: '', media_url: url, message_type: 'image',
+        delivered_at: new Date().toISOString(), deleted_for: [], starred_by: [],
+      }).select('*, sender:sender_id(id,username,display_name,avatar_url)').single();
+      if (data) {
+        setMessages((prev) => prev.find((m) => m.id === data.id) ? prev : [...prev, { ...data, reactions: {} }]);
+        if (otherUser) sendNotification({ to: otherUser.id, from: user.id, type: 'message', message: 'sent you a photo 📷', refId: id }).catch(() => {});
+      }
+    } catch (err) {
+      alert('Image upload failed: ' + err.message);
     }
     setUploading(false); scrollBot();
   };
 
   // ── Message actions ───────────────────────────────────────────────
+  // Was a raw array read-then-write — racy across multiple devices/
+  // tabs reacting to the delete around the same time. Now atomic.
   const delForMe = async (mid) => {
     setMsgMenu(null);
-    const m = messages.find((x) => x.id === mid);
-    await supabase.from('messages').update({ deleted_for: [...(m?.deleted_for || []), user.id] }).eq('id', mid);
-    setMessages((prev) => prev.filter((x) => x.id !== mid));
+    try {
+      const { error } = await supabase.rpc('delete_message_for_me', { p_message_id: mid });
+      if (error) throw error;
+      setMessages((prev) => prev.filter((x) => x.id !== mid));
+    } catch (err) {
+      alert('Delete failed: ' + err.message);
+    }
   };
 
+  // Was a raw update with no check that the caller actually sent the
+  // message — any chat participant could wipe the OTHER person's
+  // message content. Now server-enforced, sender-only.
   const delForAll = async (mid) => {
     setMsgMenu(null);
-    await supabase.from('messages').update({ is_deleted: true, body: '', media_url: null, deleted_for: [] }).eq('id', mid);
-    setMessages((prev) => prev.map((m) => m.id === mid ? { ...m, is_deleted: true, body: '', media_url: null } : m));
+    try {
+      const { error } = await supabase.rpc('delete_message_for_all', { p_message_id: mid });
+      if (error) throw error;
+      setMessages((prev) => prev.map((m) => m.id === mid ? { ...m, is_deleted: true, body: '', media_url: null } : m));
+    } catch (err) {
+      alert('Delete failed: ' + err.message);
+    }
   };
 
   const toggleStar = async (mid) => {
@@ -288,11 +416,19 @@ export default function ChatRoom() {
 
   const react = async (mid, emoji) => {
     setQuickReact(null);
-    try { await supabase.from('message_reactions').upsert({ message_id: mid, user_id: user.id, emoji }, { onConflict: 'message_id,user_id' }); } catch (e) {}
+    const prevMessages = messages;
     setMessages((prev) => prev.map((m) => {
       if (m.id !== mid) return m;
       return { ...m, reactions: { ...(m.reactions || {}), [user.id]: emoji } };
     }));
+    try {
+      const { error } = await supabase.from('message_reactions').upsert(
+        { message_id: mid, user_id: user.id, emoji }, { onConflict: 'message_id,user_id' }
+      );
+      if (error) throw error;
+    } catch (err) {
+      setMessages(prevMessages); // rollback — was previously fire-and-forget with no rollback
+    }
   };
 
   // ── Swipe to reply ────────────────────────────────────────────────
@@ -335,7 +471,21 @@ export default function ChatRoom() {
     return d.toLocaleDateString('en-KE', { weekday: 'short', month: 'short', day: 'numeric' });
   };
 
-  // ── Render ────────────────────────────────────────────────────────
+  if (initLoading) return (
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100dvh', background:'#0A1628' }}>
+      <div style={{ width:28, height:28, border:'2px solid #1E6FFF', borderTopColor:'transparent', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
+    </div>
+  );
+
+  if (initError) return (
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100dvh', background:'#0A1628', gap:12, padding:24 }}>
+      <p style={{ fontSize:40 }}>⚠️</p>
+      <p style={{ color:'white', fontWeight:700 }}>Could not load conversation</p>
+      <p style={{ color:'#6B7280', fontSize:13, textAlign:'center' }}>{initError}</p>
+      <button onClick={() => navigate('/chats')} style={{ color:'#1E6FFF', fontWeight:700, background:'none', border:'none', cursor:'pointer', fontSize:14 }}>← Back to Chats</button>
+    </div>
+  );
+
   return (
     <div
       style={{
@@ -360,7 +510,7 @@ export default function ChatRoom() {
       }}>
         {searchMode ? (
           <>
-            <button onClick={() => { setSearchMode(false); setSearchQ(''); }} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+            <button onClick={() => { setSearchMode(false); setSearchQ(''); }} aria-label="Close search" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
               <ArrowLeft size={22} />
             </button>
             <input
@@ -368,11 +518,11 @@ export default function ChatRoom() {
               placeholder="Search messages..." autoFocus
               style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'white', fontSize: '14px' }}
             />
-            {searchQ && <button onClick={() => setSearchQ('')} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={18} /></button>}
+            {searchQ && <button onClick={() => setSearchQ('')} aria-label="Clear search" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={18} /></button>}
           </>
         ) : (
           <>
-            <button onClick={() => navigate('/chats')} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', flexShrink: 0 }}>
+            <button onClick={() => navigate('/chats')} aria-label="Back to chats" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', flexShrink: 0 }}>
               <ArrowLeft size={22} />
             </button>
             <button onClick={() => navigate('/profile/' + otherUser?.username)} style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
@@ -391,12 +541,13 @@ export default function ChatRoom() {
               </div>
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
-              <button style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}><Phone size={19} /></button>
-              <button style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}><Video size={19} /></button>
-              <button onClick={() => setSearchMode(true)} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}><Search size={19} /></button>
+              <button aria-label="Voice call" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}><Phone size={19} /></button>
+              <button aria-label="Video call" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}><Video size={19} /></button>
+              <button onClick={() => setSearchMode(true)} aria-label="Search messages" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}><Search size={19} /></button>
               <div style={{ position: 'relative' }}>
                 <button
                   onClick={(e) => { e.stopPropagation(); setChatMenu(!chatMenu); }}
+                  aria-label="Chat options"
                   style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}
                 >
                   <MoreVertical size={19} />
@@ -417,7 +568,7 @@ export default function ChatRoom() {
                         action: async () => {
                           if (window.confirm('Clear all messages?')) {
                             for (const m of messages) {
-                              await supabase.from('messages').update({ deleted_for: [...(m.deleted_for || []), user.id] }).eq('id', m.id);
+                              await supabase.rpc('delete_message_for_me', { p_message_id: m.id }).catch(() => {});
                             }
                             setMessages([]); setChatMenu(false);
                           }
@@ -444,7 +595,7 @@ export default function ChatRoom() {
             <p style={{ color: '#1E6FFF', fontSize: '10px', fontWeight: 700 }}>Pinned</p>
             <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pinnedMsg.body || '📷 Photo'}</p>
           </div>
-          <button onClick={() => setPinnedMsg(null)} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={14} /></button>
+          <button onClick={() => setPinnedMsg(null)} aria-label="Dismiss pinned" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={14} /></button>
         </div>
       )}
 
@@ -455,12 +606,13 @@ export default function ChatRoom() {
             <Star size={14} style={{ color: '#FFD700', fill: '#FFD700' }} />
             <span style={{ color: '#FFD700', fontSize: '12px', fontWeight: 600 }}>Starred messages</span>
           </div>
-          <button onClick={() => setStarredOnly(false)} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
+          <button onClick={() => setStarredOnly(false)} aria-label="Exit starred view" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
         </div>
       )}
 
       {/* ── MESSAGES ── */}
       <div
+        ref={scrollContainerRef}
         style={{ flex: 1, overflowY: 'auto', padding: '12px', overscrollBehavior: 'contain' }}
         onClick={() => { setMsgMenu(null); setQuickReact(null); setChatMenu(false); setShowEmoji(false); }}
       >
@@ -486,21 +638,18 @@ export default function ChatRoom() {
                   onTouchMove={(e) => onTM(e, m)}
                   onTouchEnd={() => onTE(m)}
                 >
-                  {/* Avatar */}
                   {!isMine && (
                     <div style={{ width: '28px', flexShrink: 0, marginBottom: '4px' }}>
                       {isLast && <Avatar url={m.sender?.avatar_url} name={m.sender?.display_name} size={7} />}
                     </div>
                   )}
 
-                  {/* Swipe indicator */}
                   {isSwiping && !isDeleted && (
                     <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(30,111,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <Reply size={13} style={{ color: '#1E6FFF' }} />
                     </div>
                   )}
 
-                  {/* Bubble */}
                   <div
                     className="group"
                     style={{
@@ -533,85 +682,69 @@ export default function ChatRoom() {
                       {m.forwarded && <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px', opacity: 0.6, fontSize: '10px', color: 'white' }}><Forward size={10} /> Forwarded</div>}
                       <div style={{ position: 'absolute', top: '4px', right: '6px', display: 'flex', gap: '2px' }}>
                         {isStarred && <Star size={9} style={{ color: '#FFD700', fill: '#FFD700' }} />}
-                        {m.is_pinned && <Pin size={9} style={{ color: '#1E6FFF' }} />}
                       </div>
 
-                      {m.message_type === 'image' && m.media_url && !isDeleted && (
-                        <img src={m.media_url} alt="sent" onClick={() => window.open(m.media_url, '_blank')}
-                          style={{ borderRadius: '10px', maxWidth: '100%', maxHeight: '220px', objectFit: 'cover', display: 'block', marginBottom: '6px', cursor: 'pointer' }} />
+                      {isDeleted ? (
+                        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', fontStyle: 'italic' }}>🚫 This message was deleted</p>
+                      ) : m.message_type === 'image' && m.media_url ? (
+                        <img
+                          src={m.media_url} alt=""
+                          onClick={(e) => { e.stopPropagation(); setViewerImage(m.media_url); }}
+                          style={{ maxWidth: '240px', borderRadius: '10px', display: 'block', cursor: 'pointer' }}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <p style={{ color: 'white', fontSize: '14px', lineHeight: '1.4', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{m.body}</p>
                       )}
 
-                      <p style={{ fontSize: '14px', lineHeight: 1.5, color: isDeleted ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.93)', wordBreak: 'break-word', fontStyle: isDeleted ? 'italic' : 'normal' }}>
-                        {isDeleted ? '🚫 This message was deleted' : m.body}
-                      </p>
-                      {m.edited && !isDeleted && <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>edited</p>}
-
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: isMine ? 'flex-end' : 'flex-start', gap: '4px', marginTop: '4px' }}>
-                        <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>
-                          {new Date(m.created_at).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                        <MsgStatus msg={m} isMine={isMine} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'flex-end', marginTop: '3px' }}>
+                        {m.edited && !isDeleted && <span style={{ color: isMine ? 'rgba(255,255,255,0.6)' : '#6B7280', fontSize: '10px' }}>edited</span>}
+                        <span style={{ color: isMine ? 'rgba(255,255,255,0.7)' : '#6B7280', fontSize: '10px' }}>{formatTime(m.created_at)}</span>
+                        {m._pending
+                          ? <Clock size={11} style={{ color: 'rgba(255,255,255,0.5)' }} />
+                          : <MsgStatus msg={m} isMine={isMine} />
+                        }
                       </div>
+
+                      {Object.keys(reactionCounts).length > 0 && (
+                        <div style={{ position: 'absolute', bottom: '-10px', [isMine ? 'left' : 'right']: '4px', background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '99px', padding: '1px 6px', display: 'flex', gap: '2px', fontSize: '11px' }}>
+                          {Object.entries(reactionCounts).map(([e,c]) => <span key={e}>{e}{c>1?c:''}</span>)}
+                        </div>
+                      )}
                     </div>
 
-                    {/* Reactions */}
-                    {Object.keys(reactionCounts).length > 0 && (
-                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '4px', justifyContent: isMine ? 'flex-end' : 'flex-start' }}>
-                        {Object.entries(reactionCounts).map(([emoji, count]) => (
-                          <button key={emoji} onClick={() => react(m.id, emoji)}
-                            style={{ display: 'flex', alignItems: 'center', gap: '2px', background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '99px', padding: '2px 6px', cursor: 'pointer' }}>
-                            <span style={{ fontSize: '12px' }}>{emoji}</span>
-                            {count > 1 && <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>{count}</span>}
-                          </button>
+                    {quickReact === m.id && (
+                      <div style={{ position: 'absolute', bottom: '100%', [isMine?'right':'left']: 0, marginBottom: '6px', background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '99px', padding: '6px', display: 'flex', gap: '2px', zIndex: 40, boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
+                        {QUICK_REACTIONS.map(e => (
+                          <button key={e} onClick={() => react(m.id, e)} style={{ fontSize: '18px', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '50%' }}>{e}</button>
                         ))}
                       </div>
                     )}
 
-                    {/* Quick react */}
-                    {quickReact === m.id && !isDeleted && (
-                      <div
-                        style={{
-                          position: 'absolute', zIndex: 30,
-                          [isMine ? 'right' : 'left']: 0, top: '-52px',
-                          background: '#111827', border: '1px solid rgba(255,255,255,0.1)',
-                          borderRadius: '99px', padding: '6px 8px',
-                          display: 'flex', gap: '4px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {QUICK_REACTIONS.map((emoji) => (
-                          <button key={emoji} onClick={() => react(m.id, emoji)}
-                            style={{ fontSize: '20px', background: 'none', border: 'none', cursor: 'pointer', padding: '2px', borderRadius: '8px' }}
-                            onMouseOver={(e) => { e.target.style.transform = 'scale(1.3)'; }}
-                            onMouseOut={(e) => { e.target.style.transform = 'scale(1)'; }}
-                          >{emoji}</button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Hover actions */}
                     {!isDeleted && (
                       <div
-                        className="hidden group-hover:flex"
+                        className="group-hover-actions"
                         style={{
-                          position: 'absolute', top: 0, zIndex: 20,
-                          [isMine ? 'left' : 'right']: isMine ? '-72px' : '-72px',
+                          position: 'absolute', top: 0, opacity: 0,
+                          [isMine ? 'right' : 'left']: '100%',
+                          display: 'flex',
                           flexDirection: isMine ? 'row-reverse' : 'row',
                           gap: '4px', alignItems: 'center',
                         }}
                       >
                         <button
                           onClick={(e) => { e.stopPropagation(); setReplyTo(m); setTimeout(() => inputRef.current?.focus(), 80); }}
+                          aria-label="Reply"
                           style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#111827', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                         ><Reply size={12} style={{ color: 'rgba(255,255,255,0.7)' }} /></button>
                         <button
                           onClick={(e) => { e.stopPropagation(); setMsgMenu(msgMenu === m.id ? null : m.id); }}
+                          aria-label="More options"
                           style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#111827', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                         ><ChevronDown size={12} style={{ color: 'rgba(255,255,255,0.7)' }} /></button>
                       </div>
                     )}
 
-                    {/* Message menu */}
                     {msgMenu === m.id && (
                       <div
                         style={{
@@ -649,7 +782,6 @@ export default function ChatRoom() {
           </div>
         ))}
 
-        {/* Empty state */}
         {messages.length === 0 && !searchQ && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '16px' }}>
             <div style={{ position: 'relative' }}>
@@ -669,7 +801,6 @@ export default function ChatRoom() {
           </div>
         )}
 
-        {/* Typing indicator */}
         {isTyping && (
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', marginTop: '8px' }}>
             <Avatar url={otherUser?.avatar_url} name={otherUser?.display_name} size={7} />
@@ -682,9 +813,24 @@ export default function ChatRoom() {
         )}
 
         <div ref={messagesEndRef} style={{ height: '8px' }} />
+
+        {showJumpToBottom && (
+          <button
+            onClick={(e) => { e.stopPropagation(); wasNearBottomRef.current = true; scrollBot(); setShowJumpToBottom(false); }}
+            aria-label="Jump to latest messages"
+            style={{
+              position: 'sticky', bottom: 8, left: '50%', transform: 'translateX(-50%)',
+              background: '#1E6FFF', color: 'white', border: 'none', borderRadius: 999,
+              padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(30,111,255,0.4)', display: 'flex',
+              alignItems: 'center', gap: 6, zIndex: 10,
+            }}
+          >
+            <ChevronDown size={14} /> New messages
+          </button>
+        )}
       </div>
 
-      {/* ── EMOJI PICKER ── */}
       {showEmoji && (
         <div style={{ flexShrink: 0, background: '#111827', borderTop: '1px solid rgba(255,255,255,0.1)', maxHeight: '220px' }}>
           <div style={{ padding: '8px 12px 4px' }}>
@@ -713,7 +859,6 @@ export default function ChatRoom() {
         </div>
       )}
 
-      {/* ── REPLY PREVIEW ── */}
       {replyTo && (
         <div style={{ flexShrink: 0, background: '#111827', borderTop: '1px solid rgba(255,255,255,0.1)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ width: '2px', height: '36px', background: '#1E6FFF', borderRadius: '2px', flexShrink: 0 }} />
@@ -721,11 +866,10 @@ export default function ChatRoom() {
             <p style={{ color: '#1E6FFF', fontSize: '11px', fontWeight: 700 }}>{replyTo.sender_id === user.id ? 'You' : replyTo.sender?.display_name}</p>
             <p style={{ color: '#6B7280', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{replyTo.message_type === 'image' ? '📷 Photo' : replyTo.body}</p>
           </div>
-          <button onClick={() => setReplyTo(null)} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
+          <button onClick={() => setReplyTo(null)} aria-label="Cancel reply" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
         </div>
       )}
 
-      {/* ── EDIT BANNER ── */}
       {editing && (
         <div style={{ flexShrink: 0, background: 'rgba(30,111,255,0.1)', borderTop: '1px solid rgba(30,111,255,0.2)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Edit3 size={14} style={{ color: '#1E6FFF', flexShrink: 0 }} />
@@ -733,21 +877,19 @@ export default function ChatRoom() {
             <p style={{ color: '#1E6FFF', fontSize: '11px', fontWeight: 700 }}>Editing message</p>
             <p style={{ color: '#6B7280', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{editing.body}</p>
           </div>
-          <button onClick={() => { setEditing(null); setMsg(''); if (inputRef.current) inputRef.current.style.height = '24px'; }} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
+          <button onClick={() => { setEditing(null); setMsg(''); if (inputRef.current) inputRef.current.style.height = '24px'; }} aria-label="Cancel edit" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
         </div>
       )}
 
-      {/* ── SCHEDULE BANNER ── */}
       {scheduler && (
         <div style={{ flexShrink: 0, background: 'rgba(123,47,255,0.1)', borderTop: '1px solid rgba(123,47,255,0.2)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Clock size={14} style={{ color: '#7B2FFF', flexShrink: 0 }} />
           <input type="datetime-local" value={schedTime} onChange={(e) => setSchedTime(e.target.value)}
             style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'white', fontSize: '12px' }} />
-          <button onClick={() => { setScheduler(false); setSchedTime(''); }} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
+          <button onClick={() => { setScheduler(false); setSchedTime(''); }} aria-label="Cancel schedule" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
         </div>
       )}
 
-      {/* ── INPUT BAR — using inline styles to avoid CSS conflicts ── */}
       <div style={{
         flexShrink: 0,
         background: '#0d1f3c',
@@ -762,10 +904,10 @@ export default function ChatRoom() {
       }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', width: '100%' }}>
 
-          {/* Emoji btn */}
           <button
             type="button"
             onMouseDown={(e) => { e.preventDefault(); setShowEmoji((v) => !v); }}
+            aria-label="Emoji picker"
             style={{
               width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
               background: showEmoji ? 'rgba(30,111,255,0.2)' : 'transparent',
@@ -776,11 +918,11 @@ export default function ChatRoom() {
             <Smile size={22} />
           </button>
 
-          {/* Image btn */}
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
+            aria-label="Send image"
             style={{
               width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
               background: 'transparent', border: 'none', cursor: 'pointer',
@@ -795,7 +937,6 @@ export default function ChatRoom() {
           </button>
           <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageSend} />
 
-          {/* Textarea wrapper */}
           <div style={{
             flex: 1, minWidth: 0,
             background: 'rgba(255,255,255,0.07)',
@@ -836,10 +977,10 @@ export default function ChatRoom() {
             />
           </div>
 
-          {/* Schedule btn */}
           <button
             type="button"
             onClick={() => setScheduler(!scheduler)}
+            aria-label="Schedule message"
             style={{
               width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
               background: scheduler ? 'rgba(123,47,255,0.2)' : 'transparent',
@@ -850,11 +991,11 @@ export default function ChatRoom() {
             <Clock size={20} />
           </button>
 
-          {/* Send btn */}
           <button
             type="button"
             onClick={handleSend}
             disabled={sending || !msg.trim()}
+            aria-label="Send message"
             style={{
               width: '42px', height: '42px', borderRadius: '50%', flexShrink: 0,
               background: (sending || !msg.trim()) ? 'rgba(30,111,255,0.4)' : 'linear-gradient(135deg, #1E6FFF, #7B2FFF)',
@@ -870,6 +1011,10 @@ export default function ChatRoom() {
           </button>
         </div>
       </div>
+
+      {viewerImage && (
+        <ImageViewer images={[viewerImage]} index={0} onClose={() => setViewerImage(null)} />
+      )}
     </div>
   );
-} 
+}

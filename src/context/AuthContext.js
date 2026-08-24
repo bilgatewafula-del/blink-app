@@ -145,6 +145,54 @@ export function AuthProvider({ children }) {
     };
   }, [fetchProfile]);
 
+  // Global presence heartbeat — replaces ChatRoom's old per-chat
+// is_online toggle. "Online" now means "actively using the app
+// anywhere," not "currently has one specific chat open."
+useEffect(() => {
+  if (!user?.id) return;
+
+  const HEARTBEAT_MS = 60000; // matches ONLINE_THRESHOLD_MS/2 in ChatList/ChatRoom's staleness check
+
+  const goOnline = () => {
+    supabase.from('users').update({
+      is_online: true,
+      last_seen: new Date().toISOString(),
+    }).eq('id', user.id).then(() => {});
+  };
+
+  const goOffline = () => {
+    // navigator.sendBeacon isn't usable for a Supabase PostgREST call
+    // directly, so this is best-effort — if the tab is force-closed
+    // rather than backgrounded, last_seen simply goes stale and the
+    // 2-minute threshold in ChatList/ChatRoom's isOnline() check
+    // naturally treats it as offline shortly after, which is the
+    // correct fallback behavior for an unclean disconnect anyway.
+    supabase.from('users').update({
+      is_online: false,
+      last_seen: new Date().toISOString(),
+    }).eq('id', user.id).then(() => {});
+  };
+
+  goOnline();
+  const interval = setInterval(() => {
+    if (document.visibilityState === 'visible') goOnline();
+  }, HEARTBEAT_MS);
+
+  const onVisibility = () => {
+    if (document.visibilityState === 'visible') goOnline();
+    else goOffline();
+  };
+  document.addEventListener('visibilitychange', onVisibility);
+  window.addEventListener('beforeunload', goOffline);
+
+  return () => {
+    clearInterval(interval);
+    document.removeEventListener('visibilitychange', onVisibility);
+    window.removeEventListener('beforeunload', goOffline);
+    goOffline();
+  };
+}, [user?.id]);
+
   // Keeps the CURRENT user's own profile fresh automatically whenever
   // their row changes — another tab, an admin action against them, a
   // coin purchase webhook, a follow that changes their counts, etc.
