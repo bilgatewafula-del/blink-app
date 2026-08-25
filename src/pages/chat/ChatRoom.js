@@ -9,7 +9,7 @@ import {
   Phone, Video, Check, CheckCheck, Trash2, Reply,
   X, Star, Forward, Copy, Edit3, Clock, Search,
   ChevronDown, Info, Volume2, VolumeX, Shield,
-  Download, Pin
+  Download, Pin, Flag
 } from 'lucide-react';
 import Avatar from '../../components/Avatar';
 import ImageViewer from '../../components/ImageViewer';
@@ -104,6 +104,11 @@ export default function ChatRoom() {
   const [scheduler, setScheduler] = useState(false);
   const [schedTime, setSchedTime] = useState('');
   const [pinnedMsg, setPinnedMsg] = useState(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDetails, setReportDetails] = useState('');
+  const [reportSending, setReportSending] = useState(false);
+  const [reportDone, setReportDone] = useState(false);
   const [initError, setInitError] = useState('');
   const [initLoading, setInitLoading] = useState(true);
   const [viewerImage, setViewerImage] = useState(null);
@@ -151,6 +156,11 @@ export default function ChatRoom() {
             avatar_url: info.avatar_url, is_verified: info.is_verified,
             is_online: info.is_online, last_seen: info.last_seen, bio: info.bio,
           });
+          // Was: `muted` only ever lived in local component state and
+          // reset to false every time the chat was reopened — muting
+          // someone did nothing beyond the current screen visit. Now
+          // reflects the real persisted value from get_chat_info().
+          if (mountedRef.current) setMuted(!!info.is_muted);
         }
       } catch (err) {
         if (!cancelled) setInitError(err.message || 'Could not load conversation.');
@@ -417,17 +427,33 @@ export default function ChatRoom() {
   const react = async (mid, emoji) => {
     setQuickReact(null);
     const prevMessages = messages;
+    const current = messages.find(m => m.id === mid)?.reactions?.[user.id];
+    const isUndo = current === emoji;
+
     setMessages((prev) => prev.map((m) => {
       if (m.id !== mid) return m;
-      return { ...m, reactions: { ...(m.reactions || {}), [user.id]: emoji } };
+      const next = { ...(m.reactions || {}) };
+      if (isUndo) delete next[user.id];
+      else next[user.id] = emoji;
+      return { ...m, reactions: next };
     }));
+
     try {
-      const { error } = await supabase.from('message_reactions').upsert(
-        { message_id: mid, user_id: user.id, emoji }, { onConflict: 'message_id,user_id' }
-      );
-      if (error) throw error;
+      if (isUndo) {
+        // Was missing entirely — tapping the same emoji again just
+        // re-upserted the identical value with no way to actually
+        // remove a reaction once added.
+        const { error } = await supabase.from('message_reactions')
+          .delete().eq('message_id', mid).eq('user_id', user.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('message_reactions').upsert(
+          { message_id: mid, user_id: user.id, emoji }, { onConflict: 'message_id,user_id' }
+        );
+        if (error) throw error;
+      }
     } catch (err) {
-      setMessages(prevMessages); // rollback — was previously fire-and-forget with no rollback
+      setMessages(prevMessages);
     }
   };
 
@@ -493,9 +519,16 @@ export default function ChatRoom() {
         flexDirection: 'column',
         height: '100dvh',
         background: '#0A1628',
-        overflow: 'hidden',
         position: 'fixed',
         top: 0, left: 0, right: 0, bottom: 0,
+        // Was `overflow: 'hidden'` here — the messages list already
+        // has its own internal overflowY:'auto' scroll container, so
+        // this wasn't needed for scroll control, but it WAS clipping
+        // any popover (chat menu, message menu, quick-react picker)
+        // that rendered even a few pixels past this container's own
+        // edge. That's what the "narrow line, menu appears empty"
+        // symptom was — the dropdown was rendering, just almost
+        // entirely cut off by this.
       }}
       onClick={() => { setMsgMenu(null); setQuickReact(null); setChatMenu(false); }}
     >
@@ -559,24 +592,87 @@ export default function ChatRoom() {
                   >
                     {[
                       { icon: Star, label: 'Starred messages', action: () => { setStarredOnly(true); setChatMenu(false); } },
-                      { icon: Pin, label: 'View pinned', action: () => setChatMenu(false) },
-                      { icon: muted ? Volume2 : VolumeX, label: muted ? 'Unmute' : 'Mute', action: () => { setMuted(!muted); setChatMenu(false); } },
-                      { icon: Info, label: 'Contact info', action: () => { navigate('/profile/' + otherUser?.username); setChatMenu(false); } },
-                      { icon: Shield, label: 'Block contact', action: () => setChatMenu(false) },
                       {
-                        icon: Trash2, label: 'Clear chat',
-                        action: async () => {
-                          if (window.confirm('Clear all messages?')) {
-                            for (const m of messages) {
-                              await supabase.rpc('delete_message_for_me', { p_message_id: m.id }).catch(() => {});
-                            }
-                            setMessages([]); setChatMenu(false);
+                        icon: Pin, label: pinnedMsg ? 'View pinned message' : 'No pinned message',
+                        action: () => {
+                          setChatMenu(false);
+                          // Was a no-op — tapping this did nothing at
+                          // all. Now scrolls to and briefly highlights
+                          // the actual pinned message, or does nothing
+                          // if there isn't one (button still shows so
+                          // the option is discoverable either way).
+                          if (!pinnedMsg) return;
+                          const el = document.getElementById('msg-' + pinnedMsg.id);
+                          el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          if (el) {
+                            el.style.outline = '2px solid #1E6FFF';
+                            setTimeout(() => { el.style.outline = 'none'; }, 1500);
                           }
-                        }
+                        },
+                      },
+                      {
+                        icon: muted ? Volume2 : VolumeX, label: muted ? 'Unmute' : 'Mute',
+                        action: async () => {
+                          setChatMenu(false);
+                          const prev = muted;
+                          setMuted(!muted); // optimistic
+                          try {
+                            const { data, error } = await supabase.rpc('toggle_chat_mute', { p_chat_id: id });
+                            if (error) throw error;
+                            setMuted(!!data);
+                          } catch (err) {
+                            setMuted(prev); // rollback — was previously local-only state with nothing to fail
+                          }
+                        },
+                      },
+                      { icon: Info, label: 'Contact info', action: () => { navigate('/profile/' + otherUser?.username); setChatMenu(false); } },
+                      {
+                        icon: Flag, label: 'Report user', red: true,
+                        action: () => { setChatMenu(false); setShowReportModal(true); },
+                      },
+                      {
+                        // Was a no-op (`action: () => setChatMenu(false)`)
+                        // — Block did literally nothing before. Now
+                        // calls the real block_user() RPC, which
+                        // removes the follow relationship both ways
+                        // AND (per 42_fix_chat_start_and_features.sql)
+                        // prevents them from messaging you again —
+                        // security enforced server-side via RLS, not
+                        // just hidden in the UI.
+                        icon: Shield, label: 'Block ' + (otherUser?.display_name || 'contact'), red: true,
+                        action: async () => {
+                          setChatMenu(false);
+                          if (!otherUser?.id) return;
+                          if (!window.confirm(`Block ${otherUser.display_name}? They won't be able to message you, and you'll stop following each other. You can unblock later from Settings.`)) return;
+                          try {
+                            const { error } = await supabase.rpc('block_user', { p_target_id: otherUser.id });
+                            if (error) throw error;
+                            navigate('/chats');
+                          } catch (err) {
+                            alert('Could not block user: ' + err.message);
+                          }
+                        },
+                      },
+                      {
+                        icon: Trash2, label: 'Clear chat', red: true,
+                        action: async () => {
+                          setChatMenu(false);
+                          if (!window.confirm('Clear all messages? This only removes them for you.')) return;
+                          try {
+                            // Was a client-side loop calling
+                            // delete_message_for_me once per message —
+                            // N round trips for N messages. One call.
+                            const { error } = await supabase.rpc('clear_chat_for_me', { p_chat_id: id });
+                            if (error) throw error;
+                            setMessages([]);
+                          } catch (err) {
+                            alert('Could not clear chat: ' + err.message);
+                          }
+                        },
                       },
                     ].map((item) => (
-                      <button key={item.label} onClick={item.action} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', color: 'rgba(255,255,255,0.8)', background: 'none', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', fontSize: '13px', textAlign: 'left' }}>
-                        <item.icon size={15} style={{ color: '#6B7280', flexShrink: 0 }} />{item.label}
+                      <button key={item.label} onClick={item.action} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', color: item.red ? '#EF4444' : 'rgba(255,255,255,0.8)', background: 'none', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', fontSize: '13px', textAlign: 'left' }}>
+                        <item.icon size={15} style={{ color: item.red ? '#EF4444' : '#6B7280', flexShrink: 0 }} />{item.label}
                       </button>
                     ))}
                   </div>
@@ -652,6 +748,7 @@ export default function ChatRoom() {
 
                   <div
                     className="group"
+                    id={'msg-' + m.id}
                     style={{
                       maxWidth: '78%', position: 'relative',
                       transform: isSwiping ? (isMine ? 'translateX(-32px)' : 'translateX(32px)') : 'none',
@@ -716,7 +813,8 @@ export default function ChatRoom() {
                     {quickReact === m.id && (
                       <div style={{ position: 'absolute', bottom: '100%', [isMine?'right':'left']: 0, marginBottom: '6px', background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '99px', padding: '6px', display: 'flex', gap: '2px', zIndex: 40, boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
                         {QUICK_REACTIONS.map(e => (
-                          <button key={e} onClick={() => react(m.id, e)} style={{ fontSize: '18px', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '50%' }}>{e}</button>
+                          <button key={e} onClick={() => react(m.id, e)}
+                            style={{ fontSize: '18px', background: m.reactions?.[user.id] === e ? 'rgba(30,111,255,0.3)' : 'none', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '50%' }}>{e}</button>
                         ))}
                       </div>
                     )}
@@ -1014,6 +1112,64 @@ export default function ChatRoom() {
 
       {viewerImage && (
         <ImageViewer images={[viewerImage]} index={0} onClose={() => setViewerImage(null)} />
+      )}
+
+      {showReportModal && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', zIndex: 60, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          onClick={() => { setShowReportModal(false); setReportDone(false); setReportReason(''); setReportDetails(''); }}
+        >
+          <div style={{ width: '100%', maxWidth: 620, background: '#0d1f3c', borderTop: '1px solid rgba(255,255,255,0.1)', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 32 }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h3 style={{ color: 'white', fontWeight: 700, fontSize: 16 }}>Report {otherUser?.display_name}</h3>
+              <button onClick={() => { setShowReportModal(false); setReportDone(false); }} aria-label="Close" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
+            </div>
+
+            {reportDone ? (
+              <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                <p style={{ fontSize: 40, marginBottom: 12 }}>✅</p>
+                <p style={{ color: 'white', fontWeight: 700 }}>Report submitted</p>
+                <p style={{ color: '#6B7280', fontSize: 13, marginTop: 4 }}>Our team will review this.</p>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
+                  {['Spam or scam', 'Harassment or bullying', 'Inappropriate content', 'Pretending to be someone else', 'Other'].map(r => (
+                    <button key={r} onClick={() => setReportReason(r)}
+                      style={{ textAlign: 'left', padding: '12px 16px', borderRadius: 12, fontSize: 14, border: '1px solid ' + (reportReason === r ? 'rgba(30,111,255,0.5)' : 'rgba(255,255,255,0.06)'), background: reportReason === r ? 'rgba(30,111,255,0.15)' : 'rgba(255,255,255,0.03)', color: reportReason === r ? 'white' : 'rgba(255,255,255,0.7)', cursor: 'pointer' }}>
+                      {r}
+                    </button>
+                  ))}
+                </div>
+                {reportReason && (
+                  <textarea value={reportDetails} onChange={e => setReportDetails(e.target.value)}
+                    placeholder="Additional details (optional)..." rows={3}
+                    style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '12px 16px', color: 'white', fontSize: 14, outline: 'none', resize: 'none', marginBottom: 16, boxSizing: 'border-box' }} />
+                )}
+                <button
+                  onClick={async () => {
+                    if (!reportReason || !otherUser?.id) return;
+                    setReportSending(true);
+                    try {
+                      const { error } = await supabase.rpc('report_user', {
+                        p_target_id: otherUser.id, p_reason: reportReason, p_details: reportDetails.trim() || null,
+                      });
+                      if (error) throw error;
+                      setReportDone(true);
+                    } catch (err) {
+                      alert('Could not submit report: ' + err.message);
+                    }
+                    setReportSending(false);
+                  }}
+                  disabled={!reportReason || reportSending}
+                  style={{ width: '100%', padding: '14px', borderRadius: 16, fontWeight: 700, fontSize: 14, color: 'white', background: '#EF4444', border: 'none', cursor: 'pointer', opacity: (!reportReason || reportSending) ? 0.5 : 1 }}
+                >
+                  {reportSending ? 'Submitting...' : 'Submit Report'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

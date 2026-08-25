@@ -300,7 +300,24 @@ export default function Profile() {
     }
   };
 
-  const handleMessage = () => navigate('/chats');
+  // Was: navigate('/chats') — always sent you to the chat LIST, never
+  // to an actual conversation with the profile you tapped "Message"
+  // from. Now uses the same atomic get_or_create_chat() RPC ChatList
+  // uses, so it either opens the existing conversation or creates one
+  // and goes straight there.
+  const [messageBusy, setMessageBusy] = useState(false);
+  const handleMessage = async () => {
+    if (!profile?.id || messageBusy) return;
+    setMessageBusy(true);
+    try {
+      const { data: chatId, error } = await supabase.rpc('get_or_create_chat', { p_other_id: profile.id });
+      if (error) throw error;
+      navigate('/chats/' + chatId);
+    } catch (err) {
+      console.error('handleMessage:', err.message);
+    }
+    setMessageBusy(false);
+  };
 
   const fetchFollowers = () => supabase
     .from('follows')
@@ -476,9 +493,12 @@ export default function Profile() {
                   : <><followButtonConfig.icon size={14} /> {followButtonConfig.label}</>
                 }
               </button>
-              <button onClick={handleMessage}
-                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-white/20 bg-white/[0.06] hover:bg-white/10 transition-colors active:scale-95 flex items-center justify-center gap-1.5">
-                <MessageCircle size={14} /> Message
+              <button onClick={handleMessage} disabled={messageBusy}
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-white/20 bg-white/[0.06] hover:bg-white/10 transition-colors active:scale-95 flex items-center justify-center gap-1.5 disabled:opacity-60">
+                {messageBusy
+                  ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  : <><MessageCircle size={14} /> Message</>
+                }
               </button>
             </>
           )}
