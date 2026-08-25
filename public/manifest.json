@@ -1,0 +1,18 @@
+{
+  "short_name": "B-Link",
+  "name": "B-Link – Africa's GenZ Social Platform",
+  "description": "Connect, vibe, share and grow with millions of young Africans.",
+  "icons": [
+    { "src": "favicon.png",   "sizes": "32x32",   "type": "image/png" },
+    { "src": "logo192.png",   "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "logo512.png",   "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "maskable-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0A1628",
+  "background_color": "#0A1628",
+  "scope": "/",
+  "prefer_related_applications": false
+}
