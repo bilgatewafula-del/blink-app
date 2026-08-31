@@ -102,12 +102,6 @@ export default function Home() {
   const PULL_THRESHOLD  = 70;
 
   // ── Refs mirroring frequently-changing state ──────────────────
-  // Realtime subscriptions and the auto-refresh interval used to
-  // list `loading`/`isOffline` as effect dependencies, which meant
-  // the channel/interval was torn down and recreated on almost every
-  // fetch — wasteful, and briefly risks missing a realtime event
-  // during the resubscribe window. Reading from refs instead lets
-  // those effects run once per mount/tab-change.
   const loadingRef   = useRef(loading);
   const isOfflineRef = useRef(isOffline);
   const activeTabRef = useRef(activeTab);
@@ -115,9 +109,6 @@ export default function Home() {
   useEffect(() => { isOfflineRef.current = isOffline; }, [isOffline]);
   useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
 
-  // Cache of id lists for 'following' / 'country' tabs so paginating
-  // (page 2, 3, ...) doesn't re-fetch the whole follow/country list
-  // on every scroll page — only on tab switch.
   const idCacheRef = useRef({ following: null, country: null, forTab: null });
 
   const showToast = (msg) => {
@@ -127,15 +118,11 @@ export default function Home() {
   };
 
   // ── Optimistic insert when returning from /create ─────────────
-  // If CreatePost navigates back with `state: { newPost }`, show it
-  // immediately instead of making the user pull-to-refresh to see
-  // their own post.
   useEffect(() => {
     const incoming = location.state?.newPost;
     if (incoming) {
       setPosts(prev => (prev.some(p => p.id === incoming.id) ? prev : [normalise(incoming), ...prev]));
       showToast('✅ Posted!');
-      // Clear the state so it doesn't re-apply on back/forward nav.
       navigate(location.pathname, { replace: true, state: {} });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -169,21 +156,39 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
-  // Also check immediately when the tab regains focus after being
-  // backgrounded, rather than waiting up to 3 minutes.
+  // Was: only ever called the lightweight checkForNewPosts() on
+  // regaining visibility, and even that was skipped while `loading`
+  // was still true. That meant a genuinely STUCK load (the exact
+  // scenario reproduced by backgrounding the tab, which browsers
+  // throttle/freeze pending requests in) had no way to recover on its
+  // own — the only thing that ever unstuck it was accidentally
+  // interacting with DevTools, which brings the whole browser window
+  // back into focus and un-throttles everything at once. This makes
+  // the app do that same recovery automatically, for every user, not
+  // just when DevTools happens to be open.
   useEffect(() => {
     const onVisible = () => {
-      if (document.visibilityState === 'visible' && !loadingRef.current && !isOfflineRef.current) {
+      if (document.visibilityState !== 'visible') return;
+      const stuck = posts.length === 0 && (loadingRef.current || !!fetchError);
+      if (stuck) {
+        console.log('[DIAG]', Date.now(), 'Home: regained visibility while stuck (loading or errored with no posts) — retrying loadPosts');
+        setFetchError('');
+        setPage(0);
+        loadPosts(0, true);
+      } else if (!loadingRef.current && !isOfflineRef.current) {
         checkForNewPosts();
       }
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeTab, fetchError, posts.length]);
 
   // ── Reload on tab change ───────────────────────────────────────
   useEffect(() => {
+    // [DIAG]
+    console.log('[DIAG]', Date.now(), 'Home: "reload on tab change" effect fired, activeTab =', activeTab, '— about to call loadPosts');
+
     setNewPostsBanner(false);
     setNewPostsCount(0);
     setPosts([]);
@@ -210,9 +215,6 @@ export default function Home() {
   }, [hasMore, loadingMore, loading, page]);
 
   // ── Realtime new-posts banner ──────────────────────────────────
-  // Filtered to public, non-draft posts only — previously this fired
-  // on every INSERT including drafts and private posts, which meant
-  // viewers could see "new posts" and tap it to find nothing changed.
   useEffect(() => {
     const ch = supabase.channel('home:new:' + user?.id)
       .on('postgres_changes',
@@ -296,11 +298,17 @@ export default function Home() {
 
   // ── Core feed loader ────────────────────────────────────────────
   const loadPosts = useCallback(async (pageNum, reset = false, silent = false) => {
+    // [DIAG]
+    console.log('[DIAG]', Date.now(), 'Home: loadPosts() called. pageNum=', pageNum, 'reset=', reset, 'silent=', silent, 'activeTab=', activeTab);
+
     if (reset && !silent) setLoading(true);
     else if (!reset)      setLoadingMore(true);
 
     if (loadTimerRef.current) clearTimeout(loadTimerRef.current);
     loadTimerRef.current = setTimeout(() => {
+      // [DIAG]
+      console.log('[DIAG]', Date.now(), 'Home: LOAD_TIMEOUT_MS (12s) fired — the posts query never resolved in time');
+
       setLoading(false);
       setLoadingMore(false);
       setRefreshing(false);
@@ -317,6 +325,9 @@ export default function Home() {
       let data = null, error = null;
 
       if (activeTab === 'foryou') {
+        // [DIAG]
+        console.log('[DIAG]', Date.now(), 'Home: about to await the posts query (foryou tab)');
+
         const res = await supabase.from('posts')
           .select(POST_SELECT)
           .eq('is_draft', false)
@@ -330,8 +341,18 @@ export default function Home() {
           .range(from, to);
         data = res.data; error = res.error;
 
+        // [DIAG]
+        console.log('[DIAG]', Date.now(), 'Home: posts query RETURNED. error?', error?.message, 'row count:', data?.length);
+
       } else {
+        // [DIAG]
+        console.log('[DIAG]', Date.now(), 'Home: about to resolve tab user ids (non-foryou tab)');
+
         const ids = await resolveTabUserIds();
+
+        // [DIAG]
+        console.log('[DIAG]', Date.now(), 'Home: resolveTabUserIds RETURNED, ids count:', ids?.length, '— about to await the posts query');
+
         const q = supabase.from('posts')
           .select(POST_SELECT)
           .eq('is_draft', false)
@@ -342,6 +363,9 @@ export default function Home() {
           .range(from, to);
         const res = ids && ids.length > 0 ? await q.in('user_id', ids) : await q;
         data = res.data; error = res.error;
+
+        // [DIAG]
+        console.log('[DIAG]', Date.now(), 'Home: posts query RETURNED (non-foryou). error?', error?.message, 'row count:', data?.length);
       }
 
       clearTimeout(loadTimerRef.current);
@@ -377,9 +401,15 @@ export default function Home() {
       setNewPostsBanner(false);
       setNewPostsCount(0);
 
+      // [DIAG]
+      console.log('[DIAG]', Date.now(), 'Home: loadPosts finished SUCCESSFULLY, posts set in state');
+
     } catch (err) {
       clearTimeout(loadTimerRef.current);
       console.error('loadPosts error:', err.message);
+      // [DIAG]
+      console.log('[DIAG]', Date.now(), 'Home: loadPosts CAUGHT an exception:', err.message);
+
       if (!silent) {
         setFetchError(
           err.message?.includes('timeout') || err.name === 'AbortError'
@@ -397,12 +427,7 @@ export default function Home() {
     }
   }, [activeTab, resolveTabUserIds]);
 
-  // ── Silent "are there new posts" check — never wipes scroll state ──
-  // Replaces the old behavior where the 3-min auto-refresh called
-  // loadPosts(0, true, true), which fully replaced `posts` with just
-  // page 0 — silently discarding everything a scrolled-down user had
-  // loaded. Now it only peeks at page 0 and shows the banner if
-  // there's anything genuinely new; it never touches `posts` directly.
+  // ── Silent "are there new posts" check ──
   const checkForNewPosts = useCallback(async () => {
     try {
       let res;
@@ -436,7 +461,7 @@ export default function Home() {
           setNewPostsCount(freshCount);
           setNewPostsBanner(true);
         }
-        return prev; // never mutate the actual list here
+        return prev;
       });
     } catch (_) { /* silent by design */ }
   }, [resolveTabUserIds]);
@@ -457,10 +482,6 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
   };
 
-  // ── Pull-to-refresh — was checking a ref div's scrollTop, but the
-  // page actually scrolls on window, so it could trigger from
-  // anywhere, not just the top of the feed. Fixed to check
-  // window.scrollY. ──────────────────────────────────────────────
   const handleTouchStart = (e) => {
     if (window.scrollY === 0) touchStartY.current = e.touches[0].clientY;
   };
@@ -482,7 +503,6 @@ export default function Home() {
     touchStartY.current = null;
   };
 
-  // ── Keyboard shortcut: 'r' refreshes when not typing in a field ──
   useEffect(() => {
     const onKeyDown = (e) => {
       const tag = document.activeElement?.tagName;

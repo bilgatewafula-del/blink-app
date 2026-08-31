@@ -1,35 +1,48 @@
 // public/service-worker.js
 // B-Link Service Worker — Network First strategy
-// Bump CACHE_NAME on every deployment to force cache invalidation
 
-const CACHE_NAME = 'blink-v2.1.1';
+const CACHE_NAME = 'blink-v2.1.2';
 const OFFLINE_FALLBACK = '/index.html';
 
-const PRECACHE = ['/', '/index.html', '/manifest.json'];
+const PRECACHE = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE))
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(PRECACHE))
   );
+
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((key) => caches.delete(key))
+        )
+      )
+      .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', (event) => {
-  // FIXED: never intercept non-GET requests — POST/PUT/DELETE can't be
-  // cached and were previously falling through to the cache-write logic.
-  if (event.request.method !== 'GET') return;
+  // Never intercept non-GET requests.
+  if (event.request.method !== 'GET') {
+    return;
+  }
 
   const url = new URL(event.request.url);
 
-  // Never intercept API/auth/realtime calls — always go to network
+  // Never intercept Supabase, Cloudinary, or API calls.
+  // Let the browser handle them directly.
   if (
     url.hostname.includes('supabase.co') ||
     url.hostname.includes('cloudinary.com') ||
@@ -37,30 +50,50 @@ self.addEventListener('fetch', (event) => {
     url.pathname.startsWith('/auth/') ||
     url.pathname.startsWith('/realtime/')
   ) {
-    event.respondWith(fetch(event.request));
     return;
   }
 
-  // HTML navigation — always network first
+  // HTML navigation — network first, cache fallback.
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
-        .then(res => {
-          caches.open(CACHE_NAME).then(c => c.put(event.request, res.clone()));
+        .then((res) => {
+          // IMPORTANT:
+          // Clone synchronously BEFORE returning the original response.
+          const cacheResponse = res.clone();
+
+          event.waitUntil(
+            caches.open(CACHE_NAME)
+              .then((cache) =>
+                cache.put(event.request, cacheResponse)
+              )
+          );
+
           return res;
         })
         .catch(() => caches.match(OFFLINE_FALLBACK))
     );
+
     return;
   }
 
-  // JS/CSS — network first, cache fallback
+  // JS/CSS/assets — network first, cache fallback.
   event.respondWith(
     fetch(event.request)
-      .then(res => {
-        if (res?.status === 200) {
-          caches.open(CACHE_NAME).then(c => c.put(event.request, res.clone()));
+      .then((res) => {
+        if (res && res.status === 200) {
+          // IMPORTANT:
+          // Clone synchronously while the response body is still unused.
+          const cacheResponse = res.clone();
+
+          event.waitUntil(
+            caches.open(CACHE_NAME)
+              .then((cache) =>
+                cache.put(event.request, cacheResponse)
+              )
+          );
         }
+
         return res;
       })
       .catch(() => caches.match(event.request))
@@ -68,8 +101,18 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('message', (event) => {
-  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+
   if (event.data?.type === 'CLEAR_CACHE') {
-    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
+    event.waitUntil(
+      caches.keys()
+        .then((keys) =>
+          Promise.all(
+            keys.map((key) => caches.delete(key))
+          )
+        )
+    );
   }
 });
