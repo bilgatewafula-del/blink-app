@@ -1,7 +1,7 @@
 // public/service-worker.js
 // B-Link Service Worker — Network First strategy
 
-const CACHE_NAME = 'blink-v2.1.2';
+const CACHE_NAME = 'blink-v2.2.0';
 const OFFLINE_FALLBACK = '/index.html';
 
 const PRECACHE = [
@@ -60,14 +60,16 @@ self.addEventListener('fetch', (event) => {
         .then((res) => {
           // IMPORTANT:
           // Clone synchronously BEFORE returning the original response.
-          const cacheResponse = res.clone();
+          if (res && res.status === 200) {
+            const cacheResponse = res.clone();
 
-          event.waitUntil(
-            caches.open(CACHE_NAME)
-              .then((cache) =>
-                cache.put(event.request, cacheResponse)
-              )
-          );
+            event.waitUntil(
+              caches.open(CACHE_NAME)
+                .then((cache) =>
+                  cache.put(event.request, cacheResponse)
+                )
+            );
+          }
 
           return res;
         })
@@ -78,12 +80,23 @@ self.addEventListener('fetch', (event) => {
   }
 
   // JS/CSS/assets — network first, cache fallback.
+  //
+  // Vercel rewrites every unknown path to /index.html with a 200. After a
+  // deploy, a stale page asking for an old hashed chunk would therefore get
+  // HTML back "successfully", and we would cache it as if it were JS —
+  // leaving the app stuck on a blank screen until site data is cleared.
+  // So: never cache or pass through an HTML response for a non-navigation
+  // request; answer 404 so the page's error handling can recover.
   event.respondWith(
     fetch(event.request)
       .then((res) => {
+        const type = (res && res.headers.get('content-type')) || '';
+
+        if (res && res.status === 200 && type.includes('text/html')) {
+          return new Response('', { status: 404, statusText: 'Not Found' });
+        }
+
         if (res && res.status === 200) {
-          // IMPORTANT:
-          // Clone synchronously while the response body is still unused.
           const cacheResponse = res.clone();
 
           event.waitUntil(

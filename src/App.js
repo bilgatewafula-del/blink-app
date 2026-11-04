@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AuthProvider, useAuth } from './context/AuthContext';
 import BottomNav from './components/BottomNav';
 import NetworkBanner from './components/NetworkBanner';
+import ErrorBoundary from './components/ErrorBoundary';
 
 /* ── Lazy pages — paths match REAL folder structure ── */
 const Login              = lazy(() => import('./pages/auth/Login'));
@@ -118,6 +119,7 @@ function AppShell() {
   return (
     <>
       <NetworkBanner />
+      <ErrorBoundary>
       <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Auth */}
@@ -160,6 +162,7 @@ function AppShell() {
           <Route path="*" element={<Navigate to={user ? '/' : '/login'} replace />} />
         </Routes>
       </Suspense>
+      </ErrorBoundary>
       {showNav && <BottomNav />}
     </>
   );

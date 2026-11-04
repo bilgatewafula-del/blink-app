@@ -41,7 +41,6 @@ export default function ImageViewer({ images, index = 0, onClose, onPrev, onNext
     >
       {/* Close */}
       <button
-        onClick={onClose}
         className="absolute top-4 right-4 z-10 w-10 h-10 bg-black/60 rounded-full flex items-center justify-center"
         onClick={e => { e.stopPropagation(); onClose(); }}
       >

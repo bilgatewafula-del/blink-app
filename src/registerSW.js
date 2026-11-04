@@ -22,6 +22,12 @@ export function registerServiceWorker() {
       registration.update();
       setInterval(() => registration.update(), 60000);
 
+      // Timers freeze while an installed PWA is suspended in the background.
+      // Re-check for a new version every time the app is brought back.
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') registration.update();
+      });
+
       registration.addEventListener('updatefound', () => {
         const newWorker = registration.installing;
         if (!newWorker) return;
