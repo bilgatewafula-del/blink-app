@@ -431,7 +431,7 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
         <div className="flex items-center gap-2">
           {story.users?.avatar_url
             ? <img src={story.users.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover border-2 border-white/50" />
-            : <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-sm border-2 border-white/50">
+            : <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold text-sm border-2 border-white/50">
                 {story.users?.display_name?.[0]?.toUpperCase()}
               </div>
           }
@@ -548,33 +548,33 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
 
       {showViewers && isOwner && (
         <div className="absolute inset-0 z-30 bg-black/80 flex flex-col" onClick={() => { setShowViewers(false); resumeStory(); }}>
-          <div className="absolute bottom-0 left-0 right-0 bg-[#0d1f3c] rounded-t-3xl max-h-[60vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="absolute bottom-0 left-0 right-0 bg-[#171614] rounded-t-3xl max-h-[60vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-white/10">
               <div>
                 <p className="text-white font-bold">Viewed by</p>
-                <p className="text-[#6B7280] text-sm">{formatNumber(viewCount)} view{viewCount !== 1 ? 's':''}</p>
+                <p className="text-[#8E8C88] text-sm">{formatNumber(viewCount)} view{viewCount !== 1 ? 's':''}</p>
               </div>
-              <button onClick={() => { setShowViewers(false); resumeStory(); }} aria-label="Close" className="text-[#6B7280] hover:text-white">
+              <button onClick={() => { setShowViewers(false); resumeStory(); }} aria-label="Close" className="text-[#8E8C88] hover:text-white">
                 <X size={20} />
               </button>
             </div>
             {viewers.length === 0 ? (
               <div className="text-center py-10">
                 <p className="text-3xl mb-2">👁️</p>
-                <p className="text-[#6B7280] text-sm">No views yet</p>
+                <p className="text-[#8E8C88] text-sm">No views yet</p>
               </div>
             ) : (
               viewers.map((v, i) => (
                 <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.05]">
                   {v.user?.avatar_url
                     ? <img src={v.user.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
-                    : <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold flex-shrink-0">{v.user?.display_name?.[0]?.toUpperCase()}</div>
+                    : <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold flex-shrink-0">{v.user?.display_name?.[0]?.toUpperCase()}</div>
                   }
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-bold text-[14px]">{v.user?.display_name}</p>
-                    <p className="text-[#6B7280] text-[12px]">@{v.user?.username}</p>
+                    <p className="text-[#8E8C88] text-[12px]">@{v.user?.username}</p>
                   </div>
-                  <p className="text-[#6B7280] text-[11px] flex-shrink-0">
+                  <p className="text-[#8E8C88] text-[11px] flex-shrink-0">
                     {new Date(v.viewed_at).toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'})}
                   </p>
                 </div>
@@ -624,7 +624,7 @@ export function StoryViewer({ stories, startIndex = 0, onClose }) {
                     onClick={sendReply}
                     disabled={sending}
                     aria-label="Send reply"
-                    className="w-7 h-7 rounded-full bg-[#1E6FFF] flex items-center justify-center flex-shrink-0 disabled:opacity-60"
+                    className="w-7 h-7 rounded-full bg-[#FF5A1F] flex items-center justify-center flex-shrink-0 disabled:opacity-60"
                   >
                     {sending
                       ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -673,18 +673,18 @@ function StoryRing({ storyGroup, onPress, onAddPress, isOwn, hasUnviewed, hasSto
       <button onClick={onPress} aria-label={isOwn ? 'Your status' : `${u?.display_name}'s status`} className="relative">
         <div className={`w-14 h-14 rounded-full p-[2px] ${
           hasUnviewed
-            ? 'bg-gradient-to-tr from-[#FFD700] via-[#FF6B35] to-[#7B2FFF]'
+            ? 'bg-gradient-to-tr from-[#FFD700] via-[#FF6B35] to-[#FF2D78]'
             : 'bg-white/20'
         }`}>
-          <div className="w-full h-full rounded-full overflow-hidden bg-[#0A1628] p-[2px]">
+          <div className="w-full h-full rounded-full overflow-hidden bg-[#0D0C0B] p-[2px]">
             {isOwn && !hasStories ? (
-              <div className="w-full h-full rounded-full bg-[#1E6FFF]/20 flex items-center justify-center border-2 border-dashed border-[#1E6FFF]/60">
-                <Plus size={20} className="text-[#1E6FFF]" />
+              <div className="w-full h-full rounded-full bg-[#FF5A1F]/20 flex items-center justify-center border-2 border-dashed border-[#FF5A1F]/60">
+                <Plus size={20} className="text-[#FF5A1F]" />
               </div>
             ) : u?.avatar_url ? (
               <img src={u.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
             ) : (
-              <div className="w-full h-full rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-lg">
+              <div className="w-full h-full rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold text-lg">
                 {u?.display_name?.[0]?.toUpperCase()}
               </div>
             )}
@@ -700,7 +700,7 @@ function StoryRing({ storyGroup, onPress, onAddPress, isOwn, hasUnviewed, hasSto
             onClick={e => { e.stopPropagation(); onAddPress(); }}
             role="button"
             aria-label="Add another status"
-            className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-[#1E6FFF] border-2 border-[#0A1628] flex items-center justify-center"
+            className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-[#FF5A1F] border-2 border-[#0D0C0B] flex items-center justify-center"
           >
             <Plus size={11} color="white" strokeWidth={3} />
           </span>
@@ -806,21 +806,21 @@ export function StoryCreator({ onClose, onCreated }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex items-end justify-center" onClick={onClose}>
-      <div className="w-full max-w-[620px] bg-[#0d1f3c] rounded-t-3xl p-5 pb-8" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-[620px] bg-[#171614] rounded-t-3xl p-5 pb-8" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-white font-bold text-base">Add Status</h3>
-          <button onClick={onClose} aria-label="Close" className="text-[#6B7280] hover:text-white"><X size={20} /></button>
+          <button onClick={onClose} aria-label="Close" className="text-[#8E8C88] hover:text-white"><X size={20} /></button>
         </div>
 
         {!preview ? (
           <div>
             <button
               onClick={() => fileRef.current?.click()}
-              className="w-full border-2 border-dashed border-white/20 rounded-2xl py-12 flex flex-col items-center gap-3 hover:border-[#1E6FFF]/50 transition-colors"
+              className="w-full border-2 border-dashed border-white/20 rounded-2xl py-12 flex flex-col items-center gap-3 hover:border-[#FF5A1F]/50 transition-colors"
             >
               <span className="text-5xl">📷</span>
               <p className="text-white font-bold">Tap to choose photo or video</p>
-              <p className="text-[#6B7280] text-sm">Disappears after 24 hours</p>
+              <p className="text-[#8E8C88] text-sm">Disappears after 24 hours</p>
             </button>
             <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleFile} />
             {error && <p className="text-red-400 text-sm mt-3 text-center">{error}</p>}
@@ -849,10 +849,10 @@ export function StoryCreator({ onClose, onCreated }) {
               onChange={e => setCaption(e.target.value.slice(0, CAPTION_LIMIT))}
               placeholder="Add a caption... (optional)"
               maxLength={CAPTION_LIMIT}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-[#6B7280] focus:outline-none mb-1.5"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-[#8E8C88] focus:outline-none mb-1.5"
             />
             <div className="flex justify-end mb-3">
-              <span className="text-[#6B7280] text-[11px]">{caption.length}/{CAPTION_LIMIT}</span>
+              <span className="text-[#8E8C88] text-[11px]">{caption.length}/{CAPTION_LIMIT}</span>
             </div>
 
             {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
@@ -861,7 +861,7 @@ export function StoryCreator({ onClose, onCreated }) {
               onClick={handleUpload}
               disabled={uploading}
               className="w-full py-3.5 rounded-2xl font-bold text-white text-sm disabled:opacity-50 flex items-center justify-center gap-2"
-              style={{ background:'linear-gradient(135deg, #1E6FFF, #7B2FFF)' }}
+              style={{ background:'linear-gradient(135deg, #FF5A1F, #FF2D78)' }}
             >
               {uploading
                 ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {compressing ? 'Optimising...' : 'Uploading...'}</>

@@ -8,8 +8,8 @@ class EmojiErrorBoundary extends Component {
     if (this.state.crashed)
       return (
         <div style={{
-          background: '#111827', borderRadius: 16, padding: '16px 20px',
-          color: '#6B7280', fontSize: 13, border: '1px solid rgba(255,255,255,0.1)',
+          background: '#1d1c1a', borderRadius: 16, padding: '16px 20px',
+          color: '#8E8C88', fontSize: 13, border: '1px solid rgba(255,255,255,0.1)',
         }}>
           Emoji picker failed to load. You can type emoji directly 😊
         </div>
@@ -31,11 +31,11 @@ function LazyPicker(props) {
       .catch(() => setErr(true));
   }, []);
 
-  if (err)  return <div style={{ padding: '12px 16px', color: '#6B7280', fontSize: 13 }}>Emoji picker unavailable.</div>;
+  if (err)  return <div style={{ padding: '12px 16px', color: '#8E8C88', fontSize: 13 }}>Emoji picker unavailable.</div>;
   if (!Comp) return (
     <div style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: 8 }}>
-      <div style={{ width: 16, height: 16, border: '2px solid #1E6FFF', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-      <span style={{ color: '#6B7280', fontSize: 12 }}>Loading emojis…</span>
+      <div style={{ width: 16, height: 16, border: '2px solid #FF5A1F', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <span style={{ color: '#8E8C88', fontSize: 12 }}>Loading emojis…</span>
     </div>
   );
   return <Comp {...props} />;
@@ -134,7 +134,7 @@ export default function SmartEmojiPicker({
           style={{
             position: 'fixed', bottom: 0, left: 0, right: 0,
             zIndex: 999,
-            background: '#111827',
+            background: '#1d1c1a',
             borderTop: '1px solid rgba(255,255,255,0.1)',
             borderRadius: '20px 20px 0 0',
             overflow: 'hidden',

@@ -17,21 +17,21 @@ const TYPE_CONFIG = {
   like:         { emoji:'❤️',  color:'#EF4444', tab:'activity' },
   haha:         { emoji:'😂',  color:'#FFD700', tab:'activity' },
   wow:          { emoji:'😮',  color:'#FF6B35', tab:'activity' },
-  sad:          { emoji:'😢',  color:'#6B7280', tab:'activity' },
+  sad:          { emoji:'😢',  color:'#8E8C88', tab:'activity' },
   angry:        { emoji:'😡',  color:'#EF4444', tab:'activity' },
   fire:         { emoji:'🔥',  color:'#FF6B35', tab:'activity' },
-  comment:      { emoji:'💬',  color:'#1E6FFF', tab:'activity' },
-  reply:        { emoji:'↩️',  color:'#1E6FFF', tab:'activity' },
+  comment:      { emoji:'💬',  color:'#FF5A1F', tab:'activity' },
+  reply:        { emoji:'↩️',  color:'#FF5A1F', tab:'activity' },
   mention:      { emoji:'🏷️',  color:'#FF6B35', tab:'social'   },
-  follow:       { emoji:'👥',  color:'#7B2FFF', tab:'social'   },
-  follow_request:{ emoji:'👤', color:'#7B2FFF', tab:'social'   },
+  follow:       { emoji:'👥',  color:'#FF2D78', tab:'social'   },
+  follow_request:{ emoji:'👤', color:'#FF2D78', tab:'social'   },
   repost:       { emoji:'🔁',  color:'#2ECC71', tab:'activity' },
   quote:        { emoji:'📝',  color:'#2ECC71', tab:'activity' },
-  share:        { emoji:'📤',  color:'#00D4C8', tab:'activity' },
-  message:      { emoji:'📨',  color:'#1E6FFF', tab:'messages' },
+  share:        { emoji:'📤',  color:'#FFB020', tab:'activity' },
+  message:      { emoji:'📨',  color:'#FF5A1F', tab:'messages' },
   admin_action: { emoji:'🛡️',  color:'#EF4444', tab:'system'   },
   announcement: { emoji:'📢',  color:'#FFD700', tab:'system'   },
-  system:       { emoji:'⚙️',  color:'#6B7280', tab:'system'   },
+  system:       { emoji:'⚙️',  color:'#8E8C88', tab:'system'   },
   milestone:    { emoji:'🔥',  color:'#FFD700', tab:'activity' },
   achievement:  { emoji:'🏆',  color:'#FFD700', tab:'activity' },
   warning:      { emoji:'⚠️',  color:'#FF6B35', tab:'system'   },
@@ -98,11 +98,11 @@ function buildText(n) {
 /* ── Announcement type icon ────────────────────── */
 function AnnouncementIcon({ type, size = 20 }) {
   const icons = {
-    info:        <Info size={size} color="#1E6FFF" />,
+    info:        <Info size={size} color="#FF5A1F" />,
     warning:     <AlertTriangle size={size} color="#FF6B35" />,
     update:      <Zap size={size} color="#2ECC71" />,
     promo:       <Gift size={size} color="#FFD700" />,
-    maintenance: <Wrench size={size} color="#6B7280" />,
+    maintenance: <Wrench size={size} color="#8E8C88" />,
   };
   return icons[type] || <Megaphone size={size} color="#FFD700" />;
 }
@@ -120,11 +120,11 @@ function SendAnnouncementModal({ onClose, onSent }) {
   const [error,   setError]   = useState('');
 
   const TYPES = [
-    { key:'info',        label:'ℹ️ Info',         color:'#1E6FFF' },
+    { key:'info',        label:'ℹ️ Info',         color:'#FF5A1F' },
     { key:'update',      label:'⚡ Update',        color:'#2ECC71' },
     { key:'warning',     label:'⚠️ Warning',       color:'#FF6B35' },
     { key:'promo',       label:'🎁 Promotion',     color:'#FFD700' },
-    { key:'maintenance', label:'🔧 Maintenance',   color:'#6B7280' },
+    { key:'maintenance', label:'🔧 Maintenance',   color:'#8E8C88' },
   ];
 
   const ICONS = ['📢','🚀','⚡','🎉','🔥','💎','🛡️','✨','🌍','🏆','📱','💬'];
@@ -185,7 +185,7 @@ function SendAnnouncementModal({ onClose, onSent }) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[620px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl p-5 pb-8 max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5 pb-8 max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -196,10 +196,10 @@ function SendAnnouncementModal({ onClose, onSent }) {
             </div>
             <div>
               <p className="text-white font-bold">Broadcast Announcement</p>
-              <p className="text-[#6B7280] text-xs">Notify all users instantly</p>
+              <p className="text-[#8E8C88] text-xs">Notify all users instantly</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-[#6B7280] hover:text-white">
+          <button onClick={onClose} className="text-[#8E8C88] hover:text-white">
             <X size={20} />
           </button>
         </div>
@@ -212,7 +212,7 @@ function SendAnnouncementModal({ onClose, onSent }) {
               key={t.key}
               onClick={() => setType(t.key)}
               className={'px-3 py-1.5 rounded-full text-xs font-bold border transition-all ' +
-                (type === t.key ? 'text-white' : 'text-[#6B7280] border-white/10 hover:border-white/20')}
+                (type === t.key ? 'text-white' : 'text-[#8E8C88] border-white/10 hover:border-white/20')}
               style={type === t.key ? { background: t.color + '30', borderColor: t.color + '60', color: t.color } : {}}
             >
               {t.label}
@@ -243,7 +243,7 @@ function SendAnnouncementModal({ onClose, onSent }) {
           onChange={e => setTitle(e.target.value)}
           placeholder="e.g. New Feature Available!"
           maxLength={80}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/50 mb-4"
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/50 mb-4"
         />
 
         {/* Message */}
@@ -254,10 +254,10 @@ function SendAnnouncementModal({ onClose, onSent }) {
           placeholder="Write your announcement here..."
           maxLength={500}
           rows={4}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/50 resize-none mb-1"
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/50 resize-none mb-1"
         />
         <div className="flex justify-end mb-4">
-          <span className={`text-xs ${body.length > 450 ? 'text-orange-400' : 'text-[#6B7280]'}`}>{body.length}/500</span>
+          <span className={`text-xs ${body.length > 450 ? 'text-orange-400' : 'text-[#8E8C88]'}`}>{body.length}/500</span>
         </div>
 
         {/* Optional action button */}
@@ -269,7 +269,7 @@ function SendAnnouncementModal({ onClose, onSent }) {
             onChange={e => setActionLabel(e.target.value)}
             placeholder="Button label"
             maxLength={30}
-            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm placeholder-[#6B7280] focus:outline-none"
+            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm placeholder-[#8E8C88] focus:outline-none"
           />
           <input
             type="text"
@@ -277,7 +277,7 @@ function SendAnnouncementModal({ onClose, onSent }) {
             onChange={e => setActionUrl(e.target.value)}
             placeholder="Link or /page"
             maxLength={100}
-            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm placeholder-[#6B7280] focus:outline-none"
+            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm placeholder-[#8E8C88] focus:outline-none"
           />
         </div>
 
@@ -489,7 +489,7 @@ export default function Notifications() {
   const grouped = groupByDate(notifs);
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-24">
+    <div className="min-h-screen bg-[#0D0C0B] pb-24">
 
       {/* Broadcast modal */}
       {showBroadcast && (
@@ -500,13 +500,13 @@ export default function Notifications() {
       )}
 
       {/* ── TOP BAR ── */}
-      <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07]">
+      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07]">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <div className="relative">
               <Bell size={22} className="text-white" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-[#1E6FFF] rounded-full text-[9px] text-white flex items-center justify-center font-bold px-0.5">
+                <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-[#FF5A1F] rounded-full text-[9px] text-white flex items-center justify-center font-bold px-0.5">
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
@@ -528,7 +528,7 @@ export default function Notifications() {
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
-                className="flex items-center gap-1 text-[#1E6FFF] text-xs font-semibold"
+                className="flex items-center gap-1 text-[#FF5A1F] text-xs font-semibold"
               >
                 <CheckCheck size={14} /> All read
               </button>
@@ -543,11 +543,11 @@ export default function Notifications() {
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={'flex-shrink-0 px-3 py-2.5 text-[13px] font-semibold relative transition-all ' +
-                (activeTab === tab.key ? 'text-white' : 'text-[#6B7280] hover:text-white/70')}
+                (activeTab === tab.key ? 'text-white' : 'text-[#8E8C88] hover:text-white/70')}
             >
               {tab.label}
               {activeTab === tab.key && (
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-[#1E6FFF] rounded-full" style={{ width:'70%' }} />
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-[#FF5A1F] rounded-full" style={{ width:'70%' }} />
               )}
             </button>
           ))}
@@ -565,15 +565,15 @@ export default function Notifications() {
                 className="border rounded-2xl p-4"
                 style={{
                   background: ann.type === 'warning'     ? 'rgba(255,107,53,0.07)' :
-                               ann.type === 'maintenance' ? 'rgba(107,114,128,0.07)' :
+                               ann.type === 'maintenance' ? 'rgba(138,138,148,0.07)' :
                                ann.type === 'promo'       ? 'rgba(255,215,0,0.07)' :
                                ann.type === 'update'      ? 'rgba(46,204,113,0.07)' :
-                               'rgba(30,111,255,0.07)',
+                               'rgba(255,90,31,0.07)',
                   borderColor: ann.type === 'warning'     ? 'rgba(255,107,53,0.25)' :
-                               ann.type === 'maintenance' ? 'rgba(107,114,128,0.25)' :
+                               ann.type === 'maintenance' ? 'rgba(138,138,148,0.25)' :
                                ann.type === 'promo'       ? 'rgba(255,215,0,0.25)' :
                                ann.type === 'update'      ? 'rgba(46,204,113,0.25)' :
-                               'rgba(30,111,255,0.25)',
+                               'rgba(255,90,31,0.25)',
                 }}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -585,10 +585,10 @@ export default function Notifications() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className="text-[10px] font-bold uppercase tracking-wider"
-                          style={{ color: ann.type === 'warning' ? '#FF6B35' : ann.type === 'promo' ? '#FFD700' : ann.type === 'update' ? '#2ECC71' : '#1E6FFF' }}>
+                          style={{ color: ann.type === 'warning' ? '#FF6B35' : ann.type === 'promo' ? '#FFD700' : ann.type === 'update' ? '#2ECC71' : '#FF5A1F' }}>
                           📢 B-Link
                         </span>
-                        <span className="text-[#6B7280] text-[10px]">{formatTime(ann.created_at)}</span>
+                        <span className="text-[#8E8C88] text-[10px]">{formatTime(ann.created_at)}</span>
                       </div>
                       <p className="text-white font-bold text-[14px]">{ann.title}</p>
                       <p className="text-white/70 text-[13px] mt-0.5 leading-snug">{ann.body}</p>
@@ -596,7 +596,7 @@ export default function Notifications() {
                         <button
                           onClick={() => { navigate(ann.action_url); dismissAnnouncement(ann.id); }}
                           className="mt-2 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1"
-                          style={{ background: 'rgba(30,111,255,0.2)', color: '#1E6FFF', border: '1px solid rgba(30,111,255,0.3)' }}
+                          style={{ background: 'rgba(255,90,31,0.2)', color: '#FF5A1F', border: '1px solid rgba(255,90,31,0.3)' }}
                         >
                           {ann.action_label} <ChevronRight size={11} />
                         </button>
@@ -605,7 +605,7 @@ export default function Notifications() {
                   </div>
                   <button
                     onClick={() => dismissAnnouncement(ann.id)}
-                    className="text-[#6B7280] hover:text-white flex-shrink-0 p-1"
+                    className="text-[#8E8C88] hover:text-white flex-shrink-0 p-1"
                   >
                     <X size={16} />
                   </button>
@@ -617,19 +617,19 @@ export default function Notifications() {
 
         {/* ── TODAY'S ACTIVITY SUMMARY ── */}
         {hasTodayActivity && activeTab === 'all' && (
-          <div className="bg-gradient-to-r from-[#1E6FFF]/10 to-[#7B2FFF]/10 border border-[#1E6FFF]/20 rounded-2xl p-4">
+          <div className="bg-gradient-to-r from-[#FF5A1F]/10 to-[#FF2D78]/10 border border-[#FF5A1F]/20 rounded-2xl p-4">
             <p className="text-white font-bold text-sm mb-3">📊 Today's Activity</p>
             <div className="grid grid-cols-4 gap-2">
               {[
                 { label:'Reactions', value:todayStats.reactions, emoji:'❤️', color:'#EF4444' },
-                { label:'Comments',  value:todayStats.comments,  emoji:'💬', color:'#1E6FFF' },
-                { label:'Followers', value:todayStats.followers, emoji:'👥', color:'#7B2FFF' },
-                { label:'Messages',  value:todayStats.messages,  emoji:'📨', color:'#00D4C8' },
+                { label:'Comments',  value:todayStats.comments,  emoji:'💬', color:'#FF5A1F' },
+                { label:'Followers', value:todayStats.followers, emoji:'👥', color:'#FF2D78' },
+                { label:'Messages',  value:todayStats.messages,  emoji:'📨', color:'#FFB020' },
               ].map(s => (
                 <div key={s.label} className="text-center bg-white/[0.04] rounded-xl py-2.5 px-1">
                   <p className="text-lg leading-none mb-1">{s.emoji}</p>
                   <p className="text-white font-bold text-sm leading-none">{formatNumber(s.value)}</p>
-                  <p className="text-[#6B7280] text-[10px] mt-0.5">{s.label}</p>
+                  <p className="text-[#8E8C88] text-[10px] mt-0.5">{s.label}</p>
                 </div>
               ))}
             </div>
@@ -639,13 +639,13 @@ export default function Notifications() {
         {/* ── NOTIFICATIONS LIST ── */}
         {loading ? (
           <div className="flex justify-center py-16">
-            <div className="w-7 h-7 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" />
+            <div className="w-7 h-7 border-2 border-[#FF5A1F] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : notifs.length === 0 && announcements.length === 0 ? (
           <div className="text-center py-20 px-6">
             <p className="text-6xl mb-3">🔔</p>
             <p className="text-white font-bold text-lg">No notifications yet</p>
-            <p className="text-[#6B7280] text-sm mt-1">
+            <p className="text-[#8E8C88] text-sm mt-1">
               When people interact with you, you'll see it here.
             </p>
           </div>
@@ -654,7 +654,7 @@ export default function Notifications() {
             if (!items.length) return null;
             return (
               <div key={dateLabel}>
-                <p className="text-[#6B7280] text-xs font-bold uppercase tracking-wider mb-2 mt-2">
+                <p className="text-[#8E8C88] text-xs font-bold uppercase tracking-wider mb-2 mt-2">
                   {dateLabel}
                 </p>
                 <div className="space-y-1">
@@ -671,7 +671,7 @@ export default function Notifications() {
                         key={n.id}
                         onClick={() => handleTapNotif(n)}
                         className={'w-full flex items-start gap-3 px-3 py-3 rounded-2xl transition-all hover:bg-white/[0.04] text-left ' +
-                          (!n.is_read ? 'bg-[#1E6FFF]/[0.06] border border-[#1E6FFF]/[0.12]' : '')}
+                          (!n.is_read ? 'bg-[#FF5A1F]/[0.06] border border-[#FF5A1F]/[0.12]' : '')}
                       >
                         {/* Avatar / Icon area */}
                         <div className="relative flex-shrink-0">
@@ -687,19 +687,19 @@ export default function Notifications() {
                               {/* Primary avatar */}
                               {actors[0]
                                 ? <img src={actors[0]} alt="" className="w-11 h-11 rounded-full object-cover" />
-                                : <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold">
+                                : <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold">
                                     {names[0]?.[0]?.toUpperCase() || '?'}
                                   </div>
                               }
                               {/* Second actor (stacked) */}
                               {actors[1] && (
-                                <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-[#0A1628] overflow-hidden">
+                                <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-[#0D0C0B] overflow-hidden">
                                   <img src={actors[1]} alt="" className="w-full h-full object-cover" />
                                 </div>
                               )}
                               {/* Type badge */}
                               <div
-                                className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] border-2 border-[#0A1628]"
+                                className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] border-2 border-[#0D0C0B]"
                                 style={{ background: cfg.color }}
                               >
                                 {cfg.emoji}
@@ -726,20 +726,20 @@ export default function Notifications() {
 
                           {/* Preview text (comment body, message snippet) */}
                           {n.preview_text && (
-                            <p className="text-[#6B7280] text-[12px] mt-0.5 line-clamp-1">
+                            <p className="text-[#8E8C88] text-[12px] mt-0.5 line-clamp-1">
                               "{n.preview_text}"
                             </p>
                           )}
 
                           {/* Time */}
-                          <p className="text-[#6B7280] text-[11px] mt-1">{formatTime(n.created_at)}</p>
+                          <p className="text-[#8E8C88] text-[11px] mt-1">{formatTime(n.created_at)}</p>
                         </div>
 
                         {/* Right side */}
                         <div className="flex flex-col items-end gap-2 flex-shrink-0">
                           {/* Unread dot */}
                           {!n.is_read && (
-                            <div className="w-2.5 h-2.5 rounded-full bg-[#1E6FFF] shadow-sm shadow-[#1E6FFF]/60" />
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#FF5A1F] shadow-sm shadow-[#FF5A1F]/60" />
                           )}
 
                           {/* Post thumbnail */}
@@ -756,7 +756,7 @@ export default function Notifications() {
                             <button
                               onClick={e => handleFollowBack(e, n.from_user?.id)}
                               className="text-xs font-bold px-3 py-1.5 rounded-full transition-all"
-                              style={{ background: 'linear-gradient(135deg, #1E6FFF, #7B2FFF)', color: 'white' }}
+                              style={{ background: 'linear-gradient(135deg, #FF5A1F, #FF2D78)', color: 'white' }}
                             >
                               Follow Back
                             </button>

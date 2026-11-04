@@ -10,7 +10,7 @@ export const MPESA = {
 // Subscription plans
 export const PLANS = {
   free: {
-    key: 'free', label: 'Free', price: 0, color: '#6B7280', badge: null,
+    key: 'free', label: 'Free', price: 0, color: '#8E8C88', badge: null,
     features: [
       '10 posts per day',
       '15s story duration',
@@ -19,7 +19,7 @@ export const PLANS = {
     ],
   },
   pro: {
-    key: 'pro', label: 'Pro', price: 299, color: '#1E6FFF', badge: '⭐',
+    key: 'pro', label: 'Pro', price: 299, color: '#FF5A1F', badge: '⭐',
     features: [
       '20 posts per day',
       '30s story duration',

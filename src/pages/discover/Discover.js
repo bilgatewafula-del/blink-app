@@ -87,7 +87,7 @@ function PeopleCard({ u, currentUserId }) {
       <div className="relative flex-shrink-0" onClick={goToProfile}>
         {u.avatar_url
           ? <img src={u.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover" />
-          : <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-lg">
+          : <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold text-lg">
               {u.display_name?.[0]?.toUpperCase()}
             </div>
         }
@@ -100,9 +100,9 @@ function PeopleCard({ u, currentUserId }) {
           <p className="text-white font-bold text-[14px] truncate max-w-[150px]">{u.display_name}</p>
           {u.is_verified && <VerifiedBadge size={15} />}
         </div>
-        <p className="text-[#6B7280] text-[12px]">@{u.username}</p>
+        <p className="text-[#8E8C88] text-[12px]">@{u.username}</p>
         {u.bio && <p className="text-white/40 text-[11px] mt-0.5 truncate">{u.bio}</p>}
-        <p className="text-[#6B7280] text-[11px] mt-0.5">
+        <p className="text-[#8E8C88] text-[11px] mt-0.5">
           <span className="text-white/60 font-semibold">{formatNumber(u.followers_count||0)}</span> followers ·{' '}
           <span className="text-white/60 font-semibold">{formatNumber(u.posts_count||0)}</span> posts
         </p>
@@ -115,7 +115,7 @@ function PeopleCard({ u, currentUserId }) {
           className={'flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all flex-shrink-0 ' +
             (following
               ? 'bg-white/[0.08] text-white border border-white/20 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30'
-              : 'bg-[#1E6FFF] text-white hover:bg-[#1565cc] shadow-md shadow-[#1E6FFF]/30')}
+              : 'bg-[#FF5A1F] text-white hover:bg-[#d9480f] shadow-md shadow-[#FF5A1F]/30')}
         >
           {fLoading
             ? <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -136,17 +136,17 @@ function HashtagRow({ tag, count, rank }) {
     >
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ background: rank <= 3 ? 'rgba(255,107,53,0.15)' : 'rgba(30,111,255,0.10)' }}>
+          style={{ background: rank <= 3 ? 'rgba(255,107,53,0.15)' : 'rgba(255,90,31,0.10)' }}>
           {rank <= 3
             ? <span className="font-black text-sm" style={{ color:'#FF6B35' }}>#{rank}</span>
-            : <Hash size={16} className="text-[#1E6FFF]" />}
+            : <Hash size={16} className="text-[#FF5A1F]" />}
         </div>
         <div>
           <p className="text-white font-bold text-[14px]">#{tag}</p>
-          <p className="text-[#6B7280] text-[12px]">{formatNumber(count)} posts</p>
+          <p className="text-[#8E8C88] text-[12px]">{formatNumber(count)} posts</p>
         </div>
       </div>
-      <ChevronRight size={16} className="text-[#6B7280] group-hover:text-white transition-colors" />
+      <ChevronRight size={16} className="text-[#8E8C88] group-hover:text-white transition-colors" />
     </button>
   );
 }
@@ -291,17 +291,17 @@ export default function Discover() {
   const isSearching = search.trim().length > 0;
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-20">
+    <div className="min-h-screen bg-[#0D0C0B] pb-20">
 
       {/* Top bar */}
-      <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07]">
+      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07]">
         <div className="px-4 py-3">
           <div className="flex items-center gap-3 bg-white/[0.07] border border-white/10 rounded-2xl px-4 py-2.5">
-            <Search size={16} className="text-[#6B7280] flex-shrink-0" />
+            <Search size={16} className="text-[#8E8C88] flex-shrink-0" />
             <input type="text" value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search posts, people, hashtags..."
-              className="flex-1 bg-transparent text-white text-[15px] placeholder-[#6B7280] focus:outline-none" />
-            {search && <button onClick={() => setSearch('')} className="text-[#6B7280] hover:text-white flex-shrink-0"><X size={16} /></button>}
+              className="flex-1 bg-transparent text-white text-[15px] placeholder-[#8E8C88] focus:outline-none" />
+            {search && <button onClick={() => setSearch('')} className="text-[#8E8C88] hover:text-white flex-shrink-0"><X size={16} /></button>}
           </div>
         </div>
 
@@ -310,9 +310,9 @@ export default function Discover() {
             {TABS.map(tab => (
               <button key={tab.key} onClick={() => setMainTab(tab.key)}
                 className={'flex-shrink-0 px-3 py-2.5 text-[13px] font-semibold relative transition-all ' +
-                  (mainTab === tab.key ? 'text-white' : 'text-[#6B7280] hover:text-white/70')}>
+                  (mainTab === tab.key ? 'text-white' : 'text-[#8E8C88] hover:text-white/70')}>
                 {tab.label}
-                {mainTab === tab.key && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-[#1E6FFF] rounded-full" style={{width:'70%'}} />}
+                {mainTab === tab.key && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-[#FF5A1F] rounded-full" style={{width:'70%'}} />}
               </button>
             ))}
           </div>
@@ -323,27 +323,27 @@ export default function Discover() {
       {isSearching && (
         searching ? (
           <div className="flex justify-center py-12">
-            <div className="w-6 h-6 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-[#FF5A1F] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <>
             {results.users.length > 0 && (
               <div>
-                <p className="text-[#6B7280] text-[11px] font-bold uppercase tracking-wider px-4 pt-4 pb-2">People</p>
+                <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-wider px-4 pt-4 pb-2">People</p>
                 {results.users.map(u => (
                   // CRITICAL FIX: navigate to u.username (searched user), NOT current user
                   <div key={u.id} className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.05] hover:bg-white/[0.025] cursor-pointer"
                     onClick={() => navigate('/profile/' + u.username)}>
                     {u.avatar_url
                       ? <img src={u.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
-                      : <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold flex-shrink-0">{u.display_name?.[0]?.toUpperCase()}</div>
+                      : <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold flex-shrink-0">{u.display_name?.[0]?.toUpperCase()}</div>
                     }
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <p className="text-white font-bold text-[14px] truncate">{u.display_name}</p>
                         {u.is_verified && <VerifiedBadge size={15} />}
                       </div>
-                      <p className="text-[#6B7280] text-[12px]">@{u.username} · {formatNumber(u.followers_count||0)} followers</p>
+                      <p className="text-[#8E8C88] text-[12px]">@{u.username} · {formatNumber(u.followers_count||0)} followers</p>
                     </div>
                   </div>
                 ))}
@@ -352,14 +352,14 @@ export default function Discover() {
 
             {results.hashtags.length > 0 && (
               <div>
-                <p className="text-[#6B7280] text-[11px] font-bold uppercase tracking-wider px-4 pt-4 pb-2">Hashtags</p>
+                <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-wider px-4 pt-4 pb-2">Hashtags</p>
                 {results.hashtags.map((h,i) => <HashtagRow key={h.tag} tag={h.tag} count={h.count} rank={i+1} />)}
               </div>
             )}
 
             {results.posts.length > 0 && (
               <div>
-                <p className="text-[#6B7280] text-[11px] font-bold uppercase tracking-wider px-4 pt-4 pb-2">Posts</p>
+                <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-wider px-4 pt-4 pb-2">Posts</p>
                 {results.posts.map(post => <PostCard key={post.id} post={post} currentUser={user} />)}
               </div>
             )}
@@ -368,7 +368,7 @@ export default function Discover() {
               <div className="text-center py-20 px-6">
                 <p className="text-5xl mb-3">🔍</p>
                 <p className="text-white font-bold text-lg">No results for "{search}"</p>
-                <p className="text-[#6B7280] text-sm mt-1">Try a different term</p>
+                <p className="text-[#8E8C88] text-sm mt-1">Try a different term</p>
               </div>
             )}
           </>
@@ -391,7 +391,7 @@ export default function Discover() {
 
           {mainTab === 'hashtags' && (
             <div>
-              <p className="text-[#6B7280] text-[11px] font-bold uppercase tracking-wider px-4 pt-4 pb-2">Trending Hashtags</p>
+              <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-wider px-4 pt-4 pb-2">Trending Hashtags</p>
               {loading
                 ? Array(8).fill(0).map((_,i) => (
                     <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.05] animate-pulse">
@@ -415,7 +415,7 @@ export default function Discover() {
                 <div className="mx-4 mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
                   <p className="text-red-400 text-sm font-semibold">Could not load posts</p>
                   <p className="text-red-300/70 text-xs mt-1">{fetchError}</p>
-                  <button onClick={() => fetchPosts(mainTab,0,true)} className="mt-2 text-xs font-bold text-[#1E6FFF]">Try again</button>
+                  <button onClick={() => fetchPosts(mainTab,0,true)} className="mt-2 text-xs font-bold text-[#FF5A1F]">Try again</button>
                 </div>
               )}
               {loading
@@ -426,7 +426,7 @@ export default function Discover() {
                       <p className="text-5xl mb-3">{mainTab==='trending'?'🔥':'✨'}</p>
                       <p className="text-white font-bold text-lg">No posts yet</p>
                       <div className="flex justify-center gap-3 mt-4">
-                        <button onClick={() => navigate('/create')} className="bg-[#1E6FFF] text-white px-5 py-2.5 rounded-full font-bold text-sm">Create post</button>
+                        <button onClick={() => navigate('/create')} className="bg-[#FF5A1F] text-white px-5 py-2.5 rounded-full font-bold text-sm">Create post</button>
                       </div>
                     </div>
                   )
@@ -434,8 +434,8 @@ export default function Discover() {
                     <>
                       {posts.map(post => <PostCard key={post.id} post={post} currentUser={user} />)}
                       <div ref={loadMoreRef} className="flex justify-center py-6 min-h-[60px]">
-                        {loadingMore && <div className="flex items-center gap-2 text-[#6B7280]"><div className="w-5 h-5 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" /><span className="text-sm">Loading more...</span></div>}
-                        {!hasMore && !loadingMore && posts.length > 0 && <p className="text-[#6B7280] text-xs">You've seen it all! 🎉</p>}
+                        {loadingMore && <div className="flex items-center gap-2 text-[#8E8C88]"><div className="w-5 h-5 border-2 border-[#FF5A1F] border-t-transparent rounded-full animate-spin" /><span className="text-sm">Loading more...</span></div>}
+                        {!hasMore && !loadingMore && posts.length > 0 && <p className="text-[#8E8C88] text-xs">You've seen it all! 🎉</p>}
                       </div>
                     </>
                   )

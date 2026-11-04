@@ -171,7 +171,6 @@ export default function Home() {
       if (document.visibilityState !== 'visible') return;
       const stuck = posts.length === 0 && (loadingRef.current || !!fetchError);
       if (stuck) {
-        console.log('[DIAG]', Date.now(), 'Home: regained visibility while stuck (loading or errored with no posts) — retrying loadPosts');
         setFetchError('');
         setPage(0);
         loadPosts(0, true);
@@ -186,8 +185,6 @@ export default function Home() {
 
   // ── Reload on tab change ───────────────────────────────────────
   useEffect(() => {
-    // [DIAG]
-    console.log('[DIAG]', Date.now(), 'Home: "reload on tab change" effect fired, activeTab =', activeTab, '— about to call loadPosts');
 
     setNewPostsBanner(false);
     setNewPostsCount(0);
@@ -298,16 +295,12 @@ export default function Home() {
 
   // ── Core feed loader ────────────────────────────────────────────
   const loadPosts = useCallback(async (pageNum, reset = false, silent = false) => {
-    // [DIAG]
-    console.log('[DIAG]', Date.now(), 'Home: loadPosts() called. pageNum=', pageNum, 'reset=', reset, 'silent=', silent, 'activeTab=', activeTab);
 
     if (reset && !silent) setLoading(true);
     else if (!reset)      setLoadingMore(true);
 
     if (loadTimerRef.current) clearTimeout(loadTimerRef.current);
     loadTimerRef.current = setTimeout(() => {
-      // [DIAG]
-      console.log('[DIAG]', Date.now(), 'Home: LOAD_TIMEOUT_MS (12s) fired — the posts query never resolved in time');
 
       setLoading(false);
       setLoadingMore(false);
@@ -325,8 +318,6 @@ export default function Home() {
       let data = null, error = null;
 
       if (activeTab === 'foryou') {
-        // [DIAG]
-        console.log('[DIAG]', Date.now(), 'Home: about to await the posts query (foryou tab)');
 
         const res = await supabase.from('posts')
           .select(POST_SELECT)
@@ -341,17 +332,11 @@ export default function Home() {
           .range(from, to);
         data = res.data; error = res.error;
 
-        // [DIAG]
-        console.log('[DIAG]', Date.now(), 'Home: posts query RETURNED. error?', error?.message, 'row count:', data?.length);
 
       } else {
-        // [DIAG]
-        console.log('[DIAG]', Date.now(), 'Home: about to resolve tab user ids (non-foryou tab)');
 
         const ids = await resolveTabUserIds();
 
-        // [DIAG]
-        console.log('[DIAG]', Date.now(), 'Home: resolveTabUserIds RETURNED, ids count:', ids?.length, '— about to await the posts query');
 
         const q = supabase.from('posts')
           .select(POST_SELECT)
@@ -364,8 +349,6 @@ export default function Home() {
         const res = ids && ids.length > 0 ? await q.in('user_id', ids) : await q;
         data = res.data; error = res.error;
 
-        // [DIAG]
-        console.log('[DIAG]', Date.now(), 'Home: posts query RETURNED (non-foryou). error?', error?.message, 'row count:', data?.length);
       }
 
       clearTimeout(loadTimerRef.current);
@@ -401,14 +384,10 @@ export default function Home() {
       setNewPostsBanner(false);
       setNewPostsCount(0);
 
-      // [DIAG]
-      console.log('[DIAG]', Date.now(), 'Home: loadPosts finished SUCCESSFULLY, posts set in state');
 
     } catch (err) {
       clearTimeout(loadTimerRef.current);
       console.error('loadPosts error:', err.message);
-      // [DIAG]
-      console.log('[DIAG]', Date.now(), 'Home: loadPosts CAUGHT an exception:', err.message);
 
       if (!silent) {
         setFetchError(
@@ -465,6 +444,8 @@ export default function Home() {
       });
     } catch (_) { /* silent by design */ }
   }, [resolveTabUserIds]);
+
+  const refreshFeed = useCallback(() => loadPosts(0, true), [loadPosts]);
 
   const handleLoadMore = useCallback(() => {
     const next = page + 1;
@@ -524,7 +505,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-20">
+    <div className="min-h-screen bg-[#0D0C0B] pb-20">
       <Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       {/* Toast */}
@@ -535,7 +516,7 @@ export default function Home() {
       )}
 
       {/* ── Top bar ── */}
-      <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07]">
+      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07]">
         <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={() => setDrawerOpen(true)}
@@ -546,7 +527,7 @@ export default function Home() {
           </button>
 
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center shadow-lg shadow-[#1E6FFF]/30">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center shadow-lg shadow-[#FF5A1F]/30">
               <span className="text-white font-black text-base">B</span>
             </div>
             <span className="text-white font-extrabold text-lg tracking-tight">B-Link</span>
@@ -557,9 +538,9 @@ export default function Home() {
             aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
             className="relative w-9 h-9 flex items-center justify-center"
           >
-            <Bell size={22} className="text-[#6B7280]" />
+            <Bell size={22} className="text-[#8E8C88]" />
             {unread > 0 && (
-              <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-[#1E6FFF] rounded-full text-[9px] text-white flex items-center justify-center font-bold px-0.5 animate-pulse">
+              <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-[#FF5A1F] rounded-full text-[9px] text-white flex items-center justify-center font-bold px-0.5 animate-pulse">
                 {unread > 9 ? '9+' : unread}
               </span>
             )}
@@ -575,12 +556,12 @@ export default function Home() {
               aria-selected={activeTab === tab.key}
               onClick={() => setActiveTab(tab.key)}
               className="flex-1 py-3 text-sm font-semibold transition-colors relative"
-              style={{ color: activeTab === tab.key ? 'white' : '#6B7280' }}
+              style={{ color: activeTab === tab.key ? 'white' : '#8E8C88' }}
             >
               {tab.label}
               {activeTab === tab.key && (
                 <div
-                  className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-[#1E6FFF] rounded-full transition-all duration-200"
+                  className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-[#FF5A1F] rounded-full transition-all duration-200"
                   style={{ width:'60%' }}
                 />
               )}
@@ -602,7 +583,7 @@ export default function Home() {
         <div className="flex justify-center py-2 sticky top-[106px] z-10">
           <button
             onClick={scrollToTopAndRefresh}
-            className="bg-[#1E6FFF] text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-[#1E6FFF]/40 flex items-center gap-2 active:scale-95 transition-transform"
+            className="bg-[#FF5A1F] text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-[#FF5A1F]/40 flex items-center gap-2 active:scale-95 transition-transform"
           >
             <RefreshCw size={12} />
             {newPostsCount > 0
@@ -616,7 +597,7 @@ export default function Home() {
         className="overflow-hidden flex items-center justify-center transition-all"
         style={{ height: isPulling || refreshing ? Math.max(pullDist, refreshing ? 44 : 0) : 0 }}
       >
-        <div className={`flex items-center gap-2 text-sm ${pullDist >= PULL_THRESHOLD || refreshing ? 'text-[#1E6FFF]' : 'text-[#6B7280]'}`}>
+        <div className={`flex items-center gap-2 text-sm ${pullDist >= PULL_THRESHOLD || refreshing ? 'text-[#FF5A1F]' : 'text-[#8E8C88]'}`}>
           <RefreshCw size={14} className={refreshing && !reducedMotion ? 'animate-spin' : ''} />
           <span>{refreshing ? 'Refreshing...' : pullDist >= PULL_THRESHOLD ? 'Release to refresh' : 'Pull to refresh'}</span>
         </div>
@@ -634,7 +615,7 @@ export default function Home() {
             <div className="flex gap-2">
               <button
                 onClick={() => { setFetchError(''); setPage(0); loadPosts(0, true); }}
-                className="flex items-center gap-1.5 text-xs font-bold text-[#1E6FFF]"
+                className="flex items-center gap-1.5 text-xs font-bold text-[#FF5A1F]"
               >
                 <RefreshCw size={12} /> Try again
               </button>
@@ -660,12 +641,12 @@ export default function Home() {
             <h2 className="text-white font-bold text-xl text-center">
               {activeTab === 'following' ? 'Nothing in your feed yet' : 'No posts yet'}
             </h2>
-            <p className="text-[#6B7280] text-sm text-center">
+            <p className="text-[#8E8C88] text-sm text-center">
               {activeTab === 'following' ? 'Follow people to see their posts here.' : 'Be the first to post!'}
             </p>
             <div className="flex gap-3">
               <button onClick={() => navigate('/discover')}
-                className="bg-[#1E6FFF] text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-lg shadow-[#1E6FFF]/30 active:scale-95 transition-transform">
+                className="bg-[#FF5A1F] text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-lg shadow-[#FF5A1F]/30 active:scale-95 transition-transform">
                 Find people
               </button>
               <button onClick={() => navigate('/create')}
@@ -679,17 +660,17 @@ export default function Home() {
         {!loading && posts.length > 0 && (
           <>
             {posts.map(post => (
-              <PostCard key={post.id} post={post} currentUser={user} onRefresh={() => loadPosts(0, true)} />
+              <PostCard key={post.id} post={post} currentUser={user} onRefresh={refreshFeed} />
             ))}
             <div ref={loadMoreRef} className="flex justify-center py-6 min-h-[60px]">
               {loadingMore && (
-                <div className="flex items-center gap-2 text-[#6B7280]">
-                  <div className={`w-5 h-5 border-2 border-[#1E6FFF] border-t-transparent rounded-full ${reducedMotion ? '' : 'animate-spin'}`} />
+                <div className="flex items-center gap-2 text-[#8E8C88]">
+                  <div className={`w-5 h-5 border-2 border-[#FF5A1F] border-t-transparent rounded-full ${reducedMotion ? '' : 'animate-spin'}`} />
                   <span className="text-sm">Loading more...</span>
                 </div>
               )}
               {!hasMore && !loadingMore && (
-                <p className="text-[#6B7280] text-xs">You're all caught up! 🎉</p>
+                <p className="text-[#8E8C88] text-xs">You're all caught up! 🎉</p>
               )}
             </div>
           </>
@@ -711,7 +692,7 @@ export default function Home() {
       <button
         onClick={() => navigate('/create')}
         aria-label="Create post"
-        className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-[#1E6FFF] flex items-center justify-center shadow-xl shadow-[#1E6FFF]/40 hover:bg-[#1565cc] active:scale-95 transition-all z-20"
+        className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-[#FF5A1F] flex items-center justify-center shadow-xl shadow-[#FF5A1F]/40 hover:bg-[#d9480f] active:scale-95 transition-all z-20"
         style={{
           transform: fabVisible ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.85)',
           opacity: fabVisible ? 1 : 0,

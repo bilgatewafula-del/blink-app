@@ -123,11 +123,11 @@ const LIBRARIES = [
 function LegalModal({ item, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-end justify-center" onClick={onClose}>
-      <div className="w-full max-w-[540px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl p-5 pb-8 max-h-[85vh] flex flex-col"
+      <div className="w-full max-w-[540px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5 pb-8 max-h-[85vh] flex flex-col"
         onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4 flex-shrink-0">
           <p className="text-white font-bold text-base">{item.icon} {item.label}</p>
-          <button onClick={onClose} className="text-[#6B7280] hover:text-white text-lg font-bold">✕</button>
+          <button onClick={onClose} className="text-[#8E8C88] hover:text-white text-lg font-bold">✕</button>
         </div>
         <div className="flex-1 overflow-y-auto scrollbar-none">
           <pre className="text-white/70 text-[12px] leading-relaxed whitespace-pre-wrap font-sans">{item.text}</pre>
@@ -176,14 +176,14 @@ export default function AboutPage() {
   const statusLabel = apiStatus === 'online' ? '● Online' : apiStatus === 'slow' ? '● Slow' : '● Offline';
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-24">
+    <div className="min-h-screen bg-[#0D0C0B] pb-24">
 
       {/* Legal modal */}
       {legalModal && <LegalModal item={legalModal} onClose={() => setLegalModal(null)} />}
 
       {/* Top bar */}
-      <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white transition-colors">
+      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => navigate(-1)} className="text-[#8E8C88] hover:text-white transition-colors">
           <ArrowLeft size={22} />
         </button>
         <h1 className="text-white font-bold text-[15px]">About B-Link</h1>
@@ -191,12 +191,12 @@ export default function AboutPage() {
 
       {/* Hero */}
       <div className="flex flex-col items-center px-6 pt-8 pb-6 text-center">
-        <div className="w-24 h-24 rounded-[28px] bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center shadow-2xl shadow-[#1E6FFF]/40 mb-4">
+        <div className="w-24 h-24 rounded-[28px] bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center shadow-2xl shadow-[#FF5A1F]/40 mb-4">
           <span className="text-white font-black text-4xl">B</span>
         </div>
         <h2 className="text-white font-black text-3xl tracking-tight mb-1">B-Link</h2>
         <p className="text-transparent font-bold text-sm mb-1"
-          style={{ background:'linear-gradient(90deg,#1E6FFF,#FF6B35,#FFD700)', WebkitBackgroundClip:'text', backgroundClip:'text' }}>
+          style={{ background:'linear-gradient(90deg,#FF5A1F,#FF6B35,#FFD700)', WebkitBackgroundClip:'text', backgroundClip:'text' }}>
           Africa's GenZ Social Platform
         </p>
         <div className="flex items-center gap-3 mt-2">
@@ -219,7 +219,7 @@ export default function AboutPage() {
         </div>
 
         {/* Mission */}
-        <div className="bg-gradient-to-br from-[#1E6FFF]/10 to-[#7B2FFF]/10 border border-[#1E6FFF]/20 rounded-2xl p-4">
+        <div className="bg-gradient-to-br from-[#FF5A1F]/10 to-[#FF2D78]/10 border border-[#FF5A1F]/20 rounded-2xl p-4">
           <p className="text-white font-bold text-sm mb-2">🎯 Our Mission</p>
           <p className="text-white/65 text-[13px] leading-relaxed">
             To connect millions of young Africans in a fast, lightweight, and genuinely African social platform — built by Africans, for Africans. Every feature is designed to work well even on limited data connections.
@@ -228,7 +228,7 @@ export default function AboutPage() {
 
         {/* Features */}
         <div>
-          <p className="text-[#6B7280] text-[11px] font-bold uppercase tracking-widest mb-3">Platform Features</p>
+          <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-widest mb-3">Platform Features</p>
           <div className="grid grid-cols-2 gap-2">
             {FEATURES.map(f => (
               <div key={f.title} className="bg-white/[0.04] border border-white/[0.07] rounded-2xl p-3">
@@ -242,7 +242,7 @@ export default function AboutPage() {
 
         {/* Legal */}
         <div>
-          <p className="text-[#6B7280] text-[11px] font-bold uppercase tracking-widest mb-2">Legal</p>
+          <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-widest mb-2">Legal</p>
           <div className="bg-white/[0.03] border border-white/[0.07] rounded-2xl overflow-hidden">
             {LEGAL_LINKS.map((item, i) => (
               <div key={item.label}>
@@ -252,7 +252,7 @@ export default function AboutPage() {
                 >
                   <span className="text-lg flex-shrink-0">{item.icon}</span>
                   <span className="flex-1 text-white/80 font-semibold text-[14px]">{item.label}</span>
-                  <ExternalLink size={14} className="text-[#6B7280] flex-shrink-0" />
+                  <ExternalLink size={14} className="text-[#8E8C88] flex-shrink-0" />
                 </button>
                 {i < LEGAL_LINKS.length - 1 && <div className="h-px bg-white/[0.06] mx-4" />}
               </div>
@@ -262,7 +262,7 @@ export default function AboutPage() {
 
         {/* Technical info */}
         <div>
-          <p className="text-[#6B7280] text-[11px] font-bold uppercase tracking-widest mb-2">Technical Info</p>
+          <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-widest mb-2">Technical Info</p>
           <div className="bg-white/[0.03] border border-white/[0.07] rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
               <p className="text-white/60 text-[13px]">App Version</p>
@@ -291,17 +291,17 @@ export default function AboutPage() {
 
         {/* Libraries */}
         <div>
-          <p className="text-[#6B7280] text-[11px] font-bold uppercase tracking-widest mb-2">Open Source Libraries</p>
+          <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-widest mb-2">Open Source Libraries</p>
           <div className="bg-white/[0.03] border border-white/[0.07] rounded-2xl overflow-hidden">
             {LIBRARIES.map((lib, i) => (
               <div key={lib.name}>
                 <div className="flex items-center gap-3 px-4 py-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-semibold text-[13px]">{lib.name}</p>
-                    <p className="text-[#6B7280] text-[11px]">{lib.purpose}</p>
+                    <p className="text-[#8E8C88] text-[11px]">{lib.purpose}</p>
                   </div>
                   <a href={lib.link} target="_blank" rel="noopener noreferrer"
-                    className="text-[#1E6FFF] flex-shrink-0 p-1 hover:text-[#1565cc]">
+                    className="text-[#FF5A1F] flex-shrink-0 p-1 hover:text-[#d9480f]">
                     <ExternalLink size={14} />
                   </a>
                 </div>
@@ -324,11 +324,11 @@ export default function AboutPage() {
 
         {/* Contact */}
         <div>
-          <p className="text-[#6B7280] text-[11px] font-bold uppercase tracking-widest mb-2">Contact</p>
+          <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-widest mb-2">Contact</p>
           <div className="bg-white/[0.03] border border-white/[0.07] rounded-2xl overflow-hidden">
             <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.06]">
-              <div className="w-9 h-9 rounded-xl bg-[#1E6FFF]/15 flex items-center justify-center flex-shrink-0">
-                <Mail size={16} className="text-[#1E6FFF]" />
+              <div className="w-9 h-9 rounded-xl bg-[#FF5A1F]/15 flex items-center justify-center flex-shrink-0">
+                <Mail size={16} className="text-[#FF5A1F]" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white/60 text-[11px] font-bold uppercase">Email</p>
@@ -350,7 +350,7 @@ export default function AboutPage() {
                 <p className="text-white/60 text-[11px] font-bold uppercase">WhatsApp Support</p>
                 <p className="text-white text-[13px] font-semibold">+254 740 309 980</p>
               </div>
-              <ExternalLink size={15} className="text-[#6B7280] flex-shrink-0" />
+              <ExternalLink size={15} className="text-[#8E8C88] flex-shrink-0" />
             </a>
           </div>
         </div>

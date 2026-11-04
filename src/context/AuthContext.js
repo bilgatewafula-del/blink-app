@@ -32,8 +32,6 @@ export function AuthProvider({ children }) {
     if (fetchingRef.current) return;
     fetchingRef.current = true;
 
-    // [DIAG]
-    console.log('[DIAG]', Date.now(), 'AuthContext: fetchProfile — about to query users table for uid', uid);
 
     try {
       const { data, error } = await supabase
@@ -50,8 +48,6 @@ export function AuthProvider({ children }) {
         .eq('id', uid)
         .maybeSingle();
 
-      // [DIAG]
-      console.log('[DIAG]', Date.now(), 'AuthContext: fetchProfile — users query RETURNED. error?', error?.message, 'data?', !!data);
 
       if (error) {
         // Cause #4: expired/invalid JWT — sign out cleanly instead of hanging
@@ -74,21 +70,15 @@ export function AuthProvider({ children }) {
     } finally {
       fetchingRef.current = false;
       if (mountedRef.current) setLoading(false);
-      // [DIAG]
-      console.log('[DIAG]', Date.now(), 'AuthContext: fetchProfile — finally block reached, loading set to false');
     }
   }, []);
 
   useEffect(() => {
-    // [DIAG]
-    console.log('[DIAG]', Date.now(), 'AuthContext: effect starting, calling getSession()');
 
     // Hard 6s timeout — loading MUST resolve regardless of network
     const hardTimeout = setTimeout(() => {
       if (mountedRef.current) {
         console.warn('[Auth] Hard timeout reached — forcing loading=false');
-        // [DIAG]
-        console.log('[DIAG]', Date.now(), 'AuthContext: HARD TIMEOUT fired (6s) — getSession or fetchProfile never resolved in time');
         setLoading(false);
       }
     }, 6000);
@@ -96,8 +86,6 @@ export function AuthProvider({ children }) {
     // Check existing session first (avoids loading flicker on refresh)
     supabase.auth.getSession()
       .then(({ data: { session }, error }) => {
-        // [DIAG]
-        console.log('[DIAG]', Date.now(), 'AuthContext: getSession() RESOLVED. session exists?', !!session, 'error?', error?.message);
 
         if (error) {
           console.error('[Auth] getSession error:', error.message);
@@ -108,11 +96,7 @@ export function AuthProvider({ children }) {
         const u = session?.user ?? null;
         if (mountedRef.current) setUser(u);
         if (u) {
-          // [DIAG]
-          console.log('[DIAG]', Date.now(), 'AuthContext: calling fetchProfile for', u.id);
           fetchProfile(u.id).then(() => {
-            // [DIAG]
-            console.log('[DIAG]', Date.now(), 'AuthContext: fetchProfile().then() fired — fetchProfile fully finished');
             clearTimeout(hardTimeout);
           });
         } else {
@@ -122,8 +106,6 @@ export function AuthProvider({ children }) {
       })
       .catch(err => {
         console.error('[Auth] getSession threw:', err.message);
-        // [DIAG]
-        console.log('[DIAG]', Date.now(), 'AuthContext: getSession() THREW an exception:', err.message);
         clearTimeout(hardTimeout);
         if (mountedRef.current) setLoading(false);
       });
@@ -131,8 +113,6 @@ export function AuthProvider({ children }) {
     // Listen for auth state changes (login, logout, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        // [DIAG]
-        console.log('[DIAG]', Date.now(), 'AuthContext: onAuthStateChange fired, event =', event);
 
         if (!mountedRef.current) return;
         const u = session?.user ?? null;
@@ -182,7 +162,6 @@ export function AuthProvider({ children }) {
     const onVisible = () => {
       if (document.visibilityState !== 'visible') return;
       if (loading && !user) {
-        console.log('[DIAG]', Date.now(), 'AuthContext: regained visibility while still stuck on initial auth check — retrying getSession');
         supabase.auth.getSession().then(({ data: { session } }) => {
           const u = session?.user ?? null;
           if (mountedRef.current) setUser(u);

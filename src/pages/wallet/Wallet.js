@@ -44,10 +44,10 @@ const WalletPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-24">
+    <div className="min-h-screen bg-[#0D0C0B] pb-24">
       {/* Top bar */}
-      <div className="sticky top-0 z-20 bg-[#0A1628] border-b border-white/10 px-4 py-3 flex items-center gap-4">
-        <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white">
+      <div className="sticky top-0 z-20 bg-[#0D0C0B] border-b border-white/10 px-4 py-3 flex items-center gap-4">
+        <button onClick={() => navigate(-1)} className="text-[#8E8C88] hover:text-white">
           <ArrowLeft size={22} />
         </button>
         <h1 className="text-white font-bold text-lg">Wallet</h1>
@@ -55,8 +55,8 @@ const WalletPage = () => {
 
       {/* Coming Soon hero */}
       <div className="mx-4 mt-6">
-        <div className="bg-gradient-to-br from-[#1E6FFF]/20 via-[#7B2FFF]/20 to-[#00D4C8]/10 border border-[#1E6FFF]/30 rounded-3xl p-6 text-center">
-          <div className="w-20 h-20 bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-[#1E6FFF]/30">
+        <div className="bg-gradient-to-br from-[#FF5A1F]/20 via-[#FF2D78]/20 to-[#FFB020]/10 border border-[#FF5A1F]/30 rounded-3xl p-6 text-center">
+          <div className="w-20 h-20 bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-[#FF5A1F]/30">
             <Wallet size={36} className="text-white" />
           </div>
           <div className="flex items-center justify-center gap-2 mb-2">
@@ -64,7 +64,7 @@ const WalletPage = () => {
             <span className="bg-[#FFD700]/20 text-[#FFD700] text-xs font-bold px-3 py-1 rounded-full">Coming Soon</span>
           </div>
           <h2 className="text-white font-bold text-2xl mb-2">B-Link Wallet</h2>
-          <p className="text-[#6B7280] text-sm leading-relaxed">
+          <p className="text-[#8E8C88] text-sm leading-relaxed">
             We're building a powerful creator economy platform with M-Pesa integration. Support your favorite creators and earn from your content.
           </p>
         </div>
@@ -72,17 +72,17 @@ const WalletPage = () => {
 
       {/* Your current stats */}
       <div className="px-4 mt-4">
-        <p className="text-[#6B7280] text-xs font-bold uppercase tracking-widest mb-3">Your Activity</p>
+        <p className="text-[#8E8C88] text-xs font-bold uppercase tracking-widest mb-3">Your Activity</p>
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
             <p className="text-3xl font-bold text-[#2ECC71]">{tipsReceived}</p>
-            <p className="text-[#6B7280] text-xs mt-1">Tips Received</p>
-            <p className="text-[#6B7280] text-[10px]">Once wallet launches</p>
+            <p className="text-[#8E8C88] text-xs mt-1">Tips Received</p>
+            <p className="text-[#8E8C88] text-[10px]">Once wallet launches</p>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
-            <p className="text-3xl font-bold text-[#1E6FFF]">{tipsSent}</p>
-            <p className="text-[#6B7280] text-xs mt-1">Tips Sent</p>
-            <p className="text-[#6B7280] text-[10px]">Once wallet launches</p>
+            <p className="text-3xl font-bold text-[#FF5A1F]">{tipsSent}</p>
+            <p className="text-[#8E8C88] text-xs mt-1">Tips Sent</p>
+            <p className="text-[#8E8C88] text-[10px]">Once wallet launches</p>
           </div>
         </div>
       </div>
@@ -96,22 +96,22 @@ const WalletPage = () => {
             </div>
             <div>
               <p className="text-white font-bold text-sm">Your Earnings Potential</p>
-              <p className="text-[#6B7280] text-xs">Based on your current followers</p>
+              <p className="text-[#8E8C88] text-xs">Based on your current followers</p>
             </div>
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-[#6B7280] text-sm">Followers</p>
+              <p className="text-[#8E8C88] text-sm">Followers</p>
               <p className="text-white font-semibold">{profile?.follower_count || 0}</p>
             </div>
             <div className="flex items-center justify-between">
-              <p className="text-[#6B7280] text-sm">Est. monthly tips</p>
+              <p className="text-[#8E8C88] text-sm">Est. monthly tips</p>
               <p className="text-[#2ECC71] font-semibold">
                 KES {Math.floor((profile?.follower_count || 0) * 2.5).toLocaleString()}+
               </p>
             </div>
             <div className="flex items-center justify-between">
-              <p className="text-[#6B7280] text-sm">Creator tier</p>
+              <p className="text-[#8E8C88] text-sm">Creator tier</p>
               <p className="text-[#FFD700] font-semibold">
                 {(profile?.follower_count || 0) >= 1000 ? '🌟 Gold' :
                  (profile?.follower_count || 0) >= 100 ? '⭐ Silver' : '🔰 Bronze'}
@@ -123,16 +123,16 @@ const WalletPage = () => {
 
       {/* Upcoming features */}
       <div className="px-4 mt-4">
-        <p className="text-[#6B7280] text-xs font-bold uppercase tracking-widest mb-3">What's Coming</p>
+        <p className="text-[#8E8C88] text-xs font-bold uppercase tracking-widest mb-3">What's Coming</p>
         <div className="space-y-2">
           {upcomingFeatures.map((f) => (
             <div key={f.title} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-3">
               <span className="text-2xl flex-shrink-0">{f.icon}</span>
               <div className="flex-1 min-w-0">
                 <p className="text-white font-semibold text-sm">{f.title}</p>
-                <p className="text-[#6B7280] text-xs">{f.desc}</p>
+                <p className="text-[#8E8C88] text-xs">{f.desc}</p>
               </div>
-              <span className="bg-[#1E6FFF]/20 text-[#1E6FFF] text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0">
+              <span className="bg-[#FF5A1F]/20 text-[#FF5A1F] text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0">
                 {f.eta}
               </span>
             </div>
@@ -142,15 +142,15 @@ const WalletPage = () => {
 
       {/* Notify me */}
       <div className="px-4 mt-4">
-        <div className="bg-gradient-to-r from-[#1E6FFF]/10 to-[#7B2FFF]/10 border border-[#1E6FFF]/20 rounded-2xl p-5">
+        <div className="bg-gradient-to-r from-[#FF5A1F]/10 to-[#FF2D78]/10 border border-[#FF5A1F]/20 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-3">
-            <Bell size={18} className="text-[#1E6FFF]" />
+            <Bell size={18} className="text-[#FF5A1F]" />
             <p className="text-white font-bold text-sm">Get Notified at Launch</p>
           </div>
           {notified ? (
             <div className="bg-[#2ECC71]/10 border border-[#2ECC71]/20 rounded-xl p-3 text-center">
               <p className="text-[#2ECC71] font-semibold text-sm">✅ You're on the list!</p>
-              <p className="text-[#6B7280] text-xs mt-1">We'll notify you when the wallet launches.</p>
+              <p className="text-[#8E8C88] text-xs mt-1">We'll notify you when the wallet launches.</p>
             </div>
           ) : (
             <>
@@ -159,11 +159,11 @@ const WalletPage = () => {
                 value={notifyEmail}
                 onChange={(e) => setNotifyEmail(e.target.value)}
                 placeholder={user?.email || 'your@email.com'}
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-[#6B7280] text-sm focus:outline-none focus:border-[#1E6FFF] mb-3"
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-[#8E8C88] text-sm focus:outline-none focus:border-[#FF5A1F] mb-3"
               />
               <button
                 onClick={handleNotify}
-                className="w-full bg-gradient-to-r from-[#1E6FFF] to-[#7B2FFF] text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity"
+                className="w-full bg-gradient-to-r from-[#FF5A1F] to-[#FF2D78] text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity"
               >
                 Notify Me at Launch
               </button>
@@ -172,7 +172,7 @@ const WalletPage = () => {
         </div>
       </div>
 
-      <p className="text-center text-[#6B7280] text-xs px-4 mt-4 pb-4">
+      <p className="text-center text-[#8E8C88] text-xs px-4 mt-4 pb-4">
         🔒 Your earnings will be 100% secure with Safaricom M-Pesa integration
       </p>
     </div>

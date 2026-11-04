@@ -21,7 +21,7 @@ export default function MonetisationHub() {
       subtitle: `Current: ${planInfo?.label || 'Free'} plan${activePlan !== 'free' ? ` · ${planInfo?.badge}` : ''}`,
       badge: activePlan !== 'free' ? { label: planInfo?.label, color: planInfo?.color } : null,
       path: '/subscription',
-      color: '#1E6FFF',
+      color: '#FF5A1F',
     },
     {
       emoji: '🪙',
@@ -44,8 +44,8 @@ export default function MonetisationHub() {
       title: 'Get Verified',
       subtitle: isVerified ? '✓ Your account is verified' : 'One-time KES 500 verification fee',
       path: '/verification',
-      color: '#1E6FFF',
-      badge: isVerified ? { label: 'Verified', color: '#1E6FFF' } : null,
+      color: '#FF5A1F',
+      badge: isVerified ? { label: 'Verified', color: '#FF5A1F' } : null,
     },
     {
       emoji: '💼',
@@ -58,12 +58,12 @@ export default function MonetisationHub() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-24">
-      <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white"><ArrowLeft size={22} /></button>
+    <div className="min-h-screen bg-[#0D0C0B] pb-24">
+      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => navigate(-1)} className="text-[#8E8C88] hover:text-white"><ArrowLeft size={22} /></button>
         <div>
           <h1 className="text-white font-bold text-[15px] leading-none">B-Link Premium</h1>
-          <p className="text-[#6B7280] text-xs mt-0.5">Monetisation & features</p>
+          <p className="text-[#8E8C88] text-xs mt-0.5">Monetisation & features</p>
         </div>
       </div>
 
@@ -115,10 +115,10 @@ export default function MonetisationHub() {
                   </span>
                 )}
               </div>
-              <p className="text-[#6B7280] text-[12px] mt-0.5">{item.subtitle}</p>
+              <p className="text-[#8E8C88] text-[12px] mt-0.5">{item.subtitle}</p>
               {item.hint && <p className="text-orange-400 text-[11px] mt-0.5">{item.hint}</p>}
             </div>
-            <ChevronRight size={18} className="text-[#6B7280] flex-shrink-0" />
+            <ChevronRight size={18} className="text-[#8E8C88] flex-shrink-0" />
           </button>
         ))}
       </div>

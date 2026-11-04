@@ -45,7 +45,7 @@ const POSTS_PAGE_SIZE = 15;
 
 function ProfileSkeleton() {
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-24 animate-pulse">
+    <div className="min-h-screen bg-[#0D0C0B] pb-24 animate-pulse">
       <div className="px-4 pt-5 pb-4">
         <div className="flex items-start justify-between gap-4">
           <div className="w-20 h-20 rounded-full skeleton flex-shrink-0" />
@@ -82,39 +82,39 @@ function UserListModal({ title, fetcher, currentUserId, onClose, onRemove, canRe
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end justify-center" onClick={onClose}>
-      <div className="w-full max-w-[620px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl max-h-[75vh] flex flex-col" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl max-h-[75vh] flex flex-col" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/10 flex-shrink-0">
           <p className="text-white font-bold text-base">{title}</p>
-          <button onClick={onClose} aria-label="Close" className="text-[#6B7280] hover:text-white"><X size={20} /></button>
+          <button onClick={onClose} aria-label="Close" className="text-[#8E8C88] hover:text-white"><X size={20} /></button>
         </div>
         <div className="overflow-y-auto flex-1">
           {error ? (
             <p className="text-red-400 text-sm text-center py-10">{error}</p>
           ) : users === null ? (
-            <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" /></div>
+            <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-[#FF5A1F] border-t-transparent rounded-full animate-spin" /></div>
           ) : users.length === 0 ? (
-            <p className="text-[#6B7280] text-sm text-center py-10">Nobody here yet</p>
+            <p className="text-[#8E8C88] text-sm text-center py-10">Nobody here yet</p>
           ) : (
             users.map(u => (
               <div key={u.id} className="flex items-center gap-3 px-5 py-3 border-b border-white/[0.05]">
                 <button onClick={() => { onClose(); navigate('/profile/' + u.username); }} className="flex items-center gap-3 flex-1 min-w-0 text-left">
                   {u.avatar_url
                     ? <img src={u.avatar_url} alt="" className="w-11 h-11 rounded-full object-cover flex-shrink-0" />
-                    : <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold flex-shrink-0">{u.display_name?.[0]?.toUpperCase()}</div>
+                    : <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold flex-shrink-0">{u.display_name?.[0]?.toUpperCase()}</div>
                   }
                   <div className="min-w-0">
                     <div className="flex items-center gap-1">
                       <p className="text-white font-bold text-[14px] truncate">{u.display_name}</p>
                       {u.is_verified && <VerifiedBadge size={13} />}
                     </div>
-                    <p className="text-[#6B7280] text-[12px]">@{u.username}</p>
+                    <p className="text-[#8E8C88] text-[12px]">@{u.username}</p>
                   </div>
                 </button>
                 {canRemove && u.id !== currentUserId && (
                   <button
                     onClick={() => onRemove(u.id)}
                     aria-label={`Remove ${u.username}`}
-                    className="text-[#6B7280] hover:text-red-400 text-xs font-bold px-2.5 py-1.5 rounded-full hover:bg-red-500/10 flex items-center gap-1 flex-shrink-0"
+                    className="text-[#8E8C88] hover:text-red-400 text-xs font-bold px-2.5 py-1.5 rounded-full hover:bg-red-500/10 flex items-center gap-1 flex-shrink-0"
                   >
                     <UserMinus size={12} /> Remove
                   </button>
@@ -334,36 +334,36 @@ export default function Profile() {
   if (loading) return <ProfileSkeleton />;
 
   if (fetchError && !profile) return (
-    <div className="min-h-screen bg-[#0A1628] flex flex-col items-center justify-center gap-3 px-6">
+    <div className="min-h-screen bg-[#0D0C0B] flex flex-col items-center justify-center gap-3 px-6">
       <p className="text-5xl">⚠️</p>
       <p className="text-white font-bold text-lg">Could not load profile</p>
-      <p className="text-[#6B7280] text-sm text-center">{fetchError}</p>
-      <button onClick={loadProfile} className="mt-2 bg-[#1E6FFF] text-white px-5 py-2.5 rounded-full font-bold text-sm">
+      <p className="text-[#8E8C88] text-sm text-center">{fetchError}</p>
+      <button onClick={loadProfile} className="mt-2 bg-[#FF5A1F] text-white px-5 py-2.5 rounded-full font-bold text-sm">
         Try again
       </button>
-      <button onClick={() => navigate(-1)} className="text-[#6B7280] text-sm">← Go back</button>
+      <button onClick={() => navigate(-1)} className="text-[#8E8C88] text-sm">← Go back</button>
     </div>
   );
 
   if (!profile) return (
-    <div className="min-h-screen bg-[#0A1628] flex flex-col items-center justify-center gap-3 px-6">
+    <div className="min-h-screen bg-[#0D0C0B] flex flex-col items-center justify-center gap-3 px-6">
       <p className="text-5xl">🔍</p>
       <p className="text-white font-bold text-lg">User not found</p>
-      <button onClick={() => navigate(-1)} className="text-[#1E6FFF] font-semibold">← Go back</button>
+      <button onClick={() => navigate(-1)} className="text-[#FF5A1F] font-semibold">← Go back</button>
     </div>
   );
 
   const roleIcon = profile.role === 'blink' ? '👑' : profile.role === 'admin' ? '🛡️' : profile.role === 'moderator' ? '🔵' : null;
 
   const followButtonConfig = {
-    none:        { label: 'Follow',       icon: UserPlus,  cls: 'text-white bg-[#1E6FFF] hover:bg-[#1565cc] shadow-lg shadow-[#1E6FFF]/30' },
+    none:        { label: 'Follow',       icon: UserPlus,  cls: 'text-white bg-[#FF5A1F] hover:bg-[#d9480f] shadow-lg shadow-[#FF5A1F]/30' },
     following:   { label: 'Following',    icon: UserCheck, cls: 'border border-white/20 bg-white/[0.06] text-white hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30' },
-    follow_back: { label: 'Follow Back',  icon: UserPlus,  cls: 'text-white bg-gradient-to-r from-[#1E6FFF] to-[#7B2FFF] shadow-lg shadow-[#1E6FFF]/30' },
+    follow_back: { label: 'Follow Back',  icon: UserPlus,  cls: 'text-white bg-gradient-to-r from-[#FF5A1F] to-[#FF2D78] shadow-lg shadow-[#FF5A1F]/30' },
     friends:     { label: 'Friends',      icon: Users2,    cls: 'border border-[#2ECC71]/40 bg-[#2ECC71]/10 text-[#2ECC71] hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30' },
-  }[relationship] || { label: 'Follow', icon: UserPlus, cls: 'text-white bg-[#1E6FFF]' };
+  }[relationship] || { label: 'Follow', icon: UserPlus, cls: 'text-white bg-[#FF5A1F]' };
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-24">
+    <div className="min-h-screen bg-[#0D0C0B] pb-24">
 
       {imgViewer && profile.avatar_url && (
         <ImageViewer images={[profile.avatar_url]} index={0} onClose={() => setImgViewer(false)} />
@@ -389,18 +389,18 @@ export default function Profile() {
         />
       )}
 
-      <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between gap-3">
-        <button onClick={() => navigate(-1)} aria-label="Back" className="text-[#6B7280] hover:text-white transition-colors flex-shrink-0">
+      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between gap-3">
+        <button onClick={() => navigate(-1)} aria-label="Back" className="text-[#8E8C88] hover:text-white transition-colors flex-shrink-0">
           <ArrowLeft size={22} />
         </button>
         <div className="flex-1 min-w-0 text-center">
           <p className="text-white font-bold text-[15px] leading-none truncate">{profile.display_name}</p>
-          <p className="text-[#6B7280] text-xs mt-0.5">{formatNumber(profile.posts_count || 0)} posts</p>
+          <p className="text-[#8E8C88] text-xs mt-0.5">{formatNumber(profile.posts_count || 0)} posts</p>
         </div>
         {isOwnProfile ? (
-          <button onClick={() => navigate('/settings')} aria-label="Settings" className="text-[#6B7280] hover:text-white flex-shrink-0"><Settings size={20} /></button>
+          <button onClick={() => navigate('/settings')} aria-label="Settings" className="text-[#8E8C88] hover:text-white flex-shrink-0"><Settings size={20} /></button>
         ) : (
-          <button aria-label="More options" className="text-[#6B7280] hover:text-white flex-shrink-0"><MoreHorizontal size={20} /></button>
+          <button aria-label="More options" className="text-[#8E8C88] hover:text-white flex-shrink-0"><MoreHorizontal size={20} /></button>
         )}
       </div>
 
@@ -410,12 +410,12 @@ export default function Profile() {
             {profile.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="w-20 h-20 rounded-full object-cover border-2 border-white/20" />
             ) : (
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-black text-2xl border-2 border-white/20">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-black text-2xl border-2 border-white/20">
                 {profile.display_name?.[0]?.toUpperCase()}
               </div>
             )}
             {profile.is_verified && (
-              <div className="absolute -bottom-1 -right-1 bg-[#0A1628] rounded-full p-0.5">
+              <div className="absolute -bottom-1 -right-1 bg-[#0D0C0B] rounded-full p-0.5">
                 <VerifiedBadge size={20} />
               </div>
             )}
@@ -424,17 +424,17 @@ export default function Profile() {
           <div className="flex-1 flex justify-around">
             <div className="text-center">
               <p className="text-white font-black text-xl leading-none">{formatNumber(profile.posts_count || 0)}</p>
-              <p className="text-[#6B7280] text-xs mt-1">Posts</p>
+              <p className="text-[#8E8C88] text-xs mt-1">Posts</p>
             </div>
             {/* Clickable — previously plain text, no way to see who
                 follows this account or who they follow. */}
             <button onClick={() => setListModal('followers')} className="text-center active:opacity-60 transition-opacity">
               <p className="text-white font-black text-xl leading-none">{formatNumber(profile.followers_count || 0)}</p>
-              <p className="text-[#6B7280] text-xs mt-1">Followers</p>
+              <p className="text-[#8E8C88] text-xs mt-1">Followers</p>
             </button>
             <button onClick={() => setListModal('following')} className="text-center active:opacity-60 transition-opacity">
               <p className="text-white font-black text-xl leading-none">{formatNumber(profile.following_count || 0)}</p>
-              <p className="text-[#6B7280] text-xs mt-1">Following</p>
+              <p className="text-[#8E8C88] text-xs mt-1">Following</p>
             </button>
           </div>
         </div>
@@ -453,17 +453,17 @@ export default function Profile() {
               </span>
             )}
           </div>
-          <p className="text-[#6B7280] text-sm">@{profile.username}</p>
+          <p className="text-[#8E8C88] text-sm">@{profile.username}</p>
           {relationship === 'follow_back' && (
-            <p className="text-[#1E6FFF] text-xs mt-1 font-semibold">Follows you</p>
+            <p className="text-[#FF5A1F] text-xs mt-1 font-semibold">Follows you</p>
           )}
           {profile.bio && (
             <p className="text-white/80 text-[14px] mt-2 leading-snug">{profile.bio}</p>
           )}
           {profile.country && (
-            <p className="text-[#6B7280] text-xs mt-1">📍 {profile.country}</p>
+            <p className="text-[#8E8C88] text-xs mt-1">📍 {profile.country}</p>
           )}
-          <p className="text-[#6B7280] text-xs mt-1">
+          <p className="text-[#8E8C88] text-xs mt-1">
             Joined {new Date(profile.created_at).toLocaleDateString('en-KE',{month:'long',year:'numeric'})}
           </p>
         </div>
@@ -476,7 +476,7 @@ export default function Profile() {
                 Edit Profile
               </button>
               <button onClick={() => navigate('/premium')}
-                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-[#1E6FFF]/40 bg-[#1E6FFF]/10 hover:bg-[#1E6FFF]/20 transition-colors active:scale-95">
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-[#FF5A1F]/40 bg-[#FF5A1F]/10 hover:bg-[#FF5A1F]/20 transition-colors active:scale-95">
                 ⭐ Premium
               </button>
             </>
@@ -517,11 +517,11 @@ export default function Profile() {
                   <div className="text-left">
                     <p className="text-white font-bold text-[14px]">{planInfo?.label || 'Free'} Plan</p>
                     {activePlan !== 'free' && profile?.subscription_expires_at ? (
-                      <p className="text-[#6B7280] text-[11px]">
+                      <p className="text-[#8E8C88] text-[11px]">
                         Renews {new Date(profile.subscription_expires_at).toLocaleDateString('en-KE',{day:'numeric',month:'short'})}
                       </p>
                     ) : (
-                      <p className="text-[#6B7280] text-[11px]">Tap to upgrade</p>
+                      <p className="text-[#8E8C88] text-[11px]">Tap to upgrade</p>
                     )}
                   </div>
                 </div>
@@ -530,7 +530,7 @@ export default function Profile() {
                     <Coins size={12} className="text-yellow-400" />
                     <span className="text-yellow-400 font-bold text-[12px]">{formatNumber(profile?.coins_balance || 0)}</span>
                   </div>
-                  <ChevronRight size={16} className="text-[#6B7280]" />
+                  <ChevronRight size={16} className="text-[#8E8C88]" />
                 </div>
               </button>
               <div className="grid grid-cols-4 border-t border-white/[0.06]">
@@ -544,7 +544,7 @@ export default function Profile() {
                     className="flex flex-col items-center gap-1 py-3 hover:bg-white/[0.04] transition-colors border-r border-white/[0.06] last:border-r-0">
                     <span className="text-lg">{item.icon}</span>
                     <span className="text-[10px] font-semibold text-white/60">{item.label}</span>
-                    {item.active && <div className="w-1 h-1 rounded-full bg-[#1E6FFF]" />}
+                    {item.active && <div className="w-1 h-1 rounded-full bg-[#FF5A1F]" />}
                   </button>
                 ))}
               </div>
@@ -558,21 +558,21 @@ export default function Profile() {
           {['posts','reposts'].map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={'py-3 px-4 text-sm font-semibold capitalize transition-all relative ' +
-                (tab === t ? 'text-white' : 'text-[#6B7280]')}>
+                (tab === t ? 'text-white' : 'text-[#8E8C88]')}>
               {t}
-              {tab === t && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-[#1E6FFF] rounded-full" style={{ width:'70%' }} />}
+              {tab === t && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-[#FF5A1F] rounded-full" style={{ width:'70%' }} />}
             </button>
           ))}
         </div>
         <div className="flex gap-1">
-          <button onClick={() => setViewLayout('list')} aria-label="List view" className={`p-2 rounded-lg ${viewLayout==='list' ? 'text-[#1E6FFF] bg-[#1E6FFF]/10' : 'text-[#6B7280]'}`}><List size={17} /></button>
-          <button onClick={() => setViewLayout('grid')} aria-label="Grid view" className={`p-2 rounded-lg ${viewLayout==='grid' ? 'text-[#1E6FFF] bg-[#1E6FFF]/10' : 'text-[#6B7280]'}`}><Grid size={17} /></button>
+          <button onClick={() => setViewLayout('list')} aria-label="List view" className={`p-2 rounded-lg ${viewLayout==='list' ? 'text-[#FF5A1F] bg-[#FF5A1F]/10' : 'text-[#8E8C88]'}`}><List size={17} /></button>
+          <button onClick={() => setViewLayout('grid')} aria-label="Grid view" className={`p-2 rounded-lg ${viewLayout==='grid' ? 'text-[#FF5A1F] bg-[#FF5A1F]/10' : 'text-[#8E8C88]'}`}><Grid size={17} /></button>
         </div>
       </div>
 
       {postsLoading && posts.length === 0 ? (
         <div className="flex justify-center py-10">
-          <div className="w-6 h-6 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-[#FF5A1F] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : posts.filter(p => tab === 'posts' ? !p.is_repost : p.is_repost).length === 0 ? (
         <div className="text-center py-14 px-6">
@@ -580,7 +580,7 @@ export default function Profile() {
           <p className="text-white font-bold">No {tab} yet</p>
           {isOwnProfile && tab === 'posts' && (
             <button onClick={() => navigate('/create')}
-              className="mt-4 bg-[#1E6FFF] text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-lg shadow-[#1E6FFF]/30">
+              className="mt-4 bg-[#FF5A1F] text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-lg shadow-[#FF5A1F]/30">
               Create your first post
             </button>
           )}
@@ -601,7 +601,7 @@ export default function Profile() {
           {postsHasMore && (
             <div className="flex justify-center py-4">
               <button onClick={handleLoadMorePosts} disabled={postsLoading}
-                className="text-[#1E6FFF] text-sm font-bold disabled:opacity-50">
+                className="text-[#FF5A1F] text-sm font-bold disabled:opacity-50">
                 {postsLoading ? 'Loading...' : 'Load more'}
               </button>
             </div>
@@ -615,7 +615,7 @@ export default function Profile() {
           {postsHasMore && (
             <div className="flex justify-center py-4">
               <button onClick={handleLoadMorePosts} disabled={postsLoading}
-                className="text-[#1E6FFF] text-sm font-bold disabled:opacity-50">
+                className="text-[#FF5A1F] text-sm font-bold disabled:opacity-50">
                 {postsLoading ? 'Loading...' : 'Load more'}
               </button>
             </div>

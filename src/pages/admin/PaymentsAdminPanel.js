@@ -21,7 +21,7 @@ function Stat({ label, value, color, sub }) {
   return (
     <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4">
       <p className="text-white font-black text-xl leading-none">{value}</p>
-      <p className="text-[#6B7280] text-xs mt-1">{label}</p>
+      <p className="text-[#8E8C88] text-xs mt-1">{label}</p>
       {sub && <p className="text-white/30 text-[10px] mt-0.5">{sub}</p>}
     </div>
   );
@@ -39,17 +39,17 @@ function PaymentDetailModal({ payment, onClose, onConfirm, onReject, busy }) {
 
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" onClick={onClose}>
-      <div className="w-full max-w-[540px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl p-5 pb-8 max-h-[85vh] overflow-y-auto"
+      <div className="w-full max-w-[540px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5 pb-8 max-h-[85vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}>
 
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-white font-black text-base">Verify Payment</h3>
-          <button onClick={onClose} className="text-[#6B7280] hover:text-white"><XCircle size={20} /></button>
+          <button onClick={onClose} className="text-[#8E8C88] hover:text-white"><XCircle size={20} /></button>
         </div>
 
         {/* Admin instruction */}
-        <div className="bg-[#1E6FFF]/10 border border-[#1E6FFF]/20 rounded-2xl p-4 mb-4">
-          <p className="text-[#1E6FFF] font-bold text-sm mb-1">📱 Before confirming</p>
+        <div className="bg-[#FF5A1F]/10 border border-[#FF5A1F]/20 rounded-2xl p-4 mb-4">
+          <p className="text-[#FF5A1F] font-bold text-sm mb-1">📱 Before confirming</p>
           <p className="text-white/60 text-xs leading-relaxed">
             Open M-Pesa on your phone → Go to <strong className="text-white">My Account → Statement</strong> or <strong className="text-white">Transaction History</strong> → Search for reference <strong className="text-yellow-400 font-mono">{payment.reference_code}</strong> and verify the amount is <strong className="text-white">{formatKES(payment.amount_kes)}</strong> from <strong className="text-white">{payment.mpesa_phone}</strong>.
           </p>
@@ -67,7 +67,7 @@ function PaymentDetailModal({ payment, onClose, onConfirm, onReject, busy }) {
             { label: 'Submitted at',    value: new Date(payment.created_at).toLocaleString('en-KE', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) },
           ].map(row => (
             <div key={row.label} className="flex items-center justify-between gap-3">
-              <p className="text-[#6B7280] text-[12px] flex-shrink-0">{row.label}</p>
+              <p className="text-[#8E8C88] text-[12px] flex-shrink-0">{row.label}</p>
               <p className={`text-right text-[13px] font-bold truncate max-w-[200px] ${
                 row.highlight ? 'text-yellow-400' : 'text-white/80'
               } ${row.mono ? 'font-mono' : ''}`}>
@@ -415,20 +415,20 @@ export default function PaymentsAdminPanel() {
     t === 'business_page' ? '💼' : '💳';
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-24">
+    <div className="min-h-screen bg-[#0D0C0B] pb-24">
 
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between">
+      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white">
+          <button onClick={() => navigate(-1)} className="text-[#8E8C88] hover:text-white">
             <ArrowLeft size={22} />
           </button>
           <div>
             <p className="text-white font-bold text-[15px] leading-none">Payments Dashboard</p>
-            <p className="text-[#6B7280] text-[11px] mt-0.5">Till: 4766037 · BILGATE WAFULA MUKHAYO</p>
+            <p className="text-[#8E8C88] text-[11px] mt-0.5">Till: 4766037 · BILGATE WAFULA MUKHAYO</p>
           </div>
         </div>
-        <button onClick={() => { fetchPayments(); fetchStats(); }} className="text-[#6B7280] hover:text-white p-1">
+        <button onClick={() => { fetchPayments(); fetchStats(); }} className="text-[#8E8C88] hover:text-white p-1">
           <RefreshCw size={18} />
         </button>
       </div>
@@ -450,7 +450,7 @@ export default function PaymentsAdminPanel() {
           <div className={`rounded-xl px-4 py-3 text-sm font-semibold flex items-center justify-between gap-2 ${
             feedback.type === 'success' ? 'bg-green-500/10 border border-green-500/20 text-green-400' :
             feedback.type === 'error'   ? 'bg-red-500/10 border border-red-500/20 text-red-400' :
-            'bg-[#1E6FFF]/10 border border-[#1E6FFF]/20 text-[#1E6FFF]'
+            'bg-[#FF5A1F]/10 border border-[#FF5A1F]/20 text-[#FF5A1F]'
           }`}>
             <span>{feedback.msg}</span>
             <button onClick={() => setFeedback(null)} className="flex-shrink-0 opacity-60 hover:opacity-100">
@@ -479,7 +479,7 @@ export default function PaymentsAdminPanel() {
           ].map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
               className={'flex-1 py-2 rounded-xl text-[11px] font-bold transition-all ' +
-                (tab === t.key ? 'bg-[#1E6FFF] text-white shadow-lg shadow-[#1E6FFF]/30' : 'text-[#6B7280] hover:text-white')}>
+                (tab === t.key ? 'bg-[#FF5A1F] text-white shadow-lg shadow-[#FF5A1F]/30' : 'text-[#8E8C88] hover:text-white')}>
               {t.label}
             </button>
           ))}
@@ -487,17 +487,17 @@ export default function PaymentsAdminPanel() {
 
         {/* Search */}
         <div className="flex items-center gap-3 bg-white/[0.05] border border-white/10 rounded-2xl px-4 py-2.5">
-          <Search size={15} className="text-[#6B7280] flex-shrink-0" />
+          <Search size={15} className="text-[#8E8C88] flex-shrink-0" />
           <input type="text" value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search by ref, username, phone, name..."
-            className="flex-1 bg-transparent text-white text-sm placeholder-[#6B7280] focus:outline-none" />
-          {search && <button onClick={() => setSearch('')} className="text-[#6B7280] hover:text-white flex-shrink-0"><XCircle size={15} /></button>}
+            className="flex-1 bg-transparent text-white text-sm placeholder-[#8E8C88] focus:outline-none" />
+          {search && <button onClick={() => setSearch('')} className="text-[#8E8C88] hover:text-white flex-shrink-0"><XCircle size={15} /></button>}
         </div>
 
         {/* Payment list */}
         {loading ? (
           <div className="flex justify-center py-10">
-            <div className="w-6 h-6 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-[#FF5A1F] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-12">
@@ -540,11 +540,11 @@ export default function PaymentsAdminPanel() {
                         <p className="text-white/70 text-[12px]">
                           <strong>{pay.user?.display_name}</strong> · @{pay.user?.username}
                         </p>
-                        <p className="text-[#6B7280] text-[11px] font-mono mt-0.5">
+                        <p className="text-[#8E8C88] text-[11px] font-mono mt-0.5">
                           {pay.reference_code} · {pay.mpesa_phone}
                           {pay.mpesa_name ? ` · ${pay.mpesa_name}` : ''}
                         </p>
-                        <p className="text-[#6B7280] text-[11px] mt-0.5">{formatTime(pay.created_at)}</p>
+                        <p className="text-[#8E8C88] text-[11px] mt-0.5">{formatTime(pay.created_at)}</p>
                         {pay.rejection_reason && (
                           <p className="text-red-400/70 text-[11px] mt-1">Reason: {pay.rejection_reason}</p>
                         )}

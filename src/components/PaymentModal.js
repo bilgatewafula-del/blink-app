@@ -144,7 +144,7 @@ export default function PaymentModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[540px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl max-h-[92vh] overflow-y-auto"
+        className="w-full max-w-[540px] bg-[#171614] border-t border-white/10 rounded-t-3xl max-h-[92vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
         style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}
       >
@@ -159,15 +159,15 @@ export default function PaymentModal({
             <p className="text-white font-black text-[16px]">{title}</p>
             <p className="text-white/40 text-xs">{description}</p>
           </div>
-          <button onClick={onClose} className="text-[#6B7280] hover:text-white w-8 h-8 flex items-center justify-center">
+          <button onClick={onClose} className="text-[#8E8C88] hover:text-white w-8 h-8 flex items-center justify-center">
             <X size={20} />
           </button>
         </div>
 
         {/* Amount badge */}
-        <div className="mx-5 mt-4 bg-[#1E6FFF]/10 border border-[#1E6FFF]/20 rounded-2xl px-4 py-3 flex items-center justify-between">
+        <div className="mx-5 mt-4 bg-[#FF5A1F]/10 border border-[#FF5A1F]/20 rounded-2xl px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <DollarSign size={16} className="text-[#1E6FFF]" />
+            <DollarSign size={16} className="text-[#FF5A1F]" />
             <span className="text-white/60 text-sm">Amount to pay</span>
           </div>
           <span className="text-white font-black text-xl">{formatKES(amount)}</span>
@@ -213,7 +213,7 @@ export default function PaymentModal({
                 },
               ].map(step => (
                 <div key={step.n} className="flex gap-3">
-                  <div className="w-7 h-7 rounded-full bg-[#1E6FFF]/20 text-[#1E6FFF] font-bold text-[13px] flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-7 h-7 rounded-full bg-[#FF5A1F]/20 text-[#FF5A1F] font-bold text-[13px] flex items-center justify-center flex-shrink-0 mt-0.5">
                     {step.n}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -222,7 +222,7 @@ export default function PaymentModal({
                     {step.field && (
                       <div className={`mt-2 rounded-xl px-3 py-2 flex items-center justify-between gap-2 ${step.field.important ? 'bg-yellow-500/10 border border-yellow-500/30' : 'bg-white/[0.06] border border-white/10'}`}>
                         <div className="min-w-0">
-                          <p className="text-[#6B7280] text-[10px] font-bold uppercase">{step.field.label}</p>
+                          <p className="text-[#8E8C88] text-[10px] font-bold uppercase">{step.field.label}</p>
                           <p className={`font-black text-[16px] font-mono ${step.field.important ? 'text-yellow-400' : 'text-white'}`}>
                             {step.field.value}
                           </p>
@@ -237,14 +237,14 @@ export default function PaymentModal({
 
             {/* Till name */}
             <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-3 mb-5">
-              <p className="text-[#6B7280] text-[11px] font-bold uppercase mb-1">Business Name (confirm on M-Pesa screen)</p>
+              <p className="text-[#8E8C88] text-[11px] font-bold uppercase mb-1">Business Name (confirm on M-Pesa screen)</p>
               <p className="text-white font-bold text-[14px]">{MPESA.name}</p>
             </div>
 
             <button
               onClick={() => setStep(2)}
               className="w-full py-4 rounded-2xl font-bold text-white text-[15px] flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-              style={{ background: 'linear-gradient(135deg, #1E6FFF, #7B2FFF)', boxShadow: '0 8px 24px rgba(30,111,255,0.3)' }}
+              style={{ background: 'linear-gradient(135deg, #FF5A1F, #FF2D78)', boxShadow: '0 8px 24px rgba(255,90,31,0.3)' }}
             >
               I Have Paid — Confirm Details <ChevronRight size={18} />
             </button>
@@ -274,7 +274,7 @@ export default function PaymentModal({
                   onChange={e => { setMpesaPhone(e.target.value); setError(''); }}
                   placeholder="e.g. 0712 345 678"
                   inputMode="tel"
-                  className="w-full bg-white/[0.07] border border-white/15 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60 transition-all"
+                  className="w-full bg-white/[0.07] border border-white/15 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 transition-all"
                 />
               </div>
 
@@ -289,7 +289,7 @@ export default function PaymentModal({
                   value={mpesaName}
                   onChange={e => { setMpesaName(e.target.value); setError(''); }}
                   placeholder="e.g. John Doe"
-                  className="w-full bg-white/[0.07] border border-white/15 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60 transition-all"
+                  className="w-full bg-white/[0.07] border border-white/15 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 transition-all"
                 />
               </div>
 
@@ -305,7 +305,7 @@ export default function PaymentModal({
                   onChange={e => { setConfirmAmount(e.target.value); setError(''); }}
                   placeholder={String(amount)}
                   inputMode="numeric"
-                  className="w-full bg-white/[0.07] border border-white/15 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60 transition-all"
+                  className="w-full bg-white/[0.07] border border-white/15 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 transition-all"
                 />
               </div>
 
@@ -363,21 +363,21 @@ export default function PaymentModal({
             <div className="bg-white/[0.04] border border-white/10 rounded-2xl px-4 py-3 mb-4 text-left">
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-[#6B7280] text-sm">Reference</span>
+                  <span className="text-[#8E8C88] text-sm">Reference</span>
                   <span className="text-white font-black font-mono">{ref}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#6B7280] text-sm">Amount</span>
+                  <span className="text-[#8E8C88] text-sm">Amount</span>
                   <span className="text-white font-bold">{formatKES(amount)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#6B7280] text-sm">Status</span>
+                  <span className="text-[#8E8C88] text-sm">Status</span>
                   <span className="text-yellow-400 font-bold">⏳ Pending Verification</span>
                 </div>
               </div>
             </div>
-            <div className="bg-[#1E6FFF]/10 border border-[#1E6FFF]/20 rounded-2xl p-4 mb-5 text-left">
-              <p className="text-[#1E6FFF] font-bold text-sm mb-1">⏱ What happens next?</p>
+            <div className="bg-[#FF5A1F]/10 border border-[#FF5A1F]/20 rounded-2xl p-4 mb-5 text-left">
+              <p className="text-[#FF5A1F] font-bold text-sm mb-1">⏱ What happens next?</p>
               <p className="text-white/50 text-xs leading-relaxed">
                 An admin will verify your payment on M-Pesa using reference <strong className="text-white">{ref}</strong>. Once confirmed, your service activates automatically and you'll receive a notification. This usually takes 5–60 minutes during business hours.
               </p>
@@ -385,7 +385,7 @@ export default function PaymentModal({
             <button
               onClick={onClose}
               className="w-full py-4 rounded-2xl font-bold text-white"
-              style={{ background: 'linear-gradient(135deg, #1E6FFF, #7B2FFF)' }}
+              style={{ background: 'linear-gradient(135deg, #FF5A1F, #FF2D78)' }}
             >
               Done — I'll wait for confirmation
             </button>

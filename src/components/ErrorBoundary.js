@@ -64,11 +64,11 @@ const styles = {
   wrap: {
     minHeight: '100vh', display: 'flex', flexDirection: 'column',
     alignItems: 'center', justifyContent: 'center', gap: 16,
-    background: '#0A1628', color: '#fff', padding: 24, textAlign: 'center',
+    background: '#0D0C0B', color: '#fff', padding: 24, textAlign: 'center',
   },
   text: { margin: 0, fontSize: 16 },
   btn: {
-    background: '#1E6FFF', color: '#fff', border: 'none', borderRadius: 12,
+    background: '#FF5A1F', color: '#fff', border: 'none', borderRadius: 12,
     padding: '12px 28px', fontSize: 16, fontWeight: 600, cursor: 'pointer',
   },
 };

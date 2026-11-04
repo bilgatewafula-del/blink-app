@@ -38,7 +38,7 @@ export default function VerificationPage() {
   ];
 
   const BENEFITS = [
-    '✓ Blue verified badge on your profile and posts',
+    '✓ Verified badge on your profile and posts',
     '✓ Higher visibility in Discover and search',
     '✓ Priority in "People to Follow" suggestions',
     '✓ Verified label in comments and replies',
@@ -46,13 +46,13 @@ export default function VerificationPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-24">
+    <div className="min-h-screen bg-[#0D0C0B] pb-24">
 
-      <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white"><ArrowLeft size={22} /></button>
+      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => navigate(-1)} className="text-[#8E8C88] hover:text-white"><ArrowLeft size={22} /></button>
         <div>
           <h1 className="text-white font-bold text-[15px] leading-none">Get Verified</h1>
-          <p className="text-[#6B7280] text-xs mt-0.5">One-time verification fee</p>
+          <p className="text-[#8E8C88] text-xs mt-0.5">One-time verification fee</p>
         </div>
       </div>
 
@@ -60,11 +60,11 @@ export default function VerificationPage() {
 
         {/* Already verified */}
         {isVerified && (
-          <div className="bg-[#1E6FFF]/10 border border-[#1E6FFF]/25 rounded-2xl p-5 flex flex-col items-center text-center gap-3">
+          <div className="bg-[#FF5A1F]/10 border border-[#FF5A1F]/25 rounded-2xl p-5 flex flex-col items-center text-center gap-3">
             <VerifiedBadge size={48} />
             <div>
               <p className="text-white font-black text-lg">Verified Account ✓</p>
-              <p className="text-[#6B7280] text-xs mt-1">
+              <p className="text-[#8E8C88] text-xs mt-1">
                 Your B-Link verified badge is live and visible on your profile, posts, and comments.
               </p>
               {profile?.verified_at && (
@@ -92,14 +92,14 @@ export default function VerificationPage() {
         )}
 
         {/* Hero */}
-        <div className="bg-gradient-to-br from-[#1E6FFF]/15 to-[#7B2FFF]/15 border border-[#1E6FFF]/20 rounded-2xl p-5 text-center">
+        <div className="bg-gradient-to-br from-[#FF5A1F]/15 to-[#FF2D78]/15 border border-[#FF5A1F]/20 rounded-2xl p-5 text-center">
           <div className="flex justify-center mb-3">
             <VerifiedBadge size={56} />
           </div>
           <p className="text-white font-black text-xl mb-1">B-Link Verified Badge</p>
           <p className="text-white/50 text-sm mb-3">One-time fee — badge stays forever</p>
           <div className="bg-white/[0.06] rounded-xl px-4 py-3 inline-block">
-            <p className="text-[#6B7280] text-xs">One-time verification fee</p>
+            <p className="text-[#8E8C88] text-xs">One-time verification fee</p>
             <p className="text-white font-black text-3xl">{formatKES(VERIFICATION_PRICE)}</p>
           </div>
         </div>
@@ -120,7 +120,7 @@ export default function VerificationPage() {
           <div className="space-y-2">
             {REQUIREMENTS.map((r,i) => (
               <div key={i} className="flex items-start gap-2">
-                <Check size={12} className="text-[#1E6FFF] flex-shrink-0 mt-0.5" />
+                <Check size={12} className="text-[#FF5A1F] flex-shrink-0 mt-0.5" />
                 <p className="text-white/60 text-[12px]">{r}</p>
               </div>
             ))}
@@ -132,7 +132,7 @@ export default function VerificationPage() {
           <button
             onClick={() => setShowPayment(true)}
             className="w-full py-4 rounded-2xl font-bold text-white text-[15px] active:scale-[0.98] transition-all"
-            style={{ background: 'linear-gradient(135deg, #1E6FFF, #7B2FFF)', boxShadow:'0 8px 24px rgba(30,111,255,0.3)' }}
+            style={{ background: 'linear-gradient(135deg, #FF5A1F, #FF2D78)', boxShadow:'0 8px 24px rgba(255,90,31,0.3)' }}
           >
             Apply for Verification — {formatKES(VERIFICATION_PRICE)}
           </button>

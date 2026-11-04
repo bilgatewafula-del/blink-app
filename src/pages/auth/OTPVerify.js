@@ -56,20 +56,20 @@ const OTPVerify = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A1628] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[#0D0C0B] flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-xl">B</div>
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold text-xl">B</div>
           <span className="text-white font-bold text-2xl">B-Link</span>
         </div>
 
         <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm text-center">
           <div className="text-4xl mb-4">📧</div>
           <h2 className="text-white text-2xl font-bold mb-2">Verify your email</h2>
-          <p className="text-[#6B7280] text-sm mb-2">
+          <p className="text-[#8E8C88] text-sm mb-2">
             We sent a 6-digit code to
           </p>
-          <p className="text-[#1E6FFF] text-sm font-semibold mb-6">{email}</p>
+          <p className="text-[#FF5A1F] text-sm font-semibold mb-6">{email}</p>
 
           {error && (
             <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 mb-4">
@@ -94,7 +94,7 @@ const OTPVerify = () => {
                 value={digit}
                 onChange={(e) => handleChange(e.target.value, i)}
                 onKeyDown={(e) => handleKeyDown(e, i)}
-                className="w-11 h-12 bg-white/5 border border-white/10 rounded-xl text-center text-white text-lg font-bold focus:outline-none focus:border-[#1E6FFF] transition-colors"
+                className="w-11 h-12 bg-white/5 border border-white/10 rounded-xl text-center text-white text-lg font-bold focus:outline-none focus:border-[#FF5A1F] transition-colors"
               />
             ))}
           </div>
@@ -102,16 +102,16 @@ const OTPVerify = () => {
           <button
             onClick={handleVerify}
             disabled={loading}
-            className="w-full bg-gradient-to-r from-[#1E6FFF] to-[#7B2FFF] text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+            className="w-full bg-gradient-to-r from-[#FF5A1F] to-[#FF2D78] text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed mb-4"
           >
             {loading ? 'Verifying...' : 'Verify Email'}
           </button>
 
           <button
             onClick={handleResend}
-            className="text-[#6B7280] text-sm hover:text-[#1E6FFF] transition-colors"
+            className="text-[#8E8C88] text-sm hover:text-[#FF5A1F] transition-colors"
           >
-            Didn't receive it? <span className="text-[#1E6FFF]">Resend code</span>
+            Didn't receive it? <span className="text-[#FF5A1F]">Resend code</span>
           </button>
         </div>
       </div>

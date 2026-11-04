@@ -13,7 +13,7 @@ export default function Avatar({ url, name, size = 10, className = '', onClick }
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'linear-gradient(135deg, #1E6FFF, #7B2FFF)',
+    background: 'linear-gradient(135deg, #FF5A1F, #FF2D78)',
     userSelect: 'none',
   };
 

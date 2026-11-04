@@ -124,7 +124,7 @@ export default function Drawer({ isOpen, onClose }) {
 
       <div
         ref={panelRef}
-        className={`fixed top-0 left-0 bottom-0 z-50 flex flex-col bg-[#0d1f3c] border-r border-white/10 shadow-2xl transition-transform ${closing ? 'animate-slideOutLeft' : 'animate-slideInLeft'}`}
+        className={`fixed top-0 left-0 bottom-0 z-50 flex flex-col bg-[#171614] border-r border-white/10 shadow-2xl transition-transform ${closing ? 'animate-slideOutLeft' : 'animate-slideInLeft'}`}
         style={{ width: 'min(85vw, 320px)' }}
         onClick={e => e.stopPropagation()}
         onTouchStart={handleTouchStart}
@@ -142,7 +142,7 @@ export default function Drawer({ isOpen, onClose }) {
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
             ) : (
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
                 {profile?.display_name?.[0]?.toUpperCase() || 'B'}
               </div>
             )}
@@ -152,7 +152,7 @@ export default function Drawer({ isOpen, onClose }) {
                 {profile?.is_verified && <VerifiedBadge size={14} />}
                 {profile?.role === 'blink' && <span className="text-[13px]">👑</span>}
               </div>
-              <p className="text-[#6B7280] text-xs truncate">@{profile?.username || 'user'}</p>
+              <p className="text-[#8E8C88] text-xs truncate">@{profile?.username || 'user'}</p>
               <div className="flex items-center gap-3 mt-1">
                 <span className="text-white/50 text-[11px]">
                   <span className="text-white/80 font-semibold">{formatNumber(profile?.followers_count || 0)}</span> followers
@@ -163,7 +163,7 @@ export default function Drawer({ isOpen, onClose }) {
               </div>
             </div>
           </button>
-          <button onClick={requestClose} aria-label="Close menu" className="text-[#6B7280] hover:text-white p-1 flex-shrink-0 ml-2 active:scale-90 transition-transform">
+          <button onClick={requestClose} aria-label="Close menu" className="text-[#8E8C88] hover:text-white p-1 flex-shrink-0 ml-2 active:scale-90 transition-transform">
             <X size={20} />
           </button>
         </div>
@@ -177,7 +177,7 @@ export default function Drawer({ isOpen, onClose }) {
             <div className="flex-1 min-w-0">
               <p className="text-white font-bold text-[13px]">{planInfo?.label} Plan</p>
               {profile?.subscription_expires_at && (
-                <p className="text-[#6B7280] text-[10px]">
+                <p className="text-[#8E8C88] text-[10px]">
                   expires {new Date(profile.subscription_expires_at).toLocaleDateString('en-KE',{day:'numeric',month:'short'})}
                 </p>
               )}
@@ -235,7 +235,7 @@ export default function Drawer({ isOpen, onClose }) {
 
 function SectionLabel({ label }) {
   return (
-    <p className="text-[#6B7280] text-[10px] font-bold uppercase tracking-widest px-5 pt-3 pb-1">
+    <p className="text-[#8E8C88] text-[10px] font-bold uppercase tracking-widest px-5 pt-3 pb-1">
       {label}
     </p>
   );
@@ -249,13 +249,13 @@ function NavItem({ item, onPress, admin, active }) {
       aria-current={active ? 'page' : undefined}
       className={'w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all text-left active:scale-[0.98] ' +
         (active
-          ? (admin ? 'bg-red-500/[0.08]' : 'bg-[#1E6FFF]/[0.10]')
+          ? (admin ? 'bg-red-500/[0.08]' : 'bg-[#FF5A1F]/[0.10]')
           : (admin ? 'hover:bg-red-500/10' : 'hover:bg-white/[0.06]'))}
     >
       <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
-        admin ? 'bg-red-500/15' : active ? 'bg-[#1E6FFF]/20' : 'bg-white/[0.06]'
+        admin ? 'bg-red-500/15' : active ? 'bg-[#FF5A1F]/20' : 'bg-white/[0.06]'
       }`}>
-        <Icon size={16} className={admin ? 'text-red-400' : active ? 'text-[#1E6FFF]' : 'text-[#6B7280]'} />
+        <Icon size={16} className={admin ? 'text-red-400' : active ? 'text-[#FF5A1F]' : 'text-[#8E8C88]'} />
       </div>
       <span className={`flex-1 font-semibold text-[14px] ${
         admin ? 'text-red-300' : active ? 'text-white' : 'text-white/80'
@@ -263,13 +263,13 @@ function NavItem({ item, onPress, admin, active }) {
         {item.label}
       </span>
       {item.badge && (
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1E6FFF]/20 text-[#1E6FFF] border border-[#1E6FFF]/30 flex-shrink-0">
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FF5A1F]/20 text-[#FF5A1F] border border-[#FF5A1F]/30 flex-shrink-0">
           {item.badge}
         </span>
       )}
       {active
-        ? <div className="w-1.5 h-1.5 rounded-full bg-[#1E6FFF] flex-shrink-0" />
-        : <ChevronRight size={14} className="text-[#6B7280] flex-shrink-0" />
+        ? <div className="w-1.5 h-1.5 rounded-full bg-[#FF5A1F] flex-shrink-0" />
+        : <ChevronRight size={14} className="text-[#8E8C88] flex-shrink-0" />
       }
     </button>
   );

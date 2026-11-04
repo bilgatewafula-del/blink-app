@@ -37,11 +37,11 @@ export default function SubscriptionPage() {
   const planOrder = ['free', 'pro', 'creator', 'business'];
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-24">
+    <div className="min-h-screen bg-[#0D0C0B] pb-24">
 
       {/* Top bar */}
-      <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white">
+      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => navigate(-1)} className="text-[#8E8C88] hover:text-white">
           <ArrowLeft size={22} />
         </button>
         <div className="flex-1">
@@ -49,14 +49,14 @@ export default function SubscriptionPage() {
           <div className="flex items-center gap-2 mt-0.5">
             <span className={`text-xs font-bold px-2 py-0.5 rounded-full capitalize ${
               activePlan === 'free' ? 'bg-white/10 text-white/50' :
-              activePlan === 'pro' ? 'bg-[#1E6FFF]/20 text-[#1E6FFF]' :
+              activePlan === 'pro' ? 'bg-[#FF5A1F]/20 text-[#FF5A1F]' :
               activePlan === 'creator' ? 'bg-[#FF6B35]/20 text-[#FF6B35]' :
               'bg-yellow-500/20 text-yellow-400'
             }`}>
               {PLANS[activePlan]?.badge || ''} {activePlan} plan
             </span>
             {isActive && profile?.subscription_expires_at && (
-              <span className="text-[#6B7280] text-[11px]">
+              <span className="text-[#8E8C88] text-[11px]">
                 expires {new Date(profile.subscription_expires_at).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' })}
               </span>
             )}
@@ -69,7 +69,7 @@ export default function SubscriptionPage() {
         {[['plans', 'Plans'], ['history', 'Payment History']].map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)}
             className={'flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ' +
-              (tab === k ? 'bg-[#1E6FFF] text-white shadow-lg shadow-[#1E6FFF]/30' : 'text-white/50')}>
+              (tab === k ? 'bg-[#FF5A1F] text-white shadow-lg shadow-[#FF5A1F]/30' : 'text-white/50')}>
             {l}
           </button>
         ))}
@@ -145,7 +145,7 @@ export default function SubscriptionPage() {
                   <div className="space-y-1.5">
                     {p.features.map((f, i) => (
                       <div key={i} className="flex items-center gap-2">
-                        <Check size={12} style={{ color: p.price === 0 ? '#6B7280' : p.color, flexShrink: 0 }} />
+                        <Check size={12} style={{ color: p.price === 0 ? '#8E8C88' : p.color, flexShrink: 0 }} />
                         <span className="text-white/65 text-[12px]">{f}</span>
                       </div>
                     ))}
@@ -170,7 +170,7 @@ export default function SubscriptionPage() {
             <div className="text-center py-16">
               <p className="text-4xl mb-3">💳</p>
               <p className="text-white font-bold">No payments yet</p>
-              <p className="text-[#6B7280] text-sm mt-1">Upgrade your plan to get started</p>
+              <p className="text-[#8E8C88] text-sm mt-1">Upgrade your plan to get started</p>
             </div>
           ) : payments.map(pay => (
             <div key={pay.id} className={`border rounded-2xl p-4 ${
@@ -194,13 +194,13 @@ export default function SubscriptionPage() {
                        pay.status === 'rejected'  ? '✗ Rejected' : pay.status}
                     </span>
                     {pay.service_active && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1E6FFF]/20 text-[#1E6FFF] border border-[#1E6FFF]/30">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FF5A1F]/20 text-[#FF5A1F] border border-[#FF5A1F]/30">
                         Active
                       </span>
                     )}
                   </div>
-                  <p className="text-[#6B7280] text-[11px] font-mono">Ref: <strong className="text-white/70">{pay.reference_code}</strong></p>
-                  <p className="text-[#6B7280] text-[11px] mt-0.5">
+                  <p className="text-[#8E8C88] text-[11px] font-mono">Ref: <strong className="text-white/70">{pay.reference_code}</strong></p>
+                  <p className="text-[#8E8C88] text-[11px] mt-0.5">
                     {new Date(pay.created_at).toLocaleString('en-KE', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}
                   </p>
                   {pay.status === 'pending' && (
@@ -214,7 +214,7 @@ export default function SubscriptionPage() {
                 </div>
                 <div className="text-right flex-shrink-0">
                   <p className="text-white font-black text-[16px]">{formatKES(pay.amount_kes)}</p>
-                  <p className="text-[#6B7280] text-[11px] mt-0.5">{pay.mpesa_phone}</p>
+                  <p className="text-[#8E8C88] text-[11px] mt-0.5">{pay.mpesa_phone}</p>
                 </div>
               </div>
             </div>

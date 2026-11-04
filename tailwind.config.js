@@ -8,28 +8,28 @@ module.exports = {
     extend: {
       colors: {
         // Original palette — unchanged, every existing className keeps working
-        primary: '#1E6FFF',
-        secondary: '#00D4C8',
-        accent: '#7B2FFF',
-        turquoise: '#00B4D8',
+        primary: '#FF5A1F',
+        secondary: '#FFB020',
+        accent: '#FF2D78',
+        amber:     '#FF9F1C',
         blinkorange: '#FF6B35',
         gold: '#FFD700',
         success: '#2ECC71',
-        deepblue: '#0A1628',
-        darktext: '#1A1A2E',
-        midgray: '#6B7280',
+        ink:       '#0D0C0B',
+        darktext: '#1A1917',
+        midgray: '#8E8C88',
 
         // Extended — most components hardcode these exact hex values
-        // inline (bg-[#0A1628], text-[#6B7280], etc.) instead of using
+        // inline (bg-[#0D0C0B], text-[#8E8C88], etc.) instead of using
         // token names, which is why the app looks slightly inconsistent
         // component-to-component. These give you named alternatives to
         // migrate toward — not required to use immediately, but every
         // future file I touch will prefer these over raw hex so the
         // palette stays centralized in one place.
         surface: {
-          DEFAULT: '#0A1628',   // page background (was deepblue, kept both)
-          raised:  '#0d1f3c',   // modals, drawer, sheets
-          card:    '#111827',   // dropdown menus, popovers
+          DEFAULT: '#0D0C0B',   // page background (page background)
+          raised:  '#171614',   // modals, drawer, sheets
+          card:    '#1d1c1a',   // dropdown menus, popovers
         },
         border: {
           subtle: 'rgba(255,255,255,0.07)',

@@ -40,14 +40,14 @@ export default function CoinsPage() {
   const balance    = profile?.coins_balance || 0;
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-24">
+    <div className="min-h-screen bg-[#0D0C0B] pb-24">
 
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white"><ArrowLeft size={22} /></button>
+      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => navigate(-1)} className="text-[#8E8C88] hover:text-white"><ArrowLeft size={22} /></button>
         <div className="flex-1">
           <h1 className="text-white font-bold text-[15px] leading-none">B-Link Coins</h1>
-          <p className="text-[#6B7280] text-xs mt-0.5">In-app currency — not withdrawable</p>
+          <p className="text-[#8E8C88] text-xs mt-0.5">In-app currency — not withdrawable</p>
         </div>
         {/* Balance chip */}
         <div className="bg-yellow-500/15 border border-yellow-500/25 rounded-2xl px-4 py-2 flex items-center gap-2">
@@ -156,7 +156,7 @@ export default function CoinsPage() {
             <div className="text-center py-14">
               <p className="text-4xl mb-3">🪙</p>
               <p className="text-white font-bold">No transactions yet</p>
-              <p className="text-[#6B7280] text-sm mt-1">Buy coins to get started</p>
+              <p className="text-[#8E8C88] text-sm mt-1">Buy coins to get started</p>
             </div>
           ) : transactions.map(tx => (
             <div key={tx.id} className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3 flex items-center gap-3">
@@ -165,7 +165,7 @@ export default function CoinsPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white text-[13px] font-semibold truncate">{tx.description || tx.transaction_type}</p>
-                <p className="text-[#6B7280] text-[11px]">
+                <p className="text-[#8E8C88] text-[11px]">
                   {new Date(tx.created_at).toLocaleDateString('en-KE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}
                 </p>
               </div>
@@ -173,7 +173,7 @@ export default function CoinsPage() {
                 <p className={`font-black text-[15px] ${tx.amount > 0 ? 'text-yellow-400' : 'text-red-400'}`}>
                   {tx.amount > 0 ? '+' : ''}{formatNumber(tx.amount)}
                 </p>
-                <p className="text-[#6B7280] text-[10px]">bal: {formatNumber(tx.balance_after)}</p>
+                <p className="text-[#8E8C88] text-[10px]">bal: {formatNumber(tx.balance_after)}</p>
               </div>
             </div>
           ))}

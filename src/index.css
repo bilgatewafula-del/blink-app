@@ -19,7 +19,7 @@ body {
   margin: 0;
   padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  background-color: #0A1628;
+  background-color: #0D0C0B;
   color: white;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -96,14 +96,14 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px #0d1f3c inset !important;
+  -webkit-box-shadow: 0 0 0 1000px #171614 inset !important;
   -webkit-text-fill-color: white !important;
   caret-color: white !important;
   transition: background-color 9999s ease-in-out 0s;
 }
 
 /* ── Select dark ── */
-select option { background: #0d1f3c; color: white; }
+select option { background: #171614; color: white; }
 
 /* ── Input & textarea base ── */
 input, textarea, select, button {
@@ -130,8 +130,8 @@ input, textarea {
 
 /* ── Emoji picker dark theme ── */
 .EmojiPickerReact {
-  --epr-bg-color:                 #111827 !important;
-  --epr-category-label-bg-color:  #0d1f3c !important;
+  --epr-bg-color:                 #1d1c1a !important;
+  --epr-category-label-bg-color:  #171614 !important;
   --epr-hover-bg-color:           rgba(255,255,255,0.08) !important;
   --epr-search-input-bg-color:    rgba(255,255,255,0.08) !important;
   --epr-text-color:               #ffffff !important;
@@ -170,7 +170,7 @@ input, textarea {
   position: fixed;
   bottom: 0; left: 0; right: 0;
   z-index: 30;
-  background: rgba(10, 22, 40, 0.97);
+  background: rgba(13, 12, 11, 0.97);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid rgba(255,255,255,0.07);

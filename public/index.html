@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8" />
 
+  <!-- Open connections early: faster first data + image load -->
+  <link rel="preconnect" href="%REACT_APP_SUPABASE_URL%" crossorigin />
+  <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
+
   <!-- App Icons -->
   <link rel="icon" href="%PUBLIC_URL%/favicon.png" />
   <link rel="icon" href="%PUBLIC_URL%/favicon.ico" sizes="any" />
@@ -15,15 +19,8 @@
     content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
   />
 
-  <!-- Theme -->
-  <!-- Was #1E6FFF (bright blue) here but #0A1628 (dark navy) in
-       manifest.json — theme-color meta is what Chrome uses for the
-       address bar tint before the manifest loads, and theme_color in
-       the manifest takes over once installed as a PWA. A mismatch
-       between the two causes a visible color flash on some Android
-       devices right at launch. Aligned to #0A1628 since that's the
-       actual background color used across every screen in the app. -->
-  <meta name="theme-color" content="#0A1628" />
+  <!-- Theme (matches manifest.json so there is no colour flash at launch) -->
+  <meta name="theme-color" content="#0D0C0B" />
 
   <!-- PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes" />

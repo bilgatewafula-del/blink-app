@@ -40,12 +40,12 @@ export default function BusinessPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-24">
-      <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white"><ArrowLeft size={22} /></button>
+    <div className="min-h-screen bg-[#0D0C0B] pb-24">
+      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => navigate(-1)} className="text-[#8E8C88] hover:text-white"><ArrowLeft size={22} /></button>
         <div>
           <h1 className="text-white font-bold text-[15px] leading-none">Business Page</h1>
-          <p className="text-[#6B7280] text-xs mt-0.5">{formatKES(BUSINESS_PAGE_PRICE)} / month</p>
+          <p className="text-[#8E8C88] text-xs mt-0.5">{formatKES(BUSINESS_PAGE_PRICE)} / month</p>
         </div>
       </div>
 
@@ -56,7 +56,7 @@ export default function BusinessPage() {
             <span className="text-2xl">💼</span>
             <div>
               <p className="text-white font-bold">Business Page Active</p>
-              <p className="text-[#6B7280] text-xs mt-0.5">Your business features are live.</p>
+              <p className="text-[#8E8C88] text-xs mt-0.5">Your business features are live.</p>
             </div>
           </div>
         )}
@@ -77,7 +77,7 @@ export default function BusinessPage() {
           <p className="text-white font-black text-xl mb-1">B-Link Business</p>
           <p className="text-white/50 text-sm mb-3">Grow your brand on Africa's GenZ platform</p>
           <div className="bg-white/[0.06] rounded-xl px-4 py-3 inline-block">
-            <p className="text-[#6B7280] text-xs">Monthly subscription</p>
+            <p className="text-[#8E8C88] text-xs">Monthly subscription</p>
             <p className="text-white font-black text-3xl">{formatKES(BUSINESS_PAGE_PRICE)}</p>
             <p className="text-white/30 text-[11px]">per month</p>
           </div>

@@ -32,7 +32,7 @@ export default function ReportModal({ target, onClose, userId }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/60" onClick={onClose}>
-      <div className="w-full max-w-[620px] mx-auto bg-[#0d1f3c] border-t border-white/15 rounded-t-3xl p-5"
+      <div className="w-full max-w-[620px] mx-auto bg-[#171614] border-t border-white/15 rounded-t-3xl p-5"
         style={{ animation: 'slideUp 0.25s ease-out' }} onClick={(e) => e.stopPropagation()}>
         <div className="w-10 h-1 bg-white/30 rounded-full mx-auto mb-4" />
 
@@ -40,7 +40,7 @@ export default function ReportModal({ target, onClose, userId }) {
           <div className="text-center py-6">
             <p className="text-4xl mb-3">✅</p>
             <p className="text-white font-bold text-lg">Report submitted</p>
-            <p className="text-[#6B7280] text-sm mt-1">Our team will review this anonymously. Thank you for helping keep B-Link safe.</p>
+            <p className="text-[#8E8C88] text-sm mt-1">Our team will review this anonymously. Thank you for helping keep B-Link safe.</p>
           </div>
         ) : (
           <>
@@ -49,10 +49,10 @@ export default function ReportModal({ target, onClose, userId }) {
                 <Flag size={18} className="text-red-400" />
                 Report {target.type}
               </h3>
-              <button onClick={onClose} className="text-[#6B7280] hover:text-white"><X size={20} /></button>
+              <button onClick={onClose} className="text-[#8E8C88] hover:text-white"><X size={20} /></button>
             </div>
 
-            <p className="text-[#6B7280] text-sm mb-3">Why are you reporting this {target.type}?</p>
+            <p className="text-[#8E8C88] text-sm mb-3">Why are you reporting this {target.type}?</p>
 
             <div className="space-y-2 mb-4">
               {REASONS.map((r) => (
@@ -69,7 +69,7 @@ export default function ReportModal({ target, onClose, userId }) {
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
                 placeholder="Please describe the issue..."
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder-[#6B7280] text-sm focus:outline-none focus:border-red-500/50 resize-none mb-4"
+                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder-[#8E8C88] text-sm focus:outline-none focus:border-red-500/50 resize-none mb-4"
                 rows={3}
               />
             )}
@@ -79,7 +79,7 @@ export default function ReportModal({ target, onClose, userId }) {
               {submitting ? 'Submitting...' : 'Submit Report'}
             </button>
 
-            <p className="text-center text-[#6B7280] text-xs mt-3">
+            <p className="text-center text-[#8E8C88] text-xs mt-3">
               Reports are anonymous and reviewed by our moderation team.
             </p>
           </>

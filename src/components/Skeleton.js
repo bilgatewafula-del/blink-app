@@ -11,7 +11,7 @@ const Shimmer = ({ className }) => (
 
 // Post card skeleton
 export const PostCardSkeleton = () => (
-  <div className="bg-[#0A1628] border-b border-white/5 py-4 px-4">
+  <div className="bg-[#0D0C0B] border-b border-white/5 py-4 px-4">
     {/* Header */}
     <div className="flex items-center gap-3 mb-3">
       <div className="w-10 h-10 rounded-full bg-white/10 animate-pulse flex-shrink-0" />
@@ -41,12 +41,12 @@ export const PostCardSkeleton = () => (
 
 // Profile skeleton
 export const ProfileSkeleton = () => (
-  <div className="min-h-screen bg-[#0A1628]">
+  <div className="min-h-screen bg-[#0D0C0B]">
     {/* Cover */}
     <div className="h-36 bg-white/5 animate-pulse" />
     {/* Avatar */}
     <div className="px-4 mt-[-48px] mb-14">
-      <div className="w-24 h-24 rounded-full bg-white/10 animate-pulse border-4 border-[#0A1628]" />
+      <div className="w-24 h-24 rounded-full bg-white/10 animate-pulse border-4 border-[#0D0C0B]" />
     </div>
     {/* Info */}
     <div className="px-4 space-y-3 mt-2">
@@ -136,7 +136,7 @@ export const DiscoverSkeleton = () => (
 
 // Post detail skeleton
 export const PostDetailSkeleton = () => (
-  <div className="min-h-screen bg-[#0A1628] pb-24">
+  <div className="min-h-screen bg-[#0D0C0B] pb-24">
     <div className="px-4 py-4 flex items-center gap-3">
       <div className="w-12 h-12 rounded-full bg-white/10 animate-pulse" />
       <div className="space-y-2 flex-1">

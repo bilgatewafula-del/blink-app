@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { memo, useState, useEffect, useRef, useCallback } from 'react';
 import VerifiedBadge from './VerifiedBadge';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
@@ -38,7 +38,7 @@ const REACTIONS = [
   { emoji:'❤️', type:'like',  color:'#EF4444' },
   { emoji:'😂', type:'haha',  color:'#FFD700' },
   { emoji:'😮', type:'wow',   color:'#FF6B35' },
-  { emoji:'😢', type:'sad',   color:'#6B7280' },
+  { emoji:'😢', type:'sad',   color:'#8E8C88' },
   { emoji:'😡', type:'angry', color:'#EF4444' },
   { emoji:'🔥', type:'fire',  color:'#FF6B35' },
 ];
@@ -52,9 +52,9 @@ function RichCaption({ text, onHashtag, onMention }) {
     <p className="text-white/90 text-[15px] leading-relaxed break-words whitespace-pre-wrap">
       {text.split(/(#\w+|@\w+)/g).map((p, i) => {
         if (p.startsWith('#'))
-          return <button key={i} onClick={e => { e.stopPropagation(); onHashtag(p.slice(1)); }} className="text-[#1E6FFF] hover:underline font-medium">{p}</button>;
+          return <button key={i} onClick={e => { e.stopPropagation(); onHashtag(p.slice(1)); }} className="text-[#FF5A1F] hover:underline font-medium">{p}</button>;
         if (p.startsWith('@'))
-          return <button key={i} onClick={e => { e.stopPropagation(); onMention(p.slice(1)); }} className="text-[#1E6FFF] hover:underline font-medium">{p}</button>;
+          return <button key={i} onClick={e => { e.stopPropagation(); onMention(p.slice(1)); }} className="text-[#FF5A1F] hover:underline font-medium">{p}</button>;
         return <span key={i}>{p}</span>;
       })}
     </p>
@@ -327,13 +327,13 @@ function QuotedPost({ quotedPost, navigate }) {
       onClick={e => { e.stopPropagation(); navigate('/post/' + quotedPost.id); }}>
       <div className="flex items-center gap-1.5 mb-1 flex-wrap">
         {a?.avatar_url
-          ? <img src={a.avatar_url} alt="" className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
-          : <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">{a?.display_name?.[0]?.toUpperCase()}</div>
+          ? <img loading="lazy" decoding="async" src={a.avatar_url} alt="" className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
+          : <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">{a?.display_name?.[0]?.toUpperCase()}</div>
         }
         <span className="text-white font-bold text-[13px] truncate max-w-[100px]">{a?.display_name}</span>
         {a?.is_verified && <VerifiedBadge size={14} />}
-        <span className="text-[#6B7280] text-[12px]">@{a?.username}</span>
-        <span className="text-[#6B7280] text-[12px]">· {formatTime(quotedPost.created_at)}</span>
+        <span className="text-[#8E8C88] text-[12px]">@{a?.username}</span>
+        <span className="text-[#8E8C88] text-[12px]">· {formatTime(quotedPost.created_at)}</span>
       </div>
       {quotedPost.caption && <p className="text-white/75 text-[13px] leading-snug line-clamp-3 mb-1">{quotedPost.caption}</p>}
       {imgs.length > 0 && <img src={imgs[0]} alt="" className="w-full object-cover rounded-xl" style={{ maxHeight:160 }} loading="lazy" />}
@@ -382,17 +382,17 @@ function ReportModal({ postId, postUserId, currentUserId, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center" onClick={onClose}>
-      <div className="w-full max-w-[620px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl p-5 pb-8" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5 pb-8" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-white font-bold text-base">Report Post</h3>
-          <button onClick={onClose} className="text-[#6B7280] hover:text-white"><X size={20} /></button>
+          <button onClick={onClose} className="text-[#8E8C88] hover:text-white"><X size={20} /></button>
         </div>
         {done ? (
           <div className="text-center py-8">
             <p className="text-4xl mb-3">✅</p>
             <p className="text-white font-bold">Report submitted</p>
-            <p className="text-[#6B7280] text-sm mt-1">Thank you. Our team will review this.</p>
-            <button onClick={onClose} className="mt-4 bg-[#1E6FFF] text-white px-6 py-2.5 rounded-full font-bold text-sm">Done</button>
+            <p className="text-[#8E8C88] text-sm mt-1">Thank you. Our team will review this.</p>
+            <button onClick={onClose} className="mt-4 bg-[#FF5A1F] text-white px-6 py-2.5 rounded-full font-bold text-sm">Done</button>
           </div>
         ) : (
           <>
@@ -400,7 +400,7 @@ function ReportModal({ postId, postUserId, currentUserId, onClose }) {
               {REASONS.map(r => (
                 <button key={r} onClick={() => setSelected(r)}
                   className={'w-full text-left px-4 py-3 rounded-xl text-sm border transition-all ' +
-                    (selected === r ? 'bg-[#1E6FFF]/20 border-[#1E6FFF]/50 text-white font-semibold' : 'bg-white/[0.03] border-white/[0.06] text-white/70 hover:bg-white/[0.07]')}>
+                    (selected === r ? 'bg-[#FF5A1F]/20 border-[#FF5A1F]/50 text-white font-semibold' : 'bg-white/[0.03] border-white/[0.06] text-white/70 hover:bg-white/[0.07]')}>
                   {r}
                 </button>
               ))}
@@ -408,7 +408,7 @@ function ReportModal({ postId, postUserId, currentUserId, onClose }) {
             {selected && (
               <textarea value={details} onChange={e => setDetails(e.target.value)}
                 placeholder="Additional details (optional)..." rows={3}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-[#6B7280] focus:outline-none resize-none mb-4" />
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-[#8E8C88] focus:outline-none resize-none mb-4" />
             )}
             <button onClick={handleSubmit} disabled={!selected || sending}
               className="w-full py-3.5 rounded-2xl font-bold text-white text-sm disabled:opacity-40 bg-red-500 hover:bg-red-600 transition-colors">
@@ -577,7 +577,7 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center" onClick={onClose}>
-      <div className="w-full max-w-[620px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl pb-safe overflow-hidden"
+      <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl pb-safe overflow-hidden"
         style={{ paddingBottom:'max(16px, env(safe-area-inset-bottom))' }}
         onClick={e => e.stopPropagation()}>
 
@@ -635,7 +635,7 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${item.danger ? 'bg-red-500/15' : 'bg-white/[0.07]'}`}>
                       {busy === item.key
                         ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        : Icon ? <Icon size={16} className={item.danger ? 'text-red-400' : 'text-[#6B7280]'} /> : null
+                        : Icon ? <Icon size={16} className={item.danger ? 'text-red-400' : 'text-[#8E8C88]'} /> : null
                       }
                     </div>
                     <span className={`font-semibold text-[14px] ${item.danger ? 'text-red-400' : 'text-white/85'}`}>
@@ -662,7 +662,7 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
 /* ═══════════════════════════════════════════════
    MAIN POSTCARD
 ═══════════════════════════════════════════════ */
-export default function PostCard({
+function PostCard({
   post: initialPost, currentUser, onRefresh,
   // Optional — if the parent feed query already knows whether the
   // current user liked/saved/reposted this post (e.g. via a joined
@@ -844,7 +844,7 @@ export default function PostCard({
   };
 
   const getReactionEmoji = () => REACTIONS.find(r => r.type === reaction)?.emoji || null;
-  const getReactionColor = () => REACTIONS.find(r => r.type === reaction)?.color || '#6B7280';
+  const getReactionColor = () => REACTIONS.find(r => r.type === reaction)?.color || '#8E8C88';
 
   const hiddenPosts = JSON.parse(localStorage.getItem('blink_hidden_posts') || '[]');
   if (hiddenPosts.includes(post.id)) return null;
@@ -856,23 +856,23 @@ export default function PostCard({
     <>
       {showQuoteModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center" onClick={() => setShowQuoteModal(false)}>
-          <div className="w-full max-w-[620px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl p-4 pb-8" onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-4 pb-8" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <button onClick={() => setShowQuoteModal(false)} className="text-[#6B7280] hover:text-white"><X size={20} /></button>
+              <button onClick={() => setShowQuoteModal(false)} className="text-[#8E8C88] hover:text-white"><X size={20} /></button>
               <h3 className="text-white font-bold">Quote Post</h3>
               <button onClick={handleQuotePost} disabled={!quoteText.trim()}
-                className="bg-[#1E6FFF] text-white text-sm font-bold px-4 py-1.5 rounded-full disabled:opacity-40">Post</button>
+                className="bg-[#FF5A1F] text-white text-sm font-bold px-4 py-1.5 rounded-full disabled:opacity-40">Post</button>
             </div>
             <textarea autoFocus value={quoteText} onChange={e => setQuoteText(e.target.value)}
               placeholder="Add a comment..." maxLength={500} rows={3}
-              className="w-full bg-transparent text-white text-[16px] placeholder-[#6B7280] focus:outline-none resize-none leading-relaxed mb-3" />
+              className="w-full bg-transparent text-white text-[16px] placeholder-[#8E8C88] focus:outline-none resize-none leading-relaxed mb-3" />
             <div className="border border-white/15 rounded-2xl p-3 bg-white/[0.03]">
               <div className="flex items-center gap-1.5 mb-1">
                 <span className="text-white font-bold text-[13px]">{author?.display_name}</span>
-                <span className="text-[#6B7280] text-[12px]">@{author?.username}</span>
+                <span className="text-[#8E8C88] text-[12px]">@{author?.username}</span>
               </div>
               {post.caption && <p className="text-white/70 text-[13px] line-clamp-2">{post.caption}</p>}
-              {images[0] && <img src={images[0]} alt="" className="w-full object-cover rounded-xl mt-2" style={{ maxHeight:80 }} />}
+              {images[0] && <img loading="lazy" decoding="async" src={images[0]} alt="" className="w-full object-cover rounded-xl mt-2" style={{ maxHeight:80 }} />}
             </div>
           </div>
         </div>
@@ -914,8 +914,8 @@ export default function PostCard({
       >
         {post.is_pinned && (
           <div className="flex items-center gap-1.5 px-4 pt-2">
-            <Pin size={12} className="text-[#6B7280]" />
-            <span className="text-[#6B7280] text-xs font-medium">Pinned post</span>
+            <Pin size={12} className="text-[#8E8C88]" />
+            <span className="text-[#8E8C88] text-xs font-medium">Pinned post</span>
           </div>
         )}
 
@@ -927,8 +927,8 @@ export default function PostCard({
 
         {isRepost && !post.is_pinned && !post.is_boosted && (
           <div className="flex items-center gap-1.5 px-4 pt-2.5 pb-0">
-            <Repeat2 size={13} className="text-[#6B7280]" />
-            <span className="text-[#6B7280] text-xs font-medium">{author?.display_name} reposted</span>
+            <Repeat2 size={13} className="text-[#8E8C88]" />
+            <span className="text-[#8E8C88] text-xs font-medium">{author?.display_name} reposted</span>
           </div>
         )}
 
@@ -949,16 +949,16 @@ export default function PostCard({
                 {author?.is_verified && <VerifiedBadge size={15} />}
                 {author?.role === 'blink'  && <span className="text-[10px] flex-shrink-0">👑</span>}
                 {author?.role === 'admin'  && <span className="text-[10px] flex-shrink-0">🛡️</span>}
-                <span className="text-[#6B7280] text-[13px] truncate max-w-[80px]">@{author?.username}</span>
-                <span className="text-[#6B7280] text-[13px]">·</span>
-                <span className="text-[#6B7280] text-[13px] whitespace-nowrap">{formatTime(post.created_at)}</span>
+                <span className="text-[#8E8C88] text-[13px] truncate max-w-[80px]">@{author?.username}</span>
+                <span className="text-[#8E8C88] text-[13px]">·</span>
+                <span className="text-[#8E8C88] text-[13px] whitespace-nowrap">{formatTime(post.created_at)}</span>
                 {flagMap[author?.country] && <span className="text-[13px]">{flagMap[author?.country]}</span>}
               </div>
 
               <button
                 onClick={e => { e.stopPropagation(); setShowOptionsMenu(true); }}
                 aria-label="Post options"
-                className="text-[#6B7280] hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors flex-shrink-0"
+                className="text-[#8E8C88] hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors flex-shrink-0"
               >
                 <MoreHorizontal size={16} />
               </button>
@@ -1000,10 +1000,10 @@ export default function PostCard({
               />
             </div>
 
-            {post.location && <p className="text-[#6B7280] text-xs mb-1.5">📍 {post.location}</p>}
+            {post.location && <p className="text-[#8E8C88] text-xs mb-1.5">📍 {post.location}</p>}
 
             {post.comments_disabled && (
-              <p className="text-[#6B7280] text-xs mb-1.5 flex items-center gap-1">
+              <p className="text-[#8E8C88] text-xs mb-1.5 flex items-center gap-1">
                 <MessageSquareOff size={11} /> Comments are turned off
               </p>
             )}
@@ -1012,7 +1012,7 @@ export default function PostCard({
 
               <button onClick={() => navigate('/post/' + post.id)}
                 aria-label="Comment"
-                className="flex items-center gap-1.5 text-[#6B7280] hover:text-[#1E6FFF] group px-2 py-1.5 rounded-full hover:bg-[#1E6FFF]/10 transition-all"
+                className="flex items-center gap-1.5 text-[#8E8C88] hover:text-[#FF5A1F] group px-2 py-1.5 rounded-full hover:bg-[#FF5A1F]/10 transition-all"
                 disabled={post.comments_disabled}>
                 <MessageCircle size={17} />
                 {(post.comments_count||0) > 0 && <span className="text-[13px]">{formatNumber(post.comments_count)}</span>}
@@ -1020,23 +1020,23 @@ export default function PostCard({
 
               <div className="relative">
                 {showRepostMenu && (
-                  <div className="absolute bottom-10 left-0 bg-[#111827] border border-white/10 rounded-2xl overflow-hidden z-30 shadow-2xl" style={{ minWidth:180 }}>
+                  <div className="absolute bottom-10 left-0 bg-[#1d1c1a] border border-white/10 rounded-2xl overflow-hidden z-30 shadow-2xl" style={{ minWidth:180 }}>
                     <button onClick={handleDirectRepost}
                       className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-sm border-b border-white/5"
                       style={{ color: reposted ? '#2ECC71':'white' }}>
-                      <Repeat2 size={16} style={{ color: reposted?'#2ECC71':'#6B7280' }} />
+                      <Repeat2 size={16} style={{ color: reposted?'#2ECC71':'#8E8C88' }} />
                       {reposted ? 'Undo Repost' : 'Repost'}
                     </button>
                     <button onClick={() => { setShowRepostMenu(false); setShowQuoteModal(true); }}
                       className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white text-sm">
-                      <Quote size={16} className="text-[#6B7280]" /> Quote
+                      <Quote size={16} className="text-[#8E8C88]" /> Quote
                     </button>
                   </div>
                 )}
                 <button onClick={e => { e.stopPropagation(); setShowRepostMenu(!showRepostMenu); setShowReactionPicker(false); }}
                   aria-label="Repost"
                   className={'flex items-center gap-1.5 px-2 py-1.5 rounded-full transition-all ' +
-                    (reposted ? 'text-[#2ECC71] hover:bg-[#2ECC71]/10' : 'text-[#6B7280] hover:text-[#2ECC71] hover:bg-[#2ECC71]/10')}>
+                    (reposted ? 'text-[#2ECC71] hover:bg-[#2ECC71]/10' : 'text-[#8E8C88] hover:text-[#2ECC71] hover:bg-[#2ECC71]/10')}>
                   <Repeat2 size={17} />
                   {repostCount > 0 && <span className="text-[13px]">{formatNumber(repostCount)}</span>}
                 </button>
@@ -1044,7 +1044,7 @@ export default function PostCard({
 
               <div className="relative">
                 {showReactionPicker && (
-                  <div className="absolute bottom-10 left-0 bg-[#111827] border border-white/10 rounded-full px-2 py-2 flex gap-1 z-30 shadow-2xl" style={{ minWidth:'max-content' }}>
+                  <div className="absolute bottom-10 left-0 bg-[#1d1c1a] border border-white/10 rounded-full px-2 py-2 flex gap-1 z-30 shadow-2xl" style={{ minWidth:'max-content' }}>
                     {REACTIONS.map(r => (
                       <button key={r.type} onClick={() => handleLike(r.type)}
                         className="text-lg hover:scale-125 transition-transform w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10">
@@ -1062,13 +1062,13 @@ export default function PostCard({
                   onTouchEnd={() => clearTimeout(longPressTimer.current)}
                   aria-label="Like"
                   className="flex items-center gap-1.5 px-2 py-1.5 rounded-full transition-all hover:bg-red-500/10"
-                  style={{ color: liked ? getReactionColor() : '#6B7280' }}>
+                  style={{ color: liked ? getReactionColor() : '#8E8C88' }}>
                   {liked && reaction
                     ? <span className="text-base leading-none">{getReactionEmoji()}</span>
                     : <Heart size={17} fill={liked ? 'currentColor' : 'none'} />
                   }
                   {likesCount > 0 && (
-                    <span className="text-[13px]" style={{ color: liked ? getReactionColor() : '#6B7280' }}>
+                    <span className="text-[13px]" style={{ color: liked ? getReactionColor() : '#8E8C88' }}>
                       {formatNumber(likesCount)}
                     </span>
                   )}
@@ -1083,7 +1083,7 @@ export default function PostCard({
                 onClick={isOwner ? handleViewInsights : undefined}
                 aria-label="View count"
                 className={'flex items-center gap-1.5 px-2 py-1.5 rounded-full transition-all ' +
-                  (isOwner ? 'text-[#6B7280] hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10 cursor-pointer' : 'text-[#6B7280] cursor-default')}>
+                  (isOwner ? 'text-[#8E8C88] hover:text-[#FF5A1F] hover:bg-[#FF5A1F]/10 cursor-pointer' : 'text-[#8E8C88] cursor-default')}>
                 <BarChart2 size={17} />
                 {(post.views_count||0) > 0 && <span className="text-[13px]">{formatNumber(post.views_count)}</span>}
               </button>
@@ -1091,11 +1091,11 @@ export default function PostCard({
               <div className="flex items-center">
                 <button onClick={handleSave} aria-label={saved ? 'Remove from saved' : 'Save post'}
                   className={'px-2 py-1.5 rounded-full transition-all ' +
-                    (saved ? 'text-[#1E6FFF] hover:bg-[#1E6FFF]/10' : 'text-[#6B7280] hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10')}>
+                    (saved ? 'text-[#FF5A1F] hover:bg-[#FF5A1F]/10' : 'text-[#8E8C88] hover:text-[#FF5A1F] hover:bg-[#FF5A1F]/10')}>
                   <Bookmark size={17} fill={saved ? 'currentColor' : 'none'} />
                 </button>
                 <button onClick={handleShare} aria-label="Share post"
-                  className="text-[#6B7280] hover:text-[#1E6FFF] px-2 py-1.5 rounded-full hover:bg-[#1E6FFF]/10 transition-all">
+                  className="text-[#8E8C88] hover:text-[#FF5A1F] px-2 py-1.5 rounded-full hover:bg-[#FF5A1F]/10 transition-all">
                   <Share2 size={17} />
                 </button>
               </div>
@@ -1106,3 +1106,7 @@ export default function PostCard({
     </>
   );
 }
+
+// Skip re-rendering cards whose props did not change (keeps scrolling and
+// pull-to-refresh smooth in long feeds).
+export default memo(PostCard);

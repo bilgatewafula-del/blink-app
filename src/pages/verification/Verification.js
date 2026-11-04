@@ -44,32 +44,32 @@ const Verification = () => {
   };
 
   const badges = [
-    { type: 'personal', icon: '✓', color: 'bg-[#1E6FFF]', label: 'Personal', price: 'KES 200/mo', desc: 'For public figures, creators and individuals' },
+    { type: 'personal', icon: '✓', color: 'bg-[#FF5A1F]', label: 'Personal', price: 'KES 200/mo', desc: 'For public figures, creators and individuals' },
     { type: 'business', icon: '✓', color: 'bg-[#FFD700]', label: 'Business', price: 'KES 500/mo', desc: 'For brands, companies and organizations' },
-    { type: 'creator', icon: '✓', color: 'bg-[#7B2FFF]', label: 'Creator', price: 'Free', desc: 'For verified content creators with 1K+ followers' },
+    { type: 'creator', icon: '✓', color: 'bg-[#FF2D78]', label: 'Creator', price: 'Free', desc: 'For verified content creators with 1K+ followers' },
   ];
 
   if (profile?.is_verified) {
     return (
-      <div className="min-h-screen bg-[#0A1628] pb-24">
-        <div className="sticky top-0 z-20 bg-[#0A1628] border-b border-white/10 px-4 py-3 flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white">
+      <div className="min-h-screen bg-[#0D0C0B] pb-24">
+        <div className="sticky top-0 z-20 bg-[#0D0C0B] border-b border-white/10 px-4 py-3 flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="text-[#8E8C88] hover:text-white">
             <ArrowLeft size={22} />
           </button>
           <h1 className="text-white font-bold text-lg">Verification</h1>
         </div>
         <div className="flex flex-col items-center justify-center mt-20 px-6 gap-4">
-          <div className="w-20 h-20 bg-[#1E6FFF]/20 rounded-full flex items-center justify-center">
-            <BadgeCheck size={40} className="text-[#1E6FFF]" />
+          <div className="w-20 h-20 bg-[#FF5A1F]/20 rounded-full flex items-center justify-center">
+            <BadgeCheck size={40} className="text-[#FF5A1F]" />
           </div>
           <h2 className="text-white font-bold text-2xl">You're Verified!</h2>
-          <p className="text-[#6B7280] text-sm text-center">
+          <p className="text-[#8E8C88] text-sm text-center">
             Your account has the verified badge. It appears next to your name across B-Link.
           </p>
-          <div className="bg-[#1E6FFF]/10 border border-[#1E6FFF]/30 rounded-2xl p-4 w-full">
+          <div className="bg-[#FF5A1F]/10 border border-[#FF5A1F]/30 rounded-2xl p-4 w-full">
             <p className="text-white font-semibold text-sm">✓ Verified Account Benefits</p>
-            <div className="mt-3 space-y-2 text-xs text-[#6B7280]">
-              <p>✅ Blue tick badge on your profile</p>
+            <div className="mt-3 space-y-2 text-xs text-[#8E8C88]">
+              <p>✅ Verified badge on your profile</p>
               <p>✅ Priority in search results</p>
               <p>✅ Access to creator analytics</p>
               <p>✅ Eligible for sponsored content</p>
@@ -82,9 +82,9 @@ const Verification = () => {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-[#0A1628] pb-24">
-        <div className="sticky top-0 z-20 bg-[#0A1628] border-b border-white/10 px-4 py-3 flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white">
+      <div className="min-h-screen bg-[#0D0C0B] pb-24">
+        <div className="sticky top-0 z-20 bg-[#0D0C0B] border-b border-white/10 px-4 py-3 flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="text-[#8E8C88] hover:text-white">
             <ArrowLeft size={22} />
           </button>
           <h1 className="text-white font-bold text-lg">Verification</h1>
@@ -94,7 +94,7 @@ const Verification = () => {
             <Clock size={40} className="text-[#FFD700]" />
           </div>
           <h2 className="text-white font-bold text-2xl">Under Review</h2>
-          <p className="text-[#6B7280] text-sm text-center">
+          <p className="text-[#8E8C88] text-sm text-center">
             Your verification request has been submitted. Our team will review it within 3-5 business days.
           </p>
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 w-full space-y-3">
@@ -110,7 +110,7 @@ const Verification = () => {
                 ) : (
                   <div className="w-4.5 h-4.5 rounded-full border-2 border-white/20" />
                 )}
-                <p className={'text-sm ' + (step.done ? 'text-white font-semibold' : 'text-[#6B7280]')}>
+                <p className={'text-sm ' + (step.done ? 'text-white font-semibold' : 'text-[#8E8C88]')}>
                   {step.label}
                 </p>
               </div>
@@ -122,9 +122,9 @@ const Verification = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-24">
-      <div className="sticky top-0 z-20 bg-[#0A1628] border-b border-white/10 px-4 py-3 flex items-center gap-4">
-        <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white">
+    <div className="min-h-screen bg-[#0D0C0B] pb-24">
+      <div className="sticky top-0 z-20 bg-[#0D0C0B] border-b border-white/10 px-4 py-3 flex items-center gap-4">
+        <button onClick={() => navigate(-1)} className="text-[#8E8C88] hover:text-white">
           <ArrowLeft size={22} />
         </button>
         <h1 className="text-white font-bold text-lg">Apply for Verification</h1>
@@ -135,11 +135,11 @@ const Verification = () => {
         {[1, 2, 3].map((s) => (
           <div
             key={s}
-            className={'flex-1 h-1.5 rounded-full transition-all ' + (s <= step ? 'bg-[#1E6FFF]' : 'bg-white/10')}
+            className={'flex-1 h-1.5 rounded-full transition-all ' + (s <= step ? 'bg-[#FF5A1F]' : 'bg-white/10')}
           />
         ))}
       </div>
-      <p className="text-[#6B7280] text-xs px-4 mt-2">Step {step} of 3</p>
+      <p className="text-[#8E8C88] text-xs px-4 mt-2">Step {step} of 3</p>
 
       <div className="px-4 mt-4">
         {/* Step 1 — Badge type */}
@@ -147,7 +147,7 @@ const Verification = () => {
           <div className="space-y-4">
             <div>
               <h2 className="text-white font-bold text-xl mb-1">Choose badge type</h2>
-              <p className="text-[#6B7280] text-sm">Select the verification type that fits you.</p>
+              <p className="text-[#8E8C88] text-sm">Select the verification type that fits you.</p>
             </div>
             <div className="space-y-3">
               {badges.map((b) => (
@@ -157,7 +157,7 @@ const Verification = () => {
                   className={
                     'w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ' +
                     (badgeType === b.type
-                      ? 'border-[#1E6FFF] bg-[#1E6FFF]/10'
+                      ? 'border-[#FF5A1F] bg-[#FF5A1F]/10'
                       : 'border-white/10 bg-white/5')
                   }
                 >
@@ -166,17 +166,17 @@ const Verification = () => {
                   </div>
                   <div className="text-left flex-1">
                     <p className="text-white font-bold text-sm">{b.label} — {b.price}</p>
-                    <p className="text-[#6B7280] text-xs mt-0.5">{b.desc}</p>
+                    <p className="text-[#8E8C88] text-xs mt-0.5">{b.desc}</p>
                   </div>
                   {badgeType === b.type && (
-                    <CheckCircle size={20} className="text-[#1E6FFF] flex-shrink-0" />
+                    <CheckCircle size={20} className="text-[#FF5A1F] flex-shrink-0" />
                   )}
                 </button>
               ))}
             </div>
             <button
               onClick={() => setStep(2)}
-              className="w-full bg-gradient-to-r from-[#1E6FFF] to-[#7B2FFF] text-white font-bold py-3.5 rounded-xl"
+              className="w-full bg-gradient-to-r from-[#FF5A1F] to-[#FF2D78] text-white font-bold py-3.5 rounded-xl"
             >
               Continue →
             </button>
@@ -188,7 +188,7 @@ const Verification = () => {
           <div className="space-y-4">
             <div>
               <h2 className="text-white font-bold text-xl mb-1">Verify your identity</h2>
-              <p className="text-[#6B7280] text-sm">Upload a government-issued ID document.</p>
+              <p className="text-[#8E8C88] text-sm">Upload a government-issued ID document.</p>
             </div>
 
             {error && (
@@ -198,26 +198,26 @@ const Verification = () => {
             )}
 
             <div>
-              <label className="text-[#6B7280] text-xs mb-2 block">ID Type</label>
+              <label className="text-[#8E8C88] text-xs mb-2 block">ID Type</label>
               <select
                 value={idType}
                 onChange={(e) => setIdType(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:border-[#1E6FFF]"
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:border-[#FF5A1F]"
               >
-                <option value="national_id" className="bg-[#0A1628]">National ID</option>
-                <option value="passport" className="bg-[#0A1628]">Passport</option>
-                <option value="driving_license" className="bg-[#0A1628]">Driving License</option>
+                <option value="national_id" className="bg-[#0D0C0B]">National ID</option>
+                <option value="passport" className="bg-[#0D0C0B]">Passport</option>
+                <option value="driving_license" className="bg-[#0D0C0B]">Driving License</option>
               </select>
             </div>
 
             <div>
-              <label className="text-[#6B7280] text-xs mb-2 block">ID Number</label>
+              <label className="text-[#8E8C88] text-xs mb-2 block">ID Number</label>
               <input
                 type="text"
                 value={idNumber}
                 onChange={(e) => setIdNumber(e.target.value)}
                 placeholder="Enter your ID number"
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-[#6B7280] text-sm focus:outline-none focus:border-[#1E6FFF]"
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-[#8E8C88] text-sm focus:outline-none focus:border-[#FF5A1F]"
               />
             </div>
 
@@ -226,8 +226,8 @@ const Verification = () => {
               { label: 'Back of ID', state: idBack, setter: setIdBack, key: 'back' },
             ].map((f) => (
               <div key={f.key}>
-                <label className="text-[#6B7280] text-xs mb-2 block">{f.label}</label>
-                <label className={'w-full flex flex-col items-center justify-center gap-2 p-6 rounded-2xl border-2 border-dashed cursor-pointer transition-all ' + (f.state ? 'border-[#2ECC71] bg-[#2ECC71]/10' : 'border-white/20 bg-white/5 hover:border-[#1E6FFF]')}>
+                <label className="text-[#8E8C88] text-xs mb-2 block">{f.label}</label>
+                <label className={'w-full flex flex-col items-center justify-center gap-2 p-6 rounded-2xl border-2 border-dashed cursor-pointer transition-all ' + (f.state ? 'border-[#2ECC71] bg-[#2ECC71]/10' : 'border-white/20 bg-white/5 hover:border-[#FF5A1F]')}>
                   {f.state ? (
                     <>
                       <CheckCircle size={24} className="text-[#2ECC71]" />
@@ -235,8 +235,8 @@ const Verification = () => {
                     </>
                   ) : (
                     <>
-                      <Upload size={24} className="text-[#6B7280]" />
-                      <p className="text-[#6B7280] text-sm">Tap to upload {f.label}</p>
+                      <Upload size={24} className="text-[#8E8C88]" />
+                      <p className="text-[#8E8C88] text-sm">Tap to upload {f.label}</p>
                     </>
                   )}
                   <input
@@ -266,7 +266,7 @@ const Verification = () => {
               <button
                 onClick={() => { setError(''); setStep(3); }}
                 disabled={uploading}
-                className="flex-1 bg-gradient-to-r from-[#1E6FFF] to-[#7B2FFF] text-white font-bold py-3 rounded-xl disabled:opacity-50"
+                className="flex-1 bg-gradient-to-r from-[#FF5A1F] to-[#FF2D78] text-white font-bold py-3 rounded-xl disabled:opacity-50"
               >
                 Continue →
               </button>
@@ -279,7 +279,7 @@ const Verification = () => {
           <div className="space-y-4">
             <div>
               <h2 className="text-white font-bold text-xl mb-1">Review and submit</h2>
-              <p className="text-[#6B7280] text-sm">Confirm your details before submitting.</p>
+              <p className="text-[#8E8C88] text-sm">Confirm your details before submitting.</p>
             </div>
 
             <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
@@ -295,7 +295,7 @@ const Verification = () => {
                   key={item.label}
                   className={'flex items-center justify-between px-4 py-3 ' + (idx < arr.length - 1 ? 'border-b border-white/5' : '')}
                 >
-                  <p className="text-[#6B7280] text-sm">{item.label}</p>
+                  <p className="text-[#8E8C88] text-sm">{item.label}</p>
                   <p className="text-white text-sm font-semibold">{item.value}</p>
                 </div>
               ))}
@@ -303,7 +303,7 @@ const Verification = () => {
 
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
               <p className="text-white font-semibold text-sm mb-2">By submitting you agree:</p>
-              <div className="space-y-1.5 text-xs text-[#6B7280]">
+              <div className="space-y-1.5 text-xs text-[#8E8C88]">
                 <p>✅ All information provided is accurate</p>
                 <p>✅ You own this account and identity</p>
                 <p>✅ B-Link may reject applications that don't meet criteria</p>
@@ -321,7 +321,7 @@ const Verification = () => {
               <button
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="flex-1 bg-gradient-to-r from-[#1E6FFF] to-[#7B2FFF] text-white font-bold py-3 rounded-xl disabled:opacity-50"
+                className="flex-1 bg-gradient-to-r from-[#FF5A1F] to-[#FF2D78] text-white font-bold py-3 rounded-xl disabled:opacity-50"
               >
                 {submitting ? 'Submitting...' : 'Submit Application'}
               </button>

@@ -31,9 +31,9 @@ const MAX_CHAT_IMAGE_MB = 10;
 
 const MsgStatus = ({ msg, isMine }) => {
   if (!isMine) return null;
-  if (msg.seen_at) return <CheckCheck size={13} style={{ color: '#1E6FFF', filter: 'drop-shadow(0 0 3px #1E6FFF)' }} />;
-  if (msg.delivered_at) return <CheckCheck size={13} style={{ color: '#6B7280' }} />;
-  return <Check size={13} style={{ color: '#6B7280' }} />;
+  if (msg.seen_at) return <CheckCheck size={13} style={{ color: '#FF5A1F', filter: 'drop-shadow(0 0 3px #FF5A1F)' }} />;
+  if (msg.delivered_at) return <CheckCheck size={13} style={{ color: '#8E8C88' }} />;
+  return <Check size={13} style={{ color: '#8E8C88' }} />;
 };
 
 const OnlineStatus = ({ otherUser, isTyping }) => {
@@ -65,9 +65,9 @@ const OnlineStatus = ({ otherUser, isTyping }) => {
     else if (mins < 60) t += mins + 'm ago';
     else if (hours < 24) t += hours + 'h ago';
     else t += days + 'd ago';
-    return <span style={{ color: '#6B7280', fontSize: '11px' }}>{t}</span>;
+    return <span style={{ color: '#8E8C88', fontSize: '11px' }}>{t}</span>;
   }
-  return <span style={{ color: '#6B7280', fontSize: '11px' }}>Offline</span>;
+  return <span style={{ color: '#8E8C88', fontSize: '11px' }}>Offline</span>;
 };
 
 export default function ChatRoom() {
@@ -498,17 +498,17 @@ export default function ChatRoom() {
   };
 
   if (initLoading) return (
-    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100dvh', background:'#0A1628' }}>
-      <div style={{ width:28, height:28, border:'2px solid #1E6FFF', borderTopColor:'transparent', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100dvh', background:'#0D0C0B' }}>
+      <div style={{ width:28, height:28, border:'2px solid #FF5A1F', borderTopColor:'transparent', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
     </div>
   );
 
   if (initError) return (
-    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100dvh', background:'#0A1628', gap:12, padding:24 }}>
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100dvh', background:'#0D0C0B', gap:12, padding:24 }}>
       <p style={{ fontSize:40 }}>⚠️</p>
       <p style={{ color:'white', fontWeight:700 }}>Could not load conversation</p>
-      <p style={{ color:'#6B7280', fontSize:13, textAlign:'center' }}>{initError}</p>
-      <button onClick={() => navigate('/chats')} style={{ color:'#1E6FFF', fontWeight:700, background:'none', border:'none', cursor:'pointer', fontSize:14 }}>← Back to Chats</button>
+      <p style={{ color:'#8E8C88', fontSize:13, textAlign:'center' }}>{initError}</p>
+      <button onClick={() => navigate('/chats')} style={{ color:'#FF5A1F', fontWeight:700, background:'none', border:'none', cursor:'pointer', fontSize:14 }}>← Back to Chats</button>
     </div>
   );
 
@@ -518,7 +518,7 @@ export default function ChatRoom() {
         display: 'flex',
         flexDirection: 'column',
         height: '100dvh',
-        background: '#0A1628',
+        background: '#0D0C0B',
         position: 'fixed',
         top: 0, left: 0, right: 0, bottom: 0,
         // Was `overflow: 'hidden'` here — the messages list already
@@ -536,14 +536,14 @@ export default function ChatRoom() {
       {/* ── TOP BAR ── */}
       <div style={{
         flexShrink: 0,
-        background: '#0d1f3c',
+        background: '#171614',
         borderBottom: '1px solid rgba(255,255,255,0.1)',
         padding: '10px 12px',
         display: 'flex', alignItems: 'center', gap: '8px',
       }}>
         {searchMode ? (
           <>
-            <button onClick={() => { setSearchMode(false); setSearchQ(''); }} aria-label="Close search" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+            <button onClick={() => { setSearchMode(false); setSearchQ(''); }} aria-label="Close search" style={{ color: '#8E8C88', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
               <ArrowLeft size={22} />
             </button>
             <input
@@ -551,43 +551,43 @@ export default function ChatRoom() {
               placeholder="Search messages..." autoFocus
               style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'white', fontSize: '14px' }}
             />
-            {searchQ && <button onClick={() => setSearchQ('')} aria-label="Clear search" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={18} /></button>}
+            {searchQ && <button onClick={() => setSearchQ('')} aria-label="Clear search" style={{ color: '#8E8C88', background: 'none', border: 'none', cursor: 'pointer' }}><X size={18} /></button>}
           </>
         ) : (
           <>
-            <button onClick={() => navigate('/chats')} aria-label="Back to chats" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', flexShrink: 0 }}>
+            <button onClick={() => navigate('/chats')} aria-label="Back to chats" style={{ color: '#8E8C88', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', flexShrink: 0 }}>
               <ArrowLeft size={22} />
             </button>
             <button onClick={() => navigate('/profile/' + otherUser?.username)} style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
               <div style={{ position: 'relative', flexShrink: 0 }}>
                 <Avatar url={otherUser?.avatar_url} name={otherUser?.display_name} size={10} />
                 {otherUser?.is_online && (
-                  <div style={{ position: 'absolute', bottom: 0, right: 0, width: '10px', height: '10px', borderRadius: '50%', background: '#2ECC71', border: '2px solid #0d1f3c' }} />
+                  <div style={{ position: 'absolute', bottom: 0, right: 0, width: '10px', height: '10px', borderRadius: '50%', background: '#2ECC71', border: '2px solid #171614' }} />
                 )}
               </div>
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <p style={{ color: 'white', fontWeight: 700, fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{otherUser?.display_name}</p>
-                  {otherUser?.is_verified && <span style={{ background: '#1E6FFF', color: 'white', fontSize: '8px', padding: '1px 4px', borderRadius: '99px', fontWeight: 700, flexShrink: 0 }}>✓</span>}
+                  {otherUser?.is_verified && <span style={{ background: '#FF5A1F', color: 'white', fontSize: '8px', padding: '1px 4px', borderRadius: '99px', fontWeight: 700, flexShrink: 0 }}>✓</span>}
                 </div>
                 <OnlineStatus otherUser={otherUser} isTyping={isTyping} />
               </div>
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
-              <button aria-label="Voice call" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}><Phone size={19} /></button>
-              <button aria-label="Video call" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}><Video size={19} /></button>
-              <button onClick={() => setSearchMode(true)} aria-label="Search messages" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}><Search size={19} /></button>
+              <button aria-label="Voice call" style={{ color: '#8E8C88', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}><Phone size={19} /></button>
+              <button aria-label="Video call" style={{ color: '#8E8C88', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}><Video size={19} /></button>
+              <button onClick={() => setSearchMode(true)} aria-label="Search messages" style={{ color: '#8E8C88', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}><Search size={19} /></button>
               <div style={{ position: 'relative' }}>
                 <button
                   onClick={(e) => { e.stopPropagation(); setChatMenu(!chatMenu); }}
                   aria-label="Chat options"
-                  style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}
+                  style={{ color: '#8E8C88', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}
                 >
                   <MoreVertical size={19} />
                 </button>
                 {chatMenu && (
                   <div
-                    style={{ position: 'absolute', right: 0, top: '36px', background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', width: '220px', zIndex: 50, boxShadow: '0 20px 40px rgba(0,0,0,0.5)', overflow: 'hidden' }}
+                    style={{ position: 'absolute', right: 0, top: '36px', background: '#1d1c1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', width: '220px', zIndex: 50, boxShadow: '0 20px 40px rgba(0,0,0,0.5)', overflow: 'hidden' }}
                     onClick={(e) => e.stopPropagation()}
                   >
                     {[
@@ -605,7 +605,7 @@ export default function ChatRoom() {
                           const el = document.getElementById('msg-' + pinnedMsg.id);
                           el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                           if (el) {
-                            el.style.outline = '2px solid #1E6FFF';
+                            el.style.outline = '2px solid #FF5A1F';
                             setTimeout(() => { el.style.outline = 'none'; }, 1500);
                           }
                         },
@@ -672,7 +672,7 @@ export default function ChatRoom() {
                       },
                     ].map((item) => (
                       <button key={item.label} onClick={item.action} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', color: item.red ? '#EF4444' : 'rgba(255,255,255,0.8)', background: 'none', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', fontSize: '13px', textAlign: 'left' }}>
-                        <item.icon size={15} style={{ color: item.red ? '#EF4444' : '#6B7280', flexShrink: 0 }} />{item.label}
+                        <item.icon size={15} style={{ color: item.red ? '#EF4444' : '#8E8C88', flexShrink: 0 }} />{item.label}
                       </button>
                     ))}
                   </div>
@@ -685,13 +685,13 @@ export default function ChatRoom() {
 
       {/* Pinned */}
       {pinnedMsg && (
-        <div style={{ flexShrink: 0, background: 'rgba(30,111,255,0.1)', borderBottom: '1px solid rgba(30,111,255,0.2)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Pin size={14} style={{ color: '#1E6FFF', flexShrink: 0 }} />
+        <div style={{ flexShrink: 0, background: 'rgba(255,90,31,0.1)', borderBottom: '1px solid rgba(255,90,31,0.2)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Pin size={14} style={{ color: '#FF5A1F', flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ color: '#1E6FFF', fontSize: '10px', fontWeight: 700 }}>Pinned</p>
+            <p style={{ color: '#FF5A1F', fontSize: '10px', fontWeight: 700 }}>Pinned</p>
             <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pinnedMsg.body || '📷 Photo'}</p>
           </div>
-          <button onClick={() => setPinnedMsg(null)} aria-label="Dismiss pinned" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={14} /></button>
+          <button onClick={() => setPinnedMsg(null)} aria-label="Dismiss pinned" style={{ color: '#8E8C88', background: 'none', border: 'none', cursor: 'pointer' }}><X size={14} /></button>
         </div>
       )}
 
@@ -702,7 +702,7 @@ export default function ChatRoom() {
             <Star size={14} style={{ color: '#FFD700', fill: '#FFD700' }} />
             <span style={{ color: '#FFD700', fontSize: '12px', fontWeight: 600 }}>Starred messages</span>
           </div>
-          <button onClick={() => setStarredOnly(false)} aria-label="Exit starred view" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
+          <button onClick={() => setStarredOnly(false)} aria-label="Exit starred view" style={{ color: '#8E8C88', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
         </div>
       )}
 
@@ -715,7 +715,7 @@ export default function ChatRoom() {
         {Object.entries(display).map(([key, msgs]) => (
           <div key={key}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '16px 0' }}>
-              <span style={{ color: '#6B7280', fontSize: '11px', background: 'rgba(17,24,39,0.8)', padding: '4px 12px', borderRadius: '99px' }}>{dateLabel(key)}</span>
+              <span style={{ color: '#8E8C88', fontSize: '11px', background: 'rgba(29,28,26,0.8)', padding: '4px 12px', borderRadius: '99px' }}>{dateLabel(key)}</span>
             </div>
             {msgs.map((m, idx) => {
               const isMine = m.sender_id === user.id;
@@ -741,8 +741,8 @@ export default function ChatRoom() {
                   )}
 
                   {isSwiping && !isDeleted && (
-                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(30,111,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Reply size={13} style={{ color: '#1E6FFF' }} />
+                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(255,90,31,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Reply size={13} style={{ color: '#FF5A1F' }} />
                     </div>
                   )}
 
@@ -756,12 +756,12 @@ export default function ChatRoom() {
                     }}
                   >
                     {!isMine && isFirst && (
-                      <p style={{ color: '#1E6FFF', fontSize: '11px', fontWeight: 700, marginBottom: '3px', paddingLeft: '4px' }}>{m.sender?.display_name}</p>
+                      <p style={{ color: '#FF5A1F', fontSize: '11px', fontWeight: 700, marginBottom: '3px', paddingLeft: '4px' }}>{m.sender?.display_name}</p>
                     )}
 
                     {m.parent_message_id && (
-                      <div style={{ fontSize: '11px', marginBottom: '4px', padding: '6px 10px', borderRadius: '10px', borderLeft: '2px solid #1E6FFF', background: isMine ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)' }}>
-                        <p style={{ color: '#1E6FFF', fontSize: '10px', fontWeight: 700, marginBottom: '2px' }}>↩ Reply</p>
+                      <div style={{ fontSize: '11px', marginBottom: '4px', padding: '6px 10px', borderRadius: '10px', borderLeft: '2px solid #FF5A1F', background: isMine ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)' }}>
+                        <p style={{ color: '#FF5A1F', fontSize: '10px', fontWeight: 700, marginBottom: '2px' }}>↩ Reply</p>
                         <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Original message</p>
                       </div>
                     )}
@@ -770,7 +770,7 @@ export default function ChatRoom() {
                       style={{
                         padding: '9px 13px',
                         borderRadius: isFirst && isLast ? '16px' : isMine ? (isFirst ? '16px 4px 16px 16px' : isLast ? '16px 16px 4px 16px' : '16px 4px 4px 16px') : (isFirst ? '4px 16px 16px 16px' : isLast ? '16px 16px 16px 4px' : '4px 16px 16px 4px'),
-                        background: isMine ? 'linear-gradient(135deg, #1E6FFF, #7B2FFF)' : '#1a2a4a',
+                        background: isMine ? 'linear-gradient(135deg, #FF5A1F, #FF2D78)' : '#272522',
                         opacity: isDeleted ? 0.6 : 1,
                         position: 'relative',
                       }}
@@ -795,8 +795,8 @@ export default function ChatRoom() {
                       )}
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'flex-end', marginTop: '3px' }}>
-                        {m.edited && !isDeleted && <span style={{ color: isMine ? 'rgba(255,255,255,0.6)' : '#6B7280', fontSize: '10px' }}>edited</span>}
-                        <span style={{ color: isMine ? 'rgba(255,255,255,0.7)' : '#6B7280', fontSize: '10px' }}>{formatTime(m.created_at)}</span>
+                        {m.edited && !isDeleted && <span style={{ color: isMine ? 'rgba(255,255,255,0.6)' : '#8E8C88', fontSize: '10px' }}>edited</span>}
+                        <span style={{ color: isMine ? 'rgba(255,255,255,0.7)' : '#8E8C88', fontSize: '10px' }}>{formatTime(m.created_at)}</span>
                         {m._pending
                           ? <Clock size={11} style={{ color: 'rgba(255,255,255,0.5)' }} />
                           : <MsgStatus msg={m} isMine={isMine} />
@@ -804,17 +804,17 @@ export default function ChatRoom() {
                       </div>
 
                       {Object.keys(reactionCounts).length > 0 && (
-                        <div style={{ position: 'absolute', bottom: '-10px', [isMine ? 'left' : 'right']: '4px', background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '99px', padding: '1px 6px', display: 'flex', gap: '2px', fontSize: '11px' }}>
+                        <div style={{ position: 'absolute', bottom: '-10px', [isMine ? 'left' : 'right']: '4px', background: '#1d1c1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '99px', padding: '1px 6px', display: 'flex', gap: '2px', fontSize: '11px' }}>
                           {Object.entries(reactionCounts).map(([e,c]) => <span key={e}>{e}{c>1?c:''}</span>)}
                         </div>
                       )}
                     </div>
 
                     {quickReact === m.id && (
-                      <div style={{ position: 'absolute', bottom: '100%', [isMine?'right':'left']: 0, marginBottom: '6px', background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '99px', padding: '6px', display: 'flex', gap: '2px', zIndex: 40, boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
+                      <div style={{ position: 'absolute', bottom: '100%', [isMine?'right':'left']: 0, marginBottom: '6px', background: '#1d1c1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '99px', padding: '6px', display: 'flex', gap: '2px', zIndex: 40, boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
                         {QUICK_REACTIONS.map(e => (
                           <button key={e} onClick={() => react(m.id, e)}
-                            style={{ fontSize: '18px', background: m.reactions?.[user.id] === e ? 'rgba(30,111,255,0.3)' : 'none', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '50%' }}>{e}</button>
+                            style={{ fontSize: '18px', background: m.reactions?.[user.id] === e ? 'rgba(255,90,31,0.3)' : 'none', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '50%' }}>{e}</button>
                         ))}
                       </div>
                     )}
@@ -833,12 +833,12 @@ export default function ChatRoom() {
                         <button
                           onClick={(e) => { e.stopPropagation(); setReplyTo(m); setTimeout(() => inputRef.current?.focus(), 80); }}
                           aria-label="Reply"
-                          style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#111827', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                          style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#1d1c1a', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                         ><Reply size={12} style={{ color: 'rgba(255,255,255,0.7)' }} /></button>
                         <button
                           onClick={(e) => { e.stopPropagation(); setMsgMenu(msgMenu === m.id ? null : m.id); }}
                           aria-label="More options"
-                          style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#111827', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                          style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#1d1c1a', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                         ><ChevronDown size={12} style={{ color: 'rgba(255,255,255,0.7)' }} /></button>
                       </div>
                     )}
@@ -848,7 +848,7 @@ export default function ChatRoom() {
                         style={{
                           position: 'absolute', top: '32px',
                           [isMine ? 'right' : 'left']: 0, zIndex: 40,
-                          background: '#111827', border: '1px solid rgba(255,255,255,0.1)',
+                          background: '#1d1c1a', border: '1px solid rgba(255,255,255,0.1)',
                           borderRadius: '16px', width: '200px',
                           boxShadow: '0 20px 40px rgba(0,0,0,0.6)', overflow: 'hidden',
                         }}
@@ -868,7 +868,7 @@ export default function ChatRoom() {
                         ].map((item) => (
                           <button key={item.label} onClick={item.action}
                             style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '11px 16px', color: item.red ? '#EF4444' : 'rgba(255,255,255,0.8)', background: 'none', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', fontSize: '13px', textAlign: 'left' }}>
-                            <item.icon size={14} style={{ color: item.red ? '#EF4444' : '#6B7280', flexShrink: 0 }} />{item.label}
+                            <item.icon size={14} style={{ color: item.red ? '#EF4444' : '#8E8C88', flexShrink: 0 }} />{item.label}
                           </button>
                         ))}
                       </div>
@@ -884,10 +884,10 @@ export default function ChatRoom() {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '16px' }}>
             <div style={{ position: 'relative' }}>
               <Avatar url={otherUser?.avatar_url} name={otherUser?.display_name} size={20} />
-              {otherUser?.is_online && <div style={{ position: 'absolute', bottom: '2px', right: '2px', width: '14px', height: '14px', borderRadius: '50%', background: '#2ECC71', border: '2px solid #0A1628' }} />}
+              {otherUser?.is_online && <div style={{ position: 'absolute', bottom: '2px', right: '2px', width: '14px', height: '14px', borderRadius: '50%', background: '#2ECC71', border: '2px solid #0D0C0B' }} />}
             </div>
             <h3 style={{ color: 'white', fontWeight: 700, fontSize: '18px' }}>{otherUser?.display_name}</h3>
-            <p style={{ color: '#6B7280', fontSize: '14px', textAlign: 'center' }}>Say hello to {otherUser?.display_name?.split(' ')[0]}! 👋</p>
+            <p style={{ color: '#8E8C88', fontSize: '14px', textAlign: 'center' }}>Say hello to {otherUser?.display_name?.split(' ')[0]}! 👋</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', maxWidth: '280px' }}>
               {['👋 Hey!', '😊 Hi there!', '🔥 What\'s good?', '🇰🇪 Mambo!', '✨ Sawa!'].map((g) => (
                 <button key={g} onClick={() => { setMsg(g); setTimeout(() => inputRef.current?.focus(), 50); }}
@@ -902,9 +902,9 @@ export default function ChatRoom() {
         {isTyping && (
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', marginTop: '8px' }}>
             <Avatar url={otherUser?.avatar_url} name={otherUser?.display_name} size={7} />
-            <div style={{ background: '#1a2a4a', borderRadius: '16px 16px 16px 4px', padding: '10px 14px', display: 'flex', gap: '4px', alignItems: 'center' }}>
+            <div style={{ background: '#272522', borderRadius: '16px 16px 16px 4px', padding: '10px 14px', display: 'flex', gap: '4px', alignItems: 'center' }}>
               {[0,1,2].map((i) => (
-                <div key={i} style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#6B7280', animation: 'bounce 1.2s infinite', animationDelay: i * 0.2 + 's' }} />
+                <div key={i} style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#8E8C88', animation: 'bounce 1.2s infinite', animationDelay: i * 0.2 + 's' }} />
               ))}
             </div>
           </div>
@@ -918,9 +918,9 @@ export default function ChatRoom() {
             aria-label="Jump to latest messages"
             style={{
               position: 'sticky', bottom: 8, left: '50%', transform: 'translateX(-50%)',
-              background: '#1E6FFF', color: 'white', border: 'none', borderRadius: 999,
+              background: '#FF5A1F', color: 'white', border: 'none', borderRadius: 999,
               padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(30,111,255,0.4)', display: 'flex',
+              boxShadow: '0 4px 12px rgba(255,90,31,0.4)', display: 'flex',
               alignItems: 'center', gap: 6, zIndex: 10,
             }}
           >
@@ -930,7 +930,7 @@ export default function ChatRoom() {
       </div>
 
       {showEmoji && (
-        <div style={{ flexShrink: 0, background: '#111827', borderTop: '1px solid rgba(255,255,255,0.1)', maxHeight: '220px' }}>
+        <div style={{ flexShrink: 0, background: '#1d1c1a', borderTop: '1px solid rgba(255,255,255,0.1)', maxHeight: '220px' }}>
           <div style={{ padding: '8px 12px 4px' }}>
             <input type="text" value={emojiSearch} onChange={(e) => setEmojiSearch(e.target.value)} placeholder="Search emoji..."
               style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '6px 12px', color: 'white', fontSize: '12px', outline: 'none', boxSizing: 'border-box' }} />
@@ -939,7 +939,7 @@ export default function ChatRoom() {
             <div style={{ display: 'flex', overflowX: 'auto', padding: '0 8px', borderBottom: '1px solid rgba(255,255,255,0.05)', scrollbarWidth: 'none' }}>
               {EMOJI_CATS.map((c, i) => (
                 <button key={c.label} onClick={() => setEmojiCat(i)}
-                  style={{ flexShrink: 0, padding: '6px 8px', fontSize: '18px', background: 'none', border: 'none', cursor: 'pointer', borderBottom: emojiCat === i ? '2px solid #1E6FFF' : '2px solid transparent', opacity: emojiCat === i ? 1 : 0.6 }}>
+                  style={{ flexShrink: 0, padding: '6px 8px', fontSize: '18px', background: 'none', border: 'none', cursor: 'pointer', borderBottom: emojiCat === i ? '2px solid #FF5A1F' : '2px solid transparent', opacity: emojiCat === i ? 1 : 0.6 }}>
                   {c.label}
                 </button>
               ))}
@@ -958,39 +958,39 @@ export default function ChatRoom() {
       )}
 
       {replyTo && (
-        <div style={{ flexShrink: 0, background: '#111827', borderTop: '1px solid rgba(255,255,255,0.1)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '2px', height: '36px', background: '#1E6FFF', borderRadius: '2px', flexShrink: 0 }} />
+        <div style={{ flexShrink: 0, background: '#1d1c1a', borderTop: '1px solid rgba(255,255,255,0.1)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ width: '2px', height: '36px', background: '#FF5A1F', borderRadius: '2px', flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ color: '#1E6FFF', fontSize: '11px', fontWeight: 700 }}>{replyTo.sender_id === user.id ? 'You' : replyTo.sender?.display_name}</p>
-            <p style={{ color: '#6B7280', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{replyTo.message_type === 'image' ? '📷 Photo' : replyTo.body}</p>
+            <p style={{ color: '#FF5A1F', fontSize: '11px', fontWeight: 700 }}>{replyTo.sender_id === user.id ? 'You' : replyTo.sender?.display_name}</p>
+            <p style={{ color: '#8E8C88', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{replyTo.message_type === 'image' ? '📷 Photo' : replyTo.body}</p>
           </div>
-          <button onClick={() => setReplyTo(null)} aria-label="Cancel reply" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
+          <button onClick={() => setReplyTo(null)} aria-label="Cancel reply" style={{ color: '#8E8C88', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
         </div>
       )}
 
       {editing && (
-        <div style={{ flexShrink: 0, background: 'rgba(30,111,255,0.1)', borderTop: '1px solid rgba(30,111,255,0.2)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Edit3 size={14} style={{ color: '#1E6FFF', flexShrink: 0 }} />
+        <div style={{ flexShrink: 0, background: 'rgba(255,90,31,0.1)', borderTop: '1px solid rgba(255,90,31,0.2)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Edit3 size={14} style={{ color: '#FF5A1F', flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ color: '#1E6FFF', fontSize: '11px', fontWeight: 700 }}>Editing message</p>
-            <p style={{ color: '#6B7280', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{editing.body}</p>
+            <p style={{ color: '#FF5A1F', fontSize: '11px', fontWeight: 700 }}>Editing message</p>
+            <p style={{ color: '#8E8C88', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{editing.body}</p>
           </div>
-          <button onClick={() => { setEditing(null); setMsg(''); if (inputRef.current) inputRef.current.style.height = '24px'; }} aria-label="Cancel edit" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
+          <button onClick={() => { setEditing(null); setMsg(''); if (inputRef.current) inputRef.current.style.height = '24px'; }} aria-label="Cancel edit" style={{ color: '#8E8C88', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
         </div>
       )}
 
       {scheduler && (
-        <div style={{ flexShrink: 0, background: 'rgba(123,47,255,0.1)', borderTop: '1px solid rgba(123,47,255,0.2)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Clock size={14} style={{ color: '#7B2FFF', flexShrink: 0 }} />
+        <div style={{ flexShrink: 0, background: 'rgba(255,45,120,0.1)', borderTop: '1px solid rgba(255,45,120,0.2)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Clock size={14} style={{ color: '#FF2D78', flexShrink: 0 }} />
           <input type="datetime-local" value={schedTime} onChange={(e) => setSchedTime(e.target.value)}
             style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'white', fontSize: '12px' }} />
-          <button onClick={() => { setScheduler(false); setSchedTime(''); }} aria-label="Cancel schedule" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
+          <button onClick={() => { setScheduler(false); setSchedTime(''); }} aria-label="Cancel schedule" style={{ color: '#8E8C88', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
         </div>
       )}
 
       <div style={{
         flexShrink: 0,
-        background: '#0d1f3c',
+        background: '#171614',
         borderTop: '1px solid rgba(255,255,255,0.1)',
         paddingLeft: '12px',
         paddingRight: '12px',
@@ -1008,9 +1008,9 @@ export default function ChatRoom() {
             aria-label="Emoji picker"
             style={{
               width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
-              background: showEmoji ? 'rgba(30,111,255,0.2)' : 'transparent',
+              background: showEmoji ? 'rgba(255,90,31,0.2)' : 'transparent',
               border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: showEmoji ? '#1E6FFF' : '#6B7280',
+              color: showEmoji ? '#FF5A1F' : '#8E8C88',
             }}
           >
             <Smile size={22} />
@@ -1025,11 +1025,11 @@ export default function ChatRoom() {
               width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
               background: 'transparent', border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#6B7280',
+              color: '#8E8C88',
             }}
           >
             {uploading
-              ? <div style={{ width: '16px', height: '16px', border: '2px solid #1E6FFF', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              ? <div style={{ width: '16px', height: '16px', border: '2px solid #FF5A1F', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
               : <ImageIcon size={22} />
             }
           </button>
@@ -1081,9 +1081,9 @@ export default function ChatRoom() {
             aria-label="Schedule message"
             style={{
               width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
-              background: scheduler ? 'rgba(123,47,255,0.2)' : 'transparent',
+              background: scheduler ? 'rgba(255,45,120,0.2)' : 'transparent',
               border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: scheduler ? '#7B2FFF' : '#6B7280',
+              color: scheduler ? '#FF2D78' : '#8E8C88',
             }}
           >
             <Clock size={20} />
@@ -1096,10 +1096,10 @@ export default function ChatRoom() {
             aria-label="Send message"
             style={{
               width: '42px', height: '42px', borderRadius: '50%', flexShrink: 0,
-              background: (sending || !msg.trim()) ? 'rgba(30,111,255,0.4)' : 'linear-gradient(135deg, #1E6FFF, #7B2FFF)',
+              background: (sending || !msg.trim()) ? 'rgba(255,90,31,0.4)' : 'linear-gradient(135deg, #FF5A1F, #FF2D78)',
               border: 'none', cursor: (sending || !msg.trim()) ? 'default' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(30,111,255,0.4)',
+              boxShadow: '0 4px 12px rgba(255,90,31,0.4)',
             }}
           >
             {sending
@@ -1119,24 +1119,24 @@ export default function ChatRoom() {
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', zIndex: 60, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
           onClick={() => { setShowReportModal(false); setReportDone(false); setReportReason(''); setReportDetails(''); }}
         >
-          <div style={{ width: '100%', maxWidth: 620, background: '#0d1f3c', borderTop: '1px solid rgba(255,255,255,0.1)', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 32 }} onClick={e => e.stopPropagation()}>
+          <div style={{ width: '100%', maxWidth: 620, background: '#171614', borderTop: '1px solid rgba(255,255,255,0.1)', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 32 }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <h3 style={{ color: 'white', fontWeight: 700, fontSize: 16 }}>Report {otherUser?.display_name}</h3>
-              <button onClick={() => { setShowReportModal(false); setReportDone(false); }} aria-label="Close" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
+              <button onClick={() => { setShowReportModal(false); setReportDone(false); }} aria-label="Close" style={{ color: '#8E8C88', background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
             </div>
 
             {reportDone ? (
               <div style={{ textAlign: 'center', padding: '32px 0' }}>
                 <p style={{ fontSize: 40, marginBottom: 12 }}>✅</p>
                 <p style={{ color: 'white', fontWeight: 700 }}>Report submitted</p>
-                <p style={{ color: '#6B7280', fontSize: 13, marginTop: 4 }}>Our team will review this.</p>
+                <p style={{ color: '#8E8C88', fontSize: 13, marginTop: 4 }}>Our team will review this.</p>
               </div>
             ) : (
               <>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
                   {['Spam or scam', 'Harassment or bullying', 'Inappropriate content', 'Pretending to be someone else', 'Other'].map(r => (
                     <button key={r} onClick={() => setReportReason(r)}
-                      style={{ textAlign: 'left', padding: '12px 16px', borderRadius: 12, fontSize: 14, border: '1px solid ' + (reportReason === r ? 'rgba(30,111,255,0.5)' : 'rgba(255,255,255,0.06)'), background: reportReason === r ? 'rgba(30,111,255,0.15)' : 'rgba(255,255,255,0.03)', color: reportReason === r ? 'white' : 'rgba(255,255,255,0.7)', cursor: 'pointer' }}>
+                      style={{ textAlign: 'left', padding: '12px 16px', borderRadius: 12, fontSize: 14, border: '1px solid ' + (reportReason === r ? 'rgba(255,90,31,0.5)' : 'rgba(255,255,255,0.06)'), background: reportReason === r ? 'rgba(255,90,31,0.15)' : 'rgba(255,255,255,0.03)', color: reportReason === r ? 'white' : 'rgba(255,255,255,0.7)', cursor: 'pointer' }}>
                       {r}
                     </button>
                   ))}

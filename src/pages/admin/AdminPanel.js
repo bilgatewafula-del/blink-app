@@ -33,8 +33,8 @@ import {
 const ROLE_COLORS = {
   blink:     { bg:'#FFD700', label:'B-Link' },
   admin:     { bg:'#EF4444', label:'Admin'  },
-  moderator: { bg:'#7B2FFF', label:'Mod'    },
-  user:      { bg:'#374151', label:'User'   },
+  moderator: { bg:'#FF2D78', label:'Mod'    },
+  user:      { bg:'#3d3b38', label:'User'   },
 };
 
 function RoleBadge({ role }) {
@@ -62,7 +62,7 @@ function StatCard({ icon: Icon, label, value, color }) {
       </div>
       <div>
         <p className="text-white font-bold text-xl leading-none">{formatNumber(value)}</p>
-        <p className="text-[#6B7280] text-xs mt-0.5">{label}</p>
+        <p className="text-[#8E8C88] text-xs mt-0.5">{label}</p>
       </div>
     </div>
   );
@@ -226,14 +226,14 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
   return (
     <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-end justify-center" onClick={onClose}>
       <div
-        className="w-full max-w-[620px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl p-5 pb-8 max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5 pb-8 max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             {target.avatar_url
               ? <img src={target.avatar_url} alt="" className="w-11 h-11 rounded-full object-cover" />
-              : <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-lg">{target.display_name?.[0]?.toUpperCase()}</div>
+              : <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold text-lg">{target.display_name?.[0]?.toUpperCase()}</div>
             }
             <div>
               <p className="text-white font-bold text-[15px]">{target.display_name}</p>
@@ -241,10 +241,10 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
                 <RoleBadge role={target.role} />
                 <StatusBadge u={target} />
               </div>
-              <p className="text-[#6B7280] text-xs mt-0.5">@{target.username}</p>
+              <p className="text-[#8E8C88] text-xs mt-0.5">@{target.username}</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-[#6B7280] hover:text-white p-1">
+          <button onClick={onClose} className="text-[#8E8C88] hover:text-white p-1">
             <XCircle size={22} />
           </button>
         </div>
@@ -253,7 +253,7 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
           <div className="text-center py-8">
             <p className="text-5xl mb-3">✅</p>
             <p className="text-white font-bold text-lg">{done}</p>
-            <p className="text-[#6B7280] text-sm mt-1">Action completed successfully</p>
+            <p className="text-[#8E8C88] text-sm mt-1">Action completed successfully</p>
           </div>
         ) : (
           <>
@@ -265,14 +265,14 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
                   onClick={() => { setAction(a.key); setError(''); }}
                   className={'w-full flex items-start gap-3 px-4 py-3 rounded-xl text-left transition-all border ' +
                     (action === a.key
-                      ? 'bg-[#1E6FFF]/15 border-[#1E6FFF]/50'
+                      ? 'bg-[#FF5A1F]/15 border-[#FF5A1F]/50'
                       : 'bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.06]')}
                 >
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm font-semibold ${action === a.key ? 'text-white' : 'text-white/80'}`}>{a.label}</p>
-                    <p className="text-[#6B7280] text-[11px] mt-0.5">{a.desc}</p>
+                    <p className="text-[#8E8C88] text-[11px] mt-0.5">{a.desc}</p>
                   </div>
-                  {action === a.key && <CheckCircle size={16} className="text-[#1E6FFF] flex-shrink-0 mt-0.5" />}
+                  {action === a.key && <CheckCircle size={16} className="text-[#FF5A1F] flex-shrink-0 mt-0.5" />}
                 </button>
               ))}
             </div>
@@ -286,7 +286,7 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
                       key={d}
                       onClick={() => setDays(d)}
                       className={'px-4 py-2 rounded-xl text-sm font-bold border transition-all ' +
-                        (days === d ? 'bg-[#1E6FFF]/20 border-[#1E6FFF]/50 text-[#1E6FFF]' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10')}
+                        (days === d ? 'bg-[#FF5A1F]/20 border-[#FF5A1F]/50 text-[#FF5A1F]' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10')}
                     >
                       {d} day{d > 1 ? 's' : ''}
                     </button>
@@ -304,14 +304,14 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
                       key={r}
                       onClick={() => setNewRole(r)}
                       className={'px-4 py-2 rounded-xl text-sm font-bold border transition-all capitalize ' +
-                        (newRole === r ? 'bg-[#1E6FFF]/20 border-[#1E6FFF]/50 text-[#1E6FFF]' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10')}
+                        (newRole === r ? 'bg-[#FF5A1F]/20 border-[#FF5A1F]/50 text-[#FF5A1F]' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10')}
                     >
                       {r}
                     </button>
                   ))}
                 </div>
-                <p className="text-[#6B7280] text-xs mt-2">Current role: <span className="text-white font-semibold">{target.role}</span></p>
-                <p className="text-[#6B7280] text-[10px] mt-1">The blink role can never be assigned from this panel — server-enforced, not just hidden.</p>
+                <p className="text-[#8E8C88] text-xs mt-2">Current role: <span className="text-white font-semibold">{target.role}</span></p>
+                <p className="text-[#8E8C88] text-[10px] mt-1">The blink role can never be assigned from this panel — server-enforced, not just hidden.</p>
               </div>
             )}
 
@@ -333,10 +333,10 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
                   }
                   rows={3}
                   maxLength={300}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/50 resize-none"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/50 resize-none"
                 />
                 <div className="flex justify-between mt-1">
-                  <span className="text-[#6B7280] text-[10px]">{reason.length}/300</span>
+                  <span className="text-[#8E8C88] text-[10px]">{reason.length}/300</span>
                 </div>
               </div>
             )}
@@ -355,7 +355,7 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
                 background:
                   ['ban','delete'].includes(action)                         ? 'linear-gradient(135deg, #EF4444, #DC2626)' :
                   ['unban','unsuspend','unrestrict'].includes(action)       ? 'linear-gradient(135deg, #2ECC71, #16A34A)' :
-                  '#1E6FFF',
+                  '#FF5A1F',
               }}
             >
               {loading
@@ -420,10 +420,10 @@ function ContentModal({ item, type, onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-end justify-center" onClick={onClose}>
-      <div className="w-full max-w-[620px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl p-5 pb-8" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5 pb-8" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-white font-bold text-base">Moderate {type === 'post' ? 'Post' : 'Comment'}</h3>
-          <button onClick={onClose} className="text-[#6B7280] hover:text-white"><XCircle size={20} /></button>
+          <button onClick={onClose} className="text-[#8E8C88] hover:text-white"><XCircle size={20} /></button>
         </div>
 
         {done ? (
@@ -440,10 +440,10 @@ function ContentModal({ item, type, onClose, onSuccess }) {
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 {item.users?.avatar_url
                   ? <img src={item.users.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
-                  : <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-xs">{item.users?.display_name?.[0]?.toUpperCase()}</div>
+                  : <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold text-xs">{item.users?.display_name?.[0]?.toUpperCase()}</div>
                 }
                 <p className="text-white font-bold text-[13px]">{item.users?.display_name}</p>
-                <p className="text-[#6B7280] text-[12px]">@{item.users?.username}</p>
+                <p className="text-[#8E8C88] text-[12px]">@{item.users?.username}</p>
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                   item.status === 'hidden'  ? 'bg-yellow-500/20 text-yellow-400' :
                   item.status === 'deleted' ? 'bg-red-500/20 text-red-400' :
@@ -453,7 +453,7 @@ function ContentModal({ item, type, onClose, onSuccess }) {
               </div>
               <p className="text-white/75 text-[13px] leading-snug line-clamp-4">{itemText}</p>
               {item.moderation_reason && (
-                <p className="text-[#6B7280] text-[11px] mt-2 italic">Previous reason: "{item.moderation_reason}"</p>
+                <p className="text-[#8E8C88] text-[11px] mt-2 italic">Previous reason: "{item.moderation_reason}"</p>
               )}
             </div>
 
@@ -469,14 +469,14 @@ function ContentModal({ item, type, onClose, onSuccess }) {
                   onClick={() => { setAction(a.key); setError(''); }}
                   className={'w-full flex items-start gap-3 px-4 py-3 rounded-xl text-left transition-all border ' +
                     (action === a.key
-                      ? 'bg-[#1E6FFF]/15 border-[#1E6FFF]/50'
+                      ? 'bg-[#FF5A1F]/15 border-[#FF5A1F]/50'
                       : 'bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.06]')}
                 >
                   <div className="flex-1">
                     <p className={`text-sm font-semibold ${action === a.key ? 'text-white' : 'text-white/80'}`}>{a.label}</p>
-                    <p className="text-[#6B7280] text-[11px] mt-0.5">{a.desc}</p>
+                    <p className="text-[#8E8C88] text-[11px] mt-0.5">{a.desc}</p>
                   </div>
-                  {action === a.key && <CheckCircle size={16} className="text-[#1E6FFF] flex-shrink-0 mt-0.5" />}
+                  {action === a.key && <CheckCircle size={16} className="text-[#FF5A1F] flex-shrink-0 mt-0.5" />}
                 </button>
               ))}
             </div>
@@ -488,7 +488,7 @@ function ContentModal({ item, type, onClose, onSuccess }) {
                 placeholder="Reason (optional)..."
                 rows={2}
                 maxLength={200}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-[#6B7280] focus:outline-none resize-none mb-4"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-[#8E8C88] focus:outline-none resize-none mb-4"
               />
             )}
 
@@ -703,24 +703,24 @@ export default function AdminPanel() {
   if (!canAccess) return null;
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-20">
+    <div className="min-h-screen bg-[#0D0C0B] pb-20">
 
-      <div className="sticky top-0 z-30 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between">
+      <div className="sticky top-0 z-30 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white transition-colors">
+          <button onClick={() => navigate(-1)} className="text-[#8E8C88] hover:text-white transition-colors">
             <ArrowLeft size={22} />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-red-500 to-[#7B2FFF] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-red-500 to-[#FF2D78] flex items-center justify-center">
               <Shield size={16} color="white" />
             </div>
             <div>
               <p className="text-white font-bold text-[15px] leading-none">Admin Panel</p>
-              <p className="text-[#6B7280] text-[11px]">{ROLE_COLORS[myRole]?.label || 'Staff'}</p>
+              <p className="text-[#8E8C88] text-[11px]">{ROLE_COLORS[myRole]?.label || 'Staff'}</p>
             </div>
           </div>
         </div>
-        <button onClick={fetchAll} className="text-[#6B7280] hover:text-white p-1 transition-colors">
+        <button onClick={fetchAll} className="text-[#8E8C88] hover:text-white p-1 transition-colors">
           <RefreshCw size={18} />
         </button>
       </div>
@@ -735,8 +735,8 @@ export default function AdminPanel() {
             }}
             className={'flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all relative ' +
               (section === s.key
-                ? 'bg-[#1E6FFF] text-white border-[#1E6FFF] shadow-lg shadow-[#1E6FFF]/30'
-                : 'text-[#6B7280] border-white/10 hover:border-white/20 hover:text-white')}
+                ? 'bg-[#FF5A1F] text-white border-[#FF5A1F] shadow-lg shadow-[#FF5A1F]/30'
+                : 'text-[#8E8C88] border-white/10 hover:border-white/20 hover:text-white')}
           >
             <s.icon size={13} /> {s.label}
             {s.badge > 0 && (
@@ -753,13 +753,13 @@ export default function AdminPanel() {
         {section === 'overview' && (
           <>
             <div className="grid grid-cols-2 gap-3">
-              <StatCard icon={Users}         label="Total Users"    value={stats.total          || 0} color="#1E6FFF" />
-              <StatCard icon={UserCheck}     label="Staff"          value={stats.staff          || 0} color="#7B2FFF" />
+              <StatCard icon={Users}         label="Total Users"    value={stats.total          || 0} color="#FF5A1F" />
+              <StatCard icon={UserCheck}     label="Staff"          value={stats.staff          || 0} color="#FF2D78" />
               <StatCard icon={AlertTriangle} label="Restricted"     value={stats.restricted     || 0} color="#FFD700" />
               <StatCard icon={Clock}         label="Suspended"      value={stats.suspended      || 0} color="#FF6B35" />
               <StatCard icon={Ban}           label="Banned"         value={stats.banned         || 0} color="#EF4444" />
               <StatCard icon={Flag}          label="Open Reports"   value={stats.pendingReports || 0} color="#EF4444" />
-              <StatCard icon={EyeOff}        label="Hidden Posts"   value={stats.hiddenPosts    || 0} color="#6B7280" />
+              <StatCard icon={EyeOff}        label="Hidden Posts"   value={stats.hiddenPosts    || 0} color="#8E8C88" />
               <StatCard icon={Activity}      label="Total Posts"    value={stats.totalPosts     || 0} color="#2ECC71" />
             </div>
 
@@ -767,7 +767,7 @@ export default function AdminPanel() {
               <p className="text-white font-bold mb-3">Quick Actions</p>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { label:'Manage Users',   key:'users',   color:'#1E6FFF' },
+                  { label:'Manage Users',   key:'users',   color:'#FF5A1F' },
                   { label:'Open Reports',   key:'reports', color:'#EF4444', count: stats.pendingReports },
                   { label:'Moderate Posts', key:'content', color:'#FF6B35' },
                   { label:'View Logs',      key:'logs',    color:'#2ECC71' },
@@ -792,13 +792,13 @@ export default function AdminPanel() {
         {section === 'users' && (
           <div>
             <div className="flex items-center gap-3 bg-white/[0.05] border border-white/10 rounded-2xl px-4 py-3 mb-3">
-              <Search size={16} className="text-[#6B7280]" />
+              <Search size={16} className="text-[#8E8C88]" />
               <input
                 type="text" value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Search by name or username..."
-                className="flex-1 bg-transparent text-white text-sm placeholder-[#6B7280] focus:outline-none"
+                className="flex-1 bg-transparent text-white text-sm placeholder-[#8E8C88] focus:outline-none"
               />
-              {search && <button onClick={() => setSearch('')} className="text-[#6B7280] hover:text-white"><XCircle size={16} /></button>}
+              {search && <button onClick={() => setSearch('')} className="text-[#8E8C88] hover:text-white"><XCircle size={16} /></button>}
             </div>
 
             <div className="flex gap-1.5 overflow-x-auto pb-1 mb-3 scrollbar-none">
@@ -807,7 +807,7 @@ export default function AdminPanel() {
                   key={tab}
                   onClick={() => setStatusFilter(tab)}
                   className={'flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ' +
-                    (statusFilter === tab ? 'bg-[#1E6FFF] text-white border-[#1E6FFF]' : 'text-[#6B7280] border-white/10 hover:border-white/20')}
+                    (statusFilter === tab ? 'bg-[#FF5A1F] text-white border-[#FF5A1F]' : 'text-[#8E8C88] border-white/10 hover:border-white/20')}
                 >
                   {tab}
                   {tab === 'Banned' && stats.banned > 0 && <span className="ml-1 text-red-400">({stats.banned})</span>}
@@ -815,12 +815,12 @@ export default function AdminPanel() {
               ))}
             </div>
 
-            <p className="text-[#6B7280] text-xs mb-2">{filteredUsers.length} user{filteredUsers.length !== 1 ? 's' : ''} shown</p>
+            <p className="text-[#8E8C88] text-xs mb-2">{filteredUsers.length} user{filteredUsers.length !== 1 ? 's' : ''} shown</p>
 
             {loading ? (
-              <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" /></div>
+              <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-[#FF5A1F] border-t-transparent rounded-full animate-spin" /></div>
             ) : filteredUsers.length === 0 ? (
-              <div className="text-center py-10"><p className="text-[#6B7280]">No users found.</p></div>
+              <div className="text-center py-10"><p className="text-[#8E8C88]">No users found.</p></div>
             ) : (
               <div className="space-y-2">
                 {filteredUsers.map(u => (
@@ -828,7 +828,7 @@ export default function AdminPanel() {
                     <div className="flex-shrink-0">
                       {u.avatar_url
                         ? <img src={u.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" />
-                        : <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-sm">{u.display_name?.[0]?.toUpperCase()}</div>
+                        : <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold text-sm">{u.display_name?.[0]?.toUpperCase()}</div>
                       }
                     </div>
                     <div className="flex-1 min-w-0">
@@ -837,19 +837,19 @@ export default function AdminPanel() {
                         {u.is_verified && <VerifiedBadge size={13} />}
                         <RoleBadge role={u.role} />
                       </div>
-                      <p className="text-[#6B7280] text-[12px]">@{u.username}</p>
+                      <p className="text-[#8E8C88] text-[12px]">@{u.username}</p>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <StatusBadge u={u} />
-                        <span className="text-[#6B7280] text-[10px]">{formatNumber(u.followers_count||0)} followers · {formatNumber(u.posts_count||0)} posts</span>
+                        <span className="text-[#8E8C88] text-[10px]">{formatNumber(u.followers_count||0)} followers · {formatNumber(u.posts_count||0)} posts</span>
                       </div>
                       {u.ban_reason && (
-                        <p className="text-[#6B7280] text-[10px] mt-0.5 truncate">Reason: "{u.ban_reason}"</p>
+                        <p className="text-[#8E8C88] text-[10px] mt-0.5 truncate">Reason: "{u.ban_reason}"</p>
                       )}
                     </div>
                     {u.role !== 'blink' ? (
                       <button
                         onClick={() => setSelectedUser(u)}
-                        className="flex-shrink-0 px-3 py-2 bg-white/[0.06] hover:bg-[#1E6FFF]/20 border border-white/10 hover:border-[#1E6FFF]/40 rounded-xl text-white text-xs font-bold transition-all"
+                        className="flex-shrink-0 px-3 py-2 bg-white/[0.06] hover:bg-[#FF5A1F]/20 border border-white/10 hover:border-[#FF5A1F]/40 rounded-xl text-white text-xs font-bold transition-all"
                       >
                         Manage
                       </button>
@@ -874,7 +874,7 @@ export default function AdminPanel() {
                   key={t.key}
                   onClick={() => setContentTab(t.key)}
                   className={'flex-1 py-2.5 rounded-xl text-sm font-bold border transition-all ' +
-                    (contentTab === t.key ? 'bg-[#1E6FFF]/20 border-[#1E6FFF]/50 text-[#1E6FFF]' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10')}
+                    (contentTab === t.key ? 'bg-[#FF5A1F]/20 border-[#FF5A1F]/50 text-[#FF5A1F]' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10')}
                 >
                   {t.label} ({t.count})
                 </button>
@@ -882,7 +882,7 @@ export default function AdminPanel() {
             </div>
 
             {(contentTab === 'posts' ? posts : comments).length === 0 ? (
-              <div className="text-center py-10"><p className="text-[#6B7280]">No {contentTab} to moderate.</p></div>
+              <div className="text-center py-10"><p className="text-[#8E8C88]">No {contentTab} to moderate.</p></div>
             ) : (
               <div className="space-y-2">
                 {(contentTab === 'posts' ? posts : comments).map(item => (
@@ -896,10 +896,10 @@ export default function AdminPanel() {
                         <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                           {item.users?.avatar_url
                             ? <img src={item.users.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
-                            : <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-[9px]">{item.users?.display_name?.[0]?.toUpperCase()}</div>
+                            : <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold text-[9px]">{item.users?.display_name?.[0]?.toUpperCase()}</div>
                           }
                           <p className="text-white font-bold text-[13px]">{item.users?.display_name}</p>
-                          <p className="text-[#6B7280] text-[12px]">@{item.users?.username}</p>
+                          <p className="text-[#8E8C88] text-[12px]">@{item.users?.username}</p>
                           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${item.status === 'hidden' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>
                             {item.status || 'active'}
                           </span>
@@ -908,9 +908,9 @@ export default function AdminPanel() {
                           {contentTab === 'posts' ? (item.caption || '[No caption]') : item.body}
                         </p>
                         {item.moderation_reason && (
-                          <p className="text-[#6B7280] text-[11px] mt-1 italic">Reason: "{item.moderation_reason}"</p>
+                          <p className="text-[#8E8C88] text-[11px] mt-1 italic">Reason: "{item.moderation_reason}"</p>
                         )}
-                        <p className="text-[#6B7280] text-[11px] mt-1">{formatTime(item.created_at)}</p>
+                        <p className="text-[#8E8C88] text-[11px] mt-1">{formatTime(item.created_at)}</p>
                       </div>
                       <button
                         onClick={() => {
@@ -932,7 +932,7 @@ export default function AdminPanel() {
         {section === 'reports' && (
           <div className="space-y-2">
             {reports.length === 0 ? (
-              <div className="text-center py-10"><p className="text-[#6B7280]">No reports yet.</p></div>
+              <div className="text-center py-10"><p className="text-[#8E8C88]">No reports yet.</p></div>
             ) : reports.map(r => (
               <div
                 key={r.id}
@@ -947,18 +947,18 @@ export default function AdminPanel() {
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                         r.status === 'pending'  ? 'bg-red-500/20 text-red-400' :
                         r.status === 'resolved' ? 'bg-green-500/20 text-green-400' :
-                        'bg-[#6B7280]/20 text-[#6B7280]'}`}>
+                        'bg-[#8E8C88]/20 text-[#8E8C88]'}`}>
                         {r.status}
                       </span>
-                      <span className="text-[#6B7280] text-[10px] bg-white/5 px-1.5 py-0.5 rounded-full">{r.target_type}</span>
+                      <span className="text-[#8E8C88] text-[10px] bg-white/5 px-1.5 py-0.5 rounded-full">{r.target_type}</span>
                     </div>
                     <p className="text-white/85 text-[13px]">
                       <span className="font-bold text-white">{r.reporter?.display_name || 'User'}</span>
                       {' reported: '}
                       <span className="text-yellow-400 font-semibold">{r.reason}</span>
                     </p>
-                    {r.details && <p className="text-[#6B7280] text-[12px] mt-0.5">"{r.details}"</p>}
-                    <p className="text-[#6B7280] text-[11px] mt-1">{formatTime(r.created_at)}</p>
+                    {r.details && <p className="text-[#8E8C88] text-[12px] mt-0.5">"{r.details}"</p>}
+                    <p className="text-[#8E8C88] text-[11px] mt-1">{formatTime(r.created_at)}</p>
                   </div>
                   {r.status === 'pending' && (
                     <div className="flex flex-col gap-1.5 flex-shrink-0">
@@ -970,7 +970,7 @@ export default function AdminPanel() {
                       </button>
                       <button
                         onClick={() => resolveReport(r.id, 'ignored')}
-                        className="px-2.5 py-1.5 bg-white/5 border border-white/10 rounded-xl text-[#6B7280] text-[11px] font-bold hover:bg-white/10 transition-colors"
+                        className="px-2.5 py-1.5 bg-white/5 border border-white/10 rounded-xl text-[#8E8C88] text-[11px] font-bold hover:bg-white/10 transition-colors"
                       >
                         Ignore
                       </button>
@@ -985,15 +985,15 @@ export default function AdminPanel() {
         {section === 'logs' && (
           <div className="space-y-2">
             {logs.length === 0 ? (
-              <div className="text-center py-10"><p className="text-[#6B7280]">No admin actions yet.</p></div>
+              <div className="text-center py-10"><p className="text-[#8E8C88]">No admin actions yet.</p></div>
             ) : logs.map(log => (
               <div key={log.id} className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-white font-bold text-[13px]">{log.admin?.display_name || 'System'}</span>
-                      <span className="text-[#6B7280] text-[12px]">→</span>
-                      <span className="text-[#1E6FFF] font-semibold text-[13px]">{log.target?.display_name || 'Content'}</span>
+                      <span className="text-[#8E8C88] text-[12px]">→</span>
+                      <span className="text-[#FF5A1F] font-semibold text-[13px]">{log.target?.display_name || 'Content'}</span>
                     </div>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
@@ -1004,12 +1004,12 @@ export default function AdminPanel() {
                         log.action.includes('hide')     ? 'bg-yellow-500/20 text-yellow-400' :
                         log.action.startsWith('un') || log.action.includes('restore') || log.action.includes('unrestrict')
                                                         ? 'bg-green-500/20 text-green-400' :
-                        'bg-[#1E6FFF]/20 text-[#1E6FFF]'
+                        'bg-[#FF5A1F]/20 text-[#FF5A1F]'
                       }`}>{log.action}</span>
-                      {log.details && <span className="text-[#6B7280] text-[11px] truncate max-w-[180px]">"{log.details}"</span>}
+                      {log.details && <span className="text-[#8E8C88] text-[11px] truncate max-w-[180px]">"{log.details}"</span>}
                     </div>
                   </div>
-                  <span className="text-[#6B7280] text-[10px] flex-shrink-0 whitespace-nowrap">
+                  <span className="text-[#8E8C88] text-[10px] flex-shrink-0 whitespace-nowrap">
                     {new Date(log.created_at).toLocaleDateString('en-KE', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}
                   </span>
                 </div>
@@ -1021,7 +1021,7 @@ export default function AdminPanel() {
         {section === 'warnings' && (
           <div className="space-y-2">
             {warnings.length === 0 ? (
-              <div className="text-center py-10"><p className="text-[#6B7280]">No warnings issued yet.</p></div>
+              <div className="text-center py-10"><p className="text-[#8E8C88]">No warnings issued yet.</p></div>
             ) : warnings.map(w => (
               <div key={w.id} className="bg-yellow-500/[0.05] border border-yellow-500/20 rounded-2xl p-3">
                 <div className="flex items-center gap-3 mb-2">
@@ -1031,12 +1031,12 @@ export default function AdminPanel() {
                   }
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-bold text-[13px]">{w.user?.display_name}</p>
-                    <p className="text-[#6B7280] text-[11px]">by {w.issuer?.display_name} · {formatTime(w.created_at)}</p>
+                    <p className="text-[#8E8C88] text-[11px]">by {w.issuer?.display_name} · {formatTime(w.created_at)}</p>
                   </div>
                   {isMod && (
                     <button
                       onClick={() => deleteWarning(w.id)}
-                      className="text-[#6B7280] hover:text-red-400 p-1.5 rounded-full hover:bg-red-500/10 transition-colors flex-shrink-0"
+                      className="text-[#8E8C88] hover:text-red-400 p-1.5 rounded-full hover:bg-red-500/10 transition-colors flex-shrink-0"
                     >
                       <Trash2 size={14} />
                     </button>

@@ -139,18 +139,18 @@ export default function EditProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-24">
+    <div className="min-h-screen bg-[#0D0C0B] pb-24">
 
       {/* Top bar */}
-      <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between">
-        <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white transition-colors">
+      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between">
+        <button onClick={() => navigate(-1)} className="text-[#8E8C88] hover:text-white transition-colors">
           <ArrowLeft size={22} />
         </button>
         <h1 className="text-white font-bold text-[15px]">Edit Profile</h1>
         <button
           onClick={handleSave}
           disabled={saving || uploading}
-          className="flex items-center gap-1.5 bg-[#1E6FFF] text-white text-sm font-bold px-4 py-2 rounded-full disabled:opacity-50 active:scale-95 transition-all"
+          className="flex items-center gap-1.5 bg-[#FF5A1F] text-white text-sm font-bold px-4 py-2 rounded-full disabled:opacity-50 active:scale-95 transition-all"
         >
           {saving || uploading
             ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -169,18 +169,18 @@ export default function EditProfile() {
             {avatarPreview ? (
               <img src={avatarPreview} alt="" className="w-24 h-24 rounded-full object-cover border-2 border-white/20" />
             ) : (
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-black text-3xl border-2 border-white/20">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-black text-3xl border-2 border-white/20">
                 {displayName?.[0]?.toUpperCase() || 'B'}
               </div>
             )}
             <button
               onClick={() => fileRef.current?.click()}
-              className="absolute -bottom-1 -right-1 w-9 h-9 bg-[#1E6FFF] rounded-full flex items-center justify-center border-2 border-[#0A1628] shadow-lg hover:bg-[#1565cc] transition-colors"
+              className="absolute -bottom-1 -right-1 w-9 h-9 bg-[#FF5A1F] rounded-full flex items-center justify-center border-2 border-[#0D0C0B] shadow-lg hover:bg-[#d9480f] transition-colors"
             >
               <Camera size={15} color="white" />
             </button>
           </div>
-          <button onClick={() => fileRef.current?.click()} className="text-[#1E6FFF] text-sm font-bold mt-3">
+          <button onClick={() => fileRef.current?.click()} className="text-[#FF5A1F] text-sm font-bold mt-3">
             Change profile photo
           </button>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
@@ -194,7 +194,7 @@ export default function EditProfile() {
             <input type="text" value={displayName} onChange={e => { setDisplayName(e.target.value); setError(''); }}
               placeholder="Your name" maxLength={40}
               disabled={displayNameCooldownDays > 0}
-              className="w-full bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60 transition-all disabled:opacity-50" />
+              className="w-full bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 transition-all disabled:opacity-50" />
             {displayNameCooldownDays > 0 && (
               <p className="text-orange-400 text-[11px] mt-1.5 flex items-center gap-1">
                 <Clock size={11} /> Locked for {displayNameCooldownDays} more day{displayNameCooldownDays !== 1 ? 's' : ''}
@@ -206,19 +206,19 @@ export default function EditProfile() {
           <div>
             <label className="text-white/60 text-[11px] font-bold uppercase tracking-wider block mb-1.5">Username *</label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6B7280] font-bold text-[15px] pointer-events-none">@</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8C88] font-bold text-[15px] pointer-events-none">@</span>
               <input type="text" value={username}
                 onChange={e => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,'')); setError(''); }}
                 placeholder="username" maxLength={20}
                 disabled={usernameCooldownDays > 0}
-                className="w-full bg-white/[0.06] border border-white/10 rounded-2xl pl-9 pr-4 py-3.5 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60 transition-all disabled:opacity-50" />
+                className="w-full bg-white/[0.06] border border-white/10 rounded-2xl pl-9 pr-4 py-3.5 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 transition-all disabled:opacity-50" />
             </div>
             {usernameCooldownDays > 0 ? (
               <p className="text-orange-400 text-[11px] mt-1.5 flex items-center gap-1">
                 <Clock size={11} /> Locked for {usernameCooldownDays} more day{usernameCooldownDays !== 1 ? 's' : ''} (changes allowed every {NAME_CHANGE_COOLDOWN_DAYS} days)
               </p>
             ) : (
-              <p className="text-[#6B7280] text-[11px] mt-1.5">Use a real, recognisable name. Reserved or fake-looking names are blocked.</p>
+              <p className="text-[#8E8C88] text-[11px] mt-1.5">Use a real, recognisable name. Reserved or fake-looking names are blocked.</p>
             )}
           </div>
 
@@ -226,9 +226,9 @@ export default function EditProfile() {
           <div>
             <label className="text-white/60 text-[11px] font-bold uppercase tracking-wider block mb-1.5">Bio</label>
             <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Tell people about yourself..." rows={3} maxLength={160}
-              className="w-full bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60 resize-none transition-all" />
+              className="w-full bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 resize-none transition-all" />
             <div className="flex justify-end mt-0.5">
-              <span className={`text-xs ${bio.length > 140 ? 'text-orange-400' : 'text-[#6B7280]'}`}>{bio.length}/160</span>
+              <span className={`text-xs ${bio.length > 140 ? 'text-orange-400' : 'text-[#8E8C88]'}`}>{bio.length}/160</span>
             </div>
           </div>
 
@@ -236,10 +236,10 @@ export default function EditProfile() {
           <div>
             <label className="text-white/60 text-[11px] font-bold uppercase tracking-wider block mb-1.5">Country</label>
             <select value={country} onChange={e => setCountry(e.target.value)}
-              className="w-full bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[15px] focus:outline-none focus:border-[#1E6FFF]/60 appearance-none transition-all"
+              className="w-full bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[15px] focus:outline-none focus:border-[#FF5A1F]/60 appearance-none transition-all"
               style={{ WebkitAppearance:'none' }}>
               {COUNTRIES.map(c => (
-                <option key={c.code} value={c.code} style={{ background:'#0d1f3c' }}>{c.name}</option>
+                <option key={c.code} value={c.code} style={{ background:'#171614' }}>{c.name}</option>
               ))}
             </select>
           </div>
@@ -249,7 +249,7 @@ export default function EditProfile() {
             <label className="text-white/60 text-[11px] font-bold uppercase tracking-wider block mb-1.5">Website</label>
             <input type="url" value={website} onChange={e => { setWebsite(e.target.value); setError(''); }}
               placeholder="https://yourwebsite.com" maxLength={100}
-              className="w-full bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60 transition-all" />
+              className="w-full bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 transition-all" />
           </div>
         </div>
 
@@ -265,7 +265,7 @@ export default function EditProfile() {
           onClick={handleSave}
           disabled={saving || uploading}
           className="w-full py-4 rounded-2xl font-bold text-white text-[15px] disabled:opacity-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-          style={{ background:'linear-gradient(135deg,#1E6FFF,#7B2FFF)', boxShadow:'0 8px 24px rgba(30,111,255,0.3)' }}
+          style={{ background:'linear-gradient(135deg,#FF5A1F,#FF2D78)', boxShadow:'0 8px 24px rgba(255,90,31,0.3)' }}
         >
           {saving || uploading
             ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {uploading ? 'Uploading photo...' : 'Saving...'}</>

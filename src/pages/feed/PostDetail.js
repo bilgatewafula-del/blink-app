@@ -48,7 +48,7 @@ const REACTIONS = [
   { emoji:'❤️', type:'like',  color:'#EF4444' },
   { emoji:'😂', type:'haha',  color:'#FFD700' },
   { emoji:'😮', type:'wow',   color:'#FF6B35' },
-  { emoji:'😢', type:'sad',   color:'#6B7280' },
+  { emoji:'😢', type:'sad',   color:'#8E8C88' },
   { emoji:'😡', type:'angry', color:'#EF4444' },
   { emoji:'🔥', type:'fire',  color:'#FF6B35' },
 ];
@@ -60,8 +60,8 @@ function RichText({ text, onHashtag, onMention }) {
   return (
     <>
       {text.split(/(#\w+|@\w+)/g).map((p, i) => {
-        if (p.startsWith('#')) return <button key={i} onClick={() => onHashtag(p.slice(1))} className="text-[#1E6FFF] hover:underline font-medium">{p}</button>;
-        if (p.startsWith('@')) return <button key={i} onClick={() => onMention(p.slice(1))} className="text-[#1E6FFF] hover:underline font-medium">{p}</button>;
+        if (p.startsWith('#')) return <button key={i} onClick={() => onHashtag(p.slice(1))} className="text-[#FF5A1F] hover:underline font-medium">{p}</button>;
+        if (p.startsWith('@')) return <button key={i} onClick={() => onMention(p.slice(1))} className="text-[#FF5A1F] hover:underline font-medium">{p}</button>;
         return <span key={i}>{p}</span>;
       })}
     </>
@@ -159,29 +159,29 @@ function CommentRow({ c, postAuthorId, currentUserId, onReply, onDelete, navigat
         <button onClick={() => navigate('/profile/' + cUser.username)} className="flex-shrink-0 mt-0.5">
           {cUser.avatar_url
             ? <img src={cUser.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
-            : <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-xs">{cUser.display_name?.[0]?.toUpperCase()}</div>
+            : <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold text-xs">{cUser.display_name?.[0]?.toUpperCase()}</div>
           }
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-1 flex-wrap">
             <button onClick={() => navigate('/profile/' + cUser.username)} className="text-white font-bold text-[13px] hover:underline">{cUser.display_name}</button>
             {cUser.is_verified && <VerifiedBadge size={14} />}
-            {isAuthor && <span className="bg-[#1E6FFF]/20 text-[#1E6FFF] text-[9px] px-1.5 py-0.5 rounded-full font-bold">Author</span>}
-            <span className="text-[#6B7280] text-[12px]">@{cUser.username}</span>
-            <span className="text-[#6B7280] text-[12px]">·</span>
-            <span className="text-[#6B7280] text-[12px] whitespace-nowrap">{formatTime(c.created_at)}</span>
+            {isAuthor && <span className="bg-[#FF5A1F]/20 text-[#FF5A1F] text-[9px] px-1.5 py-0.5 rounded-full font-bold">Author</span>}
+            <span className="text-[#8E8C88] text-[12px]">@{cUser.username}</span>
+            <span className="text-[#8E8C88] text-[12px]">·</span>
+            <span className="text-[#8E8C88] text-[12px] whitespace-nowrap">{formatTime(c.created_at)}</span>
           </div>
           <p className="text-white/85 text-[14px] leading-snug break-words mt-0.5">
             <RichText text={c.body} onHashtag={t => navigate('/hashtag/'+t)} onMention={u => navigate('/profile/'+u)} />
           </p>
-          {reactionCount > 0 && <span className="text-[11px] text-[#6B7280] mt-0.5 block">{myReaction || '❤️'} {reactionCount}</span>}
+          {reactionCount > 0 && <span className="text-[11px] text-[#8E8C88] mt-0.5 block">{myReaction || '❤️'} {reactionCount}</span>}
           <div className="flex items-center gap-1 mt-1 -ml-1.5">
-            <button onClick={() => onReply(c)} className="flex items-center gap-1 text-[#6B7280] text-[12px] hover:text-[#1E6FFF] px-1.5 py-1 rounded-full hover:bg-[#1E6FFF]/10 transition-all">
+            <button onClick={() => onReply(c)} className="flex items-center gap-1 text-[#8E8C88] text-[12px] hover:text-[#FF5A1F] px-1.5 py-1 rounded-full hover:bg-[#FF5A1F]/10 transition-all">
               <MessageCircle size={12} /> Reply
             </button>
             <div className="relative" ref={pickerRef}>
               {showReactions && (
-                <div className="absolute bottom-8 left-0 bg-[#111827] border border-white/10 rounded-full px-1.5 py-1.5 flex gap-1 z-30 shadow-2xl" style={{ minWidth:'max-content' }}>
+                <div className="absolute bottom-8 left-0 bg-[#1d1c1a] border border-white/10 rounded-full px-1.5 py-1.5 flex gap-1 z-30 shadow-2xl" style={{ minWidth:'max-content' }}>
                   {COMMENT_REACTIONS.map(emoji => (
                     <button key={emoji} onClick={() => handleReact(emoji)}
                       className={`text-base hover:scale-125 transition-transform w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/10 ${myReaction === emoji ? 'bg-white/20':''}`}>
@@ -197,19 +197,19 @@ function CommentRow({ c, postAuthorId, currentUserId, onReply, onDelete, navigat
                 onTouchStart={() => { longPressTimer.current = setTimeout(() => setShowReactions(true), 500); }}
                 onTouchEnd={() => clearTimeout(longPressTimer.current)}
                 className="flex items-center gap-0.5 px-1.5 py-1 rounded-full hover:bg-red-500/10 transition-all"
-                style={{ color: myReaction ? '#EF4444' : '#6B7280' }}>
+                style={{ color: myReaction ? '#EF4444' : '#8E8C88' }}>
                 {myReaction ? <span className="text-[13px]">{myReaction}</span> : <Heart size={12} fill="none" />}
               </button>
             </div>
             {isMine && (
-              <button onClick={() => onDelete(c.id)} className="text-[#6B7280] hover:text-red-400 px-1.5 py-1 rounded-full hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all ml-1">
+              <button onClick={() => onDelete(c.id)} className="text-[#8E8C88] hover:text-red-400 px-1.5 py-1 rounded-full hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all ml-1">
                 <Trash2 size={12} />
               </button>
             )}
           </div>
 
           {depth === 0 && c.reply_count > 0 && (
-            <button onClick={loadReplies} className="flex items-center gap-1 text-[#1E6FFF] text-[12px] font-semibold mt-1.5">
+            <button onClick={loadReplies} className="flex items-center gap-1 text-[#FF5A1F] text-[12px] font-semibold mt-1.5">
               <div className="w-6 h-px bg-white/15" />
               {loadingReplies ? 'Loading...' : replies === null
                 ? `View ${c.reply_count} repl${c.reply_count === 1 ? 'y' : 'ies'}`
@@ -563,30 +563,30 @@ export default function PostDetail() {
   };
 
   const getReactionEmoji = () => REACTIONS.find(r => r.type === reaction)?.emoji || null;
-  const getReactionColor = () => REACTIONS.find(r => r.type === reaction)?.color || '#6B7280';
+  const getReactionColor = () => REACTIONS.find(r => r.type === reaction)?.color || '#8E8C88';
 
   if (loading) return (
-    <div className="min-h-screen bg-[#0A1628] flex items-center justify-center">
-      <div className="w-7 h-7 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" />
+    <div className="min-h-screen bg-[#0D0C0B] flex items-center justify-center">
+      <div className="w-7 h-7 border-2 border-[#FF5A1F] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
   if (fetchError === 'not_found' || !post) return (
-    <div className="min-h-screen bg-[#0A1628] flex flex-col items-center justify-center gap-3 px-6">
+    <div className="min-h-screen bg-[#0D0C0B] flex flex-col items-center justify-center gap-3 px-6">
       <p className="text-5xl">🔍</p>
       <p className="text-white font-bold text-lg">Post not found</p>
-      <p className="text-[#6B7280] text-sm text-center">This post may have been deleted or is unavailable.</p>
-      <button onClick={() => navigate(-1)} className="mt-2 text-[#1E6FFF] font-semibold text-sm">← Go back</button>
+      <p className="text-[#8E8C88] text-sm text-center">This post may have been deleted or is unavailable.</p>
+      <button onClick={() => navigate(-1)} className="mt-2 text-[#FF5A1F] font-semibold text-sm">← Go back</button>
     </div>
   );
 
   if (fetchError) return (
-    <div className="min-h-screen bg-[#0A1628] flex flex-col items-center justify-center gap-3 px-6">
+    <div className="min-h-screen bg-[#0D0C0B] flex flex-col items-center justify-center gap-3 px-6">
       <p className="text-5xl">⚠️</p>
       <p className="text-white font-bold text-lg">Could not load post</p>
-      <p className="text-[#6B7280] text-sm text-center">{fetchError}</p>
-      <button onClick={fetchPost} className="mt-2 bg-[#1E6FFF] text-white px-5 py-2 rounded-full font-bold text-sm">Try again</button>
-      <button onClick={() => navigate(-1)} className="text-[#6B7280] text-sm">← Go back</button>
+      <p className="text-[#8E8C88] text-sm text-center">{fetchError}</p>
+      <button onClick={fetchPost} className="mt-2 bg-[#FF5A1F] text-white px-5 py-2 rounded-full font-bold text-sm">Try again</button>
+      <button onClick={() => navigate(-1)} className="text-[#8E8C88] text-sm">← Go back</button>
     </div>
   );
 
@@ -594,7 +594,7 @@ export default function PostDetail() {
   const isOwner  = (post.users?.id || post.user_id) === user?.id;
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-32">
+    <div className="min-h-screen bg-[#0D0C0B] pb-32">
       {actionToast && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 bg-white/15 backdrop-blur border border-white/20 rounded-full px-5 py-2.5 pointer-events-none">
           <p className="text-white text-sm font-semibold whitespace-nowrap">{actionToast}</p>
@@ -603,32 +603,32 @@ export default function PostDetail() {
 
       {showQuoteModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center" onClick={() => setShowQuoteModal(false)}>
-          <div className="w-full max-w-[620px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl p-4 pb-8" onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-4 pb-8" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <button onClick={() => setShowQuoteModal(false)} aria-label="Close" className="text-[#6B7280] hover:text-white"><X size={20} /></button>
+              <button onClick={() => setShowQuoteModal(false)} aria-label="Close" className="text-[#8E8C88] hover:text-white"><X size={20} /></button>
               <h3 className="text-white font-bold">Quote Post</h3>
               <button onClick={handleQuotePost} disabled={!quoteText.trim()}
-                className="bg-[#1E6FFF] text-white text-sm font-bold px-4 py-1.5 rounded-full disabled:opacity-40">Post</button>
+                className="bg-[#FF5A1F] text-white text-sm font-bold px-4 py-1.5 rounded-full disabled:opacity-40">Post</button>
             </div>
             <textarea autoFocus value={quoteText} onChange={e => setQuoteText(e.target.value)}
               placeholder="Add a comment..." maxLength={500} rows={3}
-              className="w-full bg-transparent text-white text-[16px] placeholder-[#6B7280] focus:outline-none resize-none leading-relaxed mb-3" />
+              className="w-full bg-transparent text-white text-[16px] placeholder-[#8E8C88] focus:outline-none resize-none leading-relaxed mb-3" />
           </div>
         </div>
       )}
 
-      <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between">
-        <button onClick={() => navigate(-1)} aria-label="Back" className="text-[#6B7280] hover:text-white transition-colors"><ArrowLeft size={22} /></button>
+      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between">
+        <button onClick={() => navigate(-1)} aria-label="Back" className="text-[#8E8C88] hover:text-white transition-colors"><ArrowLeft size={22} /></button>
         <h1 className="text-white font-bold text-[15px]">Post</h1>
         <div className="relative">
-          <button onClick={() => setShowMenu(!showMenu)} aria-label="Post options" className="text-[#6B7280] hover:text-white p-1"><MoreHorizontal size={20} /></button>
+          <button onClick={() => setShowMenu(!showMenu)} aria-label="Post options" className="text-[#8E8C88] hover:text-white p-1"><MoreHorizontal size={20} /></button>
           {showMenu && (
-            <div className="absolute right-0 top-full mt-1 bg-[#111827] border border-white/10 rounded-2xl overflow-hidden shadow-xl z-30" style={{ minWidth:180 }} onClick={e => e.stopPropagation()}>
+            <div className="absolute right-0 top-full mt-1 bg-[#1d1c1a] border border-white/10 rounded-2xl overflow-hidden shadow-xl z-30" style={{ minWidth:180 }} onClick={e => e.stopPropagation()}>
               {isOwner ? (
                 <button onClick={handleDeletePost} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-500/10 text-red-400 text-sm"><Trash2 size={15} /> Delete Post</button>
               ) : (
                 <>
-                  <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 text-sm"><Flag size={15} className="text-[#6B7280]" /> Report Post</button>
+                  <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 text-sm"><Flag size={15} className="text-[#8E8C88]" /> Report Post</button>
                   <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-500/10 text-red-400 text-sm"><UserX size={15} /> Block User</button>
                 </>
               )}
@@ -647,7 +647,7 @@ export default function PostDetail() {
               {post.users?.role === 'blink' && <span className="text-xs">👑</span>}
               {flagMap[post.users?.country] && <span className="text-xs">{flagMap[post.users.country]}</span>}
             </button>
-            <p className="text-[#6B7280] text-[13px]">@{post.users?.username}</p>
+            <p className="text-[#8E8C88] text-[13px]">@{post.users?.username}</p>
           </div>
         </div>
 
@@ -678,7 +678,7 @@ export default function PostDetail() {
 
         <MediaGrid images={images} />
 
-        <div className="flex flex-wrap items-center gap-x-2 mb-3 text-[#6B7280] text-sm">
+        <div className="flex flex-wrap items-center gap-x-2 mb-3 text-[#8E8C88] text-sm">
           <span>{new Date(post.created_at).toLocaleString('en-KE',{ hour:'2-digit', minute:'2-digit', month:'short', day:'numeric', year:'numeric' })}</span>
           {post.location && <><span>·</span><span>📍 {post.location}</span></>}
           {viewsCount > 0 && <><span>·</span><span>{formatNumber(viewsCount)} views</span></>}
@@ -686,36 +686,36 @@ export default function PostDetail() {
 
         {(repostCount > 0 || likesCount > 0 || commentCount > 0 || (post.shares_count||0) > 0) && (
           <div className="flex items-center gap-5 py-3 border-y border-white/[0.07] mb-1">
-            {repostCount  > 0 && <div><span className="text-white font-bold">{formatNumber(repostCount)}</span><span className="text-[#6B7280] text-sm ml-1">Reposts</span></div>}
-            {likesCount   > 0 && <div><span className="text-white font-bold">{formatNumber(likesCount)}</span><span className="text-[#6B7280] text-sm ml-1">Likes</span></div>}
-            {commentCount > 0 && <div><span className="text-white font-bold">{formatNumber(commentCount)}</span><span className="text-[#6B7280] text-sm ml-1">Replies</span></div>}
-            {(post.shares_count||0) > 0 && <div><span className="text-white font-bold">{formatNumber(post.shares_count)}</span><span className="text-[#6B7280] text-sm ml-1">Shares</span></div>}
+            {repostCount  > 0 && <div><span className="text-white font-bold">{formatNumber(repostCount)}</span><span className="text-[#8E8C88] text-sm ml-1">Reposts</span></div>}
+            {likesCount   > 0 && <div><span className="text-white font-bold">{formatNumber(likesCount)}</span><span className="text-[#8E8C88] text-sm ml-1">Likes</span></div>}
+            {commentCount > 0 && <div><span className="text-white font-bold">{formatNumber(commentCount)}</span><span className="text-[#8E8C88] text-sm ml-1">Replies</span></div>}
+            {(post.shares_count||0) > 0 && <div><span className="text-white font-bold">{formatNumber(post.shares_count)}</span><span className="text-[#8E8C88] text-sm ml-1">Shares</span></div>}
           </div>
         )}
 
         <div className="flex items-center justify-between py-1 -mx-1" onClick={e => e.stopPropagation()}>
-          <button onClick={() => { inputRef.current?.focus(); window.dispatchEvent(new Event('blink:comments:open')); }} aria-label="Comment" className="text-[#6B7280] hover:text-[#1E6FFF] px-2 py-2 rounded-full hover:bg-[#1E6FFF]/10 transition-all"><MessageCircle size={20} /></button>
+          <button onClick={() => { inputRef.current?.focus(); window.dispatchEvent(new Event('blink:comments:open')); }} aria-label="Comment" className="text-[#8E8C88] hover:text-[#FF5A1F] px-2 py-2 rounded-full hover:bg-[#FF5A1F]/10 transition-all"><MessageCircle size={20} /></button>
 
           <div className="relative" onClick={e => e.stopPropagation()}>
             {showRepostMenu && (
-              <div className="absolute bottom-12 left-0 bg-[#111827] border border-white/10 rounded-2xl overflow-hidden z-30 shadow-2xl" style={{ minWidth:180 }}>
+              <div className="absolute bottom-12 left-0 bg-[#1d1c1a] border border-white/10 rounded-2xl overflow-hidden z-30 shadow-2xl" style={{ minWidth:180 }}>
                 <button onClick={handleDirectRepost} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-sm border-b border-white/5" style={{ color: reposted ? '#2ECC71':'white' }}>
-                  <Repeat2 size={16} style={{ color: reposted?'#2ECC71':'#6B7280' }} />{reposted?'Undo Repost':'Repost'}
+                  <Repeat2 size={16} style={{ color: reposted?'#2ECC71':'#8E8C88' }} />{reposted?'Undo Repost':'Repost'}
                 </button>
                 <button onClick={() => { setShowRepostMenu(false); setShowQuoteModal(true); }} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white text-sm">
-                  <Quote size={16} className="text-[#6B7280]" /> Quote
+                  <Quote size={16} className="text-[#8E8C88]" /> Quote
                 </button>
               </div>
             )}
             <button onClick={() => { setShowRepostMenu(!showRepostMenu); setShowMenu(false); setShowReactionPicker(false); }} aria-label="Repost"
-              className={'px-2 py-2 rounded-full transition-all '+(reposted?'text-[#2ECC71] hover:bg-[#2ECC71]/10':'text-[#6B7280] hover:text-[#2ECC71] hover:bg-[#2ECC71]/10')}>
+              className={'px-2 py-2 rounded-full transition-all '+(reposted?'text-[#2ECC71] hover:bg-[#2ECC71]/10':'text-[#8E8C88] hover:text-[#2ECC71] hover:bg-[#2ECC71]/10')}>
               <Repeat2 size={20} />
             </button>
           </div>
 
           <div className="relative" onClick={e => e.stopPropagation()}>
             {showReactionPicker && (
-              <div className="absolute bottom-12 left-0 bg-[#111827] border border-white/10 rounded-full px-2 py-2 flex gap-1.5 z-30 shadow-2xl" style={{ minWidth:'max-content' }}>
+              <div className="absolute bottom-12 left-0 bg-[#1d1c1a] border border-white/10 rounded-full px-2 py-2 flex gap-1.5 z-30 shadow-2xl" style={{ minWidth:'max-content' }}>
                 {REACTIONS.map(r => <button key={r.type} onClick={() => handleLike(r.type)} className="text-xl hover:scale-125 transition-transform w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/10">{r.emoji}</button>)}
               </div>
             )}
@@ -727,40 +727,40 @@ export default function PostDetail() {
               onTouchEnd={() => clearTimeout(longPressTimer.current)}
               aria-label="Like"
               className="px-2 py-2 rounded-full transition-all hover:bg-red-500/10"
-              style={{ color: liked?getReactionColor():'#6B7280' }}>
+              style={{ color: liked?getReactionColor():'#8E8C88' }}>
               {liked && reaction ? <span className="text-xl leading-none">{getReactionEmoji()}</span> : <Heart size={20} fill={liked?'currentColor':'none'} />}
             </button>
           </div>
 
-          <div className="text-[#6B7280] px-2 py-2 flex items-center gap-1" aria-label="Views"><BarChart2 size={20} /></div>
-          <button onClick={handleSave} aria-label={saved ? 'Remove from saved' : 'Save'} className={'px-2 py-2 rounded-full transition-all '+(saved?'text-[#1E6FFF] hover:bg-[#1E6FFF]/10':'text-[#6B7280] hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10')}><Bookmark size={20} fill={saved?'currentColor':'none'} /></button>
-          <button onClick={handleShare} aria-label="Share" className="text-[#6B7280] hover:text-[#1E6FFF] px-2 py-2 rounded-full hover:bg-[#1E6FFF]/10 transition-all"><Share2 size={20} /></button>
+          <div className="text-[#8E8C88] px-2 py-2 flex items-center gap-1" aria-label="Views"><BarChart2 size={20} /></div>
+          <button onClick={handleSave} aria-label={saved ? 'Remove from saved' : 'Save'} className={'px-2 py-2 rounded-full transition-all '+(saved?'text-[#FF5A1F] hover:bg-[#FF5A1F]/10':'text-[#8E8C88] hover:text-[#FF5A1F] hover:bg-[#FF5A1F]/10')}><Bookmark size={20} fill={saved?'currentColor':'none'} /></button>
+          <button onClick={handleShare} aria-label="Share" className="text-[#8E8C88] hover:text-[#FF5A1F] px-2 py-2 rounded-full hover:bg-[#FF5A1F]/10 transition-all"><Share2 size={20} /></button>
         </div>
       </div>
 
       {comments.length === 0
-        ? <div className="text-center py-12"><p className="text-3xl mb-2">💬</p><p className="text-white font-bold">No replies yet</p><p className="text-[#6B7280] text-sm mt-1">Be the first to reply!</p></div>
+        ? <div className="text-center py-12"><p className="text-3xl mb-2">💬</p><p className="text-white font-bold">No replies yet</p><p className="text-[#8E8C88] text-sm mt-1">Be the first to reply!</p></div>
         : (
           <>
             {comments.map(c => <CommentRow key={c.id} c={c} postAuthorId={post.user_id} currentUserId={user?.id} onReply={handleReply} onDelete={handleDeleteComment} navigate={navigate} />)}
             {commentsHasMore && (
               <div className="flex justify-center py-4">
-                <button onClick={handleLoadMoreComments} className="text-[#1E6FFF] text-sm font-bold">Load more replies</button>
+                <button onClick={handleLoadMoreComments} className="text-[#FF5A1F] text-sm font-bold">Load more replies</button>
               </div>
             )}
           </>
         )
       }
 
-      <div style={{ position:'fixed', bottom:0, left:'50%', transform:'translateX(-50%)', width:'100%', maxWidth:'620px', zIndex:40, background:'#0d1f3c', borderTop:'1px solid rgba(255,255,255,0.1)' }}>
+      <div style={{ position:'fixed', bottom:0, left:'50%', transform:'translateX(-50%)', width:'100%', maxWidth:'620px', zIndex:40, background:'#171614', borderTop:'1px solid rgba(255,255,255,0.1)' }}>
         {replyTo && (
-          <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 16px', borderBottom:'1px solid rgba(255,255,255,0.07)', background:'rgba(30,111,255,0.06)' }}>
-            <div style={{ width:2, height:28, background:'#1E6FFF', borderRadius:2, flexShrink:0 }} />
+          <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 16px', borderBottom:'1px solid rgba(255,255,255,0.07)', background:'rgba(255,90,31,0.06)' }}>
+            <div style={{ width:2, height:28, background:'#FF5A1F', borderRadius:2, flexShrink:0 }} />
             <div style={{ flex:1, minWidth:0 }}>
-              <p style={{ color:'#1E6FFF', fontSize:11, fontWeight:700 }}>Replying to @{replyTo.users?.username}</p>
-              <p style={{ color:'#6B7280', fontSize:11, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{replyTo.body}</p>
+              <p style={{ color:'#FF5A1F', fontSize:11, fontWeight:700 }}>Replying to @{replyTo.users?.username}</p>
+              <p style={{ color:'#8E8C88', fontSize:11, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{replyTo.body}</p>
             </div>
-            <button onClick={() => { setReplyTo(null); setCommentText(''); }} aria-label="Cancel reply" style={{ color:'#6B7280', background:'none', border:'none', cursor:'pointer', padding:4 }}><X size={14} /></button>
+            <button onClick={() => { setReplyTo(null); setCommentText(''); }} aria-label="Cancel reply" style={{ color:'#8E8C88', background:'none', border:'none', cursor:'pointer', padding:4 }}><X size={14} /></button>
           </div>
         )}
         <div style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', paddingBottom:'max(12px, env(safe-area-inset-bottom))' }}>
@@ -784,7 +784,7 @@ export default function PostDetail() {
             </button>
           </div>
           <button type="button" onClick={handleComment} disabled={submitting || !commentText.trim()} aria-label="Send reply"
-            style={{ width:38, height:38, borderRadius:'50%', flexShrink:0, background: (!submitting && commentText.trim())?'#1E6FFF':'rgba(30,111,255,0.35)', border:'none', cursor: commentText.trim()?'pointer':'default', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.2s' }}>
+            style={{ width:38, height:38, borderRadius:'50%', flexShrink:0, background: (!submitting && commentText.trim())?'#FF5A1F':'rgba(255,90,31,0.35)', border:'none', cursor: commentText.trim()?'pointer':'default', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.2s' }}>
             <Send size={15} style={{ color:'white', marginLeft:1 }} />
           </button>
         </div>

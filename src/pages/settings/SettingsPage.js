@@ -16,7 +16,7 @@ function Toggle({ value, onChange, disabled }) {
     <button
       onClick={() => !disabled && onChange(!value)}
       disabled={disabled}
-      className={`relative w-12 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${value ? 'bg-[#1E6FFF]' : 'bg-white/20'} disabled:opacity-50`}
+      className={`relative w-12 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${value ? 'bg-[#FF5A1F]' : 'bg-white/20'} disabled:opacity-50`}
     >
       <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${value ? 'translate-x-6' : 'translate-x-0.5'}`} />
     </button>
@@ -31,14 +31,14 @@ function SettingRow({ icon: Icon, label, value, onPress, rightEl, sub, danger })
     >
       {Icon && (
         <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${danger ? 'bg-red-500/15' : 'bg-white/[0.07]'}`}>
-          <Icon size={16} className={danger ? 'text-red-400' : 'text-[#6B7280]'} />
+          <Icon size={16} className={danger ? 'text-red-400' : 'text-[#8E8C88]'} />
         </div>
       )}
       <div className="flex-1 min-w-0">
         <p className={`text-[14px] font-semibold ${danger ? 'text-red-400' : 'text-white/85'}`}>{label}</p>
-        {sub && <p className="text-[#6B7280] text-[11px] mt-0.5">{sub}</p>}
+        {sub && <p className="text-[#8E8C88] text-[11px] mt-0.5">{sub}</p>}
       </div>
-      {rightEl || <ChevronRight size={16} className="text-[#6B7280] flex-shrink-0" />}
+      {rightEl || <ChevronRight size={16} className="text-[#8E8C88] flex-shrink-0" />}
     </button>
   );
 }
@@ -46,7 +46,7 @@ function SettingRow({ icon: Icon, label, value, onPress, rightEl, sub, danger })
 function Section({ title, children }) {
   return (
     <div className="mb-2">
-      <p className="text-[#6B7280] text-[11px] font-bold uppercase tracking-widest px-4 pt-4 pb-1.5">{title}</p>
+      <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-widest px-4 pt-4 pb-1.5">{title}</p>
       <div className="bg-white/[0.03] border border-white/[0.07] rounded-2xl mx-4 overflow-hidden">
         {children}
       </div>
@@ -61,11 +61,11 @@ function Divider() {
 function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center" onClick={onClose}>
-      <div className="w-full max-w-[540px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl p-5 pb-8 max-h-[85vh] overflow-y-auto"
+      <div className="w-full max-w-[540px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5 pb-8 max-h-[85vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
           <p className="text-white font-bold text-base">{title}</p>
-          <button onClick={onClose} className="text-[#6B7280] hover:text-white"><X size={20} /></button>
+          <button onClick={onClose} className="text-[#8E8C88] hover:text-white"><X size={20} /></button>
         </div>
         {children}
       </div>
@@ -116,13 +116,13 @@ function ChangePasswordModal({ onClose }) {
               <label className="text-white/60 text-[11px] font-bold uppercase block mb-1.5">{f.label}</label>
               <input type="password" value={f.val} onChange={e => { f.set(e.target.value); setError(''); }}
                 placeholder={f.ph}
-                className="w-full bg-white/[0.07] border border-white/10 rounded-xl px-4 py-3 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60" />
+                className="w-full bg-white/[0.07] border border-white/10 rounded-xl px-4 py-3 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60" />
             </div>
           ))}
           {error && <p className="text-red-400 text-sm">{error}</p>}
           <button onClick={handleSubmit} disabled={busy}
             className="w-full py-3.5 rounded-2xl font-bold text-white disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
-            style={{ background:'linear-gradient(135deg,#1E6FFF,#7B2FFF)' }}>
+            style={{ background:'linear-gradient(135deg,#FF5A1F,#FF2D78)' }}>
             {busy ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Updating...</> : 'Update Password'}
           </button>
         </div>
@@ -173,30 +173,30 @@ function ChangeEmailModal({ currentEmail, onClose }) {
         <div className="text-center py-8">
           <p className="text-4xl mb-3">✅</p>
           <p className="text-white font-bold">Confirmation sent!</p>
-          <p className="text-[#6B7280] text-sm mt-1">Check {email} to confirm the change.</p>
+          <p className="text-[#8E8C88] text-sm mt-1">Check {email} to confirm the change.</p>
         </div>
       ) : (
         <div className="space-y-3">
           <div className="bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3">
-            <p className="text-[#6B7280] text-[11px] font-bold uppercase">Current Email</p>
+            <p className="text-[#8E8C88] text-[11px] font-bold uppercase">Current Email</p>
             <p className="text-white text-[14px] mt-0.5">{currentEmail}</p>
           </div>
           <div>
             <label className="text-white/60 text-[11px] font-bold uppercase block mb-1.5">Current Password</label>
             <input type="password" value={password} onChange={e => { setPassword(e.target.value); setError(''); }}
               placeholder="Confirm it's you"
-              className="w-full bg-white/[0.07] border border-white/10 rounded-xl px-4 py-3 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60" />
+              className="w-full bg-white/[0.07] border border-white/10 rounded-xl px-4 py-3 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60" />
           </div>
           <div>
             <label className="text-white/60 text-[11px] font-bold uppercase block mb-1.5">New Email</label>
             <input type="email" value={email} onChange={e => { setEmail(e.target.value); setError(''); }}
               placeholder="new@email.com" inputMode="email"
-              className="w-full bg-white/[0.07] border border-white/10 rounded-xl px-4 py-3 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60" />
+              className="w-full bg-white/[0.07] border border-white/10 rounded-xl px-4 py-3 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60" />
           </div>
           {error && <p className="text-red-400 text-sm">{error}</p>}
           <button onClick={handleSubmit} disabled={busy}
             className="w-full py-3.5 rounded-2xl font-bold text-white disabled:opacity-50 flex items-center justify-center gap-2"
-            style={{ background:'linear-gradient(135deg,#1E6FFF,#7B2FFF)' }}>
+            style={{ background:'linear-gradient(135deg,#FF5A1F,#FF2D78)' }}>
             {busy ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Sending...</> : 'Send Confirmation'}
           </button>
         </div>
@@ -212,9 +212,9 @@ function SelectModal({ title, options, value, onSelect, onClose }) {
         {options.map(o => (
           <button key={o.key} onClick={() => { onSelect(o.key); onClose(); }}
             className={'w-full flex items-center justify-between px-4 py-3.5 rounded-xl border transition-all ' +
-              (value === o.key ? 'bg-[#1E6FFF]/15 border-[#1E6FFF]/40 text-white' : 'bg-white/[0.03] border-white/[0.07] text-white/80 hover:bg-white/[0.07]')}>
+              (value === o.key ? 'bg-[#FF5A1F]/15 border-[#FF5A1F]/40 text-white' : 'bg-white/[0.03] border-white/[0.07] text-white/80 hover:bg-white/[0.07]')}>
             <span className="font-semibold text-[14px]">{o.label}</span>
-            {value === o.key && <Check size={16} className="text-[#1E6FFF]" />}
+            {value === o.key && <Check size={16} className="text-[#FF5A1F]" />}
           </button>
         ))}
       </div>
@@ -240,13 +240,13 @@ function UserListModal({ title, userIds, onUnblock, onClose }) {
         <div key={u.id} className="flex items-center gap-3 py-3 border-b border-white/[0.06]">
           {u.avatar_url
             ? <img src={u.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
-            : <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold flex-shrink-0">{u.display_name?.[0]?.toUpperCase()}</div>
+            : <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold flex-shrink-0">{u.display_name?.[0]?.toUpperCase()}</div>
           }
           <div className="flex-1 min-w-0">
             <p className="text-white font-bold text-[13px]">{u.display_name}</p>
-            <p className="text-[#6B7280] text-[12px]">@{u.username}</p>
+            <p className="text-[#8E8C88] text-[12px]">@{u.username}</p>
           </div>
-          <button onClick={() => onUnblock(u.id)} className="text-xs font-bold px-3 py-1.5 rounded-full bg-[#1E6FFF]/20 text-[#1E6FFF] border border-[#1E6FFF]/30">
+          <button onClick={() => onUnblock(u.id)} className="text-xs font-bold px-3 py-1.5 rounded-full bg-[#FF5A1F]/20 text-[#FF5A1F] border border-[#FF5A1F]/30">
             Remove
           </button>
         </div>
@@ -388,15 +388,15 @@ export default function SettingsPage() {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-[#0A1628] flex items-center justify-center">
-      <div className="w-6 h-6 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" />
+    <div className="min-h-screen bg-[#0D0C0B] flex items-center justify-center">
+      <div className="w-6 h-6 border-2 border-[#FF5A1F] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
   const labelMap = { everyone:'Everyone', followers:'Followers only', nobody:'Nobody', auto:'Auto', high:'High', medium:'Medium', low:'Low', small:'Small', large:'Large', en:'English', sw:'Swahili', fr:'French' };
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-24">
+    <div className="min-h-screen bg-[#0D0C0B] pb-24">
 
       {showPassword && <ChangePasswordModal onClose={() => setShowPassword(false)} />}
       {showEmail && <ChangeEmailModal currentEmail={user?.email} onClose={() => setShowEmail(false)} />}
@@ -424,22 +424,22 @@ export default function SettingsPage() {
         </div>
       )}
 
-      <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="text-[#6B7280] hover:text-white transition-colors">
+      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => navigate(-1)} className="text-[#8E8C88] hover:text-white transition-colors">
           <ArrowLeft size={22} />
         </button>
         <h1 className="text-white font-bold text-[15px] flex-1">Settings</h1>
-        {saving && <div className="w-4 h-4 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" />}
+        {saving && <div className="w-4 h-4 border-2 border-[#FF5A1F] border-t-transparent rounded-full animate-spin" />}
       </div>
 
       <div className="mx-4 mt-4 mb-2 bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4 flex items-center gap-3">
         {profile?.avatar_url
           ? <img src={profile.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
-          : <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center text-white font-bold text-xl flex-shrink-0">{profile?.display_name?.[0]?.toUpperCase()}</div>
+          : <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold text-xl flex-shrink-0">{profile?.display_name?.[0]?.toUpperCase()}</div>
         }
         <div className="flex-1 min-w-0">
           <p className="text-white font-bold text-[15px] truncate">{profile?.display_name}</p>
-          <p className="text-[#6B7280] text-[12px]">@{profile?.username}</p>
+          <p className="text-[#8E8C88] text-[12px]">@{profile?.username}</p>
         </div>
         <button onClick={() => navigate('/edit-profile')}
           className="px-3 py-2 bg-white/10 hover:bg-white/15 rounded-xl text-white text-xs font-bold transition-colors">

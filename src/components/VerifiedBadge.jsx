@@ -53,23 +53,23 @@ export default function VerifiedBadge({ size = 18, className = '', style = {} })
       role="img"
     >
       <defs>
-        {/* Main gradient — deep blue */}
+        {/* Main gradient */}
         <radialGradient id={gradId} cx="40%" cy="35%" r="65%" fx="40%" fy="35%">
-          <stop offset="0%"   stopColor="#6AA8FF" />
-          <stop offset="40%"  stopColor="#1E6FFF" />
-          <stop offset="100%" stopColor="#0A3ED4" />
+          <stop offset="0%"   stopColor="#FF9B6A" />
+          <stop offset="40%"  stopColor="#FF5A1F" />
+          <stop offset="100%" stopColor="#C2410C" />
         </radialGradient>
 
         {/* Rim / outer border gradient */}
         <linearGradient id={rimId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%"   stopColor="#0A5FE8" />
-          <stop offset="100%" stopColor="#073AAE" />
+          <stop offset="0%"   stopColor="#E8470B" />
+          <stop offset="100%" stopColor="#A8360A" />
         </linearGradient>
 
         {/* Glow filter */}
         <filter id={glowId} x="-40%" y="-40%" width="180%" height="180%">
           <feGaussianBlur stdDeviation={size * 0.08} result="blur" />
-          <feFlood floodColor="#1E6FFF" floodOpacity="0.55" result="color" />
+          <feFlood floodColor="#FF5A1F" floodOpacity="0.55" result="color" />
           <feComposite in="color" in2="blur" operator="in" result="glow" />
           <feMerge>
             <feMergeNode in="glow" />
@@ -83,7 +83,7 @@ export default function VerifiedBadge({ size = 18, className = '', style = {} })
             dx="0"
             dy={size * 0.04}
             stdDeviation={size * 0.06}
-            floodColor="#0A3ED4"
+            floodColor="#C2410C"
             floodOpacity="0.5"
           />
         </filter>
@@ -95,7 +95,7 @@ export default function VerifiedBadge({ size = 18, className = '', style = {} })
         cy={cy + offset}
         rx={outerR * 1.1}
         ry={outerR * 1.1}
-        fill="#1E6FFF"
+        fill="#FF5A1F"
         opacity="0.18"
         filter={`url(#${glowId})`}
       />

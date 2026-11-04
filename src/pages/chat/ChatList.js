@@ -168,26 +168,26 @@ const ChatList = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-24">
-      <div className="sticky top-0 z-20 bg-[#0A1628] border-b border-white/10 px-4 py-3">
+    <div className="min-h-screen bg-[#0D0C0B] pb-24">
+      <div className="sticky top-0 z-20 bg-[#0D0C0B] border-b border-white/10 px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-white font-bold text-xl">Chats</h1>
           <button
             onClick={() => setShowNewChat(true)}
             aria-label="New message"
-            className="w-9 h-9 bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] rounded-full flex items-center justify-center shadow-lg shadow-[#1E6FFF]/30"
+            className="w-9 h-9 bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] rounded-full flex items-center justify-center shadow-lg shadow-[#FF5A1F]/30"
           >
             <Edit size={16} className="text-white" />
           </button>
         </div>
         <div className="relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8E8C88]" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search conversations..."
-            className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-9 pr-4 text-white placeholder-[#6B7280] text-sm focus:outline-none focus:border-[#1E6FFF] transition-colors"
+            className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-9 pr-4 text-white placeholder-[#8E8C88] text-sm focus:outline-none focus:border-[#FF5A1F] transition-colors"
           />
         </div>
         {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
@@ -195,31 +195,31 @@ const ChatList = () => {
 
       {showNewChat && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center" onClick={() => setShowNewChat(false)}>
-          <div className="w-full max-w-[620px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl p-5 max-h-[80vh] overflow-y-auto slide-up" onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5 max-h-[80vh] overflow-y-auto slide-up" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-white font-bold text-lg">New Message</h2>
               <button
                 onClick={() => { setShowNewChat(false); setSearchQuery(''); setSearchUsers([]); }}
                 aria-label="Close"
-                className="text-[#6B7280] hover:text-white"
+                className="text-[#8E8C88] hover:text-white"
               >
                 <X size={22} />
               </button>
             </div>
             <div className="relative mb-4">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]" />
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8E8C88]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => handleUserSearch(e.target.value)}
                 placeholder="Search by name or username..."
                 autoFocus
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-9 pr-4 text-white placeholder-[#6B7280] text-sm focus:outline-none focus:border-[#1E6FFF] transition-colors"
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-9 pr-4 text-white placeholder-[#8E8C88] text-sm focus:outline-none focus:border-[#FF5A1F] transition-colors"
               />
             </div>
             {searching && (
               <div className="flex justify-center py-4">
-                <div className="w-5 h-5 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-[#FF5A1F] border-t-transparent rounded-full animate-spin" />
               </div>
             )}
             <div className="space-y-2">
@@ -234,18 +234,18 @@ const ChatList = () => {
                     <div className="flex items-center gap-1.5">
                       <p className="text-white font-semibold text-sm">{u.display_name}</p>
                       {u.is_verified && (
-                        <span className="bg-[#1E6FFF] text-white text-[8px] px-1 py-0.5 rounded-full font-bold">✓</span>
+                        <span className="bg-[#FF5A1F] text-white text-[8px] px-1 py-0.5 rounded-full font-bold">✓</span>
                       )}
                     </div>
-                    <p className="text-[#6B7280] text-xs">@{u.username}</p>
+                    <p className="text-[#8E8C88] text-xs">@{u.username}</p>
                   </div>
                 </button>
               ))}
               {searchQuery && !searching && searchUsers.length === 0 && (
-                <p className="text-[#6B7280] text-sm text-center py-4">No users found</p>
+                <p className="text-[#8E8C88] text-sm text-center py-4">No users found</p>
               )}
               {!searchQuery && (
-                <p className="text-[#6B7280] text-sm text-center py-4">Type a name to search</p>
+                <p className="text-[#8E8C88] text-sm text-center py-4">Type a name to search</p>
               )}
             </div>
           </div>
@@ -258,10 +258,10 @@ const ChatList = () => {
         <div className="flex flex-col items-center justify-center mt-20 gap-4 px-6">
           <div className="text-6xl">💬</div>
           <h2 className="text-white font-bold text-xl text-center">No conversations yet</h2>
-          <p className="text-[#6B7280] text-sm text-center">Start a conversation with someone.</p>
+          <p className="text-[#8E8C88] text-sm text-center">Start a conversation with someone.</p>
           <button
             onClick={() => setShowNewChat(true)}
-            className="bg-gradient-to-r from-[#1E6FFF] to-[#7B2FFF] text-white px-6 py-3 rounded-full font-bold text-sm shadow-lg shadow-[#1E6FFF]/30"
+            className="bg-gradient-to-r from-[#FF5A1F] to-[#FF2D78] text-white px-6 py-3 rounded-full font-bold text-sm shadow-lg shadow-[#FF5A1F]/30"
           >
             Start a Chat
           </button>
@@ -282,7 +282,7 @@ const ChatList = () => {
               </div>
 
               <div
-                className={'flex items-center gap-3 px-4 py-4 bg-[#0A1628] transition-transform duration-200 ' + (swipedChat === chat.id ? '-translate-x-20' : 'translate-x-0')}
+                className={'flex items-center gap-3 px-4 py-4 bg-[#0D0C0B] transition-transform duration-200 ' + (swipedChat === chat.id ? '-translate-x-20' : 'translate-x-0')}
                 onTouchStart={(e) => {
                   const startX = e.touches[0].clientX;
                   const handleMove = (me) => {
@@ -304,7 +304,7 @@ const ChatList = () => {
                         from get_my_chats(), same threshold logic as
                         ChatRoom's own OnlineStatus component. */}
                     {isOnline(chat.other_user) && (
-                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#2ECC71] rounded-full border-2 border-[#0A1628]" />
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#2ECC71] rounded-full border-2 border-[#0D0C0B]" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0 text-left">
@@ -314,19 +314,19 @@ const ChatList = () => {
                           {chat.other_user?.display_name || 'Unknown'}
                         </p>
                         {chat.other_user?.is_verified && (
-                          <span className="bg-[#1E6FFF] text-white text-[8px] px-1 py-0.5 rounded-full font-bold flex-shrink-0">✓</span>
+                          <span className="bg-[#FF5A1F] text-white text-[8px] px-1 py-0.5 rounded-full font-bold flex-shrink-0">✓</span>
                         )}
                       </div>
-                      <span className="text-[#6B7280] text-xs flex-shrink-0 ml-2">
+                      <span className="text-[#8E8C88] text-xs flex-shrink-0 ml-2">
                         {chat.last_message_at ? formatTime(chat.last_message_at) : ''}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <p className={'text-xs truncate ' + (chat.unread > 0 ? 'text-white/80 font-medium' : 'text-[#6B7280]')}>
+                      <p className={'text-xs truncate ' + (chat.unread > 0 ? 'text-white/80 font-medium' : 'text-[#8E8C88]')}>
                         {chat.last_message || 'Start a conversation...'}
                       </p>
                       {chat.unread > 0 && (
-                        <span className="ml-2 min-w-[20px] h-5 bg-[#1E6FFF] rounded-full text-[10px] text-white flex items-center justify-center font-bold px-1 flex-shrink-0">
+                        <span className="ml-2 min-w-[20px] h-5 bg-[#FF5A1F] rounded-full text-[10px] text-white flex items-center justify-center font-bold px-1 flex-shrink-0">
                           {chat.unread > 99 ? '99+' : chat.unread}
                         </span>
                       )}
@@ -337,14 +337,14 @@ const ChatList = () => {
                 <button
                   onClick={() => setSwipedChat(swipedChat === chat.id ? null : chat.id)}
                   aria-label="More options"
-                  className="lg:hidden text-[#6B7280] hover:text-red-400 transition-colors p-1 flex-shrink-0"
+                  className="lg:hidden text-[#8E8C88] hover:text-red-400 transition-colors p-1 flex-shrink-0"
                 >
                   ···
                 </button>
                 <button
                   onClick={() => handleDeleteChat(chat.id)}
                   aria-label="Delete conversation"
-                  className="hidden lg:flex text-[#6B7280] hover:text-red-400 transition-colors p-1 flex-shrink-0"
+                  className="hidden lg:flex text-[#8E8C88] hover:text-red-400 transition-colors p-1 flex-shrink-0"
                 >
                   <Trash2 size={16} />
                 </button>

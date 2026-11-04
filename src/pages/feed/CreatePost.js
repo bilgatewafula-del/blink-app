@@ -368,10 +368,10 @@ export default function CreatePost() {
   const totalMediaCount = mediaFiles.length + existingMedia.images.length + (existingMedia.video ? 1 : 0);
 
   return (
-    <div className="min-h-screen bg-[#0A1628] flex flex-col">
+    <div className="min-h-screen bg-[#0D0C0B] flex flex-col">
 
-      <div className="sticky top-0 z-20 bg-[#0A1628]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between">
-        <button onClick={() => navigate(-1)} aria-label="Back" className="text-[#6B7280] hover:text-white transition-colors">
+      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between">
+        <button onClick={() => navigate(-1)} aria-label="Back" className="text-[#8E8C88] hover:text-white transition-colors">
           <ArrowLeft size={22} />
         </button>
         <div className="flex flex-col items-center">
@@ -382,7 +382,7 @@ export default function CreatePost() {
             <p className={`text-[11px] font-semibold ${
               atDailyLimit ? 'text-red-400' :
               postsToday >= DAILY_POST_LIMIT - 2 ? 'text-orange-400' :
-              'text-[#6B7280]'
+              'text-[#8E8C88]'
             }`}>
               {postsToday}/{DAILY_POST_LIMIT} posts today
             </p>
@@ -391,8 +391,8 @@ export default function CreatePost() {
         <button
           onClick={handleSubmit}
           disabled={submitting || (!caption.trim() && !hasMedia) || (atDailyLimit && !editPostId)}
-          className="flex items-center gap-1.5 bg-[#1E6FFF] text-white text-sm font-bold px-4 py-2 rounded-full disabled:opacity-50 active:scale-95 transition-all"
-          style={{ boxShadow: '0 4px 16px rgba(30,111,255,0.35)' }}
+          className="flex items-center gap-1.5 bg-[#FF5A1F] text-white text-sm font-bold px-4 py-2 rounded-full disabled:opacity-50 active:scale-95 transition-all"
+          style={{ boxShadow: '0 4px 16px rgba(255,90,31,0.35)' }}
         >
           {submitting
             ? <><Loader size={14} className="animate-spin" /> {submitPhase === 'compressing' ? 'Compressing...' : submitPhase === 'uploading' ? 'Uploading...' : 'Saving...'}</>
@@ -432,17 +432,17 @@ export default function CreatePost() {
               </button>
 
               {showAudience && (
-                <div className="absolute left-0 top-full mt-1 bg-[#111827] border border-white/10 rounded-2xl overflow-hidden shadow-xl z-30" style={{ minWidth: 200 }}>
+                <div className="absolute left-0 top-full mt-1 bg-[#1d1c1a] border border-white/10 rounded-2xl overflow-hidden shadow-xl z-30" style={{ minWidth: 200 }}>
                   {AUDIENCES.map(a => (
                     <button
                       key={a.key}
                       onClick={() => { setAudience(a.key); setShowAudience(false); }}
                       className={'w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-left transition-colors ' +
-                        (audience === a.key ? 'bg-[#1E6FFF]/10' : '')}
+                        (audience === a.key ? 'bg-[#FF5A1F]/10' : '')}
                     >
-                      <a.icon size={16} className={audience === a.key ? 'text-[#1E6FFF]' : 'text-[#6B7280]'} />
-                      <span className={`text-[14px] font-medium ${audience === a.key ? 'text-[#1E6FFF]' : 'text-white/80'}`}>{a.label}</span>
-                      {audience === a.key && <CheckCircle size={14} className="text-[#1E6FFF] ml-auto" />}
+                      <a.icon size={16} className={audience === a.key ? 'text-[#FF5A1F]' : 'text-[#8E8C88]'} />
+                      <span className={`text-[14px] font-medium ${audience === a.key ? 'text-[#FF5A1F]' : 'text-white/80'}`}>{a.label}</span>
+                      {audience === a.key && <CheckCircle size={14} className="text-[#FF5A1F] ml-auto" />}
                     </button>
                   ))}
                 </div>
@@ -458,11 +458,11 @@ export default function CreatePost() {
           placeholder="What's on your mind? Use # for hashtags, @ to mention..."
           rows={5}
           maxLength={charLimit + 50}
-          className="w-full bg-transparent text-white text-[17px] placeholder-[#6B7280] focus:outline-none resize-none leading-relaxed mb-2"
+          className="w-full bg-transparent text-white text-[17px] placeholder-[#8E8C88] focus:outline-none resize-none leading-relaxed mb-2"
           style={{ minHeight: 120 }}
         />
         <div className="flex justify-end mb-3">
-          <span className={`text-xs font-semibold ${caption.length > charLimit ? 'text-red-400' : caption.length > charLimit * 0.85 ? 'text-orange-400' : 'text-[#6B7280]'}`}>
+          <span className={`text-xs font-semibold ${caption.length > charLimit ? 'text-red-400' : caption.length > charLimit * 0.85 ? 'text-orange-400' : 'text-[#8E8C88]'}`}>
             {caption.length}/{charLimit}
           </span>
         </div>
@@ -473,7 +473,7 @@ export default function CreatePost() {
             files since one's already uploaded and one isn't. */}
         {(existingMedia.images.length > 0 || existingMedia.video) && (
           <div className="mb-3">
-            <p className="text-[#6B7280] text-[11px] font-bold uppercase tracking-wider mb-2">Current media</p>
+            <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-wider mb-2">Current media</p>
             <div className="grid grid-cols-2 gap-2">
               {existingMedia.video && (
                 <div className="relative rounded-2xl overflow-hidden bg-black/40 border border-white/10 col-span-2">
@@ -500,7 +500,7 @@ export default function CreatePost() {
         {mediaFiles.length > 0 && (
           <div className="mb-4">
             {existingMedia.images.length > 0 && (
-              <p className="text-[#6B7280] text-[11px] font-bold uppercase tracking-wider mb-2">New media</p>
+              <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-wider mb-2">New media</p>
             )}
             <div className={`grid gap-2 ${mediaFiles.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
               {mediaFiles.map((m, i) => (
@@ -512,7 +512,7 @@ export default function CreatePost() {
                   {uploadProgress[i] !== undefined && uploadProgress[i] < 100 && (
                     <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2">
                       <div className="w-3/4 h-1.5 bg-white/20 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#1E6FFF] rounded-full transition-all duration-300" style={{ width: uploadProgress[i] + '%' }} />
+                        <div className="h-full bg-[#FF5A1F] rounded-full transition-all duration-300" style={{ width: uploadProgress[i] + '%' }} />
                       </div>
                       <p className="text-white text-xs font-bold">{uploadProgress[i]}%</p>
                     </div>
@@ -531,11 +531,11 @@ export default function CreatePost() {
         )}
 
         {submitting && submitPhase === 'compressing' && (
-          <div className="mb-4 flex items-center gap-3 bg-[#1E6FFF]/10 border border-[#1E6FFF]/20 rounded-xl px-4 py-3">
-            <Loader size={16} className="text-[#1E6FFF] animate-spin flex-shrink-0" />
+          <div className="mb-4 flex items-center gap-3 bg-[#FF5A1F]/10 border border-[#FF5A1F]/20 rounded-xl px-4 py-3">
+            <Loader size={16} className="text-[#FF5A1F] animate-spin flex-shrink-0" />
             <div>
               <p className="text-white text-sm font-bold">Optimising media...</p>
-              <p className="text-[#6B7280] text-xs">Compressing images for best quality & speed</p>
+              <p className="text-[#8E8C88] text-xs">Compressing images for best quality & speed</p>
             </div>
           </div>
         )}
@@ -546,16 +546,16 @@ export default function CreatePost() {
             button, matching the hashtag panel's pattern. */}
         {showLocation && (
           <div className="flex items-center gap-2 bg-white/[0.05] border border-white/10 rounded-xl px-3 py-2.5 mb-3">
-            <MapPin size={14} className="text-[#6B7280] flex-shrink-0" />
+            <MapPin size={14} className="text-[#8E8C88] flex-shrink-0" />
             <input
               ref={locationInputRef}
               type="text"
               value={location}
               onChange={e => setLocation(e.target.value)}
               placeholder="Add location..."
-              className="flex-1 bg-transparent text-white text-sm placeholder-[#6B7280] focus:outline-none"
+              className="flex-1 bg-transparent text-white text-sm placeholder-[#8E8C88] focus:outline-none"
             />
-            <button onClick={handleLocationToggle} aria-label="Remove location" className="text-[#6B7280] hover:text-white">
+            <button onClick={handleLocationToggle} aria-label="Remove location" className="text-[#8E8C88] hover:text-white">
               <X size={14} />
             </button>
           </div>
@@ -563,7 +563,7 @@ export default function CreatePost() {
 
         {showHashtags && (
           <div className="mb-3" ref={hashtagMenuRef}>
-            <p className="text-[#6B7280] text-[11px] font-bold uppercase tracking-wider mb-2">Popular Hashtags</p>
+            <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-wider mb-2">Popular Hashtags</p>
             <div className="flex flex-wrap gap-2">
               {HASHTAG_SUGGESTIONS.map(tag => {
                 const clean = tag.replace('#','');
@@ -573,7 +573,7 @@ export default function CreatePost() {
                     key={tag}
                     onClick={() => toggleHashtag(tag)}
                     className={'px-3 py-1.5 rounded-full text-xs font-bold border transition-all ' +
-                      (active ? 'bg-[#1E6FFF] text-white border-[#1E6FFF]' : 'bg-white/5 text-white/60 border-white/15 hover:bg-white/10')}
+                      (active ? 'bg-[#FF5A1F] text-white border-[#FF5A1F]' : 'bg-white/5 text-white/60 border-white/15 hover:bg-white/10')}
                   >
                     {tag}
                   </button>
@@ -590,7 +590,7 @@ export default function CreatePost() {
         )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 max-w-[620px] mx-auto bg-[#0d1f3c] border-t border-white/[0.08]"
+      <div className="fixed bottom-0 left-0 right-0 max-w-[620px] mx-auto bg-[#171614] border-t border-white/[0.08]"
         style={{ paddingBottom:'max(12px, env(safe-area-inset-bottom))' }}>
         <div className="flex items-center gap-1 px-4 py-2">
 
@@ -598,7 +598,7 @@ export default function CreatePost() {
             onClick={() => fileInputRef.current?.click()}
             disabled={submitting}
             aria-label="Add photo"
-            className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-white/60 hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10 transition-all disabled:opacity-40"
+            className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-white/60 hover:text-[#FF5A1F] hover:bg-[#FF5A1F]/10 transition-all disabled:opacity-40"
           >
             <Image size={20} />
             <span className="text-sm font-semibold">Photo</span>
@@ -609,7 +609,7 @@ export default function CreatePost() {
             onClick={() => videoInputRef.current?.click()}
             disabled={submitting || mediaFiles.some(m => m.type === 'video') || !!existingMedia.video}
             aria-label="Add video"
-            className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-white/60 hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10 transition-all disabled:opacity-40"
+            className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-white/60 hover:text-[#FF5A1F] hover:bg-[#FF5A1F]/10 transition-all disabled:opacity-40"
           >
             <Video size={20} />
             <span className="text-sm font-semibold">Video</span>
@@ -620,7 +620,7 @@ export default function CreatePost() {
             onClick={() => setShowHashtags(!showHashtags)}
             disabled={submitting}
             aria-label="Hashtags"
-            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all disabled:opacity-40 ${showHashtags ? 'text-[#1E6FFF] bg-[#1E6FFF]/10' : 'text-white/60 hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10'}`}
+            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all disabled:opacity-40 ${showHashtags ? 'text-[#FF5A1F] bg-[#FF5A1F]/10' : 'text-white/60 hover:text-[#FF5A1F] hover:bg-[#FF5A1F]/10'}`}
           >
             <Hash size={20} />
             <span className="text-sm font-semibold">Tags</span>
@@ -630,15 +630,15 @@ export default function CreatePost() {
             onClick={handleLocationToggle}
             disabled={submitting}
             aria-label="Add location"
-            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all disabled:opacity-40 ${showLocation ? 'text-[#1E6FFF] bg-[#1E6FFF]/10' : 'text-white/60 hover:text-[#1E6FFF] hover:bg-[#1E6FFF]/10'}`}
+            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all disabled:opacity-40 ${showLocation ? 'text-[#FF5A1F] bg-[#FF5A1F]/10' : 'text-white/60 hover:text-[#FF5A1F] hover:bg-[#FF5A1F]/10'}`}
           >
             <MapPin size={20} />
             <span className="text-sm font-semibold">Location</span>
           </button>
 
           {totalMediaCount > 0 && (
-            <div className="ml-auto bg-[#1E6FFF]/20 px-2.5 py-1 rounded-full">
-              <p className="text-[#1E6FFF] text-[12px] font-bold">{totalMediaCount}/10</p>
+            <div className="ml-auto bg-[#FF5A1F]/20 px-2.5 py-1 rounded-full">
+              <p className="text-[#FF5A1F] text-[12px] font-bold">{totalMediaCount}/10</p>
             </div>
           )}
         </div>

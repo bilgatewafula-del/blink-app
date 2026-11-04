@@ -39,11 +39,11 @@ const AboutPage    = lazy(() => import('./pages/about/AboutPage'));
 function ComingSoon({ title }) {
   const nav = typeof window !== 'undefined' ? null : null;
   return (
-    <div className="min-h-screen bg-[#0A1628] flex flex-col items-center justify-center gap-4 px-6">
+    <div className="min-h-screen bg-[#0D0C0B] flex flex-col items-center justify-center gap-4 px-6">
       <p className="text-5xl">🚧</p>
       <p className="text-white font-bold text-xl">{title}</p>
-      <p className="text-[#6B7280] text-sm text-center">Coming soon!</p>
-      <button onClick={() => window.history.back()} className="mt-2 bg-[#1E6FFF] text-white px-6 py-2.5 rounded-full font-bold text-sm">← Go Back</button>
+      <p className="text-[#8E8C88] text-sm text-center">Coming soon!</p>
+      <button onClick={() => window.history.back()} className="mt-2 bg-[#FF5A1F] text-white px-6 py-2.5 rounded-full font-bold text-sm">← Go Back</button>
     </div>
   );
 }
@@ -55,24 +55,24 @@ const VibesPage  = () => <ComingSoon title="Vibes"        />;
 /* ── Loaders ── */
 function PageLoader() {
   return (
-    <div className="min-h-screen bg-[#0A1628] flex items-center justify-center">
-      <div className="w-6 h-6 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin" />
+    <div className="min-h-screen bg-[#0D0C0B] flex items-center justify-center">
+      <div className="w-6 h-6 border-2 border-[#FF5A1F] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 }
 
 function Splash() {
   return (
-    <div className="fixed inset-0 bg-[#0A1628] flex flex-col items-center justify-center z-50">
+    <div className="fixed inset-0 bg-[#0D0C0B] flex flex-col items-center justify-center z-50">
       <div
-        className="w-20 h-20 rounded-[24px] flex items-center justify-center shadow-2xl shadow-[#1E6FFF]/40 mb-4"
-        style={{ background:'linear-gradient(135deg,#1E6FFF,#7B2FFF)', animation:'splashIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both' }}
+        className="w-20 h-20 rounded-[24px] flex items-center justify-center shadow-2xl shadow-[#FF5A1F]/40 mb-4"
+        style={{ background:'linear-gradient(135deg,#FF5A1F,#FF2D78)', animation:'splashIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both' }}
       >
         <span className="text-white font-black text-3xl">B</span>
       </div>
       <p className="text-white font-black text-2xl" style={{ animation:'fadeInUp 0.3s ease 0.15s both' }}>B-Link</p>
       <p className="text-white/40 text-xs mt-1" style={{ animation:'fadeInUp 0.3s ease 0.25s both' }}>Africa's GenZ Platform</p>
-      <div className="w-5 h-5 border-2 border-[#1E6FFF] border-t-transparent rounded-full animate-spin mt-8" />
+      <div className="w-5 h-5 border-2 border-[#FF5A1F] border-t-transparent rounded-full animate-spin mt-8" />
       <style>{`
         @keyframes splashIn  { from{opacity:0;transform:scale(0.5)} to{opacity:1;transform:scale(1)} }
         @keyframes fadeInUp  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
@@ -109,6 +109,23 @@ function AppShell() {
       return () => clearTimeout(t);
     }
   }, [splashDone]);
+
+  // Warm the main tabs in the background once the app is usable, so
+  // switching tabs feels instant instead of waiting on a chunk download.
+  useEffect(() => {
+    if (!user || loading) return;
+    if (navigator.connection && navigator.connection.saveData) return;
+    const t = setTimeout(() => {
+      [
+        () => import('./pages/discover/Discover'),
+        () => import('./pages/notifications/Notifications'),
+        () => import('./pages/chat/ChatList'),
+        () => import('./pages/profile/Profile'),
+        () => import('./pages/feed/CreatePost'),
+      ].forEach((load) => load().catch(() => {}));
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [user, loading]);
 
   if (!splashDone && loading) return <Splash />;
 

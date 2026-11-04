@@ -1,7 +1,7 @@
 // public/service-worker.js
 // B-Link Service Worker — Network First strategy
 
-const CACHE_NAME = 'blink-v2.2.0';
+const CACHE_NAME = 'blink-v2.3.0';
 const OFFLINE_FALLBACK = '/index.html';
 
 const PRECACHE = [
@@ -76,6 +76,41 @@ self.addEventListener('fetch', (event) => {
         .catch(() => caches.match(OFFLINE_FALLBACK))
     );
 
+    return;
+  }
+
+  // Hashed build files (/static/...) never change, so serve them from the
+  // cache first — instant on every open after the first — and only go to
+  // the network on a miss. HTML is never stored or served as an asset.
+  if (url.pathname.startsWith('/static/')) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+
+        return fetch(event.request).then((res) => {
+          const type = (res && res.headers.get('content-type')) || '';
+
+          if (res && res.status === 200 && type.includes('text/html')) {
+            return new Response('', { status: 404, statusText: 'Not Found' });
+          }
+
+          if (res && res.status === 200) {
+            const copy = res.clone();
+            event.waitUntil(
+              caches.open(CACHE_NAME).then(async (cache) => {
+                await cache.put(event.request, copy);
+                // Keep the cache bounded across many deploys (oldest first).
+                const keys = await cache.keys();
+                const extra = keys.length - 150;
+                for (let i = 0; i < extra; i++) await cache.delete(keys[i]);
+              })
+            );
+          }
+
+          return res;
+        });
+      })
+    );
     return;
   }
 

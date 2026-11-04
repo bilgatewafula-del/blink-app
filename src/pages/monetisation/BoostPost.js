@@ -17,7 +17,7 @@ export default function BoostPost({ post, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end justify-center" onClick={onClose}>
-      <div className="w-full max-w-[540px] bg-[#0d1f3c] border-t border-white/10 rounded-t-3xl p-5"
+      <div className="w-full max-w-[540px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5"
         style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}
         onClick={e => e.stopPropagation()}>
 
@@ -29,10 +29,10 @@ export default function BoostPost({ post, onClose }) {
             </div>
             <div>
               <p className="text-white font-black text-[15px] leading-none">Boost Post</p>
-              <p className="text-[#6B7280] text-xs">Reach more people across B-Link</p>
+              <p className="text-[#8E8C88] text-xs">Reach more people across B-Link</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-[#6B7280] hover:text-white"><X size={20} /></button>
+          <button onClick={onClose} className="text-[#8E8C88] hover:text-white"><X size={20} /></button>
         </div>
 
         {/* Requires paid plan */}
@@ -45,7 +45,7 @@ export default function BoostPost({ post, onClose }) {
 
         {/* Post preview */}
         <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-3 mb-4">
-          <p className="text-[#6B7280] text-[10px] font-bold uppercase tracking-wider mb-1">Boosting this post</p>
+          <p className="text-[#8E8C88] text-[10px] font-bold uppercase tracking-wider mb-1">Boosting this post</p>
           <p className="text-white/80 text-[13px] line-clamp-2">{post.caption || '[No caption]'}</p>
           {(post.media_urls||[])[0] && (
             <img src={post.media_urls[0]} alt="" className="w-full h-16 object-cover rounded-xl mt-2" />

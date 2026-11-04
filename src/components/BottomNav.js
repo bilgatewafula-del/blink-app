@@ -71,7 +71,7 @@ export default function BottomNav() {
               {/* Badge */}
               {tab.badge > 0 && (
                 <span
-                  className="absolute top-0.5 right-1 min-w-[16px] h-4 bg-[#1E6FFF] rounded-full text-[9px] text-white flex items-center justify-center font-bold px-0.5"
+                  className="absolute top-0.5 right-1 min-w-[16px] h-4 bg-[#FF5A1F] rounded-full text-[9px] text-white flex items-center justify-center font-bold px-0.5"
                   style={{ lineHeight: 1 }}
                 >
                   {tab.badge > 9 ? '9+' : tab.badge}
@@ -81,12 +81,12 @@ export default function BottomNav() {
               {/* Icon */}
               <div
                 className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-                style={{ background: on ? 'rgba(30,111,255,0.15)' : 'transparent' }}
+                style={{ background: on ? 'rgba(255,90,31,0.15)' : 'transparent' }}
               >
                 <Icon
                   size={22}
-                  style={{ color: on ? '#1E6FFF' : '#6B7280' }}
-                  fill={on && tab.path === '/' ? '#1E6FFF' : 'none'}
+                  style={{ color: on ? '#FF5A1F' : '#8E8C88' }}
+                  fill={on && tab.path === '/' ? '#FF5A1F' : 'none'}
                   strokeWidth={on ? 2.2 : 1.8}
                 />
               </div>
@@ -94,14 +94,14 @@ export default function BottomNav() {
               {/* Label */}
               <span
                 className="text-[9px] font-semibold transition-colors"
-                style={{ color: on ? '#1E6FFF' : '#6B7280' }}
+                style={{ color: on ? '#FF5A1F' : '#8E8C88' }}
               >
                 {tab.label}
               </span>
 
               {/* Active dot */}
               {on && (
-                <div className="w-1 h-1 rounded-full bg-[#1E6FFF] absolute -bottom-0.5" />
+                <div className="w-1 h-1 rounded-full bg-[#FF5A1F] absolute -bottom-0.5" />
               )}
             </button>
           );

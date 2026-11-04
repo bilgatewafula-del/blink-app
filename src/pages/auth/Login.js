@@ -57,10 +57,10 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A1628] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
+    <div className="min-h-screen bg-[#0D0C0B] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
 
       <div className="flex flex-col items-center pt-14 pb-8 px-6">
-        <div className="w-20 h-20 rounded-[24px] bg-gradient-to-br from-[#1E6FFF] to-[#7B2FFF] flex items-center justify-center shadow-2xl shadow-[#1E6FFF]/40 mb-5">
+        <div className="w-20 h-20 rounded-[24px] bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center shadow-2xl shadow-[#FF5A1F]/40 mb-5">
           <span className="text-white font-black text-3xl">B</span>
         </div>
         <h1 className="text-white font-black text-[28px] tracking-tight mb-1">B-Link</h1>
@@ -71,7 +71,7 @@ export default function Login() {
         <button
           onClick={() => { setTab('login');  setError(''); }}
           className={'flex-1 py-3 rounded-xl text-sm font-bold transition-all ' +
-            (tab === 'login' ? 'bg-[#1E6FFF] text-white shadow-lg shadow-[#1E6FFF]/40' : 'text-white/50')}
+            (tab === 'login' ? 'bg-[#FF5A1F] text-white shadow-lg shadow-[#FF5A1F]/40' : 'text-white/50')}
         >Sign In</button>
         <button
           onClick={() => navigate('/signup')}
@@ -82,7 +82,7 @@ export default function Login() {
       <form onSubmit={handleLogin} className="flex flex-col gap-3 px-5">
 
         <div className="relative">
-          <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6B7280] pointer-events-none" />
+          <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8C88] pointer-events-none" />
           <input
             type="email"
             value={email}
@@ -90,30 +90,30 @@ export default function Login() {
             placeholder="Email address"
             autoComplete="email"
             inputMode="email"
-            className="w-full bg-white/[0.07] border border-white/10 rounded-2xl pl-11 pr-4 py-4 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60 transition-all"
+            className="w-full bg-white/[0.07] border border-white/10 rounded-2xl pl-11 pr-4 py-4 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 transition-all"
           />
         </div>
 
         <div className="relative">
-          <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6B7280] pointer-events-none" />
+          <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8C88] pointer-events-none" />
           <input
             type={showPass ? 'text' : 'password'}
             value={password}
             onChange={e => { setPassword(e.target.value); setError(''); }}
             placeholder="Password"
             autoComplete="current-password"
-            className="w-full bg-white/[0.07] border border-white/10 rounded-2xl pl-11 pr-12 py-4 text-white text-[15px] placeholder-[#6B7280] focus:outline-none focus:border-[#1E6FFF]/60 transition-all"
+            className="w-full bg-white/[0.07] border border-white/10 rounded-2xl pl-11 pr-12 py-4 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 transition-all"
           />
           <button type="button" tabIndex={-1}
             onClick={() => setShowPass(v => !v)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-white transition-colors">
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8E8C88] hover:text-white transition-colors">
             {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
 
         <div className="flex justify-end -mt-1">
           <button type="button" onClick={handleForgot}
-            className="text-[#1E6FFF] text-sm font-semibold">
+            className="text-[#FF5A1F] text-sm font-semibold">
             Forgot password?
           </button>
         </div>
@@ -128,7 +128,7 @@ export default function Login() {
           type="submit"
           disabled={busy}
           className="w-full py-4 rounded-2xl font-bold text-white text-[15px] disabled:opacity-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-1"
-          style={{ background: 'linear-gradient(135deg, #1E6FFF, #7B2FFF)', boxShadow: '0 8px 24px rgba(30,111,255,0.35)' }}
+          style={{ background: 'linear-gradient(135deg, #FF5A1F, #FF2D78)', boxShadow: '0 8px 24px rgba(255,90,31,0.35)' }}
         >
           {busy
             ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Signing in...</>
