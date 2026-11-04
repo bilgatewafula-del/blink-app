@@ -130,7 +130,7 @@ export function AuthProvider({ children }) {
 
     // Listen for auth state changes (login, logout, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         // [DIAG]
         console.log('[DIAG]', Date.now(), 'AuthContext: onAuthStateChange fired, event =', event);
 
@@ -150,10 +150,20 @@ export function AuthProvider({ children }) {
           _profileCache = null;
         }
 
+        // IMPORTANT: never `await` a Supabase call inside this callback.
+        // supabase-js holds an internal auth lock while it runs this
+        // callback, and fetchProfile() makes a Supabase request that
+        // needs that same lock — so on session RESTORE (app reopened with
+        // a saved login) it deadlocks and the app hangs on a blank screen
+        // until site data is cleared. Deferring the call lets the
+        // callback return first and release the lock.
         if (u) {
-          await fetchProfile(u.id);
+          setTimeout(() => {
+            fetchProfile(u.id).finally(() => clearTimeout(hardTimeout));
+          }, 0);
+        } else {
+          clearTimeout(hardTimeout);
         }
-        clearTimeout(hardTimeout);
       }
     );
 
