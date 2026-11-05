@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
@@ -11,7 +11,7 @@ import {
   XCircle, ArrowLeft, Trash2, Search,
   RefreshCw, Activity, UserCheck, AlertOctagon,
   EyeOff, Eye, RotateCcw, FileText, Flag,
-  CheckCircle, ChevronDown,
+  CheckCircle, ChevronDown, Lock, ShieldAlert,
 } from 'lucide-react';
 
 /* ══════════════════════════════════════════════
@@ -23,7 +23,7 @@ import {
    notification — the client never inserts admin_logs or
    notifications for another user, and never has a code path
    that can set role/is_banned/coins_balance/etc. directly.
-   The duplicate `verifyAdminServer` import from the original
+   The duplicate `verifyAdminServer`import from the original
    file has also been removed (it appeared twice).
 ══════════════════════════════════════════════ */
 
@@ -40,8 +40,7 @@ const ROLE_COLORS = {
 function RoleBadge({ role }) {
   const c = ROLE_COLORS[role] || ROLE_COLORS.user;
   return (
-    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-      style={{ background: c.bg + '25', color: c.bg, border: '1px solid ' + c.bg + '40' }}>
+    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"style={{ background: c.bg + '25', color: c.bg, border: '1px solid ' + c.bg + '40' }}>
       {c.label}
     </span>
   );
@@ -57,7 +56,7 @@ function StatusBadge({ u }) {
 function StatCard({ icon: Icon, label, value, color }) {
   return (
     <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 flex items-center gap-3">
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: color + '20' }}>
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"style={{ background: color + '20' }}>
         <Icon size={20} style={{ color }} />
       </div>
       <div>
@@ -72,7 +71,7 @@ function StatCard({ icon: Icon, label, value, color }) {
    USER ACTION MODAL
    Every action now calls a protected RPC. The RPC itself
    re-verifies the caller's role (moderator/admin/blink) —
-   the `allowed` flags below remain purely for UI/UX and are
+   the `allowed`flags below remain purely for UI/UX and are
    NOT the security boundary.
 ══════════════════════════════════════════════ */
 function UserActionModal({ target, myRole, onClose, onSuccess }) {
@@ -89,22 +88,27 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
   const isMod   = myRole === 'moderator' || isAdmin;
 
   const ACTIONS = [
-    { key:'warn',       label:'⚠️  Warn user',           desc:'Send an official warning',             allowed: isMod  },
-    { key:'restrict',   label:'🟡 Restrict user',         desc:'Block from posting & commenting',       allowed: isAdmin },
-    { key:'unrestrict', label:'✅ Remove restriction',    desc:'Restore full posting access',           allowed: isAdmin },
-    { key:'suspend',    label:'🔵 Suspend user',          desc:'Temporarily block account access',      allowed: isAdmin },
-    { key:'unsuspend',  label:'✅ Unsuspend user',        desc:'Lift the suspension immediately',       allowed: isAdmin },
-    { key:'ban',        label:'🔴 Permanently ban',       desc:'Permanently block all access',          allowed: isBlink },
-    { key:'unban',      label:'✅ Unban user',            desc:'Restore full account access',           allowed: isBlink },
-    { key:'role',       label:'👑 Change role',           desc:'Promote or demote this user',           allowed: isBlink },
-    { key:'delete',     label:'🗑️  Delete account',       desc:'Permanently erase from system',        allowed: isBlink },
-  ].filter(a => a.allowed);
+    { key:'warn',       Icon: AlertTriangle, label:'Warn user',        desc:'Send an official warning',                 need:'Moderator', allowed: isMod  },
+    { key:'restrict',   Icon: EyeOff,        label:'Restrict user',    desc:'Block from posting and commenting',        need:'Admin',     allowed: isAdmin },
+    { key:'unrestrict', Icon: RotateCcw,     label:'Remove restriction', desc:'Restore full posting access',            need:'Admin',     allowed: isAdmin },
+    { key:'suspend',    Icon: Clock,         label:'Suspend user',     desc:'Temporarily block account access',         need:'Admin',     allowed: isAdmin },
+    { key:'unsuspend',  Icon: RotateCcw,     label:'Unsuspend user',   desc:'Lift the suspension immediately',          need:'Admin',     allowed: isAdmin },
+    { key:'ban',        Icon: Ban,           label:'Permanently ban',  desc:'Block all access, keep their data',        need:'B-Link',    allowed: isBlink },
+    { key:'unban',      Icon: UserCheck,     label:'Unban user',       desc:'Restore full account access',              need:'B-Link',    allowed: isBlink },
+    { key:'role',       Icon: Shield,        label:'Change role',      desc:'Promote or demote this user',              need:'B-Link',    allowed: isBlink },
+    { key:'delete',     Icon: Trash2,        label:'Delete account everywhere', desc:'Erase the account, profile, posts, chats and login',  need:'B-Link', allowed: isBlink, danger: true },
+  ];
+  const NO_REASON = 'No reason provided';
+  const [confirmText, setConfirmText] = useState('');
 
   const handleSubmit = async () => {
     if (!action) { setError('Please select an action.'); return; }
-    if (['warn','restrict','suspend','ban'].includes(action) && !reason.trim()) {
-      setError('A reason is required for this action.'); return;
+    const chosen = ACTIONS.find((x) => x.key === action);
+    if (!chosen?.allowed) { setError('Your role cannot perform this action.'); return; }
+    if (action === 'delete' && confirmText.trim().replace(/^@/, '').toLowerCase() !== (target.username || '').toLowerCase()) {
+      setError(`Type @${target.username} to confirm.`); return;
     }
+    const why = reason.trim() || NO_REASON;
 
     setLoading(true); setError('');
 
@@ -112,7 +116,7 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
       switch (action) {
         case 'warn': {
           const { error: e } = await supabase.rpc('admin_warn_user', {
-            p_target_id: target.id, p_reason: reason.trim(),
+            p_target_id: target.id, p_reason: why,
           });
           if (e) throw new Error(e.message);
           setDone(`Warning sent to @${target.username}`);
@@ -121,7 +125,7 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
 
         case 'restrict': {
           const { error: e } = await supabase.rpc('admin_restrict_user', {
-            p_target_id: target.id, p_reason: reason.trim(),
+            p_target_id: target.id, p_reason: why,
           });
           if (e) throw new Error(e.message);
           setDone(`@${target.username} is now restricted`);
@@ -139,7 +143,7 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
 
         case 'suspend': {
           const { error: e } = await supabase.rpc('admin_suspend_user', {
-            p_target_id: target.id, p_days: days, p_reason: reason.trim(),
+            p_target_id: target.id, p_days: days, p_reason: why,
           });
           if (e) throw new Error(e.message);
           setDone(`@${target.username} suspended for ${days} day(s)`);
@@ -157,7 +161,7 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
 
         case 'ban': {
           const { error: e } = await supabase.rpc('admin_ban_user', {
-            p_target_id: target.id, p_reason: reason.trim(),
+            p_target_id: target.id, p_reason: why,
           });
           if (e) throw new Error(e.message);
           // NOTE: session revocation now happens server-side (see RPC
@@ -188,17 +192,14 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
         }
 
         case 'delete': {
-          const confirmed = window.confirm(
-            `⚠️ PERMANENTLY DELETE @${target.username}?\n\nThis will:\n• Delete their account\n• Delete all their posts\n• Delete all their comments\n• Remove all their follows/likes\n\nThis CANNOT be undone.`
-          );
-          if (!confirmed) { setLoading(false); return; }
-
-          // Single server-side transaction instead of a 10-step
-          // client-side delete chain — see admin_delete_user() RPC.
-          const { error: e } = await supabase.rpc('admin_delete_user', {
-            p_target_id: target.id, p_reason: reason.trim() || null,
-          });
-          if (e) throw new Error(e.message);
+          // One server-side call removes the account everywhere: login,
+          // profile, posts, comments, chats, follows, notifications...
+          let res = await supabase.rpc('admin_purge_user', { p_target_id: target.id, p_reason: reason.trim() || null });
+          if (res.error && /does not exist|could not find/i.test(res.error.message || '')) {
+            // purge function not installed yet -> older delete routine
+            res = await supabase.rpc('admin_delete_user', { p_target_id: target.id, p_reason: reason.trim() || null });
+          }
+          if (res.error) throw new Error(res.error.message);
 
           setDone(`@${target.username} has been permanently deleted`);
           setTimeout(() => { onSuccess('deleted', target.id); onClose(); }, 1500);
@@ -224,15 +225,14 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-end justify-center" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-end justify-center"onClick={onClose}>
       <div
-        className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5 pb-8 max-h-[90vh] overflow-y-auto"
-        onClick={e => e.stopPropagation()}
+        className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5 pb-8 max-h-[90vh] overflow-y-auto"onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             {target.avatar_url
-              ? <img src={target.avatar_url} alt="" className="w-11 h-11 rounded-full object-cover" />
+              ? <img src={target.avatar_url} alt=""className="w-11 h-11 rounded-full object-cover" />
               : <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold text-lg">{target.display_name?.[0]?.toUpperCase()}</div>
             }
             <div>
@@ -251,7 +251,7 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
 
         {done ? (
           <div className="text-center py-8">
-            <p className="text-5xl mb-3">✅</p>
+            <CheckCircle size={52} className="text-[#2ECC71] mx-auto mb-3" />
             <p className="text-white font-bold text-lg">{done}</p>
             <p className="text-[#8E8C88] text-sm mt-1">Action completed successfully</p>
           </div>
@@ -262,16 +262,19 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
               {ACTIONS.map(a => (
                 <button
                   key={a.key}
-                  onClick={() => { setAction(a.key); setError(''); }}
-                  className={'w-full flex items-start gap-3 px-4 py-3 rounded-xl text-left transition-all border ' +
+                  disabled={!a.allowed}
+                  onClick={() => { if (a.allowed) { setAction(a.key); setError(''); setConfirmText(''); } }}
+                  className={'w-full flex items-start gap-3 px-4 py-3 rounded-xl text-left transition-all border disabled:opacity-45 ' +
                     (action === a.key
-                      ? 'bg-[#FF5A1F]/15 border-[#FF5A1F]/50'
+                      ? (a.danger ? 'bg-red-500/15 border-red-500/50' : 'bg-[#FF5A1F]/15 border-[#FF5A1F]/50')
                       : 'bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.06]')}
                 >
+                  <a.Icon size={18} className={(a.danger ? 'text-red-400' : 'text-[#FF5A1F]') + 'mt-0.5 flex-shrink-0'} />
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm font-semibold ${action === a.key ? 'text-white' : 'text-white/80'}`}>{a.label}</p>
-                    <p className="text-[#8E8C88] text-[11px] mt-0.5">{a.desc}</p>
+                    <p className="text-[#8E8C88] text-[11px] mt-0.5">{a.allowed ? a.desc : `Requires ${a.need} role`}</p>
                   </div>
+                  {!a.allowed && <Lock size={14} className="text-[#8E8C88] flex-shrink-0 mt-1" />}
                   {action === a.key && <CheckCircle size={16} className="text-[#FF5A1F] flex-shrink-0 mt-0.5" />}
                 </button>
               ))}
@@ -318,9 +321,7 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
             {action && (
               <div className="mb-4">
                 <p className="text-white/60 text-[11px] font-bold uppercase tracking-wider mb-2">
-                  {['unrestrict','unsuspend','unban'].includes(action) ? 'Note (optional)' :
-                   action === 'role' ? 'Note (optional)' :
-                   'Reason *'}
+                  Reason (optional)
                 </p>
                 <textarea
                   value={reason}
@@ -338,6 +339,19 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
                 <div className="flex justify-between mt-1">
                   <span className="text-[#8E8C88] text-[10px]">{reason.length}/300</span>
                 </div>
+                {action === 'delete' && (
+                  <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 p-3">
+                    <p className="text-red-300 text-[12px] leading-snug">
+                      This permanently erases @{target.username}: their login, profile, posts, comments, chats, follows and notifications.
+                      It cannot be undone.
+                    </p>
+                    <input
+                      value={confirmText} onChange={(e) => setConfirmText(e.target.value)}
+                      placeholder={`Type @${target.username} to confirm`}
+                      className="mt-2 w-full bg-black/30 border border-red-500/30 rounded-lg px-3 py-2 text-white text-sm focus:outline-none"
+                    />
+                  </div>
+                )}
               </div>
             )}
 
@@ -349,9 +363,8 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
 
             <button
               onClick={handleSubmit}
-              disabled={loading || !action}
-              className="w-full py-4 rounded-2xl font-bold text-white text-sm transition-all disabled:opacity-40 flex items-center justify-center gap-2"
-              style={{
+              disabled={loading || !action || (action === 'delete' && confirmText.trim().replace(/^@/, '').toLowerCase() !== (target.username || '').toLowerCase())}
+              className="w-full py-4 rounded-2xl font-bold text-white text-sm transition-all disabled:opacity-40 flex items-center justify-center gap-2"style={{
                 background:
                   ['ban','delete'].includes(action)                         ? 'linear-gradient(135deg, #EF4444, #DC2626)' :
                   ['unban','unsuspend','unrestrict'].includes(action)       ? 'linear-gradient(135deg, #2ECC71, #16A34A)' :
@@ -360,10 +373,10 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
             >
               {loading
                 ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Processing...</>
-                : action === 'delete' ? '🗑️ Permanently Delete Account'
-                : action === 'ban'    ? '🔴 Permanently Ban User'
-                : action === 'unban'  ? '✅ Unban User'
-                : 'Confirm Action'
+                : action === 'delete' ? 'Delete account everywhere'
+                : action === 'ban'    ? 'Permanently ban user'
+                : action === 'unban'  ? 'Unban user'
+                : 'Confirm action'
               }
             </button>
           </>
@@ -419,8 +432,8 @@ function ContentModal({ item, type, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-end justify-center" onClick={onClose}>
-      <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5 pb-8" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-end justify-center"onClick={onClose}>
+      <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5 pb-8"onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-white font-bold text-base">Moderate {type === 'post' ? 'Post' : 'Comment'}</h3>
           <button onClick={onClose} className="text-[#8E8C88] hover:text-white"><XCircle size={20} /></button>
@@ -439,7 +452,7 @@ function ContentModal({ item, type, onClose, onSuccess }) {
                'border-white/10 bg-white/[0.03]')}>
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 {item.users?.avatar_url
-                  ? <img src={item.users.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
+                  ? <img src={item.users.avatar_url} alt=""className="w-7 h-7 rounded-full object-cover" />
                   : <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold text-xs">{item.users?.display_name?.[0]?.toUpperCase()}</div>
                 }
                 <p className="text-white font-bold text-[13px]">{item.users?.display_name}</p>
@@ -460,9 +473,9 @@ function ContentModal({ item, type, onClose, onSuccess }) {
             <p className="text-white/60 text-[11px] font-bold uppercase tracking-wider mb-2">Action</p>
             <div className="space-y-1.5 mb-4">
               {[
-                { key:'hide',    label:'🟡 Hide content',       desc:'Remove from feeds. User can still see it on their profile.', show: item.status !== 'hidden'  },
-                { key:'restore', label:'✅ Restore content',    desc:'Make visible again in all feeds.',                           show: item.status === 'hidden'  },
-                { key:'delete',  label:'🔴 Delete permanently', desc:'Permanently erase. Cannot be undone.',                       show: item.status !== 'deleted' },
+                { key:'hide',    label:'Hide content',       desc:'Remove from feeds. User can still see it on their profile.', show: item.status !== 'hidden'  },
+                { key:'restore', label:'Restore content',    desc:'Make visible again in all feeds.',                           show: item.status === 'hidden'  },
+                { key:'delete',  label:'Delete permanently', desc:'Permanently erase. Cannot be undone.',                       show: item.status !== 'deleted' },
               ].filter(a => a.show).map(a => (
                 <button
                   key={a.key}
@@ -485,8 +498,7 @@ function ContentModal({ item, type, onClose, onSuccess }) {
               <textarea
                 value={reason}
                 onChange={e => setReason(e.target.value)}
-                placeholder="Reason (optional)..."
-                rows={2}
+                placeholder="Reason (optional)..."rows={2}
                 maxLength={200}
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-[#8E8C88] focus:outline-none resize-none mb-4"
               />
@@ -501,8 +513,7 @@ function ContentModal({ item, type, onClose, onSuccess }) {
             <button
               onClick={handleSubmit}
               disabled={loading || !action}
-              className="w-full py-3.5 rounded-2xl font-bold text-white text-sm disabled:opacity-40 flex items-center justify-center gap-2 transition-all"
-              style={{
+              className="w-full py-3.5 rounded-2xl font-bold text-white text-sm disabled:opacity-40 flex items-center justify-center gap-2 transition-all"style={{
                 background:
                   action === 'delete'  ? 'linear-gradient(135deg, #EF4444, #DC2626)' :
                   action === 'restore' ? 'linear-gradient(135deg, #2ECC71, #16A34A)' :
@@ -511,9 +522,9 @@ function ContentModal({ item, type, onClose, onSuccess }) {
             >
               {loading
                 ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Processing...</>
-                : action === 'delete'  ? '🔴 Delete Permanently'
-                : action === 'hide'    ? '🟡 Hide Content'
-                : action === 'restore' ? '✅ Restore Content'
+                : action === 'delete'  ? 'Delete Permanently'
+                : action === 'hide'    ? 'Hide Content'
+                : action === 'restore' ? 'Restore Content'
                 : 'Confirm'
               }
             </button>
@@ -542,6 +553,9 @@ export default function AdminPanel() {
   const [loading,       setLoading]      = useState(true);
   const [search,        setSearch]       = useState('');
   const [statusFilter,  setStatusFilter] = useState('All');
+  const usersRef = useRef([]);
+  const [checkOpen,     setCheckOpen]    = useState(false);
+  const [checkResult,   setCheckResult]  = useState(null);
   const [contentTab,    setContentTab]   = useState('posts');
   const [selectedUser,  setSelectedUser] = useState(null);
   const [selectedItem,  setSelectedItem] = useState(null);
@@ -569,6 +583,37 @@ export default function AdminPanel() {
     setLoading(true);
     await Promise.all([fetchStats(), fetchUsers(), fetchReports(), fetchLogs(), fetchWarnings()]);
     setLoading(false);
+  };
+
+  usersRef.current = users;
+
+  // Live results: any account change anywhere refreshes the numbers and list.
+  useEffect(() => {
+    let t;
+    const refresh = () => { clearTimeout(t); t = setTimeout(() => { fetchStats(); fetchUsers(); }, 600); };
+    // Users update their last_seen every minute; only react to changes that matter here.
+    const relevant = (p) => {
+      if (p.eventType !== 'UPDATE') return true;
+      const cur = usersRef.current.find((u) => u.id === p.new?.id);
+      if (!cur) return true;
+      return ['is_banned', 'is_restricted', 'suspended_until', 'role'].some((k) => (cur[k] ?? null) !== (p.new[k] ?? null));
+    };
+    const ch = supabase.channel('admin-live:' + Math.random().toString(36).slice(2, 6))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, (p) => { if (relevant(p)) refresh(); })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'reports' }, () => { fetchReports(); fetchStats(); })
+      .subscribe();
+    return () => { clearTimeout(t); supabase.removeChannel(ch); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const runSystemCheck = async () => {
+    setCheckOpen(true); setCheckResult({ loading: true });
+    const { data, error } = await supabase.rpc('admin_system_check');
+    if (error) {
+      setCheckResult({ error: /does not exist|could not find/i.test(error.message || '')
+        ? 'The admin database script has not been installed yet. Run chat-admin-system.sql in the Supabase SQL Editor.'
+        : error.message });
+    } else setCheckResult(data);
   };
 
   const fetchStats = async () => {
@@ -720,9 +765,14 @@ export default function AdminPanel() {
             </div>
           </div>
         </div>
-        <button onClick={fetchAll} className="text-[#8E8C88] hover:text-white p-1 transition-colors">
-          <RefreshCw size={18} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={runSystemCheck} aria-label="System check"className="text-[#8E8C88] hover:text-white p-1 transition-colors">
+            <ShieldAlert size={18} />
+          </button>
+          <button onClick={fetchAll} aria-label="Refresh"className="text-[#8E8C88] hover:text-white p-1 transition-colors">
+            <RefreshCw size={18} />
+          </button>
+        </div>
       </div>
 
       <div className="flex overflow-x-auto scrollbar-none px-4 py-3 gap-2 border-b border-white/[0.07]">
@@ -753,14 +803,14 @@ export default function AdminPanel() {
         {section === 'overview' && (
           <>
             <div className="grid grid-cols-2 gap-3">
-              <StatCard icon={Users}         label="Total Users"    value={stats.total          || 0} color="#FF5A1F" />
-              <StatCard icon={UserCheck}     label="Staff"          value={stats.staff          || 0} color="#FF2D78" />
-              <StatCard icon={AlertTriangle} label="Restricted"     value={stats.restricted     || 0} color="#FFD700" />
-              <StatCard icon={Clock}         label="Suspended"      value={stats.suspended      || 0} color="#FF6B35" />
-              <StatCard icon={Ban}           label="Banned"         value={stats.banned         || 0} color="#EF4444" />
-              <StatCard icon={Flag}          label="Open Reports"   value={stats.pendingReports || 0} color="#EF4444" />
-              <StatCard icon={EyeOff}        label="Hidden Posts"   value={stats.hiddenPosts    || 0} color="#8E8C88" />
-              <StatCard icon={Activity}      label="Total Posts"    value={stats.totalPosts     || 0} color="#2ECC71" />
+              <StatCard icon={Users}         label="Total Users"value={stats.total          || 0} color="#FF5A1F" />
+              <StatCard icon={UserCheck}     label="Staff"value={stats.staff          || 0} color="#FF2D78" />
+              <StatCard icon={AlertTriangle} label="Restricted"value={stats.restricted     || 0} color="#FFD700" />
+              <StatCard icon={Clock}         label="Suspended"value={stats.suspended      || 0} color="#FF6B35" />
+              <StatCard icon={Ban}           label="Banned"value={stats.banned         || 0} color="#EF4444" />
+              <StatCard icon={Flag}          label="Open Reports"value={stats.pendingReports || 0} color="#EF4444" />
+              <StatCard icon={EyeOff}        label="Hidden Posts"value={stats.hiddenPosts    || 0} color="#8E8C88" />
+              <StatCard icon={Activity}      label="Total Posts"value={stats.totalPosts     || 0} color="#2ECC71" />
             </div>
 
             <div className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-4">
@@ -775,8 +825,7 @@ export default function AdminPanel() {
                   <button
                     key={a.key}
                     onClick={() => { setSection(a.key); if (a.key === 'content') { fetchPosts(); fetchComments(); } }}
-                    className="py-3 px-4 rounded-xl text-sm font-bold transition-all hover:opacity-80 relative"
-                    style={{ background: a.color + '18', border: '1px solid ' + a.color + '35', color: a.color }}
+                    className="py-3 px-4 rounded-xl text-sm font-bold transition-all hover:opacity-80 relative"style={{ background: a.color + '18', border: '1px solid ' + a.color + '35', color: a.color }}
                   >
                     {a.label}
                     {a.count > 0 && (
@@ -794,9 +843,8 @@ export default function AdminPanel() {
             <div className="flex items-center gap-3 bg-white/[0.05] border border-white/10 rounded-2xl px-4 py-3 mb-3">
               <Search size={16} className="text-[#8E8C88]" />
               <input
-                type="text" value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Search by name or username..."
-                className="flex-1 bg-transparent text-white text-sm placeholder-[#8E8C88] focus:outline-none"
+                type="text"value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Search by name or username..."className="flex-1 bg-transparent text-white text-sm placeholder-[#8E8C88] focus:outline-none"
               />
               {search && <button onClick={() => setSearch('')} className="text-[#8E8C88] hover:text-white"><XCircle size={16} /></button>}
             </div>
@@ -827,7 +875,7 @@ export default function AdminPanel() {
                   <div key={u.id} className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3 flex items-center gap-3">
                     <div className="flex-shrink-0">
                       {u.avatar_url
-                        ? <img src={u.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+                        ? <img src={u.avatar_url} alt=""className="w-10 h-10 rounded-full object-cover" />
                         : <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold text-sm">{u.display_name?.[0]?.toUpperCase()}</div>
                       }
                     </div>
@@ -895,7 +943,7 @@ export default function AdminPanel() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                           {item.users?.avatar_url
-                            ? <img src={item.users.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
+                            ? <img src={item.users.avatar_url} alt=""className="w-6 h-6 rounded-full object-cover" />
                             : <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold text-[9px]">{item.users?.display_name?.[0]?.toUpperCase()}</div>
                           }
                           <p className="text-white font-bold text-[13px]">{item.users?.display_name}</p>
@@ -954,7 +1002,7 @@ export default function AdminPanel() {
                     </div>
                     <p className="text-white/85 text-[13px]">
                       <span className="font-bold text-white">{r.reporter?.display_name || 'User'}</span>
-                      {' reported: '}
+                      {'reported: '}
                       <span className="text-yellow-400 font-semibold">{r.reason}</span>
                     </p>
                     {r.details && <p className="text-[#8E8C88] text-[12px] mt-0.5">"{r.details}"</p>}
@@ -1026,7 +1074,7 @@ export default function AdminPanel() {
               <div key={w.id} className="bg-yellow-500/[0.05] border border-yellow-500/20 rounded-2xl p-3">
                 <div className="flex items-center gap-3 mb-2">
                   {w.user?.avatar_url
-                    ? <img src={w.user.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                    ? <img src={w.user.avatar_url} alt=""className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
                     : <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center text-sm flex-shrink-0">⚠️</div>
                   }
                   <div className="flex-1 min-w-0">
@@ -1070,6 +1118,26 @@ export default function AdminPanel() {
             fetchLogs();
           }}
         />
+      )}
+
+      {checkOpen && (
+        <div className="fixed inset-0 bg-black/75 z-[60] flex items-end justify-center"onClick={() => setCheckOpen(false)}>
+          <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5 pb-8 max-h-[85vh] overflow-y-auto"onClick={(e) => e.stopPropagation()}>
+            <p className="text-white font-bold text-base mb-1">System check</p>
+            <p className="text-[#8E8C88] text-xs mb-4">Confirms every admin and chat function the app calls exists in the database.</p>
+            {checkResult?.loading && <p className="text-[#8E8C88] text-sm py-6 text-center">Checking…</p>}
+            {checkResult?.error && <p className="text-red-400 text-sm">{checkResult.error}</p>}
+            {checkResult && !checkResult.loading && !checkResult.error && (
+              <>
+                <p className={'text-sm font-bold mb-2 ' + ((checkResult.missing || []).length === 0 ? 'text-[#2ECC71]' : 'text-red-400')}>
+                  {(checkResult.missing || []).length === 0 ? 'Everything is installed' : `${checkResult.missing.length} missing`}
+                </p>
+                {(checkResult.missing || []).map((n) => <p key={n} className="text-red-300 text-[13px] py-1">Missing: {n}</p>)}
+                {(checkResult.ok || []).map((n) => <p key={n} className="text-white/50 text-[12px] py-0.5">OK: {n}</p>)}
+              </>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import BottomNav from './components/BottomNav';
 import NetworkBanner from './components/NetworkBanner';
 import ErrorBoundary from './components/ErrorBoundary';
+import { startPresence, stopPresence } from './lib/presence';
 
 /* ── Lazy pages — paths match REAL folder structure ── */
 const Login              = lazy(() => import('./pages/auth/Login'));
@@ -109,6 +110,12 @@ function AppShell() {
       return () => clearTimeout(t);
     }
   }, [splashDone]);
+
+  // Real online / last-seen: starts when signed in, stops on sign-out.
+  useEffect(() => {
+    if (user?.id) startPresence(user.id);
+    else stopPresence();
+  }, [user?.id]);
 
   // Warm the main tabs in the background once the app is usable, so
   // switching tabs feels instant instead of waiting on a chunk download.
