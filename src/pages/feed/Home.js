@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Bell, RefreshCw, Feather, Menu, WifiOff, ChevronUp } from 'lucide-react';
+import { Bell, RefreshCw, Feather, Menu, WifiOff, ChevronUp, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import Drawer from '../../components/Drawer';
@@ -122,7 +122,7 @@ export default function Home() {
     const incoming = location.state?.newPost;
     if (incoming) {
       setPosts(prev => (prev.some(p => p.id === incoming.id) ? prev : [normalise(incoming), ...prev]));
-      showToast('✅ Posted!');
+      showToast('Posted!');
       navigate(location.pathname, { replace: true, state: {} });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -637,7 +637,7 @@ export default function Home() {
 
         {!loading && !fetchError && posts.length === 0 && (
           <div className="flex flex-col items-center justify-center mt-20 gap-4 px-6">
-            <p className="text-6xl">🐦</p>
+            <Users size={46} className="text-[#8E8C88] mx-auto" />
             <h2 className="text-white font-bold text-xl text-center">
               {activeTab === 'following' ? 'Nothing in your feed yet' : 'No posts yet'}
             </h2>
@@ -670,7 +670,7 @@ export default function Home() {
                 </div>
               )}
               {!hasMore && !loadingMore && (
-                <p className="text-[#8E8C88] text-xs">You're all caught up! 🎉</p>
+                <p className="text-[#8E8C88] text-xs">You're all caught up</p>
               )}
             </div>
           </>

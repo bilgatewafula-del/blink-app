@@ -1,9 +1,10 @@
 // src/pages/monetisation/MonetisationHub.js
 // Central hub — all monetisation features in one place
 import { useNavigate } from 'react-router-dom';
+import { PlanIcon } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { getActivePlan, formatNumber, PLANS } from '../../utils/paymentUtils';
-import { ArrowLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Crown, Coins, Zap, BadgeCheck, Briefcase } from 'lucide-react';
 
 export default function MonetisationHub() {
   const navigate     = useNavigate();
@@ -16,22 +17,22 @@ export default function MonetisationHub() {
 
   const ITEMS = [
     {
-      emoji: '⭐',
+      Icon: Crown,
       title: 'Subscription Plans',
-      subtitle: `Current: ${planInfo?.label || 'Free'} plan${activePlan !== 'free' ? ` · ${planInfo?.badge}` : ''}`,
+      subtitle: `Current: ${planInfo?.label || 'Free'} plan`,
       badge: activePlan !== 'free' ? { label: planInfo?.label, color: planInfo?.color } : null,
       path: '/subscription',
       color: '#FF5A1F',
     },
     {
-      emoji: '🪙',
+      Icon: Coins,
       title: 'B-Link Coins',
       subtitle: `Balance: ${formatNumber(coins)} coins`,
       path: '/coins',
       color: '#FFD700',
     },
     {
-      emoji: '⚡',
+      Icon: Zap,
       title: 'Boost a Post',
       subtitle: 'Promote your content across B-Link',
       path: '/boost',
@@ -40,15 +41,15 @@ export default function MonetisationHub() {
       hint: activePlan === 'free' ? 'Requires Pro plan or higher' : null,
     },
     {
-      emoji: '✓',
+      Icon: BadgeCheck,
       title: 'Get Verified',
-      subtitle: isVerified ? '✓ Your account is verified' : 'One-time KES 500 verification fee',
+      subtitle: isVerified ? 'Your account is verified' : 'One-time KES 500 verification fee',
       path: '/verification',
       color: '#FF5A1F',
       badge: isVerified ? { label: 'Verified', color: '#FF5A1F' } : null,
     },
     {
-      emoji: '💼',
+      Icon: Briefcase,
       title: 'Business Page',
       subtitle: isBusiness ? 'Your business page is active' : 'KES 2,000/month — for brands & creators',
       path: '/business-page',
@@ -74,7 +75,7 @@ export default function MonetisationHub() {
           <div>
             <p className="text-white/50 text-xs font-bold uppercase tracking-wider mb-1">Current Plan</p>
             <p className="text-white font-black text-2xl">
-              {planInfo?.badge} {planInfo?.label}
+              <span className="inline-flex items-center gap-2"><PlanIcon plan={activePlan} size={22} /> {planInfo?.label}</span>
             </p>
             {profile?.subscription_expires_at && activePlan !== 'free' && (
               <p className="text-white/40 text-xs mt-1">
@@ -84,7 +85,7 @@ export default function MonetisationHub() {
           </div>
           <div className="text-right">
             <p className="text-white/50 text-xs">Coins</p>
-            <p className="text-yellow-400 font-black text-xl">🪙 {formatNumber(coins)}</p>
+            <p className="text-yellow-400 font-black text-xl inline-flex items-center gap-1.5"><Coins size={18} /> {formatNumber(coins)}</p>
           </div>
         </div>
       </div>
@@ -103,7 +104,7 @@ export default function MonetisationHub() {
           >
             <div className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
               style={{ background: item.color + '15', border: '1px solid ' + item.color + '25' }}>
-              {item.emoji}
+              <item.Icon size={22} color={item.color} />
             </div>
             <div className="flex-1 min-w-0 text-left">
               <div className="flex items-center gap-2 flex-wrap">

@@ -5,8 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
   ArrowLeft, Image, Video, MapPin, Hash,
   X, Globe, Users, Lock, ChevronDown,
-  Loader, CheckCircle,
-} from 'lucide-react';
+  Loader, CheckCircle, Ban } from 'lucide-react';
 import Avatar from '../../components/Avatar';
 import { DAILY_POST_LIMIT } from '../../utils/usernameValidation';
 
@@ -349,9 +348,9 @@ export default function CreatePost() {
       console.error('CreatePost error:', err.message);
       const raw = err.message || '';
       if (raw.includes('Daily post limit')) {
-        setError('🚫 Daily post limit reached (10 posts/day). Come back tomorrow!');
+        setError('Daily post limit reached (10 posts/day). Come back tomorrow!');
       } else if (raw.includes('Duplicate post')) {
-        setError('⚠️ You already posted this. Wait a bit before reposting the same content.');
+        setError('You already posted this. Wait a bit before reposting the same content.');
       } else if (raw.includes('too quickly')) {
         setError('⏱ Posting too fast — please wait a few seconds and try again.');
       } else {
@@ -405,7 +404,7 @@ export default function CreatePost() {
 
       {atDailyLimit && !editPostId && (
         <div className="mx-4 mt-3 bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex items-start gap-3">
-          <span className="text-2xl flex-shrink-0">🚫</span>
+          <Ban size={24} className="text-red-400 flex-shrink-0" />
           <div>
             <p className="text-red-400 font-bold text-sm">Daily post limit reached</p>
             <p className="text-red-400/70 text-xs mt-0.5">

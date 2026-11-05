@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import { COIN_PACKAGES, formatKES, formatNumber } from '../../utils/paymentUtils';
 import PaymentModal from '../../components/PaymentModal';
-import { ArrowLeft, Clock } from 'lucide-react';
+import { ArrowLeft, Clock, Coins, Heart, Gift, Zap, Sparkles, ArrowUpRight } from 'lucide-react';
 
 export default function CoinsPage() {
   const navigate = useNavigate();
@@ -51,7 +51,7 @@ export default function CoinsPage() {
         </div>
         {/* Balance chip */}
         <div className="bg-yellow-500/15 border border-yellow-500/25 rounded-2xl px-4 py-2 flex items-center gap-2">
-          <span className="text-xl">🪙</span>
+          <Coins size={22} className="text-yellow-400" />
           <span className="text-yellow-400 font-black text-[17px]">{formatNumber(balance)}</span>
         </div>
       </div>
@@ -85,16 +85,16 @@ export default function CoinsPage() {
 
           {/* What are coins */}
           <div className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-4">
-            <p className="text-white font-bold text-sm mb-3">🪙 What are B-Link Coins?</p>
+            <p className="text-white font-bold text-sm mb-3 flex items-center gap-2"><Coins size={16} className="text-yellow-400" /> What are B-Link Coins?</p>
             <div className="space-y-2">
               {[
-                { icon:'❤️', text:'React to posts with premium reactions' },
-                { icon:'🎁', text:'Send digital gifts to creators' },
-                { icon:'⚡', text:'Instant 1-hour post boost' },
-                { icon:'✨', text:'Highlight your comments' },
+                { Icon:Heart, text:'React to posts with premium reactions' },
+                { Icon:Gift, text:'Send digital gifts to creators' },
+                { Icon:Zap, text:'Instant 1-hour post boost' },
+                { Icon:Sparkles, text:'Highlight your comments' },
               ].map((item,i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <span className="text-lg flex-shrink-0">{item.icon}</span>
+                  <item.Icon size={18} className="text-[#FF5A1F] flex-shrink-0" />
                   <span className="text-white/60 text-sm">{item.text}</span>
                 </div>
               ))}
@@ -115,7 +115,7 @@ export default function CoinsPage() {
                   onClick={() => setSelectedPkg(pkg)}
                   className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 text-left active:scale-95 transition-all hover:border-yellow-500/30 hover:bg-white/[0.07]"
                 >
-                  <span className="text-3xl block mb-2">🪙</span>
+                  <Coins size={30} className="text-yellow-400 mb-2" />
                   <p className="text-white font-black text-lg leading-none">{formatNumber(pkg.coins)}</p>
                   {pkg.bonus > 0 && (
                     <p className="text-yellow-400 text-[11px] font-bold mt-0.5">+{pkg.bonus} bonus!</p>
@@ -154,14 +154,14 @@ export default function CoinsPage() {
           {/* Confirmed coin transactions */}
           {transactions.length === 0 ? (
             <div className="text-center py-14">
-              <p className="text-4xl mb-3">🪙</p>
+              <Coins size={38} className="text-yellow-400 mx-auto mb-3" />
               <p className="text-white font-bold">No transactions yet</p>
               <p className="text-[#8E8C88] text-sm mt-1">Buy coins to get started</p>
             </div>
           ) : transactions.map(tx => (
             <div key={tx.id} className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3 flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg ${tx.amount > 0 ? 'bg-yellow-500/15' : 'bg-red-500/10'}`}>
-                {tx.amount > 0 ? '🪙' : '💸'}
+                {tx.amount > 0 ? <Coins size={18} className="text-yellow-400" /> : <ArrowUpRight size={18} className="text-red-400" />}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white text-[13px] font-semibold truncate">{tx.description || tx.transaction_type}</p>

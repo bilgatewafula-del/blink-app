@@ -1,5 +1,6 @@
 import { memo, useState, useEffect, useRef, useCallback } from 'react';
 import VerifiedBadge from './VerifiedBadge';
+import { feedImageUrl } from '../lib/imageUtils';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -99,7 +100,7 @@ function MediaGrid({ images, onImageClick, onDoubleTapLike }) {
     <div className="mb-2 overflow-hidden rounded-2xl border border-white/10 relative">
       {n === 1 && (
         <div className="relative">
-          <img src={images[0]} alt="" className="w-full object-cover cursor-pointer"
+          <img src={feedImageUrl(images[0], 800)} alt="" className="w-full object-cover cursor-pointer"
             style={{ maxHeight:420 }} loading="lazy" decoding="async"
             onClick={e => handleTap(e, 0)} />
           <HeartBurst />
@@ -108,7 +109,7 @@ function MediaGrid({ images, onImageClick, onDoubleTapLike }) {
       {n === 2 && (
         <div className="grid grid-cols-2 gap-[2px] relative">
           {images.map((img,i) => (
-            <img key={i} src={img} alt="" className="w-full object-cover cursor-pointer"
+            <img key={i} src={feedImageUrl(img, 800)} alt="" className="w-full object-cover cursor-pointer"
               style={{ aspectRatio:'1/1' }} loading="lazy" decoding="async"
               onClick={e => handleTap(e, i)} />
           ))}
@@ -117,13 +118,13 @@ function MediaGrid({ images, onImageClick, onDoubleTapLike }) {
       )}
       {n === 3 && (
         <div className="grid gap-[2px] relative" style={{ gridTemplateColumns:'1fr 1fr', gridTemplateRows:'1fr 1fr' }}>
-          <img src={images[0]} alt="" className="row-span-2 w-full h-full object-cover cursor-pointer"
+          <img src={feedImageUrl(images[0], 800)} alt="" className="row-span-2 w-full h-full object-cover cursor-pointer"
             style={{ aspectRatio:'1/2' }} loading="lazy" decoding="async"
             onClick={e => handleTap(e, 0)} />
-          <img src={images[1]} alt="" className="w-full object-cover cursor-pointer"
+          <img src={feedImageUrl(images[1], 800)} alt="" className="w-full object-cover cursor-pointer"
             style={{ aspectRatio:'1/1' }} loading="lazy" decoding="async"
             onClick={e => handleTap(e, 1)} />
-          <img src={images[2]} alt="" className="w-full object-cover cursor-pointer"
+          <img src={feedImageUrl(images[2], 800)} alt="" className="w-full object-cover cursor-pointer"
             style={{ aspectRatio:'1/1' }} loading="lazy" decoding="async"
             onClick={e => handleTap(e, 2)} />
           <HeartBurst />
@@ -133,7 +134,7 @@ function MediaGrid({ images, onImageClick, onDoubleTapLike }) {
         <div className="grid grid-cols-2 gap-[2px] relative">
           {images.slice(0,4).map((img,i) => (
             <div key={i} className="relative">
-              <img src={img} alt="" className="w-full object-cover cursor-pointer"
+              <img src={feedImageUrl(img, 800)} alt="" className="w-full object-cover cursor-pointer"
                 style={{ aspectRatio:'1/1' }} loading="lazy" decoding="async"
                 onClick={e => handleTap(e, i)} />
               {i === 3 && n > 4 && (

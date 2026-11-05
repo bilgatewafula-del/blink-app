@@ -38,7 +38,7 @@ export default function BoostPost({ post, onClose }) {
         {/* Requires paid plan */}
         {!canBoost && (
           <div className="bg-yellow-500/10 border border-yellow-500/25 rounded-2xl p-4 mb-4">
-            <p className="text-yellow-400 font-bold text-sm">⭐ Pro plan required</p>
+            <p className="text-yellow-400 font-bold text-sm">Pro plan required</p>
             <p className="text-yellow-400/60 text-xs mt-1">Upgrade to Pro (KES 299/month) or higher to access post boosting.</p>
           </div>
         )}
@@ -89,7 +89,7 @@ export default function BoostPost({ post, onClose }) {
           className="w-full py-4 rounded-2xl font-bold text-white disabled:opacity-40 active:scale-[0.98] transition-all"
           style={{ background: 'linear-gradient(135deg, #FF6B35, #FF3D00)', boxShadow: '0 8px 24px rgba(255,107,53,0.3)' }}
         >
-          ⚡ Boost for {selectedPkg ? formatKES(selectedPkg.price) : '—'}
+          Boost for {selectedPkg ? formatKES(selectedPkg.price) : '—'}
         </button>
       </div>
 

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+import { PlanIcon } from '../../components/ui';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import { PLANS, formatKES, getActivePlan, isSubscriptionActive } from '../../utils/paymentUtils';
 import PaymentModal from '../../components/PaymentModal';
-import { ArrowLeft, Check, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, Check, Clock, CheckCircle, XCircle, CreditCard } from 'lucide-react';
 
 export default function SubscriptionPage() {
   const navigate = useNavigate();
@@ -47,13 +48,13 @@ export default function SubscriptionPage() {
         <div className="flex-1">
           <h1 className="text-white font-bold text-[15px] leading-none">B-Link Subscription</h1>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className={`text-xs font-bold px-2 py-0.5 rounded-full capitalize ${
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full capitalize inline-flex items-center gap-1 ${
               activePlan === 'free' ? 'bg-white/10 text-white/50' :
               activePlan === 'pro' ? 'bg-[#FF5A1F]/20 text-[#FF5A1F]' :
               activePlan === 'creator' ? 'bg-[#FF6B35]/20 text-[#FF6B35]' :
               'bg-yellow-500/20 text-yellow-400'
             }`}>
-              {PLANS[activePlan]?.badge || ''} {activePlan} plan
+              <PlanIcon plan={activePlan} size={12} /> {activePlan} plan
             </span>
             {isActive && profile?.subscription_expires_at && (
               <span className="text-[#8E8C88] text-[11px]">
@@ -109,7 +110,7 @@ export default function SubscriptionPage() {
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex items-center gap-2.5">
-                      {p.badge && <span className="text-2xl">{p.badge}</span>}
+                      <PlanIcon plan={p.key} size={26} />
                       <div>
                         <p className="text-white font-black text-[17px] leading-none">{p.label}</p>
                         <p className="text-white/40 text-xs mt-1">
@@ -168,7 +169,7 @@ export default function SubscriptionPage() {
         <div className="px-4 space-y-2">
           {payments.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-4xl mb-3">💳</p>
+              <CreditCard size={38} className="text-[#8E8C88] mx-auto mb-3" />
               <p className="text-white font-bold">No payments yet</p>
               <p className="text-[#8E8C88] text-sm mt-1">Upgrade your plan to get started</p>
             </div>
@@ -182,7 +183,7 @@ export default function SubscriptionPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="text-white font-bold text-[14px] capitalize">
-                      {PLANS[pay.plan]?.badge} {PLANS[pay.plan]?.label || pay.plan} Plan
+                      {PLANS[pay.plan]?.label || pay.plan} Plan
                     </span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                       pay.status === 'confirmed' ? 'bg-green-500/20 text-green-400 border-green-500/30' :

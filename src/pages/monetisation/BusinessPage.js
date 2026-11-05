@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import { BUSINESS_PAGE_PRICE, formatKES } from '../../utils/paymentUtils';
 import PaymentModal from '../../components/PaymentModal';
-import { ArrowLeft, Check, Clock, Phone, MessageCircle, BarChart2, Shield } from 'lucide-react';
+import { ArrowLeft, Check, Clock, Phone, MessageCircle, BarChart2, Shield, Briefcase } from 'lucide-react';
 
 export default function BusinessPage() {
   const navigate = useNavigate();
@@ -53,7 +53,7 @@ export default function BusinessPage() {
 
         {isBusiness && (
           <div className="bg-yellow-500/10 border border-yellow-500/25 rounded-2xl p-4 flex items-center gap-3">
-            <span className="text-2xl">💼</span>
+            <Briefcase size={24} className="text-[#FFD700]" />
             <div>
               <p className="text-white font-bold">Business Page Active</p>
               <p className="text-[#8E8C88] text-xs mt-0.5">Your business features are live.</p>
@@ -73,7 +73,7 @@ export default function BusinessPage() {
 
         {/* Hero */}
         <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-2xl p-5 text-center">
-          <span className="text-5xl block mb-3">💼</span>
+          <Briefcase size={44} className="text-[#FFD700] mb-3" />
           <p className="text-white font-black text-xl mb-1">B-Link Business</p>
           <p className="text-white/50 text-sm mb-3">Grow your brand on Africa's GenZ platform</p>
           <div className="bg-white/[0.06] rounded-xl px-4 py-3 inline-block">
@@ -117,7 +117,7 @@ export default function BusinessPage() {
             className="w-full py-4 rounded-2xl font-bold text-white text-[15px] active:scale-[0.98] transition-all"
             style={{ background:'linear-gradient(135deg, #FFD700, #FF6B35)', boxShadow:'0 8px 24px rgba(255,215,0,0.25)' }}
           >
-            💼 Set Up Business Page — {formatKES(BUSINESS_PAGE_PRICE)}/mo
+            Set up Business Page — {formatKES(BUSINESS_PAGE_PRICE)}/mo
           </button>
         )}
 

@@ -1,5 +1,7 @@
 // src/components/Avatar.js
 // Consistent avatar used everywhere
+import { avatarUrl } from '../lib/imageUtils';
+
 export default function Avatar({ url, name, size = 10, className = '', onClick }) {
   const px = size * 4; // tailwind unit to px (size-10 = 40px)
 
@@ -20,7 +22,7 @@ export default function Avatar({ url, name, size = 10, className = '', onClick }
   if (url) {
     return (
       <img
-        src={url}
+        src={avatarUrl(url, px)}
         alt={name || ''}
         style={{ ...style, objectFit: 'cover' }}
         className={className}

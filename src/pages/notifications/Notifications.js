@@ -8,36 +8,41 @@ import {
   Bell, Check, CheckCheck, Megaphone,
   Shield, ArrowLeft, X, Send, AlertTriangle,
   Info, Zap, Gift, Wrench, ChevronRight,
+  Heart, MessageCircle, Reply, AtSign, Users, UserPlus, Repeat2, Quote,
+  Share2, Mail, ShieldAlert, Settings, Trophy, Flame, Smile, Frown, Angry,
+  CircleDot, BarChart3,
 } from 'lucide-react';
+import FollowButton from '../../components/FollowButton';
+import { fetchRelationships } from '../../lib/follows';
 import Avatar from '../../components/Avatar';
 import VerifiedBadge from '../../components/VerifiedBadge';
 
 /* ── Notification type config ──────────────────── */
 const TYPE_CONFIG = {
-  like:         { emoji:'❤️',  color:'#EF4444', tab:'activity' },
-  haha:         { emoji:'😂',  color:'#FFD700', tab:'activity' },
-  wow:          { emoji:'😮',  color:'#FF6B35', tab:'activity' },
-  sad:          { emoji:'😢',  color:'#8E8C88', tab:'activity' },
-  angry:        { emoji:'😡',  color:'#EF4444', tab:'activity' },
-  fire:         { emoji:'🔥',  color:'#FF6B35', tab:'activity' },
-  comment:      { emoji:'💬',  color:'#FF5A1F', tab:'activity' },
-  reply:        { emoji:'↩️',  color:'#FF5A1F', tab:'activity' },
-  mention:      { emoji:'🏷️',  color:'#FF6B35', tab:'social'   },
-  follow:       { emoji:'👥',  color:'#FF2D78', tab:'social'   },
-  follow_request:{ emoji:'👤', color:'#FF2D78', tab:'social'   },
-  repost:       { emoji:'🔁',  color:'#2ECC71', tab:'activity' },
-  quote:        { emoji:'📝',  color:'#2ECC71', tab:'activity' },
-  share:        { emoji:'📤',  color:'#FFB020', tab:'activity' },
-  message:      { emoji:'📨',  color:'#FF5A1F', tab:'messages' },
-  admin_action: { emoji:'🛡️',  color:'#EF4444', tab:'system'   },
-  announcement: { emoji:'📢',  color:'#FFD700', tab:'system'   },
-  system:       { emoji:'⚙️',  color:'#8E8C88', tab:'system'   },
-  milestone:    { emoji:'🔥',  color:'#FFD700', tab:'activity' },
-  achievement:  { emoji:'🏆',  color:'#FFD700', tab:'activity' },
-  warning:      { emoji:'⚠️',  color:'#FF6B35', tab:'system'   },
-  restrict:     { emoji:'🟡',  color:'#FFD700', tab:'system'   },
-  suspend:      { emoji:'🔵',  color:'#FF6B35', tab:'system'   },
-  ban:          { emoji:'🔴',  color:'#EF4444', tab:'system'   },
+  like:         { Icon: Heart,  color:'#EF4444', tab:'activity' },
+  haha:         { Icon: Smile,  color:'#FFD700', tab:'activity' },
+  wow:          { Icon: Zap,  color:'#FF6B35', tab:'activity' },
+  sad:          { Icon: Frown,  color:'#8E8C88', tab:'activity' },
+  angry:        { Icon: Angry,  color:'#EF4444', tab:'activity' },
+  fire:         { Icon: Flame,  color:'#FF6B35', tab:'activity' },
+  comment:      { Icon: MessageCircle,  color:'#FF5A1F', tab:'activity' },
+  reply:        { Icon: Reply,  color:'#FF5A1F', tab:'activity' },
+  mention:      { Icon: AtSign,  color:'#FF6B35', tab:'social'   },
+  follow:       { Icon: Users,  color:'#FF2D78', tab:'social'   },
+  follow_request:{ Icon: UserPlus, color:'#FF2D78', tab:'social'   },
+  repost:       { Icon: Repeat2,  color:'#2ECC71', tab:'activity' },
+  quote:        { Icon: Quote,  color:'#2ECC71', tab:'activity' },
+  share:        { Icon: Share2,  color:'#FFB020', tab:'activity' },
+  message:      { Icon: Mail,  color:'#FF5A1F', tab:'messages' },
+  admin_action: { Icon: ShieldAlert,  color:'#EF4444', tab:'system'   },
+  announcement: { Icon: Megaphone,  color:'#FFD700', tab:'system'   },
+  system:       { Icon: Settings,  color:'#8E8C88', tab:'system'   },
+  milestone:    { Icon: Flame,  color:'#FFD700', tab:'activity' },
+  achievement:  { Icon: Trophy,  color:'#FFD700', tab:'activity' },
+  warning:      { Icon: AlertTriangle,  color:'#FF6B35', tab:'system'   },
+  restrict:     { Icon: CircleDot,  color:'#FFD700', tab:'system'   },
+  suspend:      { Icon: CircleDot,  color:'#FF6B35', tab:'system'   },
+  ban:          { Icon: CircleDot,  color:'#EF4444', tab:'system'   },
 };
 
 const TABS = [
@@ -87,9 +92,9 @@ function buildText(n) {
     case 'ban':
       return n.message || 'System notification';
     case 'milestone':
-      return n.message || 'Your post reached a milestone 🔥';
+      return n.message || 'Your post reached a milestone';
     case 'achievement':
-      return n.message || 'You earned an achievement 🏆';
+      return n.message || 'You earned an achievement';
     default:
       return n.message || 'New notification';
   }
@@ -327,6 +332,7 @@ export default function Notifications() {
   const [loading,      setLoading]      = useState(true);
   const [unreadCount,  setUnreadCount]  = useState(0);
   const [showBroadcast,setShowBroadcast]= useState(false);
+  const [followRels,   setFollowRels]   = useState({});
   const [todayStats,   setTodayStats]   = useState({ reactions:0, comments:0, followers:0, messages:0 });
 
   const isAdmin = ['blink','admin'].includes(profile?.role);
@@ -432,6 +438,16 @@ export default function Notifications() {
     setUnreadCount(0);
   };
 
+  // One bulk query for every "followed you" row instead of one per row.
+  useEffect(() => {
+    if (!user?.id) return;
+    const ids = notifs.filter((n) => n.type === 'follow' && n.from_user?.id).map((n) => n.from_user.id);
+    if (ids.length === 0) return;
+    let live = true;
+    fetchRelationships(user.id, ids).then((m) => live && setFollowRels((prev) => ({ ...prev, ...m }))).catch(() => {});
+    return () => { live = false; };
+  }, [notifs, user?.id]);
+
   const handleTapNotif = async (n) => {
     // Mark read
     await supabase.from('notifications').update({ is_read: true }).eq('id', n.id);
@@ -446,20 +462,6 @@ export default function Notifications() {
       navigate('/chats/' + n.ref_id);
     }
     // system/admin/ban notifications: stay on page, user can read the message
-  };
-
-  const handleFollowBack = async (e, fromUserId) => {
-    e.stopPropagation();
-    try {
-      await supabase.from('follows').upsert(
-        { follower_id: user.id, following_id: fromUserId, status: 'accepted' },
-        { onConflict: 'follower_id,following_id' }
-      );
-      await supabase.from('notifications').upsert(
-        { user_id: fromUserId, from_user_id: user.id, type: 'follow', message: 'followed you back', is_read: false },
-        { onConflict: 'user_id,from_user_id,type,ref_id', ignoreDuplicates: true }
-      );
-    } catch (err) { console.error(err.message); }
   };
 
   const dismissAnnouncement = async (annId) => {
@@ -618,16 +620,16 @@ export default function Notifications() {
         {/* ── TODAY'S ACTIVITY SUMMARY ── */}
         {hasTodayActivity && activeTab === 'all' && (
           <div className="bg-gradient-to-r from-[#FF5A1F]/10 to-[#FF2D78]/10 border border-[#FF5A1F]/20 rounded-2xl p-4">
-            <p className="text-white font-bold text-sm mb-3">📊 Today's Activity</p>
+            <p className="text-white font-bold text-sm mb-3 flex items-center gap-2"><BarChart3 size={16} className="text-[#FF5A1F]" /> Today's activity</p>
             <div className="grid grid-cols-4 gap-2">
               {[
-                { label:'Reactions', value:todayStats.reactions, emoji:'❤️', color:'#EF4444' },
-                { label:'Comments',  value:todayStats.comments,  emoji:'💬', color:'#FF5A1F' },
-                { label:'Followers', value:todayStats.followers, emoji:'👥', color:'#FF2D78' },
-                { label:'Messages',  value:todayStats.messages,  emoji:'📨', color:'#FFB020' },
+                { label:'Reactions', value:todayStats.reactions, Icon:Heart,         color:'#EF4444' },
+                { label:'Comments',  value:todayStats.comments,  Icon:MessageCircle, color:'#FF5A1F' },
+                { label:'Followers', value:todayStats.followers, Icon:Users,         color:'#FF2D78' },
+                { label:'Messages',  value:todayStats.messages,  Icon:Mail,          color:'#FFB020' },
               ].map(s => (
                 <div key={s.label} className="text-center bg-white/[0.04] rounded-xl py-2.5 px-1">
-                  <p className="text-lg leading-none mb-1">{s.emoji}</p>
+                  <s.Icon size={18} color={s.color} className="mx-auto mb-1.5" />
                   <p className="text-white font-bold text-sm leading-none">{formatNumber(s.value)}</p>
                   <p className="text-[#8E8C88] text-[10px] mt-0.5">{s.label}</p>
                 </div>
@@ -680,7 +682,7 @@ export default function Notifications() {
                               className="w-11 h-11 rounded-full flex items-center justify-center text-xl"
                               style={{ background: cfg.color + '20', border: '1px solid ' + cfg.color + '40' }}
                             >
-                              {cfg.emoji}
+                              <cfg.Icon size={20} color={cfg.color} />
                             </div>
                           ) : (
                             <div className="relative">
@@ -702,7 +704,7 @@ export default function Notifications() {
                                 className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] border-2 border-[#0D0C0B]"
                                 style={{ background: cfg.color }}
                               >
-                                {cfg.emoji}
+                                <cfg.Icon size={11} color="#fff" strokeWidth={2.5} />
                               </div>
                             </div>
                           )}
@@ -751,15 +753,17 @@ export default function Notifications() {
                             />
                           )}
 
-                          {/* Follow back button */}
-                          {isFollow && (
-                            <button
-                              onClick={e => handleFollowBack(e, n.from_user?.id)}
-                              className="text-xs font-bold px-3 py-1.5 rounded-full transition-all"
-                              style={{ background: 'linear-gradient(135deg, #FF5A1F, #FF2D78)', color: 'white' }}
-                            >
-                              Follow Back
-                            </button>
+                          {/* Follow state (Follow Back / Following / Friends) */}
+                          {isFollow && n.from_user?.id && (
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <FollowButton
+                                targetId={n.from_user.id}
+                                initialRelationship={followRels[n.from_user.id] ?? null}
+                                username={n.from_user.username}
+                                displayName={n.from_user.display_name}
+                                avatarUrl={n.from_user.avatar_url}
+                              />
+                            </div>
                           )}
                         </div>
                       </button>

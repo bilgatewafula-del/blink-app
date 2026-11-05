@@ -139,7 +139,9 @@ export default function ChatRoom() {
 
     (async () => {
       try {
-        const [chatInfoRes] = await Promise.all([
+        // Non-critical pieces (messages, read receipts, pinned) must not be
+        // able to take the whole conversation down with them.
+        const settled = await Promise.allSettled([
           supabase.rpc('get_chat_info', { p_chat_id: id }),
           fetchMessages(),
           markRead(),
@@ -147,9 +149,25 @@ export default function ChatRoom() {
         ]);
         if (cancelled) return;
 
-        const { data: infoRows, error: infoErr } = chatInfoRes;
-        if (infoErr) throw infoErr;
-        const info = infoRows?.[0];
+        const chatInfoRes = settled[0].status === 'fulfilled'
+          ? settled[0].value
+          : { data: null, error: settled[0].reason };
+        let info = chatInfoRes.data?.[0];
+
+        if (!info) {
+          // Fallback: work out who we are talking to straight from the chat row.
+          try {
+            const { data: chat } = await supabase.from('chats').select('id, participants').eq('id', id).maybeSingle();
+            const otherId = (chat?.participants || []).find((pid) => pid !== user.id);
+            if (otherId) {
+              const { data: u } = await supabase.from('users')
+                .select('id,username,display_name,avatar_url,is_verified,is_online,last_seen,bio')
+                .eq('id', otherId).maybeSingle();
+              if (u) info = { other_user_id: u.id, ...u };
+            }
+          } catch { /* fall through to the error below */ }
+        }
+        if (!info) throw chatInfoRes.error || new Error('This conversation could not be found.');
         if (info) {
           setOtherUser({
             id: info.other_user_id, username: info.username, display_name: info.display_name,
@@ -505,10 +523,10 @@ export default function ChatRoom() {
 
   if (initError) return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100dvh', background:'#0D0C0B', gap:12, padding:24 }}>
-      <p style={{ fontSize:40 }}>⚠️</p>
-      <p style={{ color:'white', fontWeight:700 }}>Could not load conversation</p>
+      <p style={{ color:'white', fontWeight:700, fontSize:17 }}>Could not load conversation</p>
       <p style={{ color:'#8E8C88', fontSize:13, textAlign:'center' }}>{initError}</p>
-      <button onClick={() => navigate('/chats')} style={{ color:'#FF5A1F', fontWeight:700, background:'none', border:'none', cursor:'pointer', fontSize:14 }}>← Back to Chats</button>
+      <button onClick={() => window.location.reload()} style={{ background:'#FF5A1F', color:'white', fontWeight:700, border:'none', borderRadius:999, padding:'10px 22px', cursor:'pointer', fontSize:14 }}>Try again</button>
+      <button onClick={() => navigate('/chats')} style={{ color:'#8E8C88', fontWeight:600, background:'none', border:'none', cursor:'pointer', fontSize:14 }}>Back to chats</button>
     </div>
   );
 

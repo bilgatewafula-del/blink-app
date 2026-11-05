@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { IconTile } from '../../components/ui';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
-import { ArrowLeft, Wallet, Clock, Bell, TrendingUp, Gift, Star } from 'lucide-react';
+import { ArrowLeft, Wallet, Clock, Bell, TrendingUp, Gift, Star, Send, Banknote, Landmark, BarChart3, ShoppingBag, CheckCircle2 } from 'lucide-react';
 
 const WalletPage = () => {
   const { user, profile } = useAuth();
@@ -35,12 +36,12 @@ const WalletPage = () => {
   };
 
   const upcomingFeatures = [
-    { icon: '💸', title: 'M-Pesa Tips', desc: 'Send and receive tips directly via M-Pesa', eta: 'Q2 2025' },
-    { icon: '💰', title: 'Creator Earnings', desc: 'Earn from your content and followers', eta: 'Q2 2025' },
-    { icon: '🏧', title: 'Withdrawals', desc: 'Withdraw earnings to your M-Pesa number', eta: 'Q3 2025' },
-    { icon: '🎁', title: 'Gift Subscriptions', desc: 'Gift premium access to other users', eta: 'Q3 2025' },
-    { icon: '📊', title: 'Revenue Analytics', desc: 'Track your earnings with detailed charts', eta: 'Q4 2025' },
-    { icon: '🛒', title: 'Creator Shop', desc: 'Sell digital products to your followers', eta: 'Q1 2026' },
+    { icon: Send, title: 'M-Pesa Tips', desc: 'Send and receive tips directly via M-Pesa', eta: 'Q2 2025' },
+    { icon: Banknote, title: 'Creator Earnings', desc: 'Earn from your content and followers', eta: 'Q2 2025' },
+    { icon: Landmark, title: 'Withdrawals', desc: 'Withdraw earnings to your M-Pesa number', eta: 'Q3 2025' },
+    { icon: Gift, title: 'Gift Subscriptions', desc: 'Gift premium access to other users', eta: 'Q3 2025' },
+    { icon: BarChart3, title: 'Revenue Analytics', desc: 'Track your earnings with detailed charts', eta: 'Q4 2025' },
+    { icon: ShoppingBag, title: 'Creator Shop', desc: 'Sell digital products to your followers', eta: 'Q1 2026' },
   ];
 
   return (
@@ -113,8 +114,8 @@ const WalletPage = () => {
             <div className="flex items-center justify-between">
               <p className="text-[#8E8C88] text-sm">Creator tier</p>
               <p className="text-[#FFD700] font-semibold">
-                {(profile?.follower_count || 0) >= 1000 ? '🌟 Gold' :
-                 (profile?.follower_count || 0) >= 100 ? '⭐ Silver' : '🔰 Bronze'}
+                {(profile?.follower_count || 0) >= 1000 ? 'Gold' :
+                 (profile?.follower_count || 0) >= 100 ? 'Silver' : 'Bronze'}
               </p>
             </div>
           </div>
@@ -127,7 +128,7 @@ const WalletPage = () => {
         <div className="space-y-2">
           {upcomingFeatures.map((f) => (
             <div key={f.title} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-3">
-              <span className="text-2xl flex-shrink-0">{f.icon}</span>
+              <IconTile icon={f.icon} size={40} iconSize={20} />
               <div className="flex-1 min-w-0">
                 <p className="text-white font-semibold text-sm">{f.title}</p>
                 <p className="text-[#8E8C88] text-xs">{f.desc}</p>
@@ -149,7 +150,7 @@ const WalletPage = () => {
           </div>
           {notified ? (
             <div className="bg-[#2ECC71]/10 border border-[#2ECC71]/20 rounded-xl p-3 text-center">
-              <p className="text-[#2ECC71] font-semibold text-sm">✅ You're on the list!</p>
+              <p className="text-[#2ECC71] font-semibold text-sm inline-flex items-center gap-1.5"><CheckCircle2 size={16} /> You're on the list!</p>
               <p className="text-[#8E8C88] text-xs mt-1">We'll notify you when the wallet launches.</p>
             </div>
           ) : (
@@ -173,7 +174,7 @@ const WalletPage = () => {
       </div>
 
       <p className="text-center text-[#8E8C88] text-xs px-4 mt-4 pb-4">
-        🔒 Your earnings will be 100% secure with Safaricom M-Pesa integration
+        Your earnings will be 100% secure with Safaricom M-Pesa integration
       </p>
     </div>
   );

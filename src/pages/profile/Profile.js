@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
@@ -6,11 +6,20 @@ import { formatNumber } from '../../utils/formatNumber';
 import PostCard from '../../components/PostCard';
 import ImageViewer from '../../components/ImageViewer';
 import VerifiedBadge from '../../components/VerifiedBadge';
+import Avatar from '../../components/Avatar';
+import FollowButton from '../../components/FollowButton';
+import { EmptyState, IconTile, RoleIcon, PlanIcon, Spinner } from '../../components/ui';
 import { getActivePlan, PLANS } from '../../utils/paymentUtils';
 import {
-  ArrowLeft, Settings, UserPlus, UserCheck, Users2,
-  Grid, List, MoreHorizontal, MessageCircle,
-  Coins, ChevronRight, X, UserMinus,
+  REL, iFollowThem, fetchProfileStats, fetchRelationship, fetchRelationships,
+  fetchFollowersList, fetchFollowingList, fetchFriendsList, onFollowChange,
+} from '../../lib/follows';
+import { compressImage, uploadImage, feedImageUrl, thumbUrl } from '../../lib/imageUtils';
+import {
+  ArrowLeft, Settings, MoreHorizontal, MessageCircle, Coins, ChevronRight, X,
+  UserMinus, Grid, List, Camera, Link2, MapPin, CalendarDays, Share2, Flag, Ban,
+  Copy, Crown, BadgeCheck, Briefcase, Search, FileText, Repeat2, Image as ImageIcon,
+  AlertTriangle, UserX, Play, Users2,
 } from 'lucide-react';
 
 const POST_SELECT = `
@@ -20,14 +29,7 @@ const POST_SELECT = `
   users!posts_user_id_fkey(id,username,display_name,avatar_url,country,is_verified,role)
 `.trim();
 
-// Own profile can see every field about itself. Someone else's
-// profile must NOT — the original code did `select('*')` for both
-// branches, which meant viewing any other user's profile returned
-// their coins_balance, subscription plan/expiry, ban/restriction
-// status and reason, posts_today, and every other privileged column
-// straight into the browser's network response, regardless of
-// whether the UI displayed it. This list is exactly what the public
-// profile view actually renders — nothing more.
+// Own profile may read its private fields; someone else's profile must not.
 const OWN_PROFILE_FIELDS = `
   id, username, display_name, avatar_url, bio, country, is_verified,
   role, is_business, is_banned, is_restricted, created_at,
@@ -41,25 +43,25 @@ const PUBLIC_PROFILE_FIELDS = `
   followers_count, following_count, posts_count
 `.trim();
 
-const POSTS_PAGE_SIZE = 15;
+const PAGE_SIZE = 15;
+const REPORT_REASONS = [
+  'Spam or scam', 'Harassment or bullying', 'Fake account or impersonation',
+  'Inappropriate content', 'Something else',
+];
+
+// Stale-while-revalidate: reopening a profile shows instantly, then refreshes.
+const profileCache = new Map();
 
 function ProfileSkeleton() {
   return (
     <div className="min-h-screen bg-[#0D0C0B] pb-24 animate-pulse">
       <div className="px-4 pt-5 pb-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="w-20 h-20 rounded-full skeleton flex-shrink-0" />
-          <div className="flex-1 flex justify-around">
-            {[1,2,3].map(i => (
-              <div key={i} className="flex flex-col items-center gap-1.5">
-                <div className="h-5 w-8 rounded-full skeleton" />
-                <div className="h-2.5 w-12 rounded-full skeleton" />
-              </div>
-            ))}
-          </div>
-        </div>
+        <div className="w-20 h-20 rounded-full skeleton" />
         <div className="h-4 w-32 rounded-full skeleton mt-4" />
         <div className="h-3 w-20 rounded-full skeleton mt-2" />
+        <div className="grid grid-cols-4 gap-2 mt-5">
+          {[1, 2, 3, 4].map((i) => <div key={i} className="h-12 rounded-xl skeleton" />)}
+        </div>
         <div className="flex gap-2 mt-4">
           <div className="flex-1 h-10 rounded-xl skeleton" />
           <div className="flex-1 h-10 rounded-xl skeleton" />
@@ -69,436 +71,655 @@ function ProfileSkeleton() {
   );
 }
 
-// Followers/Following list modal — the report explicitly asks for
-// counts to be clickable; previously they were plain, inert text.
-function UserListModal({ title, fetcher, currentUserId, onClose, onRemove, canRemove }) {
+/* Followers / Following / Friends list — every row has a live follow button */
+function UserListModal({ title, kind, userId, currentUserId, canRemove, onRemove, onClose }) {
   const navigate = useNavigate();
-  const [users,   setUsers]   = useState(null);
-  const [error,   setError]   = useState('');
+  const [users, setUsers] = useState(null);
+  const [rels, setRels] = useState({});
+  const [error, setError] = useState('');
+  const [q, setQ] = useState('');
 
   useEffect(() => {
-    fetcher().then(setUsers).catch(err => setError(err.message));
-  }, [fetcher]);
+    let live = true;
+    const fetcher = kind === 'followers' ? fetchFollowersList : kind === 'following' ? fetchFollowingList : fetchFriendsList;
+    fetcher(userId)
+      .then(async (list) => {
+        if (!live) return;
+        setUsers(list);
+        const map = await fetchRelationships(currentUserId, list.map((u) => u.id));
+        if (live) setRels(map);
+      })
+      .catch((err) => live && setError(err.message || 'Could not load this list.'));
+    return () => { live = false; };
+  }, [kind, userId, currentUserId]);
+
+  const shown = (users || []).filter((u) => {
+    const t = q.trim().toLowerCase();
+    return !t || u.username?.toLowerCase().includes(t) || u.display_name?.toLowerCase().includes(t);
+  });
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end justify-center" onClick={onClose}>
-      <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl max-h-[75vh] flex flex-col" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/10 flex-shrink-0">
+      <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl h-[78vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 pt-4 pb-3 flex-shrink-0">
           <p className="text-white font-bold text-base">{title}</p>
           <button onClick={onClose} aria-label="Close" className="text-[#8E8C88] hover:text-white"><X size={20} /></button>
         </div>
-        <div className="overflow-y-auto flex-1">
+        {users && users.length > 6 && (
+          <div className="px-4 pb-3 flex-shrink-0">
+            <div className="flex items-center gap-2 bg-white/[0.07] rounded-xl px-3 py-2">
+              <Search size={15} className="text-[#8E8C88]" />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search"
+                className="flex-1 bg-transparent text-white text-sm placeholder-[#8E8C88] focus:outline-none" />
+            </div>
+          </div>
+        )}
+        <div className="overflow-y-auto flex-1 border-t border-white/[0.06]">
           {error ? (
-            <p className="text-red-400 text-sm text-center py-10">{error}</p>
+            <p className="text-red-400 text-sm text-center py-10 px-6">{error}</p>
           ) : users === null ? (
-            <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-[#FF5A1F] border-t-transparent rounded-full animate-spin" /></div>
-          ) : users.length === 0 ? (
-            <p className="text-[#8E8C88] text-sm text-center py-10">Nobody here yet</p>
-          ) : (
-            users.map(u => (
-              <div key={u.id} className="flex items-center gap-3 px-5 py-3 border-b border-white/[0.05]">
-                <button onClick={() => { onClose(); navigate('/profile/' + u.username); }} className="flex items-center gap-3 flex-1 min-w-0 text-left">
-                  {u.avatar_url
-                    ? <img src={u.avatar_url} alt="" className="w-11 h-11 rounded-full object-cover flex-shrink-0" />
-                    : <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold flex-shrink-0">{u.display_name?.[0]?.toUpperCase()}</div>
-                  }
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1">
-                      <p className="text-white font-bold text-[14px] truncate">{u.display_name}</p>
-                      {u.is_verified && <VerifiedBadge size={13} />}
-                    </div>
-                    <p className="text-[#8E8C88] text-[12px]">@{u.username}</p>
+            <div className="flex justify-center py-10 text-[#FF5A1F]"><Spinner size={24} /></div>
+          ) : shown.length === 0 ? (
+            <EmptyState icon={Users2} title={q ? 'No matches' : 'Nobody here yet'}
+              text={q ? 'Try a different name.' : kind === 'friends' ? 'Friends appear when you follow each other.' : undefined} />
+          ) : shown.map((u) => (
+            <div key={u.id} className="flex items-center gap-3 px-5 py-3 border-b border-white/[0.05]">
+              <button onClick={() => { onClose(); navigate('/profile/' + u.username); }} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+                <Avatar url={u.avatar_url} name={u.display_name} size={11} />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1">
+                    <p className="text-white font-bold text-[14px] truncate">{u.display_name}</p>
+                    {u.is_verified && <VerifiedBadge size={13} />}
                   </div>
+                  <p className="text-[#8E8C88] text-[12px] truncate">@{u.username}</p>
+                </div>
+              </button>
+              {u.id !== currentUserId && (
+                <FollowButton targetId={u.id} initialRelationship={rels[u.id] ?? null}
+                  username={u.username} displayName={u.display_name} avatarUrl={u.avatar_url} />
+              )}
+              {canRemove && kind === 'followers' && u.id !== currentUserId && (
+                <button
+                  onClick={async () => { await onRemove(u.id); setUsers((l) => (l || []).filter((x) => x.id !== u.id)); }}
+                  aria-label={`Remove ${u.username}`}
+                  className="text-[#8E8C88] hover:text-red-400 p-2 rounded-full hover:bg-red-500/10 flex-shrink-0"
+                >
+                  <UserMinus size={16} />
                 </button>
-                {canRemove && u.id !== currentUserId && (
-                  <button
-                    onClick={() => onRemove(u.id)}
-                    aria-label={`Remove ${u.username}`}
-                    className="text-[#8E8C88] hover:text-red-400 text-xs font-bold px-2.5 py-1.5 rounded-full hover:bg-red-500/10 flex items-center gap-1 flex-shrink-0"
-                  >
-                    <UserMinus size={12} /> Remove
-                  </button>
-                )}
-              </div>
-            ))
-          )}
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </div>
   );
 }
 
+function Sheet({ onClose, children }) {
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/70 flex items-end justify-center" onClick={onClose}>
+      <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-4 pb-8" onClick={(e) => e.stopPropagation()}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function StatBox({ value, label, onClick }) {
+  const inner = (
+    <>
+      <p className="text-white font-black text-[19px] leading-none tabular-nums">{formatNumber(value || 0)}</p>
+      <p className="text-[#8E8C88] text-[11px] mt-1.5">{label}</p>
+    </>
+  );
+  return onClick
+    ? <button onClick={onClick} className="text-center py-2 rounded-xl active:bg-white/[0.06] transition-colors">{inner}</button>
+    : <div className="text-center py-2">{inner}</div>;
+}
+
 export default function Profile() {
-  const { username }     = useParams();
-  const navigate         = useNavigate();
-  const { user, profile: myProfile } = useAuth();
+  const { username } = useParams();
+  const navigate = useNavigate();
+  const { user, profile: myProfile, refreshProfile } = useAuth();
 
-  const [profile,       setProfile]       = useState(null);
-  const [posts,         setPosts]         = useState([]);
-  const [loading,       setLoading]       = useState(true);
-  const [postsLoading,  setPostsLoading]  = useState(true);
-  const [postsPage,     setPostsPage]     = useState(0);
-  const [postsHasMore,  setPostsHasMore]  = useState(true);
-  const [relationship,  setRelationship]  = useState('none'); // none | following | follow_back | friends
-  const [followBusy,    setFollowBusy]    = useState(false);
-  const [tab,           setTab]           = useState('posts');
-  const [viewLayout,    setViewLayout]    = useState('list');
-  const [imgViewer,     setImgViewer]     = useState(false);
-  const [fetchError,    setFetchError]    = useState('');
-  const [listModal,     setListModal]     = useState(null); // 'followers' | 'following' | null
+  const isOwnProfile = !username || username.toLowerCase() === myProfile?.username?.toLowerCase();
+  const cacheKey = isOwnProfile ? 'own:' + user?.id : 'u:' + (username || '').toLowerCase();
 
-  const isOwnProfile = !username || username === myProfile?.username;
+  const [profile, setProfile] = useState(() => profileCache.get(cacheKey)?.profile || null);
+  const [stats, setStats] = useState(() => profileCache.get(cacheKey)?.stats || null);
+  const [extras, setExtras] = useState(() => profileCache.get(cacheKey)?.extras || { website: null, cover_url: null });
+  const [loading, setLoading] = useState(() => !profileCache.get(cacheKey));
+  const [fetchError, setFetchError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
 
+  const [relationship, setRelationship] = useState(REL.NONE);
+  const relRef = useRef(REL.NONE);
+  relRef.current = relationship;
+
+  const [tab, setTab] = useState('posts');            // posts | media | reposts
+  const [viewLayout, setViewLayout] = useState('list');
+  const [feed, setFeed] = useState({
+    posts:   { items: [], page: 0, more: true, loading: true, loaded: false },
+    reposts: { items: [], page: 0, more: true, loading: false, loaded: false },
+  });
+
+  const [imgViewer, setImgViewer] = useState(false);
+  const [listModal, setListModal] = useState(null);   // followers | following | friends
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [blockOpen, setBlockOpen] = useState(false);
+  const [messageBusy, setMessageBusy] = useState(false);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const avatarInput = useRef(null);
+  const toastTimer = useRef(null);
+  const sentinel = useRef(null);
+
+  const showToast = useCallback((msg, type = 'ok') => {
+    setToast({ msg, type });
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 2800);
+  }, []);
+
+  /* ── posts ── */
+  const kindOf = (t) => (t === 'reposts' ? 'reposts' : 'posts');
+
+  const loadFeed = useCallback(async (uid, kind, page = 0, reset = false) => {
+    setFeed((f) => ({ ...f, [kind]: { ...f[kind], loading: true } }));
+    let q = supabase.from('posts').select(POST_SELECT)
+      .eq('user_id', uid)
+      .or('is_draft.is.null,is_draft.eq.false')
+      .or('status.is.null,status.neq.deleted');
+    q = kind === 'reposts' ? q.eq('is_repost', true) : q.or('is_repost.is.null,is_repost.eq.false');
+    const { data, error } = await q
+      .order('created_at', { ascending: false })
+      .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+    if (error) console.error('Profile posts error:', error.message);
+    const rows = (data || []).map((p) => ({ ...p, users: p['users!posts_user_id_fkey'] || p.users }));
+    setFeed((f) => ({
+      ...f,
+      [kind]: {
+        items: reset ? rows : [...f[kind].items, ...rows],
+        page, more: rows.length === PAGE_SIZE, loading: false, loaded: true,
+      },
+    }));
+  }, []);
+
+  /* ── load profile (instant from cache, then refresh) ── */
   useEffect(() => {
-    loadProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [username, user?.id]);
-
-  // Keep relationship state in sync with the database, not just local
-  // optimism — realtime on the follows table for this specific pair
-  // covers both directions (them following/unfollowing you updates
-  // Follow Back / Friends live, without a manual refresh).
-  useEffect(() => {
-    if (isOwnProfile || !profile?.id || !user?.id) return;
-    const ch = supabase.channel('profile:rel:' + user.id + ':' + profile.id)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'follows',
-          filter: `follower_id=eq.${profile.id}` }, refetchRelationship)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'follows',
-          filter: `following_id=eq.${profile.id}` }, refetchRelationship)
-      .subscribe();
-    return () => supabase.removeChannel(ch);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.id, user?.id, isOwnProfile]);
-
-  const refetchRelationship = async () => {
-    if (!user?.id || !profile?.id) return;
-    const { data } = await supabase.rpc('get_relationship', { p_viewer_id: user.id, p_target_id: profile.id });
-    if (data) setRelationship(data);
-  };
-
-  const loadProfile = async () => {
-    setLoading(true);
-    setPostsLoading(true);
+    if (!user?.id) return;
+    let cancelled = false;
+    const cached = profileCache.get(cacheKey);
+    if (cached) {
+      setProfile(cached.profile); setStats(cached.stats); setExtras(cached.extras); setLoading(false);
+    } else {
+      setProfile(null); setStats(null); setExtras({ website: null, cover_url: null }); setLoading(true);
+    }
     setFetchError('');
+    setTab('posts');
+    setRelationship(REL.NONE);
+    setFeed({
+      posts:   { items: [], page: 0, more: true, loading: true, loaded: false },
+      reposts: { items: [], page: 0, more: true, loading: false, loaded: false },
+    });
 
-    const hardTimeout = setTimeout(() => {
-      setLoading(false);
-      setFetchError(prev => prev || 'Taking longer than expected. Pull down or tap retry.');
-    }, 8000);
+    (async () => {
+      try {
+        const base = supabase.from('users');
+        const { data: pd, error } = isOwnProfile
+          ? await base.select(OWN_PROFILE_FIELDS).eq('id', user.id).maybeSingle()
+          : await base.select(PUBLIC_PROFILE_FIELDS).eq('username', username.toLowerCase()).maybeSingle();
+        if (cancelled) return;
+        if (error) throw error;
+        if (!pd) { setProfile(null); setLoading(false); setFeed((f) => ({ ...f, posts: { ...f.posts, loading: false } })); return; }
 
-    try {
-      const fields = isOwnProfile ? OWN_PROFILE_FIELDS : PUBLIC_PROFILE_FIELDS;
-      const query = isOwnProfile
-        ? supabase.from('users').select(fields).eq('id', user.id).maybeSingle()
-        : supabase.from('users').select(fields).eq('username', username).maybeSingle();
-
-      const { data: profileData, error } = await query;
-      if (error) throw error;
-
-      if (!profileData) {
-        clearTimeout(hardTimeout);
+        setProfile(pd);
         setLoading(false);
-        setPostsLoading(false);
+        const quickStats = { followers: pd.followers_count || 0, following: pd.following_count || 0, friends: cached?.stats?.friends || 0, posts: pd.posts_count || 0 };
+        setStats((s) => s || quickStats);
+
+        loadFeed(pd.id, 'posts', 0, true);
+
+        const entry = { profile: pd, stats: cached?.stats || quickStats, extras: cached?.extras || { website: null, cover_url: null } };
+        profileCache.set(cacheKey, entry);
+
+        // everything else in parallel; each result appears as soon as it lands
+        fetchProfileStats(pd.id).then((st) => {
+          if (cancelled) return; setStats(st); entry.stats = st;
+        }).catch(() => {});
+
+        if (!isOwnProfile) {
+          fetchRelationship(user.id, pd.id).then((r) => { if (!cancelled) setRelationship(r); }).catch(() => {});
+        }
+
+        // optional columns — tolerate them not existing yet
+        Promise.all([
+          supabase.from('users').select('website').eq('id', pd.id).maybeSingle(),
+          supabase.from('users').select('cover_url').eq('id', pd.id).maybeSingle(),
+        ]).then(([w, c]) => {
+          if (cancelled) return;
+          const ex = { website: w.data?.website || null, cover_url: c.data?.cover_url || null };
+          setExtras(ex); entry.extras = ex;
+        }).catch(() => {});
+      } catch (err) {
+        if (cancelled) return;
+        setLoading(false);
+        setFeed((f) => ({ ...f, posts: { ...f.posts, loading: false } }));
+        if (!profileCache.get(cacheKey)) setFetchError(err.message || 'Could not load profile.');
+      }
+    })();
+
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username, user?.id, isOwnProfile, reloadKey]);
+
+  // keep the cache fresh with the latest numbers
+  useEffect(() => {
+    const e = profileCache.get(cacheKey);
+    if (e && profile) { e.profile = profile; if (stats) e.stats = stats; e.extras = extras; }
+  }, [profile, stats, extras, cacheKey]);
+
+  /* ── live counts + relationship ── */
+  const refreshStats = useCallback(async () => {
+    if (!profile?.id) return;
+    try { setStats(await fetchProfileStats(profile.id)); } catch { /* keep current */ }
+  }, [profile?.id]);
+
+  const refreshRelationship = useCallback(async () => {
+    if (isOwnProfile || !profile?.id || !user?.id) return;
+    try { setRelationship(await fetchRelationship(user.id, profile.id)); } catch { /* keep current */ }
+  }, [isOwnProfile, profile?.id, user?.id]);
+
+  useEffect(() => {
+    if (!profile?.id || !user?.id) return;
+    const pid = profile.id;
+    let t;
+    const refresh = () => {
+      clearTimeout(t);
+      t = setTimeout(() => { refreshStats(); refreshRelationship(); }, 450);
+    };
+    const ch = supabase.channel('profile:' + pid + ':' + Math.random().toString(36).slice(2, 7))
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'follows', filter: `following_id=eq.${pid}` }, refresh)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'follows', filter: `follower_id=eq.${pid}` }, refresh)
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'follows' }, (p) => {
+        const o = p.old || {};
+        if ((!o.follower_id && !o.following_id) || o.follower_id === pid || o.following_id === pid) refresh();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts', filter: `user_id=eq.${pid}` }, () => {
+        refresh();
+        if (pid === user.id) loadFeed(pid, 'posts', 0, true);
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'posts' }, refresh)
+      .subscribe();
+
+    const onVisible = () => { if (document.visibilityState === 'visible') { refreshStats(); refreshRelationship(); } };
+    document.addEventListener('visibilitychange', onVisible);
+
+    // follows made from other screens (Discover, lists, notifications) on this device
+    const off = onFollowChange((d) => {
+      if (d.me !== user.id) return;
+      const wasI = iFollowThem(d.previous), isI = iFollowThem(d.relationship);
+      const wasF = d.previous === REL.FRIENDS, isF = d.relationship === REL.FRIENDS;
+      if (pid === d.targetId) {
+        setRelationship(d.relationship);
+        setStats((s) => s && ({ ...s, followers: Math.max(0, s.followers + (isI ? 1 : 0) - (wasI ? 1 : 0)) }));
+      } else if (pid === user.id) {
+        setStats((s) => s && ({
+          ...s,
+          following: Math.max(0, s.following + (isI ? 1 : 0) - (wasI ? 1 : 0)),
+          friends:   Math.max(0, s.friends + (isF ? 1 : 0) - (wasF ? 1 : 0)),
+        }));
+      }
+      refresh();
+    });
+
+    return () => { clearTimeout(t); supabase.removeChannel(ch); document.removeEventListener('visibilitychange', onVisible); off(); };
+  }, [profile?.id, user?.id, refreshStats, refreshRelationship, loadFeed]);
+
+  /* ── tabs + infinite scroll ── */
+  useEffect(() => {
+    if (!profile?.id) return;
+    const kind = kindOf(tab);
+    if (kind === 'reposts' && !feed.reposts.loaded && !feed.reposts.loading) loadFeed(profile.id, 'reposts', 0, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, profile?.id]);
+
+  const cur = feed[kindOf(tab)];
+  useEffect(() => {
+    const el = sentinel.current;
+    if (!el || !profile?.id) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && cur.more && !cur.loading && cur.loaded) {
+        loadFeed(profile.id, kindOf(tab), cur.page + 1);
+      }
+    }, { rootMargin: '400px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [cur.more, cur.loading, cur.loaded, cur.page, tab, profile?.id, loadFeed]);
+
+  const refreshPosts = useCallback(() => {
+    if (profile?.id) { loadFeed(profile.id, 'posts', 0, true); loadFeed(profile.id, 'reposts', 0, true); refreshStats(); }
+  }, [profile?.id, loadFeed, refreshStats]);
+
+  /* ── actions ── */
+  const profileLink = profile ? `${window.location.origin}/profile/${profile.username}` : '';
+
+  const shareProfile = async () => {
+    setMenuOpen(false);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `${profile.display_name} on B-Link`, text: `Follow @${profile.username} on B-Link`, url: profileLink });
         return;
       }
-
-      setProfile(profileData);
-
-      // Counts now come straight off the users row — maintained
-      // atomically by DB triggers (see 28_relationship_and_
-      // postdetail_rpcs.sql). Previously this ran 3 extra COUNT
-      // queries on every single profile view, then wrote the results
-      // back into the users table from the client (which stopped
-      // actually working once the privileged-field trigger from
-      // earlier in this project silently rejected it, and which
-      // let any visitor trigger a write to someone else's row
-      // regardless). None of that happens anymore — nothing to fetch.
-
-      if (!isOwnProfile && user?.id) {
-        const { data: rel } = await supabase.rpc('get_relationship', { p_viewer_id: user.id, p_target_id: profileData.id });
-        if (rel) setRelationship(rel);
-      }
-
-      clearTimeout(hardTimeout);
-      setLoading(false);
-      setPostsPage(0);
-      setPostsHasMore(true);
-      loadPosts(profileData.id, 0, true);
-
-    } catch (err) {
-      console.error('loadProfile error:', err.message);
-      clearTimeout(hardTimeout);
-      setLoading(false);
-      setPostsLoading(false);
-      setFetchError(err.message || 'Could not load profile.');
-    }
+    } catch (e) { if (e?.name === 'AbortError') return; }
+    copyLink();
   };
 
-  // Now paginated (15 at a time) instead of pulling up to 50 posts
-  // unconditionally on every profile visit.
-  const loadPosts = async (uid, page, reset = false) => {
-    setPostsLoading(true);
-    const from = page * POSTS_PAGE_SIZE;
-    const to   = from + POSTS_PAGE_SIZE - 1;
-    const { data, error } = await supabase.from('posts')
-      .select(POST_SELECT)
-      .eq('user_id', uid)
-      .eq('is_draft', false)
-      .neq('status', 'deleted')
-      .order('created_at', { ascending: false })
-      .range(from, to);
-
-    if (error) console.error('Profile posts error:', error.message);
-    const rows = (data || []).map(p => ({ ...p, users: p['users!posts_user_id_fkey'] || p.users }));
-    setPosts(prev => reset ? rows : [...prev, ...rows]);
-    setPostsHasMore(rows.length === POSTS_PAGE_SIZE);
-    setPostsLoading(false);
+  const copyLink = async () => {
+    setMenuOpen(false);
+    try { await navigator.clipboard.writeText(profileLink); showToast('Profile link copied'); }
+    catch { showToast('Could not copy the link', 'error'); }
   };
 
-  const handleLoadMorePosts = () => {
-    if (postsLoading || !postsHasMore) return;
-    const next = postsPage + 1;
-    setPostsPage(next);
-    loadPosts(profile.id, next);
-  };
-
-  // Atomic RPC, optimistic UI with rollback on failure — was a raw
-  // delete/upsert pair with zero error checking, so a failed request
-  // silently left the UI showing the wrong state forever.
-  const handleFollowToggle = async () => {
-    if (!profile?.id || followBusy) return;
-    setFollowBusy(true);
-    const prev = relationship;
-
-    // Optimistic: flip between the two "I follow / I don't" states.
-    // The RPC's actual return value corrects this immediately after,
-    // including the Friends/Follow Back nuance the optimistic guess
-    // can't know in advance.
-    setRelationship(r => (r === 'following' || r === 'friends') ? (r === 'friends' ? 'follow_back' : 'none') : (r === 'follow_back' ? 'friends' : 'following'));
-
+  const handleMessage = async () => {
+    if (!profile?.id || messageBusy) return;
+    setMessageBusy(true);
     try {
-      const { data, error } = await supabase.rpc('toggle_follow', { p_target_id: profile.id });
-      if (error) throw error;
-      const row = Array.isArray(data) ? data[0] : data;
-      if (row) {
-        setRelationship(row.relationship);
-        setProfile(p => ({ ...p, followers_count: row.target_followers_count }));
+      let chatId = null;
+      let rpcErr = null;
+      const { data, error } = await supabase.rpc('get_or_create_chat', { p_other_id: profile.id });
+      if (error) rpcErr = error;
+      else chatId = Array.isArray(data) ? (data[0]?.id ?? data[0]) : (data?.id ?? data);
+
+      if (!chatId) {
+        // legacy fallback: look for an existing chat, else create one
+        const { data: mine } = await supabase.from('chats').select('id, participants')
+          .contains('participants', [user.id]).limit(300);
+        const found = (mine || []).find((c) => (c.participants || []).includes(profile.id));
+        if (found) chatId = found.id;
+        else {
+          const { data: created, error: insErr } = await supabase.from('chats')
+            .insert({ participants: [user.id, profile.id] }).select('id').single();
+          if (!insErr && created) chatId = created.id;
+        }
       }
+
+      if (!chatId) {
+        const m = (rpcErr?.message || '').toLowerCase();
+        if (m.includes('block')) throw new Error("You can't message this person.");
+        if (m.includes('does not exist') || m.includes('function')) throw new Error('Messaging is not available right now. Please try again shortly.');
+        throw new Error(rpcErr?.message || 'Could not start the conversation.');
+      }
+      navigate('/chats/' + chatId);
     } catch (err) {
-      setRelationship(prev);
+      showToast(err.message || 'Could not open chat', 'error');
     }
-    setFollowBusy(false);
+    setMessageBusy(false);
   };
 
   const handleRemoveFollower = async (followerId) => {
     try {
       const { error } = await supabase.rpc('remove_follower', { p_follower_id: followerId });
       if (error) throw error;
-      setProfile(p => ({ ...p, followers_count: Math.max(0, (p.followers_count || 0) - 1) }));
+      setStats((s) => s && ({ ...s, followers: Math.max(0, s.followers - 1) }));
+      refreshStats();
     } catch (err) {
-      console.error('remove_follower:', err.message);
+      showToast(err.message || 'Could not remove follower', 'error');
     }
   };
 
-  // Was: navigate('/chats') — always sent you to the chat LIST, never
-  // to an actual conversation with the profile you tapped "Message"
-  // from. Now uses the same atomic get_or_create_chat() RPC ChatList
-  // uses, so it either opens the existing conversation or creates one
-  // and goes straight there.
-  const [messageBusy, setMessageBusy] = useState(false);
-  const handleMessage = async () => {
-    if (!profile?.id || messageBusy) return;
-    setMessageBusy(true);
+  const doReport = async (reason) => {
+    setReportOpen(false);
     try {
-      const { data: chatId, error } = await supabase.rpc('get_or_create_chat', { p_other_id: profile.id });
+      const { error } = await supabase.rpc('report_user', { p_target_id: profile.id, p_reason: reason, p_details: null });
       if (error) throw error;
-      navigate('/chats/' + chatId);
-    } catch (err) {
-      console.error('handleMessage:', err.message);
-    }
-    setMessageBusy(false);
+      showToast('Report sent. Thank you.');
+    } catch (err) { showToast(err.message || 'Could not send report', 'error'); }
   };
 
-  const fetchFollowers = () => supabase
-    .from('follows')
-    .select('users!follows_follower_id_fkey(id,username,display_name,avatar_url,is_verified)')
-    .eq('following_id', profile.id)
-    .then(({ data }) => (data || []).map(r => r['users!follows_follower_id_fkey'] || r.users).filter(Boolean));
+  const doBlock = async () => {
+    setBlockOpen(false);
+    try {
+      const { error } = await supabase.rpc('block_user', { p_target_id: profile.id });
+      if (error) throw error;
+      profileCache.delete(cacheKey);
+      showToast(`Blocked @${profile.username}`);
+      setTimeout(() => navigate(-1), 600);
+    } catch (err) { showToast(err.message || 'Could not block user', 'error'); }
+  };
 
-  const fetchFollowing = () => supabase
-    .from('follows')
-    .select('users!follows_following_id_fkey(id,username,display_name,avatar_url,is_verified)')
-    .eq('follower_id', profile.id)
-    .then(({ data }) => (data || []).map(r => r['users!follows_following_id_fkey'] || r.users).filter(Boolean));
+  const onPickAvatar = async (e) => {
+    const f = e.target.files?.[0];
+    e.target.value = '';
+    if (!f) return;
+    if (!f.type.startsWith('image/')) { showToast('Please choose an image', 'error'); return; }
+    setAvatarBusy(true);
+    try {
+      const small = await compressImage(f, { maxSize: 640, square: true, quality: 0.86 });
+      const url = await uploadImage(small, 'avatars');
+      const { error } = await supabase.from('users').update({ avatar_url: url }).eq('id', user.id);
+      if (error) throw error;
+      setProfile((p) => ({ ...p, avatar_url: url }));
+      refreshProfile?.();
+      showToast('Profile photo updated');
+    } catch (err) {
+      showToast(err.message || 'Could not update photo', 'error');
+    }
+    setAvatarBusy(false);
+  };
 
+  /* ── render ── */
   if (loading) return <ProfileSkeleton />;
 
   if (fetchError && !profile) return (
-    <div className="min-h-screen bg-[#0D0C0B] flex flex-col items-center justify-center gap-3 px-6">
-      <p className="text-5xl">⚠️</p>
-      <p className="text-white font-bold text-lg">Could not load profile</p>
-      <p className="text-[#8E8C88] text-sm text-center">{fetchError}</p>
-      <button onClick={loadProfile} className="mt-2 bg-[#FF5A1F] text-white px-5 py-2.5 rounded-full font-bold text-sm">
-        Try again
-      </button>
-      <button onClick={() => navigate(-1)} className="text-[#8E8C88] text-sm">← Go back</button>
+    <div className="min-h-screen bg-[#0D0C0B]">
+      <EmptyState icon={AlertTriangle} color="#EF4444" title="Could not load profile" text={fetchError}>
+        <button onClick={() => setReloadKey((k) => k + 1)} className="bg-[#FF5A1F] text-white px-5 py-2.5 rounded-full font-bold text-sm">Try again</button>
+        <button onClick={() => navigate(-1)} className="text-[#8E8C88] font-semibold text-sm px-3">Go back</button>
+      </EmptyState>
     </div>
   );
 
   if (!profile) return (
-    <div className="min-h-screen bg-[#0D0C0B] flex flex-col items-center justify-center gap-3 px-6">
-      <p className="text-5xl">🔍</p>
-      <p className="text-white font-bold text-lg">User not found</p>
-      <button onClick={() => navigate(-1)} className="text-[#FF5A1F] font-semibold">← Go back</button>
+    <div className="min-h-screen bg-[#0D0C0B]">
+      <EmptyState icon={UserX} title="User not found" text="This account may have been renamed or removed.">
+        <button onClick={() => navigate(-1)} className="bg-white/10 text-white px-5 py-2.5 rounded-full font-bold text-sm">Go back</button>
+      </EmptyState>
     </div>
   );
 
-  const roleIcon = profile.role === 'blink' ? '👑' : profile.role === 'admin' ? '🛡️' : profile.role === 'moderator' ? '🔵' : null;
+  const s = stats || { followers: profile.followers_count || 0, following: profile.following_count || 0, friends: 0, posts: profile.posts_count || 0 };
+  const items = tab === 'media'
+    ? feed.posts.items.filter((p) => (p.media_urls || []).length > 0 || p.video_url)
+    : cur.items;
+  const websiteHost = extras.website ? extras.website.replace(/^https?:\/\//, '').replace(/\/$/, '') : '';
+  const websiteHref = extras.website && /^https?:\/\//i.test(extras.website) ? extras.website : extras.website ? 'https://' + extras.website : '';
 
-  const followButtonConfig = {
-    none:        { label: 'Follow',       icon: UserPlus,  cls: 'text-white bg-[#FF5A1F] hover:bg-[#d9480f] shadow-lg shadow-[#FF5A1F]/30' },
-    following:   { label: 'Following',    icon: UserCheck, cls: 'border border-white/20 bg-white/[0.06] text-white hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30' },
-    follow_back: { label: 'Follow Back',  icon: UserPlus,  cls: 'text-white bg-gradient-to-r from-[#FF5A1F] to-[#FF2D78] shadow-lg shadow-[#FF5A1F]/30' },
-    friends:     { label: 'Friends',      icon: Users2,    cls: 'border border-[#2ECC71]/40 bg-[#2ECC71]/10 text-[#2ECC71] hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30' },
-  }[relationship] || { label: 'Follow', icon: UserPlus, cls: 'text-white bg-[#FF5A1F]' };
+  const TABS = [
+    { key: 'posts', label: 'Posts', Icon: FileText },
+    { key: 'media', label: 'Media', Icon: ImageIcon },
+    { key: 'reposts', label: 'Reposts', Icon: Repeat2 },
+  ];
+
+  const emptyCopy = {
+    posts:   { title: 'No posts yet', text: isOwnProfile ? 'Share your first post with the community.' : `@${profile.username} hasn't posted yet.` },
+    media:   { title: 'No photos or videos', text: isOwnProfile ? 'Posts with photos or videos show up here.' : 'Nothing to see here yet.' },
+    reposts: { title: 'No reposts yet', text: isOwnProfile ? 'Posts you repost appear here.' : 'Nothing to see here yet.' },
+  }[tab];
 
   return (
     <div className="min-h-screen bg-[#0D0C0B] pb-24">
+      {imgViewer && profile.avatar_url && <ImageViewer images={[profile.avatar_url]} index={0} onClose={() => setImgViewer(false)} />}
 
-      {imgViewer && profile.avatar_url && (
-        <ImageViewer images={[profile.avatar_url]} index={0} onClose={() => setImgViewer(false)} />
+      {toast && (
+        <div className={'fixed top-4 left-1/2 -translate-x-1/2 z-[80] px-4 py-2.5 rounded-full text-sm font-semibold shadow-xl ' +
+          (toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-white text-black')}>
+          {toast.msg}
+        </div>
       )}
 
-      {listModal === 'followers' && (
+      {listModal && (
         <UserListModal
-          title={`Followers · ${formatNumber(profile.followers_count || 0)}`}
-          fetcher={fetchFollowers}
+          kind={listModal}
+          title={`${listModal === 'followers' ? 'Followers' : listModal === 'following' ? 'Following' : 'Friends'} · ${formatNumber(s[listModal])}`}
+          userId={profile.id}
           currentUserId={user?.id}
           canRemove={isOwnProfile}
           onRemove={handleRemoveFollower}
           onClose={() => setListModal(null)}
         />
       )}
-      {listModal === 'following' && (
-        <UserListModal
-          title={`Following · ${formatNumber(profile.following_count || 0)}`}
-          fetcher={fetchFollowing}
-          currentUserId={user?.id}
-          canRemove={false}
-          onClose={() => setListModal(null)}
-        />
+
+      {menuOpen && (
+        <Sheet onClose={() => setMenuOpen(false)}>
+          {[
+            { Icon: Share2, label: 'Share profile', fn: shareProfile },
+            { Icon: Copy, label: 'Copy link', fn: copyLink },
+            { Icon: Flag, label: 'Report', fn: () => { setMenuOpen(false); setReportOpen(true); }, red: true },
+            { Icon: Ban, label: `Block @${profile.username}`, fn: () => { setMenuOpen(false); setBlockOpen(true); }, red: true },
+          ].map(({ Icon, label, fn, red }) => (
+            <button key={label} onClick={fn}
+              className={'w-full flex items-center gap-3 px-3 py-3.5 rounded-xl hover:bg-white/[0.05] text-left font-semibold text-[15px] ' + (red ? 'text-red-400' : 'text-white')}>
+              <Icon size={19} /> {label}
+            </button>
+          ))}
+        </Sheet>
       )}
 
-      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between gap-3">
-        <button onClick={() => navigate(-1)} aria-label="Back" className="text-[#8E8C88] hover:text-white transition-colors flex-shrink-0">
-          <ArrowLeft size={22} />
-        </button>
+      {reportOpen && (
+        <Sheet onClose={() => setReportOpen(false)}>
+          <p className="text-white font-bold text-base px-3 pb-2">Why are you reporting @{profile.username}?</p>
+          {REPORT_REASONS.map((r) => (
+            <button key={r} onClick={() => doReport(r)} className="w-full text-left px-3 py-3.5 rounded-xl hover:bg-white/[0.05] text-white text-[15px]">{r}</button>
+          ))}
+        </Sheet>
+      )}
+
+      {blockOpen && (
+        <Sheet onClose={() => setBlockOpen(false)}>
+          <div className="text-center px-2 pb-4">
+            <p className="text-white font-bold text-base">Block @{profile.username}?</p>
+            <p className="text-[#8E8C88] text-sm mt-1.5">They won't be able to message you, and you'll stop following each other.</p>
+          </div>
+          <button onClick={doBlock} className="w-full py-3 rounded-xl bg-red-500/15 text-red-400 font-bold text-sm border border-red-500/30 mb-2">Block</button>
+          <button onClick={() => setBlockOpen(false)} className="w-full py-3 rounded-xl bg-white/[0.07] text-white font-bold text-sm">Cancel</button>
+        </Sheet>
+      )}
+
+      {/* top bar */}
+      <div className="sticky top-0 z-20 bg-[#0D0C0B]/95 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between gap-3">
+        <button onClick={() => navigate(-1)} aria-label="Back" className="text-[#8E8C88] hover:text-white flex-shrink-0"><ArrowLeft size={22} /></button>
         <div className="flex-1 min-w-0 text-center">
           <p className="text-white font-bold text-[15px] leading-none truncate">{profile.display_name}</p>
-          <p className="text-[#8E8C88] text-xs mt-0.5">{formatNumber(profile.posts_count || 0)} posts</p>
+          <p className="text-[#8E8C88] text-xs mt-0.5">{formatNumber(s.posts)} posts</p>
         </div>
         {isOwnProfile ? (
-          <button onClick={() => navigate('/settings')} aria-label="Settings" className="text-[#8E8C88] hover:text-white flex-shrink-0"><Settings size={20} /></button>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <button onClick={shareProfile} aria-label="Share profile" className="text-[#8E8C88] hover:text-white"><Share2 size={19} /></button>
+            <button onClick={() => navigate('/settings')} aria-label="Settings" className="text-[#8E8C88] hover:text-white"><Settings size={20} /></button>
+          </div>
         ) : (
-          <button aria-label="More options" className="text-[#8E8C88] hover:text-white flex-shrink-0"><MoreHorizontal size={20} /></button>
+          <button onClick={() => setMenuOpen(true)} aria-label="More options" className="text-[#8E8C88] hover:text-white flex-shrink-0"><MoreHorizontal size={22} /></button>
         )}
       </div>
 
-      <div className="px-4 pt-5 pb-4">
-        <div className="flex items-start justify-between gap-4">
-          <button onClick={() => profile.avatar_url && setImgViewer(true)} aria-label="View profile photo" className="relative flex-shrink-0">
-            {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt="" className="w-20 h-20 rounded-full object-cover border-2 border-white/20" />
-            ) : (
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-black text-2xl border-2 border-white/20">
-                {profile.display_name?.[0]?.toUpperCase()}
-              </div>
-            )}
-            {profile.is_verified && (
-              <div className="absolute -bottom-1 -right-1 bg-[#0D0C0B] rounded-full p-0.5">
-                <VerifiedBadge size={20} />
-              </div>
-            )}
-          </button>
+      {/* cover */}
+      {extras.cover_url && (
+        <div className="h-28 w-full bg-white/5 overflow-hidden">
+          <img src={feedImageUrl(extras.cover_url, 1000)} alt="" className="w-full h-full object-cover" decoding="async" />
+        </div>
+      )}
 
-          <div className="flex-1 flex justify-around">
-            <div className="text-center">
-              <p className="text-white font-black text-xl leading-none">{formatNumber(profile.posts_count || 0)}</p>
-              <p className="text-[#8E8C88] text-xs mt-1">Posts</p>
-            </div>
-            {/* Clickable — previously plain text, no way to see who
-                follows this account or who they follow. */}
-            <button onClick={() => setListModal('followers')} className="text-center active:opacity-60 transition-opacity">
-              <p className="text-white font-black text-xl leading-none">{formatNumber(profile.followers_count || 0)}</p>
-              <p className="text-[#8E8C88] text-xs mt-1">Followers</p>
+      <div className="px-4 pt-5 pb-4">
+        <div className={'flex items-end justify-between ' + (extras.cover_url ? '-mt-12' : '')}>
+          <div className="relative flex-shrink-0">
+            <button onClick={() => profile.avatar_url && setImgViewer(true)} aria-label="View profile photo"
+              className="block rounded-full border-[3px] border-[#0D0C0B] bg-[#0D0C0B]">
+              <Avatar url={profile.avatar_url} name={profile.display_name} size={22} />
             </button>
-            <button onClick={() => setListModal('following')} className="text-center active:opacity-60 transition-opacity">
-              <p className="text-white font-black text-xl leading-none">{formatNumber(profile.following_count || 0)}</p>
-              <p className="text-[#8E8C88] text-xs mt-1">Following</p>
-            </button>
+            {profile.is_verified && (
+              <div className="absolute -bottom-0.5 -right-0.5 bg-[#0D0C0B] rounded-full p-0.5"><VerifiedBadge size={20} /></div>
+            )}
+            {isOwnProfile && (
+              <>
+                <button onClick={() => avatarInput.current?.click()} disabled={avatarBusy} aria-label="Change profile photo"
+                  className="absolute -bottom-1 -left-1 w-8 h-8 rounded-full bg-[#FF5A1F] border-2 border-[#0D0C0B] flex items-center justify-center text-white active:scale-90 transition-transform disabled:opacity-70">
+                  {avatarBusy ? <Spinner size={14} /> : <Camera size={14} />}
+                </button>
+                <input ref={avatarInput} type="file" accept="image/*" className="hidden" onChange={onPickAvatar} />
+              </>
+            )}
+          </div>
+          <div className="flex-1 grid grid-cols-4 gap-1 ml-3">
+            <StatBox value={s.posts} label="Posts" />
+            <StatBox value={s.followers} label="Followers" onClick={() => setListModal('followers')} />
+            <StatBox value={s.following} label="Following" onClick={() => setListModal('following')} />
+            <StatBox value={s.friends} label="Friends" onClick={() => setListModal('friends')} />
           </div>
         </div>
 
         <div className="mt-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-white font-black text-[17px]">{profile.display_name}</p>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <p className="text-white font-black text-[18px] leading-tight">{profile.display_name}</p>
             {profile.is_verified && <VerifiedBadge size={16} />}
-            {roleIcon && <span className="text-base">{roleIcon}</span>}
+            <RoleIcon role={profile.role} />
             {profile.is_business && (
-              <span className="bg-yellow-500/20 text-yellow-400 text-[9px] px-1.5 py-0.5 rounded-full font-bold border border-yellow-500/30">💼 Business</span>
-            )}
-            {relationship === 'friends' && !isOwnProfile && (
-              <span className="bg-[#2ECC71]/15 text-[#2ECC71] text-[9px] px-1.5 py-0.5 rounded-full font-bold border border-[#2ECC71]/30 flex items-center gap-1">
-                <Users2 size={9} /> Friends
+              <span className="inline-flex items-center gap-1 bg-yellow-500/15 text-yellow-400 text-[10px] px-2 py-0.5 rounded-full font-bold border border-yellow-500/30">
+                <Briefcase size={10} /> Business
               </span>
             )}
           </div>
-          <p className="text-[#8E8C88] text-sm">@{profile.username}</p>
-          {relationship === 'follow_back' && (
-            <p className="text-[#FF5A1F] text-xs mt-1 font-semibold">Follows you</p>
-          )}
-          {profile.bio && (
-            <p className="text-white/80 text-[14px] mt-2 leading-snug">{profile.bio}</p>
-          )}
-          {profile.country && (
-            <p className="text-[#8E8C88] text-xs mt-1">📍 {profile.country}</p>
-          )}
-          <p className="text-[#8E8C88] text-xs mt-1">
-            Joined {new Date(profile.created_at).toLocaleDateString('en-KE',{month:'long',year:'numeric'})}
-          </p>
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+            <p className="text-[#8E8C88] text-sm">@{profile.username}</p>
+            {!isOwnProfile && relationship === REL.FOLLOW_BACK && (
+              <span className="text-[10px] font-bold text-[#8E8C88] bg-white/[0.07] px-2 py-0.5 rounded-full">Follows you</span>
+            )}
+            {!isOwnProfile && relationship === REL.FRIENDS && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#2ECC71] bg-[#2ECC71]/10 border border-[#2ECC71]/30 px-2 py-0.5 rounded-full">
+                <Users2 size={10} /> Friends
+              </span>
+            )}
+          </div>
+
+          {profile.bio && <p className="text-white/85 text-[14px] mt-2.5 leading-snug whitespace-pre-line">{profile.bio}</p>}
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2.5 text-[#8E8C88] text-xs">
+            {profile.country && <span className="inline-flex items-center gap-1"><MapPin size={13} /> {profile.country}</span>}
+            {websiteHost && (
+              <a href={websiteHref} target="_blank" rel="noopener noreferrer nofollow"
+                className="inline-flex items-center gap-1 text-[#FF5A1F] font-semibold max-w-[200px]">
+                <Link2 size={13} className="flex-shrink-0" /> <span className="truncate">{websiteHost}</span>
+              </a>
+            )}
+            <span className="inline-flex items-center gap-1">
+              <CalendarDays size={13} /> Joined {new Date(profile.created_at).toLocaleDateString('en-KE', { month: 'long', year: 'numeric' })}
+            </span>
+          </div>
         </div>
 
         <div className="flex gap-2 mt-4">
           {isOwnProfile ? (
             <>
               <button onClick={() => navigate('/edit-profile')}
-                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-white/20 bg-white/[0.06] hover:bg-white/10 transition-colors active:scale-95">
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-white/20 bg-white/[0.06] hover:bg-white/10 active:scale-95 transition-all">
                 Edit Profile
               </button>
               <button onClick={() => navigate('/premium')}
-                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-[#FF5A1F]/40 bg-[#FF5A1F]/10 hover:bg-[#FF5A1F]/20 transition-colors active:scale-95">
-                ⭐ Premium
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-[#FF5A1F]/40 bg-[#FF5A1F]/10 hover:bg-[#FF5A1F]/20 active:scale-95 transition-all inline-flex items-center justify-center gap-1.5">
+                <Crown size={15} className="text-[#FF5A1F]" /> Premium
               </button>
             </>
           ) : (
             <>
-              <button
-                onClick={handleFollowToggle}
-                disabled={followBusy}
-                aria-label={followButtonConfig.label}
-                className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 disabled:opacity-60 flex items-center justify-center gap-1.5 ${followButtonConfig.cls}`}
-              >
-                {followBusy
-                  ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  : <><followButtonConfig.icon size={14} /> {followButtonConfig.label}</>
-                }
-              </button>
+              <FollowButton
+                size="lg" targetId={profile.id} initialRelationship={relationship}
+                username={profile.username} displayName={profile.display_name} avatarUrl={profile.avatar_url}
+                onChange={(r) => setRelationship(r)}
+              />
               <button onClick={handleMessage} disabled={messageBusy}
-                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-white/20 bg-white/[0.06] hover:bg-white/10 transition-colors active:scale-95 flex items-center justify-center gap-1.5 disabled:opacity-60">
-                {messageBusy
-                  ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  : <><MessageCircle size={14} /> Message</>
-                }
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-white/20 bg-white/[0.06] hover:bg-white/10 active:scale-95 transition-all inline-flex items-center justify-center gap-1.5 disabled:opacity-60">
+                {messageBusy ? <Spinner size={15} /> : <><MessageCircle size={15} /> Message</>}
               </button>
             </>
           )}
@@ -506,45 +727,42 @@ export default function Profile() {
 
         {isOwnProfile && (() => {
           const activePlan = getActivePlan(profile);
-          const planInfo    = PLANS[activePlan];
+          const planInfo = PLANS[activePlan];
+          const actions = [
+            { Icon: Crown,      label: 'Plans',    path: '/subscription', active: activePlan !== 'free' },
+            { Icon: Coins,      label: 'Coins',    path: '/coins' },
+            { Icon: BadgeCheck, label: 'Verify',   path: '/verification', active: profile.is_verified },
+            { Icon: Briefcase,  label: 'Business', path: '/business-page', active: profile.is_business },
+          ];
           return (
-            <div className="mt-4 rounded-2xl border overflow-hidden"
-              style={{ borderColor: planInfo?.color + '30', background: planInfo?.color + '08' }}>
-              <button onClick={() => navigate('/premium')}
-                className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-white/[0.04] transition-colors">
+            <div className="mt-4 rounded-2xl border overflow-hidden" style={{ borderColor: (planInfo?.color || '#8E8C88') + '30', background: (planInfo?.color || '#8E8C88') + '08' }}>
+              <button onClick={() => navigate('/premium')} className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-white/[0.04] transition-colors">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">{planInfo?.badge || '⭐'}</span>
+                  <IconTile icon={Crown} color={planInfo?.color || '#8E8C88'} size={40} iconSize={20} />
                   <div className="text-left">
-                    <p className="text-white font-bold text-[14px]">{planInfo?.label || 'Free'} Plan</p>
-                    {activePlan !== 'free' && profile?.subscription_expires_at ? (
-                      <p className="text-[#8E8C88] text-[11px]">
-                        Renews {new Date(profile.subscription_expires_at).toLocaleDateString('en-KE',{day:'numeric',month:'short'})}
-                      </p>
-                    ) : (
-                      <p className="text-[#8E8C88] text-[11px]">Tap to upgrade</p>
-                    )}
+                    <p className="text-white font-bold text-[14px] flex items-center gap-1.5">{planInfo?.label || 'Free'} Plan <PlanIcon plan={activePlan} size={13} /></p>
+                    <p className="text-[#8E8C88] text-[11px]">
+                      {activePlan !== 'free' && profile.subscription_expires_at
+                        ? 'Renews ' + new Date(profile.subscription_expires_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })
+                        : 'Tap to upgrade'}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1 bg-yellow-500/15 border border-yellow-500/25 rounded-full px-2.5 py-1">
                     <Coins size={12} className="text-yellow-400" />
-                    <span className="text-yellow-400 font-bold text-[12px]">{formatNumber(profile?.coins_balance || 0)}</span>
+                    <span className="text-yellow-400 font-bold text-[12px]">{formatNumber(profile.coins_balance || 0)}</span>
                   </div>
                   <ChevronRight size={16} className="text-[#8E8C88]" />
                 </div>
               </button>
               <div className="grid grid-cols-4 border-t border-white/[0.06]">
-                {[
-                  { icon: '⭐', label: 'Plans',   path: '/subscription'  },
-                  { icon: '🪙', label: 'Coins',   path: '/coins'         },
-                  { icon: '✓',  label: 'Verify',  path: '/verification', active: profile?.is_verified },
-                  { icon: '💼', label: 'Business',path: '/business-page', active: profile?.is_business },
-                ].map(item => (
-                  <button key={item.path} onClick={() => navigate(item.path)}
-                    className="flex flex-col items-center gap-1 py-3 hover:bg-white/[0.04] transition-colors border-r border-white/[0.06] last:border-r-0">
-                    <span className="text-lg">{item.icon}</span>
-                    <span className="text-[10px] font-semibold text-white/60">{item.label}</span>
-                    {item.active && <div className="w-1 h-1 rounded-full bg-[#FF5A1F]" />}
+                {actions.map(({ Icon, label, path, active }) => (
+                  <button key={path} onClick={() => navigate(path)}
+                    className="relative flex flex-col items-center gap-1.5 py-3 hover:bg-white/[0.04] transition-colors border-r border-white/[0.06] last:border-r-0">
+                    <Icon size={19} className={active ? 'text-[#FF5A1F]' : 'text-white/70'} />
+                    <span className="text-[10px] font-semibold text-white/60">{label}</span>
+                    {active && <span className="absolute top-2 right-3 w-1.5 h-1.5 rounded-full bg-[#2ECC71]" />}
                   </button>
                 ))}
               </div>
@@ -553,75 +771,54 @@ export default function Profile() {
         })()}
       </div>
 
-      <div className="border-t border-white/[0.07] flex items-center justify-between px-4">
+      {/* tabs */}
+      <div className="border-t border-white/[0.07] flex items-center justify-between px-2">
         <div className="flex">
-          {['posts','reposts'].map(t => (
-            <button key={t} onClick={() => setTab(t)}
-              className={'py-3 px-4 text-sm font-semibold capitalize transition-all relative ' +
-                (tab === t ? 'text-white' : 'text-[#8E8C88]')}>
-              {t}
-              {tab === t && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-[#FF5A1F] rounded-full" style={{ width:'70%' }} />}
+          {TABS.map(({ key, label, Icon }) => (
+            <button key={key} onClick={() => setTab(key)}
+              className={'py-3 px-3.5 text-[13px] font-semibold transition-all relative inline-flex items-center gap-1.5 ' + (tab === key ? 'text-white' : 'text-[#8E8C88]')}>
+              <Icon size={15} /> {label}
+              {tab === key && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-[#FF5A1F] rounded-full" style={{ width: '70%' }} />}
             </button>
           ))}
         </div>
-        <div className="flex gap-1">
-          <button onClick={() => setViewLayout('list')} aria-label="List view" className={`p-2 rounded-lg ${viewLayout==='list' ? 'text-[#FF5A1F] bg-[#FF5A1F]/10' : 'text-[#8E8C88]'}`}><List size={17} /></button>
-          <button onClick={() => setViewLayout('grid')} aria-label="Grid view" className={`p-2 rounded-lg ${viewLayout==='grid' ? 'text-[#FF5A1F] bg-[#FF5A1F]/10' : 'text-[#8E8C88]'}`}><Grid size={17} /></button>
+        <div className="flex gap-1 pr-2">
+          <button onClick={() => setViewLayout('list')} aria-label="List view" className={`p-2 rounded-lg ${viewLayout === 'list' ? 'text-[#FF5A1F] bg-[#FF5A1F]/10' : 'text-[#8E8C88]'}`}><List size={17} /></button>
+          <button onClick={() => setViewLayout('grid')} aria-label="Grid view" className={`p-2 rounded-lg ${viewLayout === 'grid' ? 'text-[#FF5A1F] bg-[#FF5A1F]/10' : 'text-[#8E8C88]'}`}><Grid size={17} /></button>
         </div>
       </div>
 
-      {postsLoading && posts.length === 0 ? (
-        <div className="flex justify-center py-10">
-          <div className="w-6 h-6 border-2 border-[#FF5A1F] border-t-transparent rounded-full animate-spin" />
-        </div>
-      ) : posts.filter(p => tab === 'posts' ? !p.is_repost : p.is_repost).length === 0 ? (
-        <div className="text-center py-14 px-6">
-          <p className="text-4xl mb-3">📭</p>
-          <p className="text-white font-bold">No {tab} yet</p>
+      {cur.loading && items.length === 0 ? (
+        <div className="flex justify-center py-10 text-[#FF5A1F]"><Spinner size={24} /></div>
+      ) : items.length === 0 ? (
+        <EmptyState icon={TABS.find((t) => t.key === tab).Icon} title={emptyCopy.title} text={emptyCopy.text}>
           {isOwnProfile && tab === 'posts' && (
-            <button onClick={() => navigate('/create')}
-              className="mt-4 bg-[#FF5A1F] text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-lg shadow-[#FF5A1F]/30">
+            <button onClick={() => navigate('/create')} className="bg-[#FF5A1F] text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-lg shadow-[#FF5A1F]/30">
               Create your first post
             </button>
           )}
-        </div>
-      ) : viewLayout === 'grid' ? (
-        <>
-          <div className="grid grid-cols-3 gap-0.5 border-t border-white/[0.06]">
-            {posts.filter(p => tab === 'posts' ? !p.is_repost : p.is_repost).map(post => (
-              <button key={post.id} onClick={() => navigate('/post/' + post.id)}
-                className="relative bg-white/5 hover:bg-white/10 transition-colors" style={{ aspectRatio: '1/1' }}>
-                {(post.media_urls||[])[0]
-                  ? <img src={post.media_urls[0]} alt="" className="w-full h-full object-cover" loading="lazy" />
-                  : <div className="w-full h-full flex items-center justify-center p-2"><p className="text-white/50 text-[10px] text-center line-clamp-3">{post.caption}</p></div>
-                }
-              </button>
-            ))}
-          </div>
-          {postsHasMore && (
-            <div className="flex justify-center py-4">
-              <button onClick={handleLoadMorePosts} disabled={postsLoading}
-                className="text-[#FF5A1F] text-sm font-bold disabled:opacity-50">
-                {postsLoading ? 'Loading...' : 'Load more'}
-              </button>
-            </div>
-          )}
-        </>
-      ) : (
-        <>
-          {posts.filter(p => tab === 'posts' ? !p.is_repost : p.is_repost).map(post => (
-            <PostCard key={post.id} post={post} currentUser={user} onRefresh={() => loadPosts(profile.id, 0, true)} />
+        </EmptyState>
+      ) : viewLayout === 'grid' || tab === 'media' ? (
+        <div className="grid grid-cols-3 gap-0.5 border-t border-white/[0.06]">
+          {items.map((post) => (
+            <button key={post.id} onClick={() => navigate('/post/' + post.id)}
+              className="relative bg-white/5 hover:bg-white/10 transition-colors" style={{ aspectRatio: '1/1' }}>
+              {(post.media_urls || [])[0]
+                ? <img src={thumbUrl(post.media_urls[0], 360)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                : post.video_url
+                  ? <div className="w-full h-full flex items-center justify-center bg-black/40"><Play size={22} className="text-white/80" /></div>
+                  : <div className="w-full h-full flex items-center justify-center p-2"><p className="text-white/50 text-[10px] text-center line-clamp-3">{post.caption}</p></div>}
+              {post.video_url && (post.media_urls || [])[0] && <Play size={14} className="absolute top-1.5 right-1.5 text-white drop-shadow" fill="white" />}
+            </button>
           ))}
-          {postsHasMore && (
-            <div className="flex justify-center py-4">
-              <button onClick={handleLoadMorePosts} disabled={postsLoading}
-                className="text-[#FF5A1F] text-sm font-bold disabled:opacity-50">
-                {postsLoading ? 'Loading...' : 'Load more'}
-              </button>
-            </div>
-          )}
-        </>
+        </div>
+      ) : (
+        items.map((post) => <PostCard key={post.id} post={post} currentUser={user} onRefresh={refreshPosts} />)
       )}
+
+      <div ref={sentinel} className="h-10 flex items-center justify-center text-[#FF5A1F]">
+        {cur.loading && items.length > 0 && <Spinner size={18} />}
+      </div>
     </div>
   );
 }

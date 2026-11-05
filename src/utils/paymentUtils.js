@@ -19,7 +19,7 @@ export const PLANS = {
     ],
   },
   pro: {
-    key: 'pro', label: 'Pro', price: 299, color: '#FF5A1F', badge: '⭐',
+    key: 'pro', label: 'Pro', price: 299, color: '#FF5A1F', badge: null,
     features: [
       '20 posts per day',
       '30s story duration',
@@ -30,7 +30,7 @@ export const PLANS = {
     ],
   },
   creator: {
-    key: 'creator', label: 'Creator', price: 599, color: '#FF6B35', badge: '🔥',
+    key: 'creator', label: 'Creator', price: 599, color: '#FF6B35', badge: null,
     features: [
       '50 posts per day',
       '60s story duration',
@@ -42,7 +42,7 @@ export const PLANS = {
     ],
   },
   business: {
-    key: 'business', label: 'Business', price: 1499, color: '#FFD700', badge: '💎',
+    key: 'business', label: 'Business', price: 1499, color: '#FFD700', badge: null,
     features: [
       '100 posts per day',
       '60s story duration',
@@ -59,8 +59,8 @@ export const PLANS = {
 // Boost packages
 export const BOOST_PACKAGES = [
   { days: 1,  label: '24 Hours', price: 200,  tag: null          },
-  { days: 3,  label: '3 Days',   price: 500,  tag: '🔥 Popular'  },
-  { days: 7,  label: '7 Days',   price: 999,  tag: '💎 Best Value'},
+  { days: 3,  label: '3 Days',   price: 500,  tag: 'Popular'  },
+  { days: 7,  label: '7 Days',   price: 999,  tag: 'Best value'},
   { days: 30, label: '30 Days',  price: 2999, tag: null          },
 ];
 

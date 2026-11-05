@@ -124,7 +124,7 @@ export default function PaymentModal({
             user_id:      a.id,
             from_user_id: user.id,
             type:         'admin_action',
-            message:      `💰 New payment pending verification — ${ref} · ${formatKES(amount)} · ${paymentType} · from ${mpesaPhone}`,
+            message:      `New payment pending verification — ${ref} · ${formatKES(amount)} · ${paymentType} · from ${mpesaPhone}`,
             is_read:      false,
           }))
         );
@@ -177,7 +177,7 @@ export default function PaymentModal({
         {step === 1 && (
           <div className="px-5 pt-4 pb-2">
             <p className="text-white font-bold text-sm mb-4">
-              📱 Pay via M-Pesa — Follow these steps exactly
+              Pay via M-Pesa — Follow these steps exactly
             </p>
 
             {/* Steps */}
@@ -347,7 +347,7 @@ export default function PaymentModal({
             >
               {submitting
                 ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Submitting...</>
-                : '✅ Submit for Verification'
+                : 'Submit for verification'
               }
             </button>
           </div>
@@ -359,7 +359,7 @@ export default function PaymentModal({
             <div className="w-20 h-20 rounded-full bg-green-500/15 flex items-center justify-center mx-auto mb-4">
               <CheckCircle size={40} className="text-green-400" />
             </div>
-            <h3 className="text-white font-black text-xl mb-2">Payment Submitted! ✅</h3>
+            <h3 className="text-white font-black text-xl mb-2">Payment submitted</h3>
             <div className="bg-white/[0.04] border border-white/10 rounded-2xl px-4 py-3 mb-4 text-left">
               <div className="space-y-2">
                 <div className="flex justify-between">

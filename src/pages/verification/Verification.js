@@ -69,10 +69,10 @@ const Verification = () => {
           <div className="bg-[#FF5A1F]/10 border border-[#FF5A1F]/30 rounded-2xl p-4 w-full">
             <p className="text-white font-semibold text-sm">✓ Verified Account Benefits</p>
             <div className="mt-3 space-y-2 text-xs text-[#8E8C88]">
-              <p>✅ Verified badge on your profile</p>
-              <p>✅ Priority in search results</p>
-              <p>✅ Access to creator analytics</p>
-              <p>✅ Eligible for sponsored content</p>
+              <p className="flex items-center gap-2"><CheckCircle size={14} className="text-[#2ECC71] flex-shrink-0" /> Verified badge on your profile</p>
+              <p className="flex items-center gap-2"><CheckCircle size={14} className="text-[#2ECC71] flex-shrink-0" /> Priority in search results</p>
+              <p className="flex items-center gap-2"><CheckCircle size={14} className="text-[#2ECC71] flex-shrink-0" /> Access to creator analytics</p>
+              <p className="flex items-center gap-2"><CheckCircle size={14} className="text-[#2ECC71] flex-shrink-0" /> Eligible for sponsored content</p>
             </div>
           </div>
         </div>
@@ -250,7 +250,7 @@ const Verification = () => {
             ))}
 
             <div className="bg-[#FFD700]/10 border border-[#FFD700]/20 rounded-xl p-3">
-              <p className="text-[#FFD700] text-xs font-semibold">🔒 Privacy Note</p>
+              <p className="text-[#FFD700] text-xs font-semibold">Privacy note</p>
               <p className="text-white/60 text-xs mt-1">
                 Your ID is uploaded to a private Cloudinary folder and only accessed by B-Link verification staff. It is never shared or sold.
               </p>
@@ -287,8 +287,8 @@ const Verification = () => {
                 { label: 'Badge Type', value: badgeType.charAt(0).toUpperCase() + badgeType.slice(1) },
                 { label: 'ID Type', value: idType.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase()) },
                 { label: 'ID Number', value: idNumber || 'Not provided' },
-                { label: 'ID Front', value: idFront ? '✅ Uploaded' : '❌ Missing' },
-                { label: 'ID Back', value: idBack ? '✅ Uploaded' : 'Optional' },
+                { label: 'ID Front', value: idFront ? 'Uploaded' : 'Missing' },
+                { label: 'ID Back', value: idBack ? 'Uploaded' : 'Optional' },
                 { label: 'Account', value: '@' + profile?.username },
               ].map((item, idx, arr) => (
                 <div
@@ -304,10 +304,10 @@ const Verification = () => {
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
               <p className="text-white font-semibold text-sm mb-2">By submitting you agree:</p>
               <div className="space-y-1.5 text-xs text-[#8E8C88]">
-                <p>✅ All information provided is accurate</p>
-                <p>✅ You own this account and identity</p>
-                <p>✅ B-Link may reject applications that don't meet criteria</p>
-                <p>✅ Monthly subscription applies for personal/business badges</p>
+                <p className="flex items-center gap-2"><CheckCircle size={14} className="text-[#2ECC71] flex-shrink-0" /> All information provided is accurate</p>
+                <p className="flex items-center gap-2"><CheckCircle size={14} className="text-[#2ECC71] flex-shrink-0" /> You own this account and identity</p>
+                <p className="flex items-center gap-2"><CheckCircle size={14} className="text-[#2ECC71] flex-shrink-0" /> B-Link may reject applications that don't meet criteria</p>
+                <p className="flex items-center gap-2"><CheckCircle size={14} className="text-[#2ECC71] flex-shrink-0" /> Monthly subscription applies for personal/business badges</p>
               </div>
             </div>
 

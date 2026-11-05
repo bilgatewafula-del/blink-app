@@ -7,8 +7,7 @@ import {
   ArrowLeft, ChevronRight, ChevronDown, ChevronUp,
   User, Lock, Bell, Eye, Palette, Video,
   Shield, Trash2, Download, LogOut,
-  Check, X, Phone, Mail, Key,
-} from 'lucide-react';
+  Check, X, Phone, Mail, Key, Heart, MessageCircle, Users, AtSign, CheckCircle2 } from 'lucide-react';
 
 /* ── Reusable toggle ── */
 function Toggle({ value, onChange, disabled }) {
@@ -102,7 +101,7 @@ function ChangePasswordModal({ onClose }) {
     <Modal title="Change Password" onClose={onClose}>
       {done ? (
         <div className="text-center py-8">
-          <p className="text-4xl mb-3">✅</p>
+          <CheckCircle2 size={40} className="text-[#2ECC71] mx-auto mb-3" />
           <p className="text-white font-bold">Password updated!</p>
         </div>
       ) : (
@@ -171,7 +170,7 @@ function ChangeEmailModal({ currentEmail, onClose }) {
     <Modal title="Change Email" onClose={onClose}>
       {done ? (
         <div className="text-center py-8">
-          <p className="text-4xl mb-3">✅</p>
+          <CheckCircle2 size={40} className="text-[#2ECC71] mx-auto mb-3" />
           <p className="text-white font-bold">Confirmation sent!</p>
           <p className="text-[#8E8C88] text-sm mt-1">Check {email} to confirm the change.</p>
         </div>
@@ -233,7 +232,7 @@ function UserListModal({ title, userIds, onUnblock, onClose }) {
     <Modal title={title} onClose={onClose}>
       {users.length === 0 ? (
         <div className="text-center py-10">
-          <p className="text-3xl mb-2">✅</p>
+          <CheckCircle2 size={34} className="text-[#2ECC71] mx-auto mb-2" />
           <p className="text-white/60 text-sm">No one here</p>
         </div>
       ) : users.map(u => (
@@ -292,7 +291,7 @@ export default function SettingsPage() {
     setSaving(true);
     await supabase.from('user_settings').update({ [key]: value, updated_at: new Date().toISOString() }).eq('user_id', user.id);
     setSaving(false);
-    showToast('✅ Saved');
+    showToast('Saved');
   };
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2000); };
@@ -314,7 +313,7 @@ export default function SettingsPage() {
   /* Same rationale — replaces the 9-step client-side delete chain
      with one transactional server-side RPC (self_delete_account). */
   const handleDeleteAccount = async () => {
-    const confirmed = window.confirm('⚠️ PERMANENTLY DELETE your account?\n\nThis will erase ALL your data forever. This cannot be undone.');
+    const confirmed = window.confirm('PERMANENTLY DELETE your account?\n\nThis will erase ALL your data forever. This cannot be undone.');
     if (!confirmed) return;
     const final = window.prompt('Type DELETE to confirm account deletion:');
     if (final !== 'DELETE') { showToast('Deletion cancelled'); return; }
@@ -339,7 +338,7 @@ export default function SettingsPage() {
     const a    = document.createElement('a');
     a.href = url; a.download = 'blink-data.json'; a.click();
     URL.revokeObjectURL(url);
-    showToast('✅ Data downloaded');
+    showToast('Data downloaded');
   };
 
   const handleUnblockUser = async (uid) => {
@@ -487,16 +486,17 @@ export default function SettingsPage() {
 
       <Section title="Notifications">
         {[
-          { key:'notif_likes',     label:'Likes',                emoji:'❤️' },
-          { key:'notif_comments',  label:'Comments',             emoji:'💬' },
-          { key:'notif_followers', label:'New Followers',        emoji:'👥' },
-          { key:'notif_messages',  label:'Messages',             emoji:'📨' },
-          { key:'notif_mentions',  label:'Mentions',             emoji:'🏷️' },
-          { key:'notif_system',    label:'System Notifications', emoji:'🔔' },
+          { key:'notif_likes',     label:'Likes',                Icon:Heart },
+          { key:'notif_comments',  label:'Comments',             Icon:MessageCircle },
+          { key:'notif_followers', label:'New Followers',        Icon:Users },
+          { key:'notif_messages',  label:'Messages',             Icon:Mail },
+          { key:'notif_mentions',  label:'Mentions',             Icon:AtSign },
+          { key:'notif_system',    label:'System Notifications', Icon:Bell },
         ].map((n, i, arr) => (
           <div key={n.key}>
             <SettingRow
-              label={`${n.emoji} ${n.label}`}
+              label={n.label}
+              icon={n.Icon}
               rightEl={<Toggle value={settings?.[n.key] ?? true} onChange={v => updateSetting(n.key, v)} />}
               onPress={() => updateSetting(n.key, !(settings?.[n.key] ?? true))}
             />
@@ -507,7 +507,7 @@ export default function SettingsPage() {
 
       <Section title="Appearance">
         <SettingRow icon={Palette} label="Theme"
-          sub={settings?.theme === 'dark' ? '🌙 Dark' : settings?.theme === 'light' ? '☀️ Light' : '⚙️ System'}
+          sub={settings?.theme === 'dark' ? 'Dark' : settings?.theme === 'light' ? 'Light' : 'System'}
           onPress={() => {
             const next = settings?.theme === 'dark' ? 'light' : settings?.theme === 'light' ? 'system' : 'dark';
             updateSetting('theme', next);
@@ -577,7 +577,7 @@ export default function SettingsPage() {
         </button>
       </div>
 
-      <p className="text-white/20 text-[11px] text-center pb-6">B-Link v2.0.0 · Made for Africa 🌍</p>
+      <p className="text-white/20 text-[11px] text-center pb-6">B-Link v2.0.0 · Made for Africa</p>
     </div>
   );
 }

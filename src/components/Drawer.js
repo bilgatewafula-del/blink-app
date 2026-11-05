@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { RoleIcon, PlanIcon } from './ui';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { formatNumber } from '../utils/formatNumber';
@@ -95,7 +96,7 @@ export default function Drawer({ isOpen, onClose }) {
   const MONETISE = [
     { icon: Star,         label: 'B-Link Premium',  path: '/premium'       },
     { icon: Coins,        label: 'My Coins',         path: '/coins',
-      badge: formatNumber(profile?.coins_balance || 0) + ' 🪙'             },
+      badge: formatNumber(profile?.coins_balance || 0)             },
     { icon: CheckCircle,  label: 'Get Verified',     path: '/verification',
       badge: profile?.is_verified ? '✓ Active' : null                       },
     { icon: Building2,    label: 'Business Page',   path: '/business-page',
@@ -150,7 +151,7 @@ export default function Drawer({ isOpen, onClose }) {
               <div className="flex items-center gap-1.5 flex-wrap">
                 <p className="text-white font-bold text-[15px] truncate">{profile?.display_name || 'B-Link User'}</p>
                 {profile?.is_verified && <VerifiedBadge size={14} />}
-                {profile?.role === 'blink' && <span className="text-[13px]">👑</span>}
+                {profile?.role === 'blink' && <RoleIcon role="blink" size={14} />}
               </div>
               <p className="text-[#8E8C88] text-xs truncate">@{profile?.username || 'user'}</p>
               <div className="flex items-center gap-3 mt-1">
@@ -173,7 +174,7 @@ export default function Drawer({ isOpen, onClose }) {
             className="mx-4 mt-3 px-3 py-2 rounded-xl flex items-center gap-2"
             style={{ background: planInfo?.color + '15', border: '1px solid ' + planInfo?.color + '30' }}
           >
-            <span className="text-base">{planInfo?.badge}</span>
+            <PlanIcon plan={activePlan} size={18} />
             <div className="flex-1 min-w-0">
               <p className="text-white font-bold text-[13px]">{planInfo?.label} Plan</p>
               {profile?.subscription_expires_at && (
@@ -226,7 +227,7 @@ export default function Drawer({ isOpen, onClose }) {
             <LogOut size={18} />
             <span className="font-semibold text-[14px]">Sign Out</span>
           </button>
-          <p className="text-white/20 text-[10px] text-center mt-2">B-Link v2.0.0 · Made for Africa 🌍</p>
+          <p className="text-white/20 text-[10px] text-center mt-2">B-Link v2.0.0 · Made for Africa</p>
         </div>
       </div>
     </>
