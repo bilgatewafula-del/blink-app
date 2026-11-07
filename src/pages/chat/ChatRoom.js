@@ -16,6 +16,7 @@ import ImageViewer from '../../components/ImageViewer';
 import VerifiedBadge from '../../components/VerifiedBadge';
 import MessageBubble from '../../components/chat/MessageBubble';
 import { Spinner } from '../../components/ui';
+import useViewport from '../../lib/useViewport';
 
 const EMOJI_CATS = [
   { label: '😀', emojis: ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','😉','😊','😇','🥰','😍','🤩','😘','😗','😚','😙','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🤧','🥵','🥶','🥴','😵','🤯','🤠','🥳','😎','🤓','🧐','😕','😟','🙁','😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿','💀','💩','🤡','👹','👺'] },
@@ -56,30 +57,6 @@ const fmtFull = (iso) => iso ? new Date(iso).toLocaleString('en-KE', { day: 'num
 const safeLike = (q) => q.replace(/[%_,()\\]/g, ' ').trim();
 const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage full */ } };
-
-/* Keep the chat exactly the size of what is VISIBLE, so the keyboard,
-   emoji panels and phone sticker/GIF keyboards can never cover the input. */
-function useViewport() {
-  const read = () => {
-    const vv = window.visualViewport;
-    return { h: vv ? vv.height : window.innerHeight, top: vv ? vv.offsetTop : 0 };
-  };
-  const [vp, setVp] = useState(read);
-  useEffect(() => {
-    const vv = window.visualViewport;
-    const update = () => setVp(read());
-    update();
-    vv?.addEventListener('resize', update);
-    vv?.addEventListener('scroll', update);
-    window.addEventListener('resize', update);
-    return () => {
-      vv?.removeEventListener('resize', update);
-      vv?.removeEventListener('scroll', update);
-      window.removeEventListener('resize', update);
-    };
-  }, []);
-  return vp;
-}
 
 /* ── small UI pieces ─────────────────────────────────────── */
 function Sheet({ onClose, children, z = 60 }) {

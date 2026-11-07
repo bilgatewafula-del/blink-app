@@ -5,7 +5,9 @@ import { useAuth } from '../../context/AuthContext';
 import {
   ArrowLeft, Image, Video, MapPin, Hash,
   X, Globe, Users, Lock, ChevronDown,
-  Loader, CheckCircle, Ban } from 'lucide-react';
+  Loader, CheckCircle, Ban, Type } from 'lucide-react';
+import { CLOUDINARY_CLOUD_NAME } from '../../lib/cloudinary';
+import { STORY_BACKGROUNDS, bgCss, textSizeFor } from '../../lib/storyPalette';
 import Avatar from '../../components/Avatar';
 import { DAILY_POST_LIMIT } from '../../utils/usernameValidation';
 
@@ -48,7 +50,7 @@ async function compressImage(file, maxW = 1920, maxH = 1920, quality = 0.82) {
 
 /* ── Upload a single file to Cloudinary — unchanged ── */
 async function uploadToCloudinary(file, resourceType = 'image', onProgress) {
-  const cloud  = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
+  const cloud  = CLOUDINARY_CLOUD_NAME;
   const preset = 'blink_uploads';
   const formData = new FormData();
   formData.append('file',           file);
@@ -66,12 +68,40 @@ async function uploadToCloudinary(file, resourceType = 'image', onProgress) {
     };
 
     xhr.onload = () => {
-      const data = JSON.parse(xhr.responseText);
-      if (data.secure_url) resolve(data);
-      else reject(new Error(data.error?.message || 'Upload failed'));
+      let data = null;
+      try { data = JSON.parse(xhr.responseText); } catch { /* not JSON (e.g. a size error page) */ }
+      if (data?.secure_url) resolve(data);
+      else if (xhr.status === 413) reject(new Error('That file is too large to upload.'));
+      else reject(new Error(data?.error?.message || 'Upload failed. Please try again.'));
     };
+    xhr.ontimeout = () => reject(new Error('Upload timed out. Check your connection.'));
+    xhr.timeout = 10 * 60 * 1000;
     xhr.onerror = () => reject(new Error('Network error during upload'));
     xhr.send(formData);
+  });
+}
+
+// Reads a video's length and grabs a still frame for the feed thumbnail
+function probeVideo(file) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const v = document.createElement('video');
+    v.preload = 'metadata'; v.muted = true; v.playsInline = true;
+    const done = (r) => { URL.revokeObjectURL(url); resolve(r); };
+    const timer = setTimeout(() => done({ duration: 0, poster: null }), 8000);
+    v.onloadedmetadata = () => { v.currentTime = Math.min(0.6, (v.duration || 1) / 2); };
+    v.onseeked = () => {
+      clearTimeout(timer);
+      try {
+        const scale = Math.min(1, 720 / Math.max(v.videoWidth || 720, v.videoHeight || 720));
+        const c = document.createElement('canvas');
+        c.width = Math.round((v.videoWidth || 720) * scale); c.height = Math.round((v.videoHeight || 405) * scale);
+        c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+        c.toBlob((b) => done({ duration: v.duration || 0, poster: b ? new File([b], 'poster.jpg', { type: 'image/jpeg' }) : null }), 'image/jpeg', 0.8);
+      } catch { done({ duration: v.duration || 0, poster: null }); }
+    };
+    v.onerror = () => { clearTimeout(timer); done({ duration: 0, poster: null }); };
+    v.src = url;
   });
 }
 
@@ -112,6 +142,7 @@ export default function CreatePost() {
   const [location,      setLocation]      = useState('');
   const [showLocation,  setShowLocation]  = useState(false);
   const [audience,      setAudience]      = useState('public');
+  const [bgStyle,       setBgStyle]       = useState('');
   const [hashtags,      setHashtags]      = useState([]);
   const [showHashtags,  setShowHashtags]  = useState(false);
   const [showAudience,  setShowAudience]  = useState(false);
@@ -125,6 +156,7 @@ export default function CreatePost() {
 
   const charLimit   = 500;
   const hasNewMedia = mediaFiles.length > 0;
+  const textOnly = !hasNewMedia && existingMedia.images.length === 0 && !existingMedia.video && caption.trim().length > 0 && caption.length <= 220;
   const hasMedia    = hasNewMedia || existingMedia.images.length > 0 || !!existingMedia.video;
   const postsToday  = (profile?.posts_today_date === new Date().toISOString().slice(0,10))
     ? (profile?.posts_today || 0) : 0;
@@ -141,6 +173,7 @@ export default function CreatePost() {
       if (data) {
         setCaption(data.caption || '');
         setAudience(data.audience || 'public');
+        setBgStyle(data.bg_color || '');
         setHashtags(data.hashtags || []);
         setLocation(data.location || '');
         setShowLocation(!!data.location);
@@ -152,6 +185,26 @@ export default function CreatePost() {
       }
     })();
   }, [editPostId, user.id]);
+
+  // Unfinished posts survive leaving the screen (new posts only)
+  useEffect(() => {
+    if (editPostId) return;
+    try {
+      const d = JSON.parse(localStorage.getItem('blink_post_draft') || 'null');
+      if (d?.caption) { setCaption(d.caption); setBgStyle(d.bgStyle || ''); }
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (editPostId) return undefined;
+    const t = setTimeout(() => {
+      try {
+        if (caption.trim()) localStorage.setItem('blink_post_draft', JSON.stringify({ caption, bgStyle }));
+        else localStorage.removeItem('blink_post_draft');
+      } catch { /* ignore */ }
+    }, 500);
+    return () => clearTimeout(t);
+  }, [caption, bgStyle, editPostId]);
 
   // Object URLs from local previews must be revoked or they leak for
   // the life of the tab — previously never cleaned up on remove or
@@ -174,8 +227,8 @@ export default function CreatePost() {
   }, [showAudience, showHashtags]);
 
   const handleImageSelect = async (e) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
+    const files = Array.from(e.target.files || []).filter((f) => f.type.startsWith('image/') && f.size <= 25 * 1024 * 1024);
+    if (!files.length) { e.target.value = ''; setError('Choose images under 25 MB.'); return; }
     const remaining = 10 - mediaFiles.length - existingMedia.images.length;
     const selected  = files.slice(0, Math.max(0, remaining));
     const previews  = selected.map(f => ({
@@ -188,12 +241,16 @@ export default function CreatePost() {
   const handleVideoSelect = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = '';
+    if (!file.type.startsWith('video/')) { setError('Please choose a video file.'); return; }
     if (file.size > 100 * 1024 * 1024) { setError('Video must be under 100 MB.'); return; }
+    const meta = await probeVideo(file);
+    if (meta.duration > 180) { setError('Videos can be up to 3 minutes long.'); return; }
+    setError('');
     setMediaFiles(prev => [
       ...prev,
-      { file, preview: URL.createObjectURL(file), type: 'video', size: file.size },
+      { file, preview: URL.createObjectURL(file), type: 'video', size: file.size, poster: meta.poster },
     ]);
-    e.target.value = '';
   };
 
   const removeMedia = (idx) => {
@@ -278,6 +335,9 @@ export default function CreatePost() {
             videoUrl      = result.secure_url;
             videoDuration = result.duration ? Math.round(result.duration) : null;
             videoThumb    = result.eager?.[0]?.secure_url || deriveVideoThumbnail(result.secure_url);
+            if (m.poster) {
+              try { videoThumb = (await uploadToCloudinary(m.poster, 'image')).secure_url; } catch { /* keep derived thumbnail */ }
+            }
           } else {
             mediaUrls.push(result.secure_url);
           }
@@ -299,6 +359,7 @@ export default function CreatePost() {
           video_duration: videoDuration,
           video_thumbnail: videoThumb,
           post_type: postType,
+          bg_color: textOnly ? (bgStyle || null) : null,
         }).eq('id', editPostId).eq('user_id', user.id);
         if (dbErr) throw new Error(dbErr.message);
       } else {
@@ -308,7 +369,7 @@ export default function CreatePost() {
         // the feed's optimistic-insert path (added earlier) had
         // nothing to prepend and the user had to pull-to-refresh to
         // see their own post.
-        const { data: inserted, error: dbErr } = await supabase.from('posts').insert({
+        const payload = {
           user_id:         user.id,
           caption:         caption.trim(),
           audience,
@@ -321,13 +382,15 @@ export default function CreatePost() {
           video_thumbnail: videoThumb,
           is_draft:        false,
           status:          'active',
-          likes_count:     0,
-          comments_count:  0,
-          reposts_count:   0,
-          views_count:     0,
-          shares_count:    0,
-        }).select('*').single();
+          bg_color:        textOnly ? (bgStyle || null) : null,
+        };
+        let { data: inserted, error: dbErr } = await supabase.from('posts').insert(payload).select('*').single();
+        if (dbErr && /bg_color/i.test(dbErr.message || '')) {          // older database without the column
+          delete payload.bg_color;
+          ({ data: inserted, error: dbErr } = await supabase.from('posts').insert(payload).select('*').single());
+        }
         if (dbErr) throw new Error(dbErr.message);
+        try { localStorage.removeItem('blink_post_draft'); } catch { /* ignore */ }
 
         // posts_count is now maintained by a DB trigger
         // (sync_user_posts_count) instead of this client-side
@@ -352,7 +415,7 @@ export default function CreatePost() {
       } else if (raw.includes('Duplicate post')) {
         setError('You already posted this. Wait a bit before reposting the same content.');
       } else if (raw.includes('too quickly')) {
-        setError('⏱ Posting too fast — please wait a few seconds and try again.');
+        setError('You are posting too fast. Please wait a few seconds and try again.');
       } else {
         setError(raw || 'Post failed. Try again.');
       }
@@ -450,16 +513,42 @@ export default function CreatePost() {
           </div>
         </div>
 
-        <textarea
-          ref={textareaRef}
-          value={caption}
-          onChange={e => setCaption(e.target.value)}
-          placeholder="What's on your mind? Use # for hashtags, @ to mention..."
-          rows={5}
-          maxLength={charLimit + 50}
-          className="w-full bg-transparent text-white text-[17px] placeholder-[#8E8C88] focus:outline-none resize-none leading-relaxed mb-2"
-          style={{ minHeight: 120 }}
-        />
+        {bgStyle && textOnly ? (
+          <div className="rounded-3xl px-6 py-8 mb-2 flex items-center justify-center" style={{ background: bgCss(bgStyle), minHeight: 220 }}>
+            <textarea
+              ref={textareaRef} value={caption} onChange={e => setCaption(e.target.value)} rows={4} maxLength={charLimit + 50}
+              placeholder="Type something"
+              className="w-full bg-transparent text-white text-center font-extrabold focus:outline-none resize-none placeholder-white/55"
+              style={{ fontSize: textSizeFor(caption.length), lineHeight: 1.25, textShadow: '0 2px 12px rgba(0,0,0,.18)' }}
+            />
+          </div>
+        ) : (
+          <textarea
+            ref={textareaRef}
+            value={caption}
+            onChange={e => setCaption(e.target.value)}
+            placeholder="What's on your mind? Use # for hashtags, @ to mention..."
+            rows={5}
+            maxLength={charLimit + 50}
+            className="w-full bg-transparent text-white text-[17px] placeholder-[#8E8C88] focus:outline-none resize-none leading-relaxed mb-2"
+            style={{ minHeight: 120 }}
+          />
+        )}
+        {textOnly && (
+          <div className="mb-3">
+            <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5"><Type size={12} /> Background</p>
+            <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+              <button onClick={() => setBgStyle('')} aria-label="No background"
+                className="w-8 h-8 rounded-full flex-shrink-0 border-2 flex items-center justify-center text-white/60"
+                style={{ borderColor: !bgStyle ? '#fff' : 'rgba(255,255,255,.2)' }}><X size={14} /></button>
+              {STORY_BACKGROUNDS.map((b) => (
+                <button key={b.key} onClick={() => setBgStyle(b.key)} aria-label={`Background ${b.key}`}
+                  className="w-8 h-8 rounded-full flex-shrink-0 transition-transform"
+                  style={{ background: b.css, border: bgStyle === b.key ? '2.5px solid #fff' : '2px solid rgba(255,255,255,.2)', transform: bgStyle === b.key ? 'scale(1.12)' : 'none' }} />
+              ))}
+            </div>
+          </div>
+        )}
         <div className="flex justify-end mb-3">
           <span className={`text-xs font-semibold ${caption.length > charLimit ? 'text-red-400' : caption.length > charLimit * 0.85 ? 'text-orange-400' : 'text-[#8E8C88]'}`}>
             {caption.length}/{charLimit}

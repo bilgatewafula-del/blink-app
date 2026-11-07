@@ -2,9 +2,10 @@
 // One chat message. Memoised so typing / scrolling never re-renders the list.
 // Gestures: tap-tap = heart, press-and-hold = actions, swipe = reply.
 import { memo, useRef } from 'react';
-import { Check, CheckCheck, Clock, AlertCircle, Ban, Forward, Star, CornerUpLeft, Pin, ImageIcon } from 'lucide-react';
+import { Check, CheckCheck, Clock, AlertCircle, Ban, Forward, Star, CornerUpLeft, Pin, ImageIcon, CircleDot } from 'lucide-react';
 import Avatar from '../Avatar';
-import { feedImageUrl } from '../../lib/imageUtils';
+import { feedImageUrl, thumbUrl } from '../../lib/imageUtils';
+import { bgCss } from '../../lib/storyPalette';
 
 const URL_RE = /((?:https?:\/\/|www\.)[^\s<]+)/gi;
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -128,6 +129,21 @@ function MessageBubble({
         >
           {m.forwarded && !deleted && (
             <div className="flex items-center gap-1 mb-1 text-[10px] text-white/60"><Forward size={10} /> Forwarded</div>
+          )}
+
+          {m.story_preview && !deleted && (
+            <div className={'flex items-stretch gap-2.5 mb-1.5 rounded-xl overflow-hidden ' + (isMine ? 'bg-black/20' : 'bg-white/[0.07]')}>
+              <div className="w-11 h-14 flex-shrink-0 flex items-center justify-center overflow-hidden"
+                style={m.story_preview.type === 'text' ? { background: bgCss(m.story_preview.bg) } : { background: '#222' }}>
+                {m.story_preview.type === 'text'
+                  ? <span className="text-white text-[8px] font-bold leading-tight px-1 line-clamp-4 text-center">{m.story_preview.text}</span>
+                  : m.story_preview.url && <img src={thumbUrl(m.story_preview.url, 120)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />}
+              </div>
+              <div className="py-1.5 pr-3 min-w-0 flex flex-col justify-center">
+                <p className="text-[11px] font-bold flex items-center gap-1 text-white/85"><CircleDot size={11} /> Status</p>
+                <p className="text-[11px] text-white/60 truncate">{m.story_preview.type === 'text' ? m.story_preview.text : 'Photo'}</p>
+              </div>
+            </div>
           )}
 
           {m.parent_message_id && !deleted && (

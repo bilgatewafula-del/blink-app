@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import VerifiedBadge from '../../components/VerifiedBadge';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { CommentsPanel } from '../../components/post/Comments';
+import TextPost, { isColoredTextPost } from '../../components/post/TextPost';
+import { ShareSheet, InsightsSheet } from '../../components/post/Sheets';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import { formatTime } from '../../utils/formatTime';
@@ -231,6 +234,9 @@ function CommentRow({ c, postAuthorId, currentUserId, onReply, onDelete, navigat
 export default function PostDetail() {
   const { id }       = useParams();
   const navigate     = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [shareOpen, setShareOpen] = useState(false);
+  const [insightsOpen, setInsightsOpen] = useState(searchParams.get('tab') === 'insights');
   const { user, profile } = useAuth();
 
   const inputRef       = useRef();
@@ -449,12 +455,7 @@ export default function PostDetail() {
     }
   };
 
-  const handleShare = async () => {
-    const url = window.location.origin + '/post/' + id;
-    if (navigator.share) navigator.share({ title:'B-Link Post', url }).catch(() => {});
-    else { navigator.clipboard.writeText(url); showToast('🔗 Link copied!'); }
-    try { await supabase.rpc('increment_post_shares', { p_post_id: id }); } catch (_) {}
-  };
+  const handleShare = () => setShareOpen(true);
 
   // Was a raw delete with no permission check beyond RLS and no
   // cleanup of dependent rows. Now the same delete_own_post RPC
@@ -651,7 +652,10 @@ export default function PostDetail() {
           </div>
         </div>
 
-        {post.caption && (
+        {post.caption && isColoredTextPost(post) && (
+          <TextPost text={post.caption} bg={post.bg_color} onHashtag={t => navigate('/hashtag/'+t)} onMention={u => navigate('/profile/'+u)} />
+        )}
+        {post.caption && !isColoredTextPost(post) && (
           <div className="mb-3">
             <p className="text-white text-[17px] leading-relaxed whitespace-pre-wrap break-words">
               <RichText text={post.caption} onHashtag={t => navigate('/hashtag/'+t)} onMention={u => navigate('/profile/'+u)} />
@@ -694,7 +698,7 @@ export default function PostDetail() {
         )}
 
         <div className="flex items-center justify-between py-1 -mx-1" onClick={e => e.stopPropagation()}>
-          <button onClick={() => { inputRef.current?.focus(); window.dispatchEvent(new Event('blink:comments:open')); }} aria-label="Comment" className="text-[#8E8C88] hover:text-[#FF5A1F] px-2 py-2 rounded-full hover:bg-[#FF5A1F]/10 transition-all"><MessageCircle size={20} /></button>
+          <button onClick={() => document.getElementById('comments-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} aria-label="Comment" className="text-[#8E8C88] hover:text-[#FF5A1F] px-2 py-2 rounded-full hover:bg-[#FF5A1F]/10 transition-all"><MessageCircle size={20} /></button>
 
           <div className="relative" onClick={e => e.stopPropagation()}>
             {showRepostMenu && (
@@ -732,65 +736,26 @@ export default function PostDetail() {
             </button>
           </div>
 
-          <div className="text-[#8E8C88] px-2 py-2 flex items-center gap-1" aria-label="Views"><BarChart2 size={20} /></div>
+          <button onClick={() => isOwner && setInsightsOpen(true)} aria-label="Views"
+            className={'px-2 py-2 flex items-center gap-1 rounded-full ' + (isOwner ? 'text-[#8E8C88] hover:text-[#FF5A1F] hover:bg-[#FF5A1F]/10' : 'text-[#8E8C88] cursor-default')}>
+            <BarChart2 size={20} />{viewsCount > 0 && <span className="text-[13px]">{viewsCount}</span>}
+          </button>
           <button onClick={handleSave} aria-label={saved ? 'Remove from saved' : 'Save'} className={'px-2 py-2 rounded-full transition-all '+(saved?'text-[#FF5A1F] hover:bg-[#FF5A1F]/10':'text-[#8E8C88] hover:text-[#FF5A1F] hover:bg-[#FF5A1F]/10')}><Bookmark size={20} fill={saved?'currentColor':'none'} /></button>
           <button onClick={handleShare} aria-label="Share" className="text-[#8E8C88] hover:text-[#FF5A1F] px-2 py-2 rounded-full hover:bg-[#FF5A1F]/10 transition-all"><Share2 size={20} /></button>
         </div>
       </div>
 
-      {comments.length === 0
-        ? <div className="text-center py-12"><p className="text-3xl mb-2">💬</p><p className="text-white font-bold">No replies yet</p><p className="text-[#8E8C88] text-sm mt-1">Be the first to reply!</p></div>
-        : (
-          <>
-            {comments.map(c => <CommentRow key={c.id} c={c} postAuthorId={post.user_id} currentUserId={user?.id} onReply={handleReply} onDelete={handleDeleteComment} navigate={navigate} />)}
-            {commentsHasMore && (
-              <div className="flex justify-center py-4">
-                <button onClick={handleLoadMoreComments} className="text-[#FF5A1F] text-sm font-bold">Load more replies</button>
-              </div>
-            )}
-          </>
-        )
-      }
-
-      <div style={{ position:'fixed', bottom:0, left:'50%', transform:'translateX(-50%)', width:'100%', maxWidth:'620px', zIndex:40, background:'#171614', borderTop:'1px solid rgba(255,255,255,0.1)' }}>
-        {replyTo && (
-          <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 16px', borderBottom:'1px solid rgba(255,255,255,0.07)', background:'rgba(255,90,31,0.06)' }}>
-            <div style={{ width:2, height:28, background:'#FF5A1F', borderRadius:2, flexShrink:0 }} />
-            <div style={{ flex:1, minWidth:0 }}>
-              <p style={{ color:'#FF5A1F', fontSize:11, fontWeight:700 }}>Replying to @{replyTo.users?.username}</p>
-              <p style={{ color:'#8E8C88', fontSize:11, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{replyTo.body}</p>
-            </div>
-            <button onClick={() => { setReplyTo(null); setCommentText(''); }} aria-label="Cancel reply" style={{ color:'#8E8C88', background:'none', border:'none', cursor:'pointer', padding:4 }}><X size={14} /></button>
-          </div>
-        )}
-        <div style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', paddingBottom:'max(12px, env(safe-area-inset-bottom))' }}>
-          <div style={{ flexShrink:0 }}><Avatar url={profile?.avatar_url} name={profile?.display_name} size={9} /></div>
-          <div style={{ flex:'1 1 auto', minWidth:0, background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.14)', borderRadius:22, padding:'9px 14px', display:'flex', alignItems:'center', gap:8 }}>
-            <input
-              ref={inputRef}
-              type="text"
-              value={commentText}
-              onChange={e => setCommentText(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleComment(); } }}
-              onFocus={() => window.dispatchEvent(new Event('blink:comments:open'))}
-              onBlur={() => setTimeout(() => { if (!showEmoji) window.dispatchEvent(new Event('blink:comments:close')); }, 250)}
-              placeholder={replyTo ? 'Reply to @'+replyTo.users?.username+'...' : 'Post your reply...'}
-              style={{ flex:1, minWidth:0, background:'transparent', border:'none', outline:'none', color:'white', fontSize:15, fontFamily:'inherit' }}
-            />
-            <button ref={emojiBtnRef} type="button" aria-label="Add emoji"
-              onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setShowEmoji(v => !v); }}
-              style={{ background:'none', border:'none', cursor:'pointer', flexShrink:0, padding:2, lineHeight:0 }}>
-              <SmilePlus size={18} style={{ color: showEmoji?'#FFD700':'rgba(255,255,255,0.4)', display:'block' }} />
-            </button>
-          </div>
-          <button type="button" onClick={handleComment} disabled={submitting || !commentText.trim()} aria-label="Send reply"
-            style={{ width:38, height:38, borderRadius:'50%', flexShrink:0, background: (!submitting && commentText.trim())?'#FF5A1F':'rgba(255,90,31,0.35)', border:'none', cursor: commentText.trim()?'pointer':'default', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.2s' }}>
-            <Send size={15} style={{ color:'white', marginLeft:1 }} />
-          </button>
+        <div id="comments-section" className="border-t border-white/[0.07] mt-1">
+          <CommentsPanel
+            inline
+            post={post}
+            count={commentCount}
+            onCountChange={(d) => setCommentCount((c) => Math.max(0, c + d))}
+            onNavigate={navigate}
+          />
         </div>
-      </div>
-
-      <SmartEmojiPicker open={showEmoji} onClose={() => setShowEmoji(false)} onEmojiClick={insertEmoji} triggerRef={emojiBtnRef} width={300} height={350} />
+        {shareOpen && <ShareSheet post={post} onClose={() => setShareOpen(false)} onDone={(t) => { setShareOpen(false); if (t) showToast(t); }} />}
+        {insightsOpen && <InsightsSheet post={post} onClose={() => setInsightsOpen(false)} />}
     </div>
   );
 }

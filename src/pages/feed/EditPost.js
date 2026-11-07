@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import { ArrowLeft, Save } from 'lucide-react';
 import { POST_AUDIENCES } from '../../utils/constants';
+import { bgCss } from '../../lib/storyPalette';
 
 const EditPost = () => {
   const { user } = useAuth();
@@ -120,7 +121,7 @@ const EditPost = () => {
         <div>
           <label className="text-[#8E8C88] text-xs mb-2 block font-semibold uppercase tracking-wide">Caption</label>
           <div
-            style={{ background: !post.media_urls?.length && post.bg_color ? post.bg_color : 'transparent' }}
+            style={{ background: !post.media_urls?.length && post.bg_color ? bgCss(post.bg_color) : 'transparent' }}
             className="relative rounded-2xl overflow-hidden"
           >
             <textarea

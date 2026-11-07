@@ -196,8 +196,8 @@ begin
      for update skip locked
   loop
     begin
-      insert into public.messages (chat_id, sender_id, body, message_type, delivered_at)
-      values (r.chat_id, r.sender_id, r.body, 'text', now());
+      insert into public.messages (chat_id, sender_id, body, message_type, delivered_at, deleted_for, starred_by)
+      values (r.chat_id, r.sender_id, r.body, 'text', now(), '{}', '{}');
       update public.scheduled_messages set status = 'sent', sent_at = now() where id = r.id;
       n := n + 1;
     exception when others then

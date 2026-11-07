@@ -14,10 +14,17 @@ import {
   Play, Quote, X, Edit3, Pin, PinOff,
   Eye, Link, MessageSquareOff, MessageSquare,
   Archive, EyeOff, BellOff, CheckCircle,
-  AlertTriangle,
+  AlertTriangle, Zap, Crown, ShieldCheck, MapPin,
 } from 'lucide-react';
 import Avatar from './Avatar';
 import ImageViewer from './ImageViewer';
+import { CommentsSheet } from './post/Comments';
+import TextPost, { isColoredTextPost } from './post/TextPost';
+import { ShareSheet, InsightsSheet } from './post/Sheets';
+import { bgCss, textSizeFor } from '../lib/storyPalette';
+import {
+  requestPostState, patchPostState, requestQuotedPost, isPostHidden, isUserMuted, hidePost, muteUser, recordShare,
+} from '../lib/posts';
 
 /* ── One active video at a time ── */
 let globalActiveVideoId = null;
@@ -460,24 +467,21 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
 
   const handleCopyLink = async () => {
     const url = window.location.origin + '/post/' + post.id;
-    await navigator.clipboard.writeText(url);
-    showToast('🔗 Link copied!');
+    try { await navigator.clipboard.writeText(url); recordShare(post.id); showToast('Link copied'); } catch { showToast("Couldn't copy the link"); }
   };
 
   const handleShare = async () => {
     const url = window.location.origin + '/post/' + post.id;
-    if (navigator.share) {
-      await navigator.share({ title: 'Check this on B-Link', url });
-    } else {
-      await navigator.clipboard.writeText(url);
-      showToast('🔗 Link copied!');
-    }
+    try {
+      if (navigator.share) { await navigator.share({ title: 'Check this on B-Link', url }); recordShare(post.id); }
+      else { await navigator.clipboard.writeText(url); recordShare(post.id); showToast('Link copied'); }
+    } catch { /* cancelled */ }
   };
 
   const handleToggleComments = () => run('comments', async () => {
     const newVal = !post.comments_disabled;
     await supabase.from('posts').update({ comments_disabled: newVal }).eq('id', post.id).eq('user_id', currentUserId);
-    showToast(newVal ? '💬 Comments disabled' : '💬 Comments enabled');
+    showToast(newVal ? 'Comments turned off' : 'Comments turned on');
     onActionDone('comments', { comments_disabled: newVal });
   });
 
@@ -520,20 +524,15 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
   };
 
   const handleHide = () => run('hide', async () => {
-    const hidden = JSON.parse(localStorage.getItem('blink_hidden_posts') || '[]');
-    if (!hidden.includes(post.id)) hidden.push(post.id);
-    localStorage.setItem('blink_hidden_posts', JSON.stringify(hidden));
-    showToast('🙈 Post hidden from feed');
+    hidePost(post.id);
+    showToast('Post hidden from feed');
     onActionDone('hide');
     onClose();
   });
 
   const handleMute = () => run('mute', async () => {
-    const muted = JSON.parse(localStorage.getItem('blink_muted_users') || '[]');
-    const uid   = post.users?.id || post.user_id;
-    if (!muted.includes(uid)) muted.push(uid);
-    localStorage.setItem('blink_muted_users', JSON.stringify(muted));
-    showToast('🔕 @' + post.users?.username + ' muted');
+    muteUser(post.users?.id || post.user_id);
+    showToast('@' + post.users?.username + ' muted');
     onClose();
   });
 
@@ -545,7 +544,7 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
   const handleBlock = () => run('block', async () => {
     const { error } = await supabase.rpc('block_user', { p_target_id: post.user_id });
     if (error) throw error;
-    showToast('🚫 User blocked');
+    showToast('User blocked');
     onActionDone('block');
     onClose();
   });
@@ -693,6 +692,10 @@ function PostCard({
   const [showReportModal,    setShowReportModal]    = useState(false);
   const [quoteText,          setQuoteText]          = useState('');
   const [actionToast,        setActionToast]        = useState('');
+  const [commentsOpen,       setCommentsOpen]       = useState(false);
+  const [shareOpen,          setShareOpen]          = useState(false);
+  const [insightsOpen,       setInsightsOpen]       = useState(false);
+  const pressed = useRef(false);
 
   const uid      = currentUser?.id || user?.id;
   const author   = post.users;
@@ -702,44 +705,29 @@ function PostCard({
 
   const showToast = (msg) => { setActionToast(msg); setTimeout(() => setActionToast(''), 2000); };
 
+  // One request per screen (batched in lib/posts) instead of 3 per card
+  const readyRef = useRef(initialLiked !== undefined && initialSaved !== undefined && initialReposted !== undefined);
   useEffect(() => {
-    // Skip the per-card lookups entirely when the parent already
-    // supplied the answer — this is the opt-in fix for the N+1 query
-    // pattern; see the comment on the props above.
-    if (initialLiked === undefined) checkLiked();
-    if (initialSaved === undefined) checkSaved();
-    if (initialReposted === undefined) checkReposted();
-    if (post.quoted_post_id) fetchQuotedPost();
+    let live = true;
+    if (!uid) return undefined;
+    if (initialLiked === undefined || initialSaved === undefined || initialReposted === undefined) {
+      requestPostState(uid, post.id).then((st) => {
+        if (!live) return;
+        if (initialLiked === undefined && st.liked) { setLiked(true); setReaction(st.reaction); }
+        if (initialSaved === undefined && st.saved) setSaved(true);
+        if (initialReposted === undefined && st.reposted) setReposted(true);
+        readyRef.current = true;
+      });
+    }
+    if (post.quoted_post_id) requestQuotedPost(post.quoted_post_id).then((q) => { if (live && q) setQuotedPost(q); });
+    return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [post.id]);
+  }, [post.id, uid]);
+
+  // keep the shared cache in step with what the user just did
+  useEffect(() => { if (readyRef.current && uid) patchPostState(uid, post.id, { liked, reaction, saved, reposted }); }, [liked, reaction, saved, reposted, uid, post.id]);
 
   useEffect(() => { setPost(initialPost); setLikesCount(initialPost.likes_count || 0); }, [initialPost]);
-
-  const fetchQuotedPost = async () => {
-    const { data } = await supabase.from('posts')
-      .select('id, caption, media_urls, video_url, created_at, user_id, users!posts_user_id_fkey(id,username,display_name,avatar_url,is_verified)')
-      .eq('id', post.quoted_post_id).maybeSingle();
-    if (data) setQuotedPost({ ...data, users: data['users!posts_user_id_fkey'] || data.users });
-  };
-
-  const checkLiked = async () => {
-    const { data } = await supabase.from('likes').select('reaction_type')
-      .eq('post_id', post.id).eq('user_id', uid).maybeSingle();
-    if (data) { setLiked(true); setReaction(data.reaction_type); }
-  };
-  const checkSaved = async () => {
-    const { data } = await supabase.from('saved_posts').select('id')
-      .eq('post_id', post.id).eq('user_id', uid).maybeSingle();
-    if (data) setSaved(true);
-  };
-  // Fixed: was missing `.eq('is_repost', true)`, so quoting a post
-  // (which also sets quoted_post_id) incorrectly lit up the repost
-  // button as if you'd done a direct repost.
-  const checkReposted = async () => {
-    const { data } = await supabase.from('posts').select('id')
-      .eq('user_id', uid).eq('quoted_post_id', post.id).eq('is_repost', true).maybeSingle();
-    if (data) setReposted(true);
-  };
 
   // Was: read likesCount from state, write likesCount+1 back — a lost
   // update under concurrent likes. Now calls the atomic toggle_post_like
@@ -817,18 +805,9 @@ function PostCard({
     }
   };
 
-  const handleShare = async (e) => {
-    e.stopPropagation();
-    const url = window.location.origin + '/post/' + post.id;
-    if (navigator.share) navigator.share({ title:'Check this on B-Link', url }).catch(() => {});
-    else { navigator.clipboard.writeText(url); showToast('🔗 Link copied!'); }
-    try { await supabase.rpc('increment_post_shares', { p_post_id: post.id }); } catch (_) { /* non-critical */ }
-  };
+  const handleShare = (e) => { e?.stopPropagation?.(); setShareOpen(true); };
 
-  const handleViewInsights = (e) => {
-    e.stopPropagation();
-    navigate('/post/' + post.id + '?tab=insights');
-  };
+  const handleViewInsights = (e) => { e?.stopPropagation?.(); setInsightsOpen(true); };
 
   const handleOptionsAction = (action, data) => {
     if (action === 'delete' || action === 'archive' || action === 'block' || action === 'hide') {
@@ -847,14 +826,20 @@ function PostCard({
   const getReactionEmoji = () => REACTIONS.find(r => r.type === reaction)?.emoji || null;
   const getReactionColor = () => REACTIONS.find(r => r.type === reaction)?.color || '#8E8C88';
 
-  const hiddenPosts = JSON.parse(localStorage.getItem('blink_hidden_posts') || '[]');
-  if (hiddenPosts.includes(post.id)) return null;
-
-  const mutedUsers = JSON.parse(localStorage.getItem('blink_muted_users') || '[]');
-  if (mutedUsers.includes(post.user_id)) return null;
+  if (isPostHidden(post.id) || isUserMuted(post.user_id)) return null;
 
   return (
     <>
+      {commentsOpen && (
+        <CommentsSheet post={post} count={post.comments_count || 0}
+          onCountChange={(d) => setPost((p) => ({ ...p, comments_count: Math.max(0, (p.comments_count || 0) + d) }))}
+          onClose={() => setCommentsOpen(false)} onNavigate={navigate} />
+      )}
+      {shareOpen && <ShareSheet post={post} onClose={() => setShareOpen(false)} onDone={(t) => { setShareOpen(false); if (t) showToast(t); }} />}
+      {insightsOpen && <InsightsSheet post={post} onClose={() => setInsightsOpen(false)} />}
+      {(showReactionPicker || showRepostMenu) && (
+        <div className="fixed inset-0 z-[5]" onClick={(e) => { e.stopPropagation(); setShowReactionPicker(false); setShowRepostMenu(false); }} />
+      )}
       {showQuoteModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center" onClick={() => setShowQuoteModal(false)}>
           <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-4 pb-8" onClick={e => e.stopPropagation()}>
@@ -922,7 +907,7 @@ function PostCard({
 
         {post.is_boosted && (
           <div className="flex items-center gap-1.5 px-4 pt-2">
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FF6B35]/15 text-[#FF6B35] border border-[#FF6B35]/25">⚡ Promoted</span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FF6B35]/15 text-[#FF6B35] border border-[#FF6B35]/25"><Zap size={10} className="inline -mt-0.5 mr-0.5" />Promoted</span>
           </div>
         )}
 
@@ -948,8 +933,8 @@ function PostCard({
                   {author?.display_name}
                 </button>
                 {author?.is_verified && <VerifiedBadge size={15} />}
-                {author?.role === 'blink'  && <span className="text-[10px] flex-shrink-0">👑</span>}
-                {author?.role === 'admin'  && <span className="text-[10px] flex-shrink-0">🛡️</span>}
+                {author?.role === 'blink'  && <Crown size={12} className="flex-shrink-0 text-[#FFD700]" fill="#FFD700" fillOpacity={0.25} />}
+                {author?.role === 'admin'  && <ShieldCheck size={12} className="flex-shrink-0 text-[#FF5A1F]" />}
                 <span className="text-[#8E8C88] text-[13px] truncate max-w-[80px]">@{author?.username}</span>
                 <span className="text-[#8E8C88] text-[13px]">·</span>
                 <span className="text-[#8E8C88] text-[13px] whitespace-nowrap">{formatTime(post.created_at)}</span>
@@ -965,7 +950,11 @@ function PostCard({
               </button>
             </div>
 
-            {post.caption && !isRepost && (
+            {post.caption && !isRepost && isColoredTextPost(post) && (
+              <TextPost text={post.caption} bg={post.bg_color}
+                onHashtag={t => navigate('/hashtag/' + t)} onMention={u => navigate('/profile/' + u)} />
+            )}
+            {post.caption && !isRepost && !isColoredTextPost(post) && (
               <div className="mb-2">
                 <RichCaption text={post.caption}
                   onHashtag={t => { navigate('/hashtag/' + t); }}
@@ -1001,7 +990,7 @@ function PostCard({
               />
             </div>
 
-            {post.location && <p className="text-[#8E8C88] text-xs mb-1.5">📍 {post.location}</p>}
+            {post.location && <p className="text-[#8E8C88] text-xs mb-1.5 flex items-center gap-1"><MapPin size={12} /> {post.location}</p>}
 
             {post.comments_disabled && (
               <p className="text-[#8E8C88] text-xs mb-1.5 flex items-center gap-1">
@@ -1011,7 +1000,7 @@ function PostCard({
 
             <div className="flex items-center justify-between mt-1 -ml-2 -mr-1" onClick={e => e.stopPropagation()}>
 
-              <button onClick={() => navigate('/post/' + post.id)}
+              <button onClick={() => setCommentsOpen(true)}
                 aria-label="Comment"
                 className="flex items-center gap-1.5 text-[#8E8C88] hover:text-[#FF5A1F] group px-2 py-1.5 rounded-full hover:bg-[#FF5A1F]/10 transition-all"
                 disabled={post.comments_disabled}>
@@ -1055,12 +1044,14 @@ function PostCard({
                   </div>
                 )}
                 <button
-                  onClick={e => { e.stopPropagation(); handleLike(reaction||'like'); }}
-                  onMouseDown={() => { longPressTimer.current = setTimeout(() => setShowReactionPicker(true), 500); }}
+                  onClick={e => { e.stopPropagation(); if (pressed.current) { pressed.current = false; return; } handleLike(reaction||'like'); }}
+                  onMouseDown={() => { pressed.current = false; longPressTimer.current = setTimeout(() => { pressed.current = true; setShowReactionPicker(true); }, 500); }}
                   onMouseUp={() => clearTimeout(longPressTimer.current)}
                   onMouseLeave={() => clearTimeout(longPressTimer.current)}
-                  onTouchStart={e => { e.stopPropagation(); longPressTimer.current = setTimeout(() => setShowReactionPicker(true), 500); }}
+                  onTouchStart={e => { e.stopPropagation(); pressed.current = false; longPressTimer.current = setTimeout(() => { pressed.current = true; navigator.vibrate?.(10); setShowReactionPicker(true); }, 450); }}
                   onTouchEnd={() => clearTimeout(longPressTimer.current)}
+                  onTouchMove={() => clearTimeout(longPressTimer.current)}
+                  onContextMenu={e => e.preventDefault()}
                   aria-label="Like"
                   className="flex items-center gap-1.5 px-2 py-1.5 rounded-full transition-all hover:bg-red-500/10"
                   style={{ color: liked ? getReactionColor() : '#8E8C88' }}>
