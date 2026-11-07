@@ -9,6 +9,10 @@ import { startPresence, stopPresence } from './lib/presence';
 /* ── Lazy pages — paths match REAL folder structure ── */
 const Login              = lazy(() => import('./pages/auth/Login'));
 const SignUp = lazy(() => import('./pages/auth/Signup'));
+const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
+const ResetPassword  = lazy(() => import('./pages/auth/ResetPassword'));
+const OTPVerify      = lazy(() => import('./pages/auth/OTPVerify'));
+const CompleteProfile = lazy(() => import('./pages/auth/CompleteProfile'));
 const Home               = lazy(() => import('./pages/feed/Home'));
 const Discover           = lazy(() => import('./pages/discover/Discover'));
 const Notifications      = lazy(() => import('./pages/notifications/Notifications'));
@@ -84,15 +88,19 @@ function Splash() {
 
 /* ── Guards ── */
 function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
+  const { user, profile, loading, profileChecked, recovery } = useAuth();
   if (loading) return <PageLoader />;
   if (!user)   return <Navigate to="/login" replace />;
+  if (recovery) return <Navigate to="/reset-password" replace />;
+  // signed in, but no profile yet -> finish it first
+  if (profileChecked && !profile) return <Navigate to="/complete-profile" replace />;
   return children;
 }
+
 function PublicRoute({ children }) {
-  const { user, loading } = useAuth();
+  const { user, loading, recovery } = useAuth();
   if (loading) return <PageLoader />;
-  if (user)    return <Navigate to="/" replace />;
+  if (user && !recovery) return <Navigate to="/" replace />;
   return children;
 }
 
@@ -149,6 +157,10 @@ function AppShell() {
           {/* Auth */}
           <Route path="/login"  element={<PublicRoute><Login  /></PublicRoute>} />
           <Route path="/signup" element={<PublicRoute><SignUp /></PublicRoute>} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password"  element={<ResetPassword />} />
+          <Route path="/verify"          element={<PublicRoute><OTPVerify /></PublicRoute>} />
+          <Route path="/complete-profile" element={<CompleteProfile />} />
 
           {/* Core */}
           <Route path="/"              element={<ProtectedRoute><Home /></ProtectedRoute>} />

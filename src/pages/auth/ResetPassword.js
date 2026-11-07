@@ -1,106 +1,98 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
-import { Eye, EyeOff, Lock } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { Lock, Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Spinner } from '../../components/ui';
+import { checkPassword, friendlyAuthError } from '../../lib/authSecurity';
 
-const ResetPassword = () => {
+export default function ResetPassword() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ password: '', confirm: '' });
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const { user, loading, recovery, clearRecovery } = useAuth();
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [show, setShow] = useState(false);
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  const check = checkPassword(password);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (form.password !== form.confirm) {
-      setError('Passwords do not match.');
-      return;
-    }
-    if (form.password.length < 6) {
-      setError('Password must be at least 6 characters.');
-      return;
-    }
-    setLoading(true);
+  // Only reachable through a real recovery (emailed link / verified code)
+  useEffect(() => {
+    if (loading || done) return;
+    if (!user) navigate('/forgot-password', { replace: true });
+    else if (!recovery) navigate('/', { replace: true });
+  }, [loading, user, recovery, done, navigate]);
 
-    const { error } = await supabase.auth.updateUser({ password: form.password });
-
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    } else {
-      navigate('/login');
-    }
+  const submit = async (e) => {
+    e?.preventDefault();
+    if (busy) return;
+    if (!check.ok) { setError(check.error); return; }
+    if (password !== confirm) { setError('Passwords do not match.'); return; }
+    setBusy(true); setError('');
+    const { error: err } = await supabase.auth.updateUser({ password });
+    if (err) { setError(friendlyAuthError(err).message); setBusy(false); return; }
+    setDone(true);
+    // a password reset must end every other login of this account
+    try { await supabase.auth.signOut({ scope: 'others' }); } catch { /* best effort */ }
+    clearRecovery();
+    setTimeout(() => navigate('/', { replace: true }), 1400);
   };
 
-  return (
-    <div className="min-h-screen bg-[#0D0C0B] flex items-center justify-center p-6">
-      <div className="w-full max-w-sm">
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold text-xl">B</div>
-          <span className="text-white font-bold text-2xl">B-Link</span>
-        </div>
+  if (loading || (!user && !done)) {
+    return <div className="min-h-screen bg-[#0D0C0B] flex items-center justify-center text-[#FF5A1F]"><Spinner size={28} /></div>;
+  }
 
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
-          <div className="text-4xl mb-4 text-center">🔐</div>
-          <h2 className="text-white text-2xl font-bold mb-2 text-center">Set new password</h2>
-          <p className="text-[#8E8C88] text-sm mb-6 text-center">Choose a strong password for your account.</p>
-
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 mb-4">
-              <p className="text-red-400 text-sm">{error}</p>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="text-white/70 text-xs mb-1 block">New password</label>
-              <div className="relative">
-                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8E8C88]" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  placeholder="Min. 6 characters"
-                  required
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-10 text-white placeholder-[#8E8C88] text-sm focus:outline-none focus:border-[#FF5A1F] transition-colors"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8E8C88] hover:text-white"
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-white/70 text-xs mb-1 block">Confirm password</label>
-              <div className="relative">
-                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8E8C88]" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={form.confirm}
-                  onChange={(e) => setForm({ ...form, confirm: e.target.value })}
-                  placeholder="Repeat your password"
-                  required
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder-[#8E8C88] text-sm focus:outline-none focus:border-[#FF5A1F] transition-colors"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-[#FF5A1F] to-[#FF2D78] text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
-            >
-              {loading ? 'Updating...' : 'Update Password'}
-            </button>
-          </form>
-        </div>
+  if (done) {
+    return (
+      <div className="min-h-screen bg-[#0D0C0B] flex flex-col items-center justify-center px-6 text-center">
+        <CheckCircle2 size={56} className="text-[#2ECC71] mb-4" />
+        <h1 className="text-white font-black text-2xl">Password updated</h1>
+        <p className="text-[#8E8C88] text-sm mt-2">Other devices have been signed out. Taking you in…</p>
       </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#0D0C0B] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
+      <div className="px-6 pt-14 pb-6">
+        <h1 className="text-white font-black text-2xl">Choose a new password</h1>
+        <p className="text-[#8E8C88] text-sm mt-2">Use at least 8 characters with letters and numbers.</p>
+      </div>
+      <form onSubmit={submit} className="flex flex-col gap-3 px-5">
+        <div className="relative">
+          <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8C88] pointer-events-none" />
+          <input type={show ? 'text' : 'password'} value={password} onChange={(e) => { setPassword(e.target.value); setError(''); }}
+            placeholder="New password" autoComplete="new-password"
+            className="w-full bg-white/[0.07] border border-white/10 rounded-2xl pl-11 pr-12 py-4 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60" />
+          <button type="button" tabIndex={-1} onClick={() => setShow((v) => !v)} aria-label={show ? 'Hide password' : 'Show password'}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8E8C88]">{show ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+        </div>
+        {password && (
+          <div className="-mt-1 px-1">
+            <div className="flex gap-1">
+              {[1, 2, 3, 4].map((i) => <div key={i} className="h-1 flex-1 rounded-full" style={{ background: i <= check.score ? (check.score >= 3 ? '#2ECC71' : '#FFB020') : 'rgba(255,255,255,0.12)' }} />)}
+            </div>
+            <p className="text-[11px] mt-1" style={{ color: check.ok ? '#8E8C88' : '#FF8A5C' }}>{check.ok ? (check.score >= 3 ? 'Strong password' : 'Good. Longer is stronger.') : check.error}</p>
+          </div>
+        )}
+        <div className="relative">
+          <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8C88] pointer-events-none" />
+          <input type={show ? 'text' : 'password'} value={confirm} onChange={(e) => { setConfirm(e.target.value); setError(''); }}
+            placeholder="Confirm new password" autoComplete="new-password"
+            className="w-full bg-white/[0.07] border border-white/10 rounded-2xl pl-11 pr-4 py-4 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60" />
+        </div>
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm flex items-start gap-2">
+            <AlertCircle size={16} className="flex-shrink-0 mt-0.5" /> <span>{error}</span>
+          </div>
+        )}
+        <button type="submit" disabled={busy}
+          className="w-full py-4 rounded-2xl font-bold text-white text-[15px] disabled:opacity-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          style={{ background: 'linear-gradient(135deg, #FF5A1F, #FF2D78)', boxShadow: '0 8px 24px rgba(255,90,31,0.35)' }}>
+          {busy ? <><Spinner size={18} /> Saving…</> : 'Update password'}
+        </button>
+      </form>
     </div>
   );
-};
-
-export default ResetPassword;
+}

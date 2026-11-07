@@ -1,224 +1,290 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
-import { Eye, EyeOff, Mail, Lock, User, Globe, ArrowLeft, ChevronDown, CheckCircle, XCircle } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import {
+  Eye, EyeOff, Mail, Lock, User, Globe, ArrowLeft, ChevronDown, CheckCircle2, XCircle, Smartphone, AlertCircle,
+} from 'lucide-react';
 import { validateUsername, validateDisplayName } from '../../utils/usernameValidation';
+import {
+  PHONE_COUNTRIES, checkEmail, normalisePhone, checkPassword, friendlyAuthError, submitGuard, maskIdentifier,
+} from '../../lib/authSecurity';
+import Captcha, { captchaEnabled } from '../../components/auth/Captcha';
+import VerifyCode from '../../components/auth/VerifyCode';
+import { Spinner } from '../../components/ui';
 
 const COUNTRIES = [
-  {code:'KE',name:'Kenya 🇰🇪'},{code:'NG',name:'Nigeria 🇳🇬'},{code:'GH',name:'Ghana 🇬🇭'},
-  {code:'UG',name:'Uganda 🇺🇬'},{code:'TZ',name:'Tanzania 🇹🇿'},{code:'ZA',name:'South Africa 🇿🇦'},
-  {code:'ET',name:'Ethiopia 🇪🇹'},{code:'RW',name:'Rwanda 🇷🇼'},{code:'GB',name:'UK 🇬🇧'},
-  {code:'US',name:'USA 🇺🇸'},{code:'CA',name:'Canada 🇨🇦'},{code:'OTHER',name:'Other 🌍'},
+  { code: 'KE', name: 'Kenya' }, { code: 'NG', name: 'Nigeria' }, { code: 'GH', name: 'Ghana' },
+  { code: 'UG', name: 'Uganda' }, { code: 'TZ', name: 'Tanzania' }, { code: 'ZA', name: 'South Africa' },
+  { code: 'ET', name: 'Ethiopia' }, { code: 'RW', name: 'Rwanda' }, { code: 'GB', name: 'United Kingdom' },
+  { code: 'US', name: 'United States' }, { code: 'CA', name: 'Canada' }, { code: 'OTHER', name: 'Other' },
 ];
 
-// Signup-specific error sanitization. Reuses the spirit of
-// securityUtils.js's sanitiseAuthError but covers the messages that
-// are actually reachable during sign-up (Login's version is tuned for
-// sign-in failures and doesn't handle "already registered" — the
-// original code showed authErr.message directly here, which for
-// Supabase's default signUp behavior confirms whether an email is
-// already in use, the same F11 enumeration issue fixed in Login.jsx).
-function sanitiseSignupError(error) {
-  if (!error) return null;
-  const msg = error.message?.toLowerCase() || '';
-  if (msg.includes('already registered') || msg.includes('already exists') || msg.includes('duplicate')) {
-    return 'Something went wrong creating your account. If you already have an account, try signing in instead.';
-  }
-  if (msg.includes('rate limit') || msg.includes('too many')) {
-    return 'Too many attempts. Please wait a few minutes and try again.';
-  }
-  if (msg.includes('network') || msg.includes('fetch')) {
-    return 'Network error. Check your connection and try again.';
-  }
-  if (msg.includes('password')) {
-    return error.message; // password-strength feedback is safe and useful to show as-is
-  }
-  return 'Something went wrong. Please try again.';
+const inputCls = 'w-full bg-white/[0.07] border border-white/10 rounded-2xl pl-11 pr-4 py-4 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 transition-all';
+
+function useDebounced(value, delay) {
+  const [v, setV] = useState(value);
+  useEffect(() => { const t = setTimeout(() => setV(value), delay); return () => clearTimeout(t); }, [value, delay]);
+  return v;
 }
 
-function useDebouncedValue(value, delay) {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(t);
-  }, [value, delay]);
-  return debounced;
+async function usernameIsFree(name) {
+  const { data, error } = await supabase.rpc('username_available', { p_username: name });
+  if (!error && typeof data === 'boolean') return data;
+  // fallback if the database script has not been installed yet
+  const { data: row } = await supabase.from('users').select('id').eq('username', name).maybeSingle();
+  return !row;
 }
 
 export default function SignUp() {
   const navigate = useNavigate();
-  const [step,        setStep]        = useState(1);
-  const [email,       setEmail]       = useState('');
-  const [password,    setPassword]    = useState('');
-  const [confirm,     setConfirm]     = useState('');
+  const { user, loading } = useAuth();
+
+  const [step, setStep] = useState(1);                    // 1 account · 2 profile · 3 verify
+  const [method, setMethod] = useState('email');          // email | phone
+  const [email, setEmail] = useState('');
+  const [phoneCountry, setPhoneCountry] = useState('KE');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [username,    setUsername]    = useState('');
-  const [country,     setCountry]     = useState('KE');
-  const [showPass,    setShowPass]    = useState(false);
-  const [error,       setError]       = useState('');
-  const [busy,        setBusy]        = useState(false);
-  const [usernameStatus, setUsernameStatus] = useState(null); // null | 'checking' | 'available' | 'taken'
+  const [username, setUsername] = useState('');
+  const [country, setCountry] = useState('KE');
+  const [showPass, setShowPass] = useState(false);
+  const [error, setError] = useState('');
+  const [hint, setHint] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [uStatus, setUStatus] = useState(null);           // null | checking | available | taken
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [captchaReset, setCaptchaReset] = useState(0);
+  const [pending, setPending] = useState(null);           // { kind, target, masked } waiting for the code
+  const [ambiguous, setAmbiguous] = useState(false);
+  const tokenRef = useRef('');
+  tokenRef.current = captchaToken;
 
-  const debouncedUsername = useDebouncedValue(username, 450);
+  const debouncedUsername = useDebounced(username, 450);
+  const pwCheck = checkPassword(password);
 
-  // Live availability check as the user types — previously this only
-  // happened once, on final submit, after filling the whole form.
+  useEffect(() => { if (!loading && user) navigate('/', { replace: true }); }, [user, loading, navigate]);
+
   useEffect(() => {
     const clean = debouncedUsername.trim().toLowerCase();
-    if (clean.length < 3 || validateUsername(clean)) { setUsernameStatus(null); return; }
-
+    if (clean.length < 3 || validateUsername(clean)) { setUStatus(null); return undefined; }
     let cancelled = false;
-    setUsernameStatus('checking');
-    supabase.from('users').select('id').eq('username', clean).maybeSingle()
-      .then(({ data }) => { if (!cancelled) setUsernameStatus(data ? 'taken' : 'available'); });
+    setUStatus('checking');
+    usernameIsFree(clean).then((free) => { if (!cancelled) setUStatus(free ? 'available' : 'taken'); }).catch(() => { if (!cancelled) setUStatus(null); });
     return () => { cancelled = true; };
   }, [debouncedUsername]);
 
-  const validateStep1 = () => {
-    if (!email.trim())                     return 'Enter your email.';
-    if (!/\S+@\S+\.\S+/.test(email))       return 'Enter a valid email.';
-    if (password.length < 8)               return 'Password must be at least 8 characters.';
-    if (password !== confirm)              return 'Passwords do not match.';
-    return null;
-  };
+  const resetCaptcha = () => { setCaptchaToken(''); setCaptchaReset((n) => n + 1); };
 
-  const validateStep2 = () => {
-    const nameErr = validateDisplayName(displayName);
-    if (nameErr) return nameErr;
-    const userErr = validateUsername(username);
-    if (userErr) return userErr;
-    if (usernameStatus === 'taken') return 'Username taken. Choose another.';
-    return null;
+  const identity = () => {
+    if (method === 'email') {
+      const c = checkEmail(email);
+      return c.ok ? { ok: true, kind: 'email', value: c.email } : { ok: false, error: c.error, suggestion: c.suggestion };
+    }
+    const p = normalisePhone(phoneCountry, phone);
+    return p.ok ? { ok: true, kind: 'phone', value: p.e164 } : { ok: false, error: p.error };
   };
 
   const handleNext = () => {
-    const err = validateStep1(); if (err) { setError(err); return; }
-    setError(''); setStep(2);
+    const id = identity();
+    if (!id.ok) { setError(id.error); setHint(id.suggestion || ''); return; }
+    if (!pwCheck.ok) { setError(pwCheck.error); return; }
+    if (password !== confirm) { setError('Passwords do not match.'); return; }
+    setError(''); setHint(''); setStep(2);
   };
+
+  const finish = () => navigate('/', { replace: true });
 
   const handleSignUp = async (e) => {
     e?.preventDefault();
-    const err = validateStep2(); if (err) { setError(err); return; }
-    setBusy(true); setError('');
+    if (busy) return;
+    const nameErr = validateDisplayName(displayName);
+    if (nameErr) { setError(nameErr); return; }
+    const userErr = validateUsername(username);
+    if (userErr) { setError(userErr); return; }
+    if (uStatus === 'taken') { setError('Username taken. Choose another.'); return; }
+    const id = identity();
+    if (!id.ok) { setError(id.error); setStep(1); return; }
+    if (captchaEnabled && !tokenRef.current) { setError('Please complete the security check.'); return; }
+    if (!submitGuard(2500)) return;
 
-    // Final authoritative check right before submit — the live
-    // indicator above is a UX nicety, this is the actual gate. Still
-    // has the same TOCTOU race a concurrent signup could hit; the
-    // real guarantee needs a UNIQUE constraint on users.username at
-    // the database level (see 09_EditProfile_notes.md, same issue,
-    // same fix — add it once and it covers both signup and profile
-    // edits).
+    setBusy(true); setError(''); setAmbiguous(false);
     const cleanUsername = username.trim().toLowerCase();
-    const { data: existing } = await supabase.from('users')
-      .select('id').eq('username', cleanUsername).maybeSingle();
-    if (existing) { setError('Username taken. Choose another.'); setBusy(false); return; }
 
-    const { data: authData, error: authErr } = await supabase.auth.signUp({
-      email: email.trim().toLowerCase(),
-      password,
-      options: {
-        data: {
-          display_name: displayName.trim(),
-          username: cleanUsername,
-          country, // included so a DB-side auto-provisioning trigger
-                   // (see SQL notes) can persist it even if the
-                   // client-side upsert below never runs
-        },
-      },
-    });
+    // Last authoritative check (the live indicator is only a hint)
+    try {
+      if (!(await usernameIsFree(cleanUsername))) { setError('Username taken. Choose another.'); setBusy(false); return; }
+    } catch { /* the database enforces uniqueness anyway */ }
 
-    if (authErr) { setError(sanitiseSignupError(authErr)); setBusy(false); return; }
+    const meta = { display_name: displayName.trim(), username: cleanUsername, country };
+    const options = { data: meta, ...(captchaEnabled ? { captchaToken: tokenRef.current } : {}) };
+    let res;
+    try {
+      res = await supabase.auth.signUp(id.kind === 'email'
+        ? { email: id.value, password, options: { ...options, emailRedirectTo: window.location.origin + '/login' } }
+        : { phone: id.value, password, options: { ...options, channel: 'sms' } });
+    } catch (err) { res = { error: err }; }
+    if (captchaEnabled) resetCaptcha();
 
-    const uid = authData?.user?.id;
-    if (uid) {
-      // Was: fire-and-forget, result never checked. If this failed —
-      // network drop right after signUp resolved, RLS misconfig,
-      // whatever — the person ended up with a working login and NO
-      // row in public.users at all, silently soft-locked out of the
-      // app with no visible error. Now surfaced clearly, and a DB
-      // trigger (see SQL notes) provides a safety net that creates a
-      // minimal profile row regardless of whether this call runs.
-      const { error: profileErr } = await supabase.from('users').upsert({
-        id: uid, email: email.trim().toLowerCase(),
-        display_name: displayName.trim(),
-        username: cleanUsername,
-        country, role: 'user',
-        is_banned: false, is_restricted: false,
-        followers_count: 0, posts_count: 0,
-      }, { onConflict: 'id' });
+    if (res.error) {
+      const f = friendlyAuthError(res.error, 'signup');
 
-      if (profileErr) {
-        console.error('Profile creation error:', profileErr.message);
-        setError('Your account was created, but we couldn\u2019t finish setting up your profile. Please try signing in — if this keeps happening, contact support.');
+      // Unclear failures (dropped connection, server hiccup): find out what really happened
+      if (['network', 'server', 'other'].includes(f.kind)) {
+        if (!captchaEnabled) {
+          const probe = await supabase.auth.signInWithPassword(id.kind === 'email' ? { email: id.value, password } : { phone: id.value, password });
+          if (probe.data?.session) { finish(); return; }                       // it WAS created and no verification needed
+          const pk = probe.error ? friendlyAuthError(probe.error).kind : '';
+          if (pk === 'unconfirmed_email' || pk === 'unconfirmed_phone') {      // created, waiting for the code
+            setPending({ kind: id.kind, target: id.value }); setStep(3); setBusy(false); return;
+          }
+          if (pk === 'credentials') { setError('We could not create your account, and nothing was saved. Please try again.'); setBusy(false); return; }
+        }
+        setError(f.message);
+        setAmbiguous(true);                                                    // offer "I already have a code"
         setBusy(false);
         return;
       }
+      setError(f.message);
+      setBusy(false);
+      return;
     }
 
+    if (res.data?.session) { finish(); return; }                               // verification switched off in Supabase
+    setPending({ kind: id.kind, target: id.value });
+    setStep(3);
     setBusy(false);
-    // Auth state change will redirect automatically
   };
+
+  /* ── step 3: enter the code ── */
+  const verifyHandler = (code) => supabase.auth.verifyOtp(
+    pending.kind === 'email'
+      ? { email: pending.target, token: code, type: 'signup' }
+      : { phone: pending.target, token: code, type: 'sms' },
+  );
+
+  const resendHandler = async () => {
+    if (captchaEnabled && !tokenRef.current) return { error: { code: 'captcha_failed' } };
+    const options = captchaEnabled ? { captchaToken: tokenRef.current } : undefined;
+    const res = await supabase.auth.resend(
+      pending.kind === 'email' ? { type: 'signup', email: pending.target, options } : { type: 'sms', phone: pending.target, options },
+    );
+    if (captchaEnabled) resetCaptcha();
+    return res;
+  };
+
+  if (step === 3 && pending) {
+    return (
+      <div className="min-h-screen bg-[#0D0C0B]" style={{ maxWidth: 480, margin: '0 auto' }}>
+        <VerifyCode
+          kind={pending.kind}
+          target={pending.kind === 'email' ? maskIdentifier(pending.target) : pending.target}
+          hint="We sent a 6-digit code to"
+          onVerify={verifyHandler}
+          onResend={resendHandler}
+          onBack={() => { setStep(2); setPending(null); resetCaptcha(); }}
+          backLabel="Change details"
+        />
+        {captchaEnabled && <div className="px-6"><Captcha onToken={setCaptchaToken} resetKey={captchaReset} /></div>}
+        <p className="text-center text-[#8E8C88] text-sm pb-10">
+          Already have an account?{' '}
+          <button onClick={() => navigate('/login')} className="text-[#FF5A1F] font-bold">Sign in</button>
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0D0C0B] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
-
       <div className="flex items-center gap-3 px-4 pt-4 pb-2">
-        <button onClick={() => step === 2 ? setStep(1) : navigate('/login')}
-          aria-label="Back"
+        <button onClick={() => (step === 2 ? setStep(1) : navigate('/login'))} aria-label="Back"
           className="w-9 h-9 rounded-xl hover:bg-white/10 flex items-center justify-center text-[#8E8C88] hover:text-white transition-colors">
           <ArrowLeft size={20} />
         </button>
         <div>
-          <p className="text-white font-bold text-[15px] leading-none">
-            {step === 1 ? 'Create Account' : 'Your Profile'}
-          </p>
+          <p className="text-white font-bold text-[15px] leading-none">{step === 1 ? 'Create account' : 'Your profile'}</p>
           <p className="text-[#8E8C88] text-xs mt-0.5">Step {step} of 2</p>
         </div>
         <div className="flex gap-1.5 ml-auto">
-          {[1,2].map(s => (
-            <div key={s} className={`h-1.5 rounded-full transition-all duration-300 ${s <= step ? 'bg-[#FF5A1F]' : 'bg-white/15'}`}
-              style={{ width: s === step ? 20 : 8 }} />
+          {[1, 2].map((s) => (
+            <div key={s} className={`h-1.5 rounded-full transition-all duration-300 ${s <= step ? 'bg-[#FF5A1F]' : 'bg-white/15'}`} style={{ width: s === step ? 20 : 8 }} />
           ))}
         </div>
       </div>
 
-      <div className="flex flex-col items-center pt-4 pb-6 px-6">
+      <div className="flex flex-col items-center pt-4 pb-5 px-6">
         <div className="w-16 h-16 rounded-[20px] bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center shadow-xl shadow-[#FF5A1F]/40 mb-3">
           <span className="text-white font-black text-2xl">B</span>
         </div>
-        <h2 className="text-white font-black text-2xl">
-          {step === 1 ? 'Join B-Link' : 'Who are you?'}
-        </h2>
-        <p className="text-white/40 text-sm text-center mt-1">
-          {step === 1 ? 'Free forever. No credit card needed.' : 'How should the community know you?'}
-        </p>
+        <h2 className="text-white font-black text-2xl">{step === 1 ? 'Join B-Link' : 'Who are you?'}</h2>
+        <p className="text-white/40 text-sm text-center mt-1">{step === 1 ? 'Free forever. No credit card needed.' : 'How should the community know you?'}</p>
       </div>
 
       {step === 1 && (
         <div className="flex flex-col gap-3 px-5">
-          <div className="relative">
-            <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8C88] pointer-events-none" />
-            <input type="email" value={email} onChange={e => { setEmail(e.target.value); setError(''); }}
-              placeholder="Email address" autoComplete="email" inputMode="email"
-              className="w-full bg-white/[0.07] border border-white/10 rounded-2xl pl-11 pr-4 py-4 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 transition-all" />
+          <div className="flex bg-white/[0.06] rounded-2xl p-1">
+            {[['email', 'Email', Mail], ['phone', 'Phone', Smartphone]].map(([key, label, Icon]) => (
+              <button key={key} onClick={() => { setMethod(key); setError(''); setHint(''); }}
+                className={'flex-1 py-2.5 rounded-xl text-sm font-bold transition-all inline-flex items-center justify-center gap-2 ' +
+                  (method === key ? 'bg-[#FF5A1F] text-white' : 'text-white/50')}>
+                <Icon size={15} /> {label}
+              </button>
+            ))}
           </div>
+
+          {method === 'email' ? (
+            <div className="relative">
+              <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8C88] pointer-events-none" />
+              <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(''); setHint(''); }}
+                placeholder="Email address" autoComplete="email" inputMode="email" autoCapitalize="none" className={inputCls} />
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <select value={phoneCountry} onChange={(e) => setPhoneCountry(e.target.value)} aria-label="Country code"
+                className="bg-white/[0.07] border border-white/10 rounded-2xl px-3 py-4 text-white text-[14px] focus:outline-none focus:border-[#FF5A1F]/60"
+                style={{ WebkitAppearance: 'none', width: 104 }}>
+                {PHONE_COUNTRIES.map((c) => <option key={c.code} value={c.code} style={{ background: '#171614' }}>{c.code} +{c.dial}</option>)}
+              </select>
+              <input type="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setError(''); }}
+                placeholder="712 345 678" autoComplete="tel-national" inputMode="tel"
+                className="flex-1 min-w-0 bg-white/[0.07] border border-white/10 rounded-2xl px-4 py-4 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60" />
+            </div>
+          )}
+          {hint && (
+            <button onClick={() => { setEmail(hint); setError(''); setHint(''); }} className="text-left text-[13px] text-[#FF5A1F] font-semibold -mt-1">
+              Use {hint}
+            </button>
+          )}
 
           <div className="relative">
             <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8C88] pointer-events-none" />
-            <input type={showPass ? 'text' : 'password'} value={password} onChange={e => { setPassword(e.target.value); setError(''); }}
-              placeholder="Password (min 8 chars)" autoComplete="new-password"
-              className="w-full bg-white/[0.07] border border-white/10 rounded-2xl pl-11 pr-12 py-4 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 transition-all" />
-            <button type="button" tabIndex={-1} onClick={() => setShowPass(v => !v)} aria-label={showPass ? 'Hide password' : 'Show password'}
+            <input type={showPass ? 'text' : 'password'} value={password} onChange={(e) => { setPassword(e.target.value); setError(''); }}
+              placeholder="Password (8+ characters)" autoComplete="new-password" className={inputCls + ' pr-12'} />
+            <button type="button" tabIndex={-1} onClick={() => setShowPass((v) => !v)} aria-label={showPass ? 'Hide password' : 'Show password'}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8E8C88] hover:text-white">
               {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
+          {password && (
+            <div className="-mt-1 px-1">
+              <div className="flex gap-1">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="h-1 flex-1 rounded-full"
+                    style={{ background: i <= pwCheck.score ? (pwCheck.score >= 3 ? '#2ECC71' : '#FFB020') : 'rgba(255,255,255,0.12)' }} />
+                ))}
+              </div>
+              <p className="text-[11px] mt-1" style={{ color: pwCheck.ok ? '#8E8C88' : '#FF8A5C' }}>
+                {pwCheck.ok ? (pwCheck.score >= 3 ? 'Strong password' : 'Good. Longer is stronger.') : pwCheck.error}
+              </p>
+            </div>
+          )}
 
           <div className="relative">
             <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8C88] pointer-events-none" />
-            <input type={showPass ? 'text' : 'password'} value={confirm} onChange={e => { setConfirm(e.target.value); setError(''); }}
-              placeholder="Confirm password" autoComplete="new-password"
-              className="w-full bg-white/[0.07] border border-white/10 rounded-2xl pl-11 pr-4 py-4 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 transition-all" />
+            <input type={showPass ? 'text' : 'password'} value={confirm} onChange={(e) => { setConfirm(e.target.value); setError(''); }}
+              placeholder="Confirm password" autoComplete="new-password" className={inputCls} />
           </div>
 
           {error && <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">{error}</div>}
@@ -226,76 +292,65 @@ export default function SignUp() {
           <button onClick={handleNext}
             className="w-full py-4 rounded-2xl font-bold text-white text-[15px] active:scale-[0.98] transition-all mt-1"
             style={{ background: 'linear-gradient(135deg, #FF5A1F, #FF2D78)', boxShadow: '0 8px 24px rgba(255,90,31,0.35)' }}>
-            Continue →
+            Continue
           </button>
-
-          <p className="text-center text-[#8E8C88] text-sm mt-2">
-            Already have an account?{' '}
-            <button onClick={() => navigate('/login')} className="text-[#FF5A1F] font-bold">Sign In</button>
+          <p className="text-center text-[#8E8C88] text-sm mt-2 pb-8">
+            Already have an account? <button onClick={() => navigate('/login')} className="text-[#FF5A1F] font-bold">Sign in</button>
           </p>
         </div>
       )}
 
       {step === 2 && (
-        <form onSubmit={handleSignUp} className="flex flex-col gap-3 px-5">
+        <form onSubmit={handleSignUp} className="flex flex-col gap-3 px-5 pb-8">
           <div className="relative">
             <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8C88] pointer-events-none" />
-            <input type="text" value={displayName} onChange={e => { setDisplayName(e.target.value); setError(''); }}
-              placeholder="Display name" maxLength={40} autoComplete="name"
-              className="w-full bg-white/[0.07] border border-white/10 rounded-2xl pl-11 pr-4 py-4 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 transition-all" />
+            <input type="text" value={displayName} onChange={(e) => { setDisplayName(e.target.value); setError(''); }}
+              placeholder="Display name" maxLength={40} autoComplete="name" className={inputCls} />
           </div>
 
           <div className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8C88] font-bold text-[15px] pointer-events-none">@</span>
-            <input type="text" value={username}
-              onChange={e => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,'')); setError(''); }}
-              placeholder="username" maxLength={20} autoComplete="username"
+            <input type="text" value={username} onChange={(e) => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')); setError(''); }}
+              placeholder="username" maxLength={20} autoComplete="off" autoCapitalize="none"
               className="w-full bg-white/[0.07] border border-white/10 rounded-2xl pl-9 pr-10 py-4 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 transition-all" />
-            {usernameStatus === 'checking' && (
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
-            )}
-            {usernameStatus === 'available' && (
-              <CheckCircle size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#2ECC71]" />
-            )}
-            {usernameStatus === 'taken' && (
-              <XCircle size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-red-400" />
-            )}
+            {uStatus === 'checking' && <Spinner size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8E8C88]" />}
+            {uStatus === 'available' && <CheckCircle2 size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#2ECC71]" />}
+            {uStatus === 'taken' && <XCircle size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-red-400" />}
           </div>
-          <p className={`text-[11px] -mt-1 pl-1 ${usernameStatus === 'taken' ? 'text-red-400' : usernameStatus === 'available' ? 'text-[#2ECC71]' : 'text-[#8E8C88]'}`}>
-            {usernameStatus === 'taken' ? 'That username is already taken' :
-             usernameStatus === 'available' ? 'Username is available' :
-             'Letters, numbers and _ only · 3-20 chars'}
+          <p className={`text-[11px] -mt-1 pl-1 ${uStatus === 'taken' ? 'text-red-400' : uStatus === 'available' ? 'text-[#2ECC71]' : 'text-[#8E8C88]'}`}>
+            {uStatus === 'taken' ? 'That username is already taken' : uStatus === 'available' ? 'Username is available' : 'Letters, numbers and _ only. 3 to 20 characters.'}
           </p>
 
           <div className="relative">
             <Globe size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8C88] pointer-events-none z-10" />
-            <select value={country} onChange={e => setCountry(e.target.value)}
+            <select value={country} onChange={(e) => setCountry(e.target.value)}
               className="w-full bg-white/[0.07] border border-white/10 rounded-2xl pl-11 pr-10 py-4 text-white text-[15px] focus:outline-none focus:border-[#FF5A1F]/60 appearance-none transition-all"
-              style={{ WebkitAppearance:'none' }}>
-              {COUNTRIES.map(c => (
-                <option key={c.code} value={c.code} style={{ background:'#171614' }}>{c.name}</option>
-              ))}
+              style={{ WebkitAppearance: 'none' }}>
+              {COUNTRIES.map((c) => <option key={c.code} value={c.code} style={{ background: '#171614' }}>{c.name}</option>)}
             </select>
-            {/* Was missing entirely — appearance-none removes the
-                native arrow with nothing replacing it, so the field
-                didn't visibly read as a dropdown at all. */}
             <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8E8C88] pointer-events-none" />
           </div>
 
-          {error && <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">{error}</div>}
+          {captchaEnabled && <Captcha onToken={setCaptchaToken} resetKey={captchaReset} />}
+
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm flex items-start gap-2">
+              <AlertCircle size={16} className="flex-shrink-0 mt-0.5" /> <span>{error}</span>
+            </div>
+          )}
+          {ambiguous && (
+            <button type="button" onClick={() => { const id = identity(); if (id.ok) { setPending({ kind: id.kind, target: id.value }); setStep(3); } }}
+              className="text-[#FF5A1F] text-sm font-semibold text-left">
+              I already received a code
+            </button>
+          )}
 
           <button type="submit" disabled={busy}
             className="w-full py-4 rounded-2xl font-bold text-white text-[15px] disabled:opacity-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-1"
             style={{ background: 'linear-gradient(135deg, #FF5A1F, #FF2D78)', boxShadow: '0 8px 24px rgba(255,90,31,0.35)' }}>
-            {busy
-              ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Creating account...</>
-              : '🚀 Create My Account'
-            }
+            {busy ? <><Spinner size={18} /> Creating account…</> : 'Create my account'}
           </button>
-
-          <p className="text-center text-white/25 text-[11px] mt-1">
-            By signing up you agree to our Terms & Privacy Policy.
-          </p>
+          <p className="text-center text-white/30 text-[11px] mt-1">By signing up you agree to our Terms and Privacy Policy.</p>
         </form>
       )}
     </div>
