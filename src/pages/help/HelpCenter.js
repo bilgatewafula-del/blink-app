@@ -1,514 +1,350 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import {
-  ArrowLeft, Mail, MessageCircle, Bug, Lightbulb,
-  ChevronDown, ChevronUp, ExternalLink, Send,
-  CheckCircle, Clock, X, Image as ImageIcon,
+  ArrowLeft, Search, X, ChevronDown, Mail, MessageCircle, ThumbsUp, ThumbsDown, Send, Paperclip, Check, Clock,
+  User, LogIn, CircleDot, FileText, Users, Bell, Wallet, ShieldCheck, HelpCircle, Bug, Lightbulb, CreditCard, Inbox, CheckCircle2,
 } from 'lucide-react';
+import { Spinner, EmptyState } from '../../components/ui';
+import { compressImage, uploadImage } from '../../lib/imageUtils';
+import { SUPPORT_EMAIL, SUPPORT_WHATSAPP, APP_VERSION } from '../../config/appInfo';
 
-/* ── FAQ data ── */
 const FAQ = [
-  {
-    category: 'Account Issues',
-    emoji: '👤',
-    questions: [
-      { q: 'How do I reset my password?', a: 'Go to Settings → Change Password. Enter your new password (min 8 characters) and confirm. The change takes effect immediately.' },
-      { q: 'Why is my account restricted?', a: 'Your account may be restricted due to a policy violation. Check your notifications for details from our admin team, or contact support.' },
-      { q: 'How do I delete my account?', a: 'Go to Settings → Delete Account. Type DELETE to confirm. This permanently removes all your data and cannot be undone.' },
-      { q: 'Can I change my username?', a: 'Yes. Go to Settings → Edit Profile → Username. You can update it anytime, but it must be unique and 3–20 characters long.' },
-    ],
-  },
-  {
-    category: 'Posts',
-    emoji: '📸',
-    questions: [
-      { q: 'Why can\'t I see my post in the feed?', a: 'Make sure your post audience is set to "Public." Private posts only appear to you. Also check your internet connection and try refreshing.' },
-      { q: 'How do I delete a post?', a: 'Tap the ⋯ (three dots) on your post → Delete Post → Confirm. The post and all its likes/comments are permanently removed.' },
-      { q: 'Can I edit a post after posting?', a: 'Yes. Tap the ⋯ on your post → Edit Post. You can update the caption, audience, and hashtags.' },
-      { q: 'What media formats are supported?', a: 'Images: JPG, PNG, WEBP (up to 10 per post, max 5MB each). Videos: MP4, MOV (max 100MB). All media is automatically compressed before upload.' },
-    ],
-  },
-  {
-    category: 'Chats',
-    emoji: '💬',
-    questions: [
-      { q: 'Why can\'t I send a message?', a: 'The user may have restricted who can message them. Check your privacy settings or try again. If you\'re not following each other, messaging may be limited.' },
-      { q: 'How do I delete a conversation?', a: 'Open the chat → tap the settings icon → Delete Conversation. This removes it from your side only.' },
-      { q: 'Are messages end-to-end encrypted?', a: 'Messages are stored securely in our Supabase database. We do not sell or share your message content with third parties.' },
-    ],
-  },
-  {
-    category: 'Notifications',
-    emoji: '🔔',
-    questions: [
-      { q: 'How do I turn off notifications?', a: 'Go to Settings → Notifications. Toggle off whichever notification types you don\'t want (likes, comments, followers, messages, mentions).' },
-      { q: 'I\'m not receiving notifications', a: 'Check Settings → Notifications and make sure the relevant types are turned on. Also ensure your browser/device has notification permissions enabled for B-Link.' },
-      { q: 'What does "pending" mean on a notification?', a: 'For payment notifications, "pending" means your payment is awaiting admin verification. For follow requests, it means the user hasn\'t accepted yet.' },
-    ],
-  },
-  {
-    category: 'Payments',
-    emoji: '💰',
-    questions: [
-      { q: 'How do I pay for a subscription or coins?', a: 'Go to Premium → select what you want → Follow the M-Pesa instructions. Pay to Till 4766037 (BILGATE WAFULA MUKHAYO), then fill in your phone and the exact amount paid.' },
-      { q: 'My payment is still pending', a: 'Payments are verified manually. This takes 5–60 minutes during business hours. If it\'s been over 2 hours, contact support with your reference code.' },
-      { q: 'I paid but my service didn\'t activate', a: 'Your service activates ONLY after an admin verifies your M-Pesa payment. If not activated after 1 hour, contact support with your reference code (starts with BLK).' },
-      { q: 'Can I get a refund?', a: 'Refunds are handled case-by-case. Contact support at bilgates072@gmail.com with your reference code and reason. Coins and verified badges are non-refundable once activated.' },
-    ],
-  },
-  {
-    category: 'Privacy',
-    emoji: '🔒',
-    questions: [
-      { q: 'Who can see my profile?', a: 'By default, your profile is public. Go to Settings → Privacy → Private Account to restrict to followers only.' },
-      { q: 'How do I block someone?', a: 'Open a post by that user → ⋯ menu → Block User. Or go to their profile → Block. Blocked users cannot see your content or message you.' },
-      { q: 'How do I mute someone?', a: 'Open a post by that user → ⋯ menu → Mute User. Their posts won\'t appear in your feed, but they won\'t know they\'re muted.' },
-      { q: 'Does B-Link sell my data?', a: 'No. B-Link does not sell your personal data to advertisers or third parties. See our Privacy Policy for full details.' },
-    ],
-  },
+  { id: 'start', title: 'Getting started', Icon: HelpCircle, items: [
+    ['What is B-Link?', 'B-Link is a social platform for young Africans. Post photos, videos and thoughts, chat privately, share 24-hour statuses with friends and follow creators you like.'],
+    ['What does "friends" mean?', 'When you follow someone and they follow you back, you become friends. Friends can see each other\'s statuses, react to them and reply to them. The profile button shows Friends once you follow each other.'],
+    ['Can I use the app on my phone like a normal app?', 'Yes. Open About B-Link and tap Install, or on iPhone tap Share, then Add to Home Screen.'],
+  ] },
+  { id: 'account', title: 'Account and sign in', Icon: LogIn, items: [
+    ['I did not get my verification code', 'Wait a minute, check your spam folder or your text messages, then tap Resend code. Make sure the email or number is typed correctly. Temporary email addresses are not accepted.'],
+    ['I forgot my password', 'On the sign-in screen tap Forgot password, choose email or phone, enter the 6-digit code and set a new password. All other devices are signed out afterwards.'],
+    ['Why was I asked to sign in again?', 'For your safety, B-Link signs you out after a long time away. Open the app, enter your password and you are back in.'],
+    ['How do I add or change my phone number?', 'Go to Settings, then Phone number. We text you a code to confirm it.'],
+    ['How do I turn on two-step verification?', 'Go to Settings, then Two-step verification. Scan the code with an authenticator app, then enter the 6-digit code it shows.'],
+    ['How do I delete my account?', 'Go to Settings, then Delete account, and type DELETE. Everything is erased permanently. If you only want a break, use Deactivate instead.'],
+    ['Can I change my username?', 'Yes, in Edit Profile. Names can only be changed every few days, and they must be real, recognisable names.'],
+  ] },
+  { id: 'status', title: 'Status updates', Icon: CircleDot, items: [
+    ['How do I post a status?', 'Tap the + on your status picture at the top of the feed. Choose Text to write on a coloured background, or Photo to share a picture. It lasts 24 hours.'],
+    ['Who can see my status?', 'Only your friends (people you follow and who follow you back).'],
+    ['How do I see who viewed my status?', 'Open your status and tap the view count at the bottom. The list updates live and stays until the status ends.'],
+    ['Where do replies and reactions go?', 'They arrive in your Chats tab as messages, with a small card showing which status it was about.'],
+    ['Can I delete a status?', 'Yes. Open it and tap the bin icon. It disappears for everyone straight away.'],
+  ] },
+  { id: 'posts', title: 'Posts and comments', Icon: FileText, items: [
+    ['Why can\'t I see my post in the feed?', 'Check the audience. Posts set to Followers or Close friends are not shown to everyone. Also give a new post a few seconds to appear.'],
+    ['How do I edit or delete a post?', 'Tap the three dots on your post. Edit lets you change the caption, and Delete removes it for good.'],
+    ['Can I put a colour behind a text post?', 'Yes. Write a short text-only post, then pick a background colour under the text box.'],
+    ['How do I manage comments?', 'Tap and hold a comment, or tap its three dots. You can reply, copy, edit your own, delete, and on your own post you can pin or hide a comment.'],
+    ['Where are my post insights?', 'On your own posts, tap the views icon to see views, likes, comments, reposts, shares, saves and engagement.'],
+    ['Which photo and video types work?', 'Photos in JPG, PNG or WebP (up to 10 per post). Videos up to 3 minutes and 100 MB.'],
+  ] },
+  { id: 'chats', title: 'Chats', Icon: MessageCircle, items: [
+    ['Why can\'t I message someone?', 'They may have limited who can message them, or blocked you. You can still follow them and try again later.'],
+    ['How do I delete a message?', 'Tap and hold the message. Delete for me hides it on your side only. Delete for everyone removes it for both people, and you can then remove the "This message was deleted" note for yourself.'],
+    ['Can I search my chats?', 'Yes. The chats list searches names and message text. Inside a chat, tap the search icon to find messages and jump to them.'],
+    ['Can I schedule a message?', 'Yes. Type your message, tap the paperclip, then Schedule and pick a time.'],
+  ] },
+  { id: 'friends', title: 'Privacy and safety', Icon: ShieldCheck, items: [
+    ['How do I block or mute someone?', 'Open their profile and tap the three dots to block or report. On a post, the three dots menu lets you mute them. Manage both lists in Settings.'],
+    ['Who can message, comment or follow me?', 'You choose in Settings, under Privacy and safety.'],
+    ['How do I report something?', 'Use the three dots on a post, comment or profile and choose Report. Our team reviews every report.'],
+    ['Does B-Link sell my data?', 'No. We never sell your personal data.'],
+  ] },
+  { id: 'notifications', title: 'Notifications', Icon: Bell, items: [
+    ['How do I turn notifications off?', 'Settings, then Notifications. Switch off the types you do not want. It takes effect immediately.'],
+    ['I am not getting notifications', 'Check Settings, then Notifications. Make sure the type is on, and that the app is allowed to notify you in your phone settings.'],
+  ] },
+  { id: 'payments', title: 'Payments and Premium', Icon: Wallet, items: [
+    ['How do I pay for a plan or coins?', 'Open Premium, choose what you want and follow the M-Pesa steps. Enter the transaction code exactly as it appears in your M-Pesa message.'],
+    ['My payment is pending', 'Payments are checked by our team, usually within an hour. You will get a notification as soon as it is verified.'],
+    ['I paid but nothing changed', 'Wait for the verification notification. If it takes longer than a few hours, send a request from the "New request" tab, choose Payment and include your M-Pesa code.'],
+  ] },
 ];
 
-/* ── FAQ item component ── */
-function FAQItem({ q, a }) {
+const TYPES = [
+  { key: 'question', label: 'Question', Icon: HelpCircle },
+  { key: 'bug', label: 'Problem', Icon: Bug },
+  { key: 'payment', label: 'Payment', Icon: CreditCard },
+  { key: 'feature', label: 'Idea', Icon: Lightbulb },
+];
+
+const STATUS = {
+  open: { color: '#EF4444', label: 'Received' },
+  pending: { color: '#FFB020', label: 'In progress' },
+  resolved: { color: '#2ECC71', label: 'Resolved' },
+};
+
+function Faq({ q, a, id }) {
   const [open, setOpen] = useState(false);
+  const [vote, setVote] = useState(() => { try { return localStorage.getItem('blink_faq_' + id); } catch { return null; } });
+  const cast = (v) => { setVote(v); try { localStorage.setItem('blink_faq_' + id, v); } catch { /* ignore */ } };
   return (
-    <div className="border-b border-white/[0.06] last:border-none">
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-start justify-between gap-3 px-4 py-3.5 text-left hover:bg-white/[0.03] transition-colors"
-      >
-        <p className="text-white/85 text-[14px] font-medium leading-snug flex-1">{q}</p>
-        {open ? <ChevronUp size={16} className="text-[#8E8C88] flex-shrink-0 mt-0.5" /> : <ChevronDown size={16} className="text-[#8E8C88] flex-shrink-0 mt-0.5" />}
+    <div className="border-b border-white/[0.06] last:border-0">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-start justify-between gap-3 px-4 py-3.5 text-left active:bg-white/[0.04]">
+        <span className="text-white/90 text-[14px] font-medium leading-snug flex-1">{q}</span>
+        <ChevronDown size={16} className={'text-[#8E8C88] flex-shrink-0 mt-0.5 transition-transform ' + (open ? 'rotate-180' : '')} />
       </button>
       {open && (
         <div className="px-4 pb-4">
-          <p className="text-white/55 text-[13px] leading-relaxed bg-white/[0.03] rounded-xl p-3">{a}</p>
+          <p className="text-white/60 text-[13px] leading-relaxed bg-white/[0.035] rounded-xl p-3">{a}</p>
+          <div className="flex items-center gap-3 mt-2.5 text-[12px] text-[#8E8C88]">
+            <span>Was this helpful?</span>
+            <button onClick={() => cast('yes')} aria-label="Yes" className={'p-1.5 rounded-full ' + (vote === 'yes' ? 'bg-[#2ECC71]/20 text-[#2ECC71]' : '')}><ThumbsUp size={14} /></button>
+            <button onClick={() => cast('no')} aria-label="No" className={'p-1.5 rounded-full ' + (vote === 'no' ? 'bg-red-500/20 text-red-400' : '')}><ThumbsDown size={14} /></button>
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-/* ── Ticket status badge ── */
-function StatusBadge({ status }) {
-  const cfg = {
-    open:     { color:'#EF4444', bg:'rgba(239,68,68,0.15)',  label:'Open'     },
-    pending:  { color:'#FFD700', bg:'rgba(255,215,0,0.15)',  label:'Pending'  },
-    resolved: { color:'#2ECC71', bg:'rgba(46,204,113,0.15)', label:'Resolved' },
-  }[status] || { color:'#8E8C88', bg:'rgba(138,138,148,0.15)', label:status };
-  return (
-    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-      style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.color}40` }}>
-      {cfg.label}
-    </span>
-  );
-}
-
-/* ═══════════════════════════════════════════════
-   MAIN HELP CENTER PAGE
-═══════════════════════════════════════════════ */
 export default function HelpCenter() {
-  const navigate         = useNavigate();
+  const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const [tab, setTab] = useState('help');
+  const [search, setSearch] = useState('');
+  const [open, setOpen] = useState(null);
 
-  const [activeTab,    setActiveTab]    = useState('faq');    // faq | bug | feature | tickets
-  const [tickets,      setTickets]      = useState([]);
-  const [loadingTickets, setLoadingTickets] = useState(false);
+  const [type, setType] = useState('question');
+  const [title, setTitle] = useState('');
+  const [desc, setDesc] = useState('');
+  const [shot, setShot] = useState(null);
+  const [shotUrl, setShotUrl] = useState('');
+  const [diag, setDiag] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const [sentId, setSentId] = useState('');
 
-  // Bug report form
-  const [bugTitle,     setBugTitle]     = useState('');
-  const [bugDesc,      setBugDesc]      = useState('');
-  const [bugScreenshot,setBugScreenshot]= useState(null);
-  const [bugPreview,   setBugPreview]   = useState(null);
-  const [bugBusy,      setBugBusy]      = useState(false);
-  const [bugDone,      setBugDone]      = useState(false);
-  const [bugError,     setBugError]     = useState('');
+  const [tickets, setTickets] = useState(null);
+  const [expanded, setExpanded] = useState(null);
+  const fileRef = useRef(null);
 
-  // Feature request form
-  const [featTitle,    setFeatTitle]    = useState('');
-  const [featDesc,     setFeatDesc]     = useState('');
-  const [featBusy,     setFeatBusy]     = useState(false);
-  const [featDone,     setFeatDone]     = useState(false);
-  const [featError,    setFeatError]    = useState('');
-
-  const [faqSearch,    setFaqSearch]    = useState('');
-  const [openCategory, setOpenCategory] = useState(null);
-
-  useEffect(() => {
-    if (activeTab === 'tickets') fetchTickets();
-  }, [activeTab]);
-
-  const fetchTickets = async () => {
-    setLoadingTickets(true);
-    const { data } = await supabase.from('support_tickets')
-      .select('*').eq('user_id', user.id)
-      .order('created_at', { ascending: false }).limit(20);
+  const loadTickets = async () => {
+    const { data } = await supabase.from('support_tickets').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(30);
     setTickets(data || []);
-    setLoadingTickets(false);
+  };
+  useEffect(() => { loadTickets(); /* eslint-disable-next-line */ }, []);
+  useEffect(() => {
+    const ch = supabase.channel('tickets:' + user.id + ':' + Math.random().toString(36).slice(2, 6))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'support_tickets', filter: 'user_id=eq.' + user.id }, loadTickets)
+      .subscribe();
+    return () => supabase.removeChannel(ch);
+    // eslint-disable-next-line
+  }, [user.id]);
+
+  const filtered = useMemo(() => {
+    const t = search.trim().toLowerCase();
+    if (!t) return FAQ;
+    return FAQ.map((c) => ({ ...c, items: c.items.filter(([q, a]) => q.toLowerCase().includes(t) || a.toLowerCase().includes(t)) })).filter((c) => c.items.length);
+  }, [search]);
+
+  const unresolved = (tickets || []).filter((t) => t.status !== 'resolved').length;
+
+  const diagnostics = async () => {
+    const t0 = Date.now();
+    let ping = null;
+    try { await supabase.from('users').select('id').limit(1); ping = Date.now() - t0; } catch { /* offline */ }
+    return {
+      app_version: APP_VERSION, user_agent: navigator.userAgent, platform: navigator.platform, language: navigator.language,
+      screen: `${window.screen.width}x${window.screen.height}`, online: navigator.onLine, response_ms: ping,
+      installed: !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches),
+    };
   };
 
-  /* ── Device info ── */
-  const getDeviceInfo = () => ({
-    userAgent: navigator.userAgent,
-    platform:  navigator.platform,
-    language:  navigator.language,
-    screen:    `${window.screen.width}×${window.screen.height}`,
-    viewport:  `${window.innerWidth}×${window.innerHeight}`,
-    online:    navigator.onLine,
-  });
-
-  /* ── Upload screenshot ── */
-  const uploadScreenshot = async (file) => {
-    const formData = new FormData();
-    formData.append('file',          file);
-    formData.append('upload_preset', 'blink_uploads');
-    formData.append('cloud_name',    process.env.REACT_APP_CLOUDINARY_CLOUD_NAME);
-    const res  = await fetch(`https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/image/upload`, { method:'POST', body:formData });
-    const data = await res.json();
-    return data.secure_url || null;
+  const pickShot = async (e) => {
+    const f = e.target.files?.[0];
+    e.target.value = '';
+    if (!f || !f.type.startsWith('image/')) return;
+    setShot(f); setShotUrl(URL.createObjectURL(f));
   };
 
-  /* ── Submit bug ── */
-  const handleBugSubmit = async () => {
-    if (!bugTitle.trim()) { setBugError('Enter a bug title.'); return; }
-    if (!bugDesc.trim())  { setBugError('Describe the bug.'); return; }
-    setBugBusy(true); setBugError('');
-
-    let screenshotUrl = null;
-    if (bugScreenshot) {
-      try { screenshotUrl = await uploadScreenshot(bugScreenshot); } catch (_) {}
+  const submit = async () => {
+    if (title.trim().length < 3) return setErr('Give your request a short title.');
+    if (desc.trim().length < 10) return setErr('Tell us a little more (at least 10 characters).');
+    setBusy(true); setErr('');
+    try {
+      let screenshot = null;
+      if (shot) { try { screenshot = await uploadImage(await compressImage(shot, { maxSize: 1400, quality: 0.8 }), 'support'); } catch { /* send without it */ } }
+      const device = diag ? await diagnostics() : {};
+      let { data, error } = await supabase.rpc('submit_support_ticket', {
+        p_type: type, p_title: title.trim(), p_description: desc.trim(), p_screenshot: screenshot, p_device: device,
+      });
+      if (error && /does not exist|could not find/i.test(error.message || '')) {
+        const r = await supabase.from('support_tickets').insert({
+          user_id: user.id, type: ['bug', 'feature'].includes(type) ? type : 'bug', title: title.trim(), description: desc.trim(),
+          screenshot_url: screenshot, device_info: device, status: 'open',
+        }).select('id').single();
+        data = r.data?.id; error = r.error;
+      }
+      if (error) throw error;
+      setSentId(String(data || '').slice(0, 8).toUpperCase());
+      setTitle(''); setDesc(''); setShot(null); setShotUrl('');
+      loadTickets();
+    } catch (e) {
+      const m = (e.message || '').toLowerCase();
+      setErr(m.includes('too many') ? 'You have sent a few requests already. Please wait a while before sending another.' : "We couldn't send your request. Check your connection and try again.");
     }
-
-    const { error } = await supabase.from('support_tickets').insert({
-      user_id:     user.id,
-      type:        'bug',
-      title:       bugTitle.trim(),
-      description: bugDesc.trim(),
-      screenshot_url: screenshotUrl,
-      device_info: getDeviceInfo(),
-      status:      'open',
-    });
-
-    setBugBusy(false);
-    if (error) { setBugError('Failed to submit. Try again.'); return; }
-
-    // Notify admins
-    const { data: admins } = await supabase.from('users').select('id').in('role',['blink','admin']);
-    if (admins?.length) {
-      await supabase.from('notifications').insert(
-        admins.map(a => ({
-          user_id:      a.id,
-          from_user_id: user.id,
-          type:         'admin_action',
-          message:      `🐛 Bug report from @${profile?.username}: "${bugTitle.trim()}"`,
-          is_read:      false,
-        }))
-      );
-    }
-
-    setBugDone(true);
-    setBugTitle(''); setBugDesc(''); setBugScreenshot(null); setBugPreview(null);
-    setTimeout(() => { setBugDone(false); setActiveTab('tickets'); }, 1500);
+    setBusy(false);
   };
-
-  /* ── Submit feature request ── */
-  const handleFeatSubmit = async () => {
-    if (!featTitle.trim()) { setFeatError('Enter a feature title.'); return; }
-    if (!featDesc.trim())  { setFeatError('Describe your feature.'); return; }
-    setFeatBusy(true); setFeatError('');
-
-    const { error } = await supabase.from('support_tickets').insert({
-      user_id:     user.id,
-      type:        'feature',
-      title:       featTitle.trim(),
-      description: featDesc.trim(),
-      device_info: getDeviceInfo(),
-      status:      'open',
-    });
-
-    setFeatBusy(false);
-    if (error) { setFeatError('Failed to submit. Try again.'); return; }
-
-    setFeatDone(true);
-    setFeatTitle(''); setFeatDesc('');
-    setTimeout(() => { setFeatDone(false); setActiveTab('tickets'); }, 1500);
-  };
-
-  // Filtered FAQ
-  const filteredFAQ = faqSearch.trim()
-    ? FAQ.map(cat => ({
-        ...cat,
-        questions: cat.questions.filter(
-          item => item.q.toLowerCase().includes(faqSearch.toLowerCase()) ||
-                  item.a.toLowerCase().includes(faqSearch.toLowerCase())
-        ),
-      })).filter(cat => cat.questions.length > 0)
-    : FAQ;
-
-  const TABS = [
-    { key:'faq',     label:'FAQ',     emoji:'❓' },
-    { key:'bug',     label:'Bug',     emoji:'🐛' },
-    { key:'feature', label:'Request', emoji:'💡' },
-    { key:'tickets', label:'My Tickets', emoji:'📋' },
-  ];
 
   return (
     <div className="min-h-screen bg-[#0D0C0B] pb-24">
-
-      {/* Top bar */}
-      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="text-[#8E8C88] hover:text-white transition-colors">
-          <ArrowLeft size={22} />
-        </button>
-        <div className="flex-1">
-          <h1 className="text-white font-bold text-[15px] leading-none">Help Center</h1>
-          <p className="text-[#8E8C88] text-xs mt-0.5">Support & FAQ</p>
-        </div>
+      <div className="sticky top-0 z-20 bg-[#0D0C0B]/95 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => navigate(-1)} aria-label="Back" className="text-[#8E8C88] hover:text-white"><ArrowLeft size={22} /></button>
+        <div><h1 className="text-white font-bold text-[16px] leading-none">Help Center</h1><p className="text-[#8E8C88] text-xs mt-0.5">Answers and support</p></div>
       </div>
 
-      {/* Contact row */}
-      <div className="mx-4 mt-4 mb-3 flex gap-2">
-        <a href="mailto:bilgates072@gmail.com"
-          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-[#FF5A1F]/15 border border-[#FF5A1F]/25 text-[#FF5A1F] font-bold text-sm active:scale-95 transition-all">
-          <Mail size={15} /> Email Support
-        </a>
-        <a href="https://wa.me/254740309980" target="_blank" rel="noopener noreferrer"
-          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-green-500/15 border border-green-500/25 text-green-400 font-bold text-sm active:scale-95 transition-all">
-          <MessageCircle size={15} /> WhatsApp
-        </a>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex mx-4 mb-4 bg-white/[0.05] rounded-2xl p-1 gap-0.5">
-        {TABS.map(t => (
-          <button key={t.key} onClick={() => setActiveTab(t.key)}
-            className={'flex-1 py-2 rounded-xl text-[11px] font-bold transition-all flex flex-col items-center gap-0.5 ' +
-              (activeTab === t.key ? 'bg-[#FF5A1F] text-white shadow-lg shadow-[#FF5A1F]/30' : 'text-[#8E8C88] hover:text-white')}>
-            <span>{t.emoji}</span>
-            <span>{t.label}</span>
+      <div className="flex mx-4 mt-4 mb-4 bg-white/[0.06] rounded-2xl p-1">
+        {[['help', 'Help'], ['new', 'New request'], ['mine', 'My requests']].map(([k, l]) => (
+          <button key={k} onClick={() => { setTab(k); setSentId(''); }}
+            className={'flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-all relative ' + (tab === k ? 'bg-[#FF5A1F] text-white' : 'text-[#8E8C88]')}>
+            {l}
+            {k === 'mine' && unresolved > 0 && <span className="absolute -top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#FF2D78] text-white text-[10px] flex items-center justify-center">{unresolved}</span>}
           </button>
         ))}
       </div>
 
-      {/* ── FAQ TAB ── */}
-      {activeTab === 'faq' && (
+      {tab === 'help' && (
         <div className="px-4">
-          {/* Search */}
-          <div className="flex items-center gap-3 bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-2.5 mb-4">
-            <span className="text-[#8E8C88] text-sm">🔍</span>
-            <input type="text" value={faqSearch} onChange={e => setFaqSearch(e.target.value)}
-              placeholder="Search questions..."
-              className="flex-1 bg-transparent text-white text-sm placeholder-[#8E8C88] focus:outline-none" />
-            {faqSearch && <button onClick={() => setFaqSearch('')} className="text-[#8E8C88] hover:text-white"><X size={14} /></button>}
+          <div className="flex items-center gap-3 bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3 mb-4">
+            <Search size={16} className="text-[#8E8C88]" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search for help" className="flex-1 bg-transparent text-white text-[15px] placeholder-[#8E8C88] outline-none" />
+            {search && <button onClick={() => setSearch('')} aria-label="Clear"><X size={16} className="text-[#8E8C88]" /></button>}
           </div>
 
-          {filteredFAQ.length === 0 ? (
-            <div className="text-center py-10">
-              <p className="text-3xl mb-2">🔍</p>
-              <p className="text-white font-bold">No results for "{faqSearch}"</p>
-              <p className="text-[#8E8C88] text-sm mt-1">Try different keywords</p>
-            </div>
-          ) : filteredFAQ.map(cat => (
-            <div key={cat.category} className="mb-3">
-              <button
-                onClick={() => setOpenCategory(openCategory === cat.category ? null : cat.category)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-2xl mb-1 hover:bg-white/[0.07] transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{cat.emoji}</span>
-                  <span className="text-white font-bold text-[14px]">{cat.category}</span>
-                  <span className="text-[#8E8C88] text-[11px]">({cat.questions.length})</span>
-                </div>
-                {openCategory === cat.category ? <ChevronUp size={16} className="text-[#8E8C88]" /> : <ChevronDown size={16} className="text-[#8E8C88]" />}
+          {filtered.length === 0 ? (
+            <EmptyState icon={Search} title="No answers found" text="Try different words, or send us a request.">
+              <button onClick={() => { setTitle(search); setTab('new'); }} className="bg-[#FF5A1F] text-white px-5 py-2.5 rounded-full font-bold text-sm">Ask support</button>
+            </EmptyState>
+          ) : filtered.map((c) => (
+            <div key={c.id} className="mb-3">
+              <button onClick={() => setOpen(open === c.id ? null : c.id)} className="w-full flex items-center justify-between px-4 py-3.5 bg-white/[0.04] border border-white/[0.08] rounded-2xl active:bg-white/[0.07]">
+                <span className="flex items-center gap-3">
+                  <span className="w-9 h-9 rounded-xl bg-[#FF5A1F]/10 flex items-center justify-center"><c.Icon size={17} className="text-[#FF8A5C]" /></span>
+                  <span className="text-white font-bold text-[14px]">{c.title}</span>
+                  <span className="text-[#8E8C88] text-[11px]">{c.items.length}</span>
+                </span>
+                <ChevronDown size={16} className={'text-[#8E8C88] transition-transform ' + ((open === c.id || search) ? 'rotate-180' : '')} />
               </button>
-
-              {(openCategory === cat.category || faqSearch) && (
-                <div className="bg-white/[0.03] border border-white/[0.07] rounded-2xl overflow-hidden">
-                  {cat.questions.map((item, i) => <FAQItem key={i} q={item.q} a={item.a} />)}
+              {(open === c.id || search) && (
+                <div className="mt-1.5 bg-white/[0.03] border border-white/[0.07] rounded-2xl overflow-hidden">
+                  {c.items.map(([q, a], i) => <Faq key={c.id + i} id={c.id + i} q={q} a={a} />)}
                 </div>
               )}
             </div>
           ))}
-        </div>
-      )}
 
-      {/* ── BUG REPORT ── */}
-      {activeTab === 'bug' && (
-        <div className="px-4">
-          {bugDone ? (
-            <div className="text-center py-16">
-              <p className="text-5xl mb-3">✅</p>
-              <p className="text-white font-black text-xl">Bug Reported!</p>
-              <p className="text-[#8E8C88] text-sm mt-2">Thanks! Our team will investigate. Check My Tickets for updates.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-4 flex items-start gap-3">
-                <Bug size={18} className="text-orange-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-orange-400 font-bold text-sm">Report a Bug</p>
-                  <p className="text-orange-400/60 text-xs mt-0.5">Help us fix issues. Device info is auto-attached.</p>
-                </div>
+          <div className="mt-5 bg-gradient-to-br from-[#FF5A1F]/10 to-[#FF2D78]/10 border border-[#FF5A1F]/20 rounded-2xl p-4">
+            <p className="text-white font-bold text-[15px]">Still need help?</p>
+            <p className="text-white/55 text-[13px] mt-1">Send us a request and our team will reply here in the app.</p>
+            <button onClick={() => setTab('new')} className="mt-3 bg-[#FF5A1F] text-white font-bold text-sm px-5 py-2.5 rounded-full">Contact support</button>
+            {(SUPPORT_EMAIL || SUPPORT_WHATSAPP) && (
+              <div className="flex gap-2 mt-3">
+                {SUPPORT_EMAIL && <a href={`mailto:${SUPPORT_EMAIL}`} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/[0.07] text-white text-[13px] font-semibold"><Mail size={14} /> Email</a>}
+                {SUPPORT_WHATSAPP && <a href={`https://wa.me/${SUPPORT_WHATSAPP}`} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/[0.07] text-white text-[13px] font-semibold"><MessageCircle size={14} /> WhatsApp</a>}
               </div>
-
-              <div>
-                <label className="text-white/60 text-[11px] font-bold uppercase tracking-wider block mb-1.5">Bug Title *</label>
-                <input type="text" value={bugTitle} onChange={e => { setBugTitle(e.target.value); setBugError(''); }}
-                  placeholder="e.g. Feed doesn't load on Chrome"
-                  className="w-full bg-white/[0.07] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60" />
-              </div>
-
-              <div>
-                <label className="text-white/60 text-[11px] font-bold uppercase tracking-wider block mb-1.5">Description *</label>
-                <textarea value={bugDesc} onChange={e => { setBugDesc(e.target.value); setBugError(''); }}
-                  placeholder="Steps to reproduce:&#10;1. Open the app&#10;2. Go to...&#10;3. Bug occurs when..."
-                  rows={5} maxLength={1000}
-                  className="w-full bg-white/[0.07] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[14px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 resize-none" />
-                <div className="flex justify-end mt-0.5">
-                  <span className="text-[#8E8C88] text-xs">{bugDesc.length}/1000</span>
-                </div>
-              </div>
-
-              {/* Screenshot upload */}
-              <div>
-                <label className="text-white/60 text-[11px] font-bold uppercase tracking-wider block mb-1.5">Screenshot (optional)</label>
-                {bugPreview ? (
-                  <div className="relative rounded-2xl overflow-hidden border border-white/10">
-                    <img src={bugPreview} alt="" className="w-full object-cover max-h-40" />
-                    <button
-                      onClick={() => { setBugScreenshot(null); setBugPreview(null); }}
-                      className="absolute top-2 right-2 w-7 h-7 bg-black/70 rounded-full flex items-center justify-center hover:bg-red-500/70 transition-colors"
-                    >
-                      <X size={13} color="white" />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="flex items-center justify-center gap-3 border border-dashed border-white/20 rounded-2xl py-6 cursor-pointer hover:border-[#FF5A1F]/40 hover:bg-[#FF5A1F]/5 transition-all">
-                    <ImageIcon size={20} className="text-[#8E8C88]" />
-                    <span className="text-[#8E8C88] text-sm">Tap to attach screenshot</span>
-                    <input type="file" accept="image/*" className="hidden"
-                      onChange={e => {
-                        const f = e.target.files?.[0];
-                        if (f) { setBugScreenshot(f); setBugPreview(URL.createObjectURL(f)); }
-                      }} />
-                  </label>
-                )}
-              </div>
-
-              {/* Device info preview */}
-              <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3">
-                <p className="text-[#8E8C88] text-[11px] font-bold uppercase mb-1">Auto-attached device info</p>
-                <p className="text-white/40 text-[11px] font-mono">{navigator.platform} · {window.innerWidth}×{window.innerHeight} · {navigator.language}</p>
-              </div>
-
-              {bugError && <p className="text-red-400 text-sm">{bugError}</p>}
-
-              <button onClick={handleBugSubmit} disabled={bugBusy}
-                className="w-full py-4 rounded-2xl font-bold text-white disabled:opacity-50 flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-                style={{ background:'linear-gradient(135deg,#FF6B35,#EF4444)', boxShadow:'0 8px 24px rgba(255,107,53,0.3)' }}>
-                {bugBusy ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />Submitting...</> : <><Bug size={16} /> Submit Bug Report</>}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── FEATURE REQUEST ── */}
-      {activeTab === 'feature' && (
-        <div className="px-4">
-          {featDone ? (
-            <div className="text-center py-16">
-              <p className="text-5xl mb-3">💡</p>
-              <p className="text-white font-black text-xl">Feature Requested!</p>
-              <p className="text-[#8E8C88] text-sm mt-2">Great idea! We'll review it. Check My Tickets for updates.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="bg-[#FF5A1F]/10 border border-[#FF5A1F]/20 rounded-2xl p-4 flex items-start gap-3">
-                <Lightbulb size={18} className="text-[#FF5A1F] flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-[#FF5A1F] font-bold text-sm">Request a Feature</p>
-                  <p className="text-[#FF5A1F]/60 text-xs mt-0.5">Tell us what you'd like to see in B-Link.</p>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-white/60 text-[11px] font-bold uppercase tracking-wider block mb-1.5">Feature Title *</label>
-                <input type="text" value={featTitle} onChange={e => { setFeatTitle(e.target.value); setFeatError(''); }}
-                  placeholder="e.g. Dark mode for stories"
-                  className="w-full bg-white/[0.07] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60" />
-              </div>
-
-              <div>
-                <label className="text-white/60 text-[11px] font-bold uppercase tracking-wider block mb-1.5">Description *</label>
-                <textarea value={featDesc} onChange={e => { setFeatDesc(e.target.value); setFeatError(''); }}
-                  placeholder="Describe your feature idea. How would it work? Why would it be useful?"
-                  rows={5} maxLength={1000}
-                  className="w-full bg-white/[0.07] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[14px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 resize-none" />
-                <div className="flex justify-end mt-0.5">
-                  <span className="text-[#8E8C88] text-xs">{featDesc.length}/1000</span>
-                </div>
-              </div>
-
-              {featError && <p className="text-red-400 text-sm">{featError}</p>}
-
-              <button onClick={handleFeatSubmit} disabled={featBusy}
-                className="w-full py-4 rounded-2xl font-bold text-white disabled:opacity-50 flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-                style={{ background:'linear-gradient(135deg,#FF5A1F,#FF2D78)', boxShadow:'0 8px 24px rgba(255,90,31,0.3)' }}>
-                {featBusy ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />Submitting...</> : <><Lightbulb size={16} /> Submit Feature Request</>}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── MY TICKETS ── */}
-      {activeTab === 'tickets' && (
-        <div className="px-4">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-white/60 text-xs font-bold uppercase tracking-wider">Your submitted tickets</p>
-            <button onClick={fetchTickets} className="text-[#FF5A1F] text-xs font-bold">Refresh</button>
+            )}
           </div>
+        </div>
+      )}
 
-          {loadingTickets ? (
-            <div className="flex justify-center py-10">
-              <div className="w-6 h-6 border-2 border-[#FF5A1F] border-t-transparent rounded-full animate-spin" />
+      {tab === 'new' && (
+        <div className="px-4">
+          {sentId ? (
+            <EmptyState icon={CheckCircle2} color="#2ECC71" title="Request sent" text={`Reference ${sentId}. We will reply in My requests. You will get a notification when something changes.`}>
+              <button onClick={() => { setSentId(''); setTab('mine'); }} className="bg-[#FF5A1F] text-white px-5 py-2.5 rounded-full font-bold text-sm">View my requests</button>
+            </EmptyState>
+          ) : (
+            <div className="space-y-4">
+              <div className="grid grid-cols-4 gap-2">
+                {TYPES.map(({ key, label, Icon }) => (
+                  <button key={key} onClick={() => setType(key)}
+                    className={'flex flex-col items-center gap-1.5 py-3 rounded-2xl border text-[12px] font-bold ' + (type === key ? 'bg-[#FF5A1F]/15 border-[#FF5A1F]/50 text-white' : 'bg-white/[0.03] border-white/[0.08] text-[#8E8C88]')}>
+                    <Icon size={18} className={type === key ? 'text-[#FF5A1F]' : ''} /> {label}
+                  </button>
+                ))}
+              </div>
+              <div>
+                <label className="text-white/60 text-[11px] font-bold uppercase tracking-wider block mb-1.5">Title</label>
+                <input value={title} maxLength={120} onChange={(e) => { setTitle(e.target.value); setErr(''); }}
+                  placeholder={type === 'payment' ? 'e.g. Paid for Pro but not active' : type === 'bug' ? 'e.g. Photos will not upload' : type === 'feature' ? 'e.g. Polls on posts' : 'What do you need help with?'}
+                  className="w-full bg-white/[0.07] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60" />
+              </div>
+              <div>
+                <label className="text-white/60 text-[11px] font-bold uppercase tracking-wider block mb-1.5">Details</label>
+                <textarea value={desc} rows={5} maxLength={2000} onChange={(e) => { setDesc(e.target.value); setErr(''); }}
+                  placeholder={type === 'payment' ? 'Include the M-Pesa transaction code and the amount.' : type === 'bug' ? 'What happened, and what did you expect? Steps help a lot.' : 'Tell us more.'}
+                  className="w-full bg-white/[0.07] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[14px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 resize-none" />
+                <p className="text-right text-[#8E8C88] text-xs mt-0.5">{desc.length}/2000</p>
+              </div>
+
+              {shotUrl ? (
+                <div className="relative rounded-2xl overflow-hidden border border-white/10">
+                  <img src={shotUrl} alt="" className="w-full max-h-44 object-cover" />
+                  <button onClick={() => { setShot(null); setShotUrl(''); }} aria-label="Remove screenshot" className="absolute top-2 right-2 w-8 h-8 bg-black/70 rounded-full flex items-center justify-center"><X size={14} color="white" /></button>
+                </div>
+              ) : (
+                <button onClick={() => fileRef.current?.click()} className="w-full flex items-center justify-center gap-2.5 border border-dashed border-white/20 rounded-2xl py-4 text-[#8E8C88] text-sm"><Paperclip size={17} /> Attach a screenshot (optional)</button>
+              )}
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={pickShot} />
+
+              <button onClick={() => setDiag((v) => !v)} className="w-full flex items-center gap-3 bg-white/[0.04] border border-white/[0.07] rounded-2xl px-4 py-3 text-left">
+                <span className={'w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 ' + (diag ? 'bg-[#FF5A1F] border-[#FF5A1F]' : 'border-white/30')}>{diag && <Check size={13} className="text-white" />}</span>
+                <span className="flex-1"><span className="block text-white/85 text-[13px] font-semibold">Include technical details</span><span className="block text-[#8E8C88] text-[11px]">App version, device and connection speed. Helps us fix problems faster.</span></span>
+              </button>
+
+              {err && <p className="text-red-400 text-sm">{err}</p>}
+              <button onClick={submit} disabled={busy} className="w-full py-4 rounded-2xl font-bold text-white disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{ background: 'linear-gradient(135deg,#FF5A1F,#FF2D78)', boxShadow: '0 8px 24px rgba(255,90,31,0.3)' }}>
+                {busy ? <><Spinner size={18} /> Sending…</> : <><Send size={17} /> Send request</>}
+              </button>
+              <p className="text-[#8E8C88] text-[11px] text-center">Signed in as @{profile?.username}. Replies appear in My requests.</p>
             </div>
-          ) : tickets.length === 0 ? (
-            <div className="text-center py-14">
-              <p className="text-4xl mb-3">📋</p>
-              <p className="text-white font-bold">No tickets yet</p>
-              <p className="text-[#8E8C88] text-sm mt-1">Submit a bug report or feature request above</p>
-            </div>
-          ) : tickets.map(t => (
-            <div key={t.id} className={`border rounded-2xl p-4 mb-2 ${
-              t.status === 'resolved' ? 'border-green-500/20 bg-green-500/[0.03]' :
-              t.status === 'pending'  ? 'border-yellow-500/20 bg-yellow-500/[0.03]' :
-              'border-white/[0.07] bg-white/[0.03]'
-            }`}>
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className="text-sm">{t.type === 'bug' ? '🐛' : t.type === 'feature' ? '💡' : '🎫'}</span>
-                    <p className="text-white font-bold text-[13px] truncate">{t.title}</p>
-                    <StatusBadge status={t.status} />
+          )}
+        </div>
+      )}
+
+      {tab === 'mine' && (
+        <div className="px-4">
+          {tickets === null ? <div className="flex justify-center py-12 text-[#FF5A1F]"><Spinner size={22} /></div>
+            : tickets.length === 0 ? (
+              <EmptyState icon={Inbox} title="No requests yet" text="Questions, problems and ideas you send appear here, with our replies.">
+                <button onClick={() => setTab('new')} className="bg-[#FF5A1F] text-white px-5 py-2.5 rounded-full font-bold text-sm">New request</button>
+              </EmptyState>
+            ) : tickets.map((t) => {
+              const st = STATUS[t.status] || { color: '#8E8C88', label: t.status };
+              const T = TYPES.find((x) => x.key === t.type) || TYPES[0];
+              const isOpen = expanded === t.id;
+              return (
+                <button key={t.id} onClick={() => setExpanded(isOpen ? null : t.id)} className="w-full text-left bg-white/[0.035] border border-white/[0.07] rounded-2xl p-4 mb-2.5 active:bg-white/[0.06]">
+                  <div className="flex items-start gap-3">
+                    <span className="w-9 h-9 rounded-xl bg-[#FF5A1F]/10 flex items-center justify-center flex-shrink-0"><T.Icon size={16} className="text-[#FF8A5C]" /></span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-bold text-[14px] truncate">{t.title}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ color: st.color, background: st.color + '22', border: '1px solid ' + st.color + '44' }}>{st.label}</span>
+                        <span className="text-[#8E8C88] text-[11px] flex items-center gap-1"><Clock size={11} /> {new Date(t.created_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}</span>
+                      </div>
+                    </div>
+                    <ChevronDown size={16} className={'text-[#8E8C88] mt-1 transition-transform ' + (isOpen ? 'rotate-180' : '')} />
                   </div>
-                  <p className="text-white/50 text-[12px] line-clamp-2">{t.description}</p>
-                  {t.admin_notes && (
-                    <div className="mt-2 bg-[#FF5A1F]/10 border border-[#FF5A1F]/20 rounded-xl px-3 py-2">
-                      <p className="text-[#FF5A1F] text-[11px] font-bold">Admin response:</p>
-                      <p className="text-white/70 text-[12px] mt-0.5">{t.admin_notes}</p>
+                  {isOpen && (
+                    <div className="mt-3 space-y-2.5">
+                      <p className="text-white/60 text-[13px] leading-relaxed whitespace-pre-wrap">{t.description}</p>
+                      {t.screenshot_url && <img src={t.screenshot_url} alt="Screenshot" className="rounded-xl max-h-40 object-cover" loading="lazy" />}
+                      {t.admin_notes && (
+                        <div className="bg-[#FF5A1F]/10 border border-[#FF5A1F]/25 rounded-xl px-3 py-2.5">
+                          <p className="text-[#FF8A5C] text-[11px] font-bold">Reply from support</p>
+                          <p className="text-white/80 text-[13px] mt-0.5 whitespace-pre-wrap">{t.admin_notes}</p>
+                        </div>
+                      )}
                     </div>
                   )}
-                  <p className="text-[#8E8C88] text-[11px] mt-1.5">
-                    {new Date(t.created_at).toLocaleDateString('en-KE',{ day:'numeric', month:'short', year:'numeric' })}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
+                </button>
+              );
+            })}
         </div>
       )}
     </div>

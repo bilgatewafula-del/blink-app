@@ -23,6 +23,7 @@ export function AuthProvider({ children }) {
   const [loading,        setLoading]        = useState(true);
   const [profileChecked, setProfileChecked] = useState(false); // true once we KNOW whether a profile exists
   const [recovery,       setRecovery]       = useState(false); // password-reset session in progress
+  const [needsMfa,       setNeedsMfa]       = useState(false); // signed in with password, authenticator code still required
   const fetchingRef = useRef(false);
   const mountedRef  = useRef(true);
 
@@ -38,6 +39,14 @@ export function AuthProvider({ children }) {
     _profileCache = null;
     if (mountedRef.current) { setProfile(null); setUser(null); setProfileChecked(false); setLoading(false); }
     try { await supabase.auth.signOut({ scope: 'local' }); } catch { /* already gone */ }
+  }, []);
+
+  const checkMfa = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (error || !data) return;
+      if (mountedRef.current) setNeedsMfa(data.nextLevel === 'aal2' && data.currentLevel !== 'aal2');
+    } catch { /* MFA not available: nothing to enforce */ }
   }, []);
 
   const fetchProfile = useCallback(async (uid, authUser) => {
@@ -125,6 +134,7 @@ export function AuthProvider({ children }) {
         if (mountedRef.current) setUser(u);
         if (u) {
           markActive();
+          checkMfa();
           fetchProfile(u.id, u).then(() => clearTimeout(hardTimeout));
         } else {
           clearTimeout(hardTimeout);
@@ -146,7 +156,7 @@ export function AuthProvider({ children }) {
 
       if (event === 'SIGNED_OUT' || !u) {
         _profileCache = null;
-        setProfile(null); setProfileChecked(false); setRecovery(false); setLoading(false);
+        setProfile(null); setProfileChecked(false); setRecovery(false); setNeedsMfa(false); setLoading(false);
         clearTimeout(hardTimeout);
         return;
       }
@@ -158,12 +168,13 @@ export function AuthProvider({ children }) {
       // holds supabase-js's auth lock and the call would deadlock on app
       // reopen. Defer so the callback returns first.
       setTimeout(() => {
+        checkMfa();
         fetchProfile(u.id, u).finally(() => clearTimeout(hardTimeout));
       }, 0);
     });
 
     return () => { subscription.unsubscribe(); clearTimeout(hardTimeout); };
-  }, [fetchProfile, forceSignOut]);
+  }, [fetchProfile, forceSignOut, checkMfa]);
 
   /* ── keep the session alive while the app is used; end it after long idleness ── */
   useEffect(() => {
@@ -229,7 +240,7 @@ export function AuthProvider({ children }) {
   const clearRecovery = useCallback(() => setRecovery(false), []);
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, profileChecked, recovery, startRecovery, clearRecovery, refreshProfile, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, profileChecked, recovery, needsMfa, refreshMfa: checkMfa, startRecovery, clearRecovery, refreshProfile, signOut }}>
       {children}
     </AuthContext.Provider>
   );

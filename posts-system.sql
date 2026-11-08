@@ -192,7 +192,7 @@ create or replace function public.add_comment(p_post_id uuid, p_body text, p_par
 returns jsonb language plpgsql security definer set search_path = public as $$
 declare
   pst record; par record; txt text := btrim(coalesce(p_body, ''));
-  root uuid := null; cid uuid; recent int; uname text; mu uuid; n int := 0;
+  root uuid := null; cid uuid; recent int; uname text; mu uuid; n int := 0; pref text;
 begin
   if auth.uid() is null then raise exception 'Not signed in' using errcode = '42501'; end if;
   if char_length(txt) < 1 or char_length(txt) > 1000 then raise exception 'Write between 1 and 1000 characters'; end if;
@@ -200,6 +200,13 @@ begin
   select id, user_id, comments_disabled, status into pst from public.posts where id = p_post_id;
   if not found or coalesce(pst.status, 'active') = 'deleted' then raise exception 'This post is no longer available'; end if;
   if coalesce(pst.comments_disabled, false) and pst.user_id <> auth.uid() then raise exception 'Comments are turned off for this post'; end if;
+  if pst.user_id <> auth.uid() then
+    select who_can_comment into pref from public.user_settings where user_id = pst.user_id;
+    if pref = 'nobody' then raise exception 'The author has turned off comments'; end if;
+    if pref = 'followers' and not exists (select 1 from public.follows where follower_id = auth.uid() and following_id = pst.user_id) then
+      raise exception 'Only followers can comment on this account''s posts';
+    end if;
+  end if;
   if exists (select 1 from public.users where id = auth.uid()
               and (is_banned = true or is_restricted = true or (suspended_until is not null and suspended_until > now()))) then
     raise exception 'Your account cannot comment right now' using errcode = '42501';

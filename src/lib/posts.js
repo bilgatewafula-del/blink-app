@@ -166,8 +166,29 @@ export async function deleteComment(id) {
   const { error } = await supabase.rpc('delete_post_comment', { p_comment_id: id });
   if (error) throw error;
 }
-export async function toggleCommentLike(id) {
+export async function toggleCommentLike(id, wasLiked = false) {
   const { data, error } = await supabase.rpc('toggle_comment_like', { p_comment_id: id });
-  if (error) throw error;
-  return data; // { liked, count }
+  if (!error) return data; // { liked, count }
+  // The database script is not installed (or its unique key is missing): use the direct path
+  if (!missingFn(error) && !/on conflict|unique or exclusion/i.test(error.message || '')) throw error;
+
+  const { data: sess } = await supabase.auth.getSession();
+  const uid = sess?.session?.user?.id;
+  if (!uid) throw new Error('Please sign in again.');
+  if (wasLiked) {
+    const { error: e1 } = await supabase.from('comment_reactions').delete().eq('comment_id', id).eq('user_id', uid);
+    if (e1) throw e1;
+  } else {
+    const { error: e2 } = await supabase.from('comment_reactions')
+      .upsert({ comment_id: id, user_id: uid, emoji: '❤️' }, { onConflict: 'comment_id,user_id' });
+    if (e2) throw e2;
+  }
+  const { count } = await supabase.from('comment_reactions').select('comment_id', { count: 'exact', head: true }).eq('comment_id', id);
+  return { liked: !wasLiked, count: count || 0 };
 }
+
+/* ── lists shown in Settings ── */
+export const getMutedUserIds = () => [...readSet(LS_MUTED)];
+export function unmuteUser(id) { const s = new Set(readSet(LS_MUTED)); s.delete(id); writeSet(LS_MUTED, s); }
+export const hiddenPostCount = () => readSet(LS_HIDDEN).size;
+export function clearHiddenPosts() { writeSet(LS_HIDDEN, new Set()); }

@@ -188,3 +188,11 @@ input, textarea {
   30%      { box-shadow: 0 0 0 4px rgba(255,90,31,0.55); }
 }
 .msg-flash { animation: msgFlash 1.2s ease-out 1; }
+
+
+/* AMOLED theme: pure black backgrounds for OLED screens */
+html.theme-amoled body,
+html.theme-amoled [class*="bg-[#0D0C0B]"] { background-color: #000 !important; }
+html.theme-amoled [class*="bg-[#171614]"] { background-color: #070707 !important; }
+html.theme-amoled [class*="bg-[#1d1c1a]"] { background-color: #0C0C0C !important; }
+html.theme-amoled { color-scheme: dark; }

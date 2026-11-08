@@ -22,6 +22,8 @@ import { CommentsSheet } from './post/Comments';
 import TextPost, { isColoredTextPost } from './post/TextPost';
 import { ShareSheet, InsightsSheet } from './post/Sheets';
 import { bgCss, textSizeFor } from '../lib/storyPalette';
+import { videoSrc } from '../lib/imageUtils';
+import { getPref } from '../lib/prefs';
 import {
   requestPostState, patchPostState, requestQuotedPost, isPostHidden, isUserMuted, hidePost, muteUser, recordShare,
 } from '../lib/posts';
@@ -174,6 +176,7 @@ function VideoPlayer({ src, poster, duration }) {
   const videoRef       = useRef();
   const containerRef   = useRef();
   const videoId        = useRef(Math.random().toString(36).slice(2));
+  const autoPlayed     = useRef(false);
   const [playing,      setPlaying]      = useState(false);
   const [muted,        setMuted]        = useState(true);
   const [buffering,    setBuffering]    = useState(false);
@@ -204,12 +207,20 @@ function VideoPlayer({ src, poster, duration }) {
     if (!el) return;
     const obs = new IntersectionObserver(
       entries => {
-        if (!entries[0].isIntersecting && videoRef.current && playing) {
+        const e = entries[0];
+        if (!e.isIntersecting && videoRef.current && playing) {
           videoRef.current.pause();
           setPlaying(false);
+        } else if (e.isIntersecting && e.intersectionRatio >= 0.6 && videoRef.current && !playing && !autoPlayed.current
+                   && getPref('autoplay_videos') && !getPref('data_saver')) {
+          // "Auto-play videos" setting: muted, once per post, only when well in view
+          autoPlayed.current = true;
+          videoRef.current.muted = true;
+          setMuted(true);
+          videoRef.current.play().then(() => setPlaying(true)).catch(() => {});
         }
       },
-      { threshold: 0.3 }
+      { threshold: [0.3, 0.6] }
     );
     obs.observe(el);
     return () => obs.disconnect();
@@ -266,7 +277,7 @@ function VideoPlayer({ src, poster, duration }) {
       style={{ aspectRatio: aspect, maxHeight: '600px' }}>
       <video
         ref={videoRef}
-        src={src}
+        src={videoSrc(src)}
         poster={poster}
         muted={muted}
         playsInline

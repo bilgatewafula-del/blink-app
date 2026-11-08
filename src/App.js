@@ -5,6 +5,8 @@ import BottomNav from './components/BottomNav';
 import NetworkBanner from './components/NetworkBanner';
 import ErrorBoundary from './components/ErrorBoundary';
 import { startPresence, stopPresence } from './lib/presence';
+import { supabase } from './lib/supabaseClient';
+import { adoptServerSettings } from './lib/prefs';
 
 /* ── Lazy pages — paths match REAL folder structure ── */
 const Login              = lazy(() => import('./pages/auth/Login'));
@@ -13,6 +15,7 @@ const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
 const ResetPassword  = lazy(() => import('./pages/auth/ResetPassword'));
 const OTPVerify      = lazy(() => import('./pages/auth/OTPVerify'));
 const CompleteProfile = lazy(() => import('./pages/auth/CompleteProfile'));
+const Verify2FA = lazy(() => import('./pages/auth/Verify2FA'));
 const Home               = lazy(() => import('./pages/feed/Home'));
 const Discover           = lazy(() => import('./pages/discover/Discover'));
 const Notifications      = lazy(() => import('./pages/notifications/Notifications'));
@@ -88,10 +91,11 @@ function Splash() {
 
 /* ── Guards ── */
 function ProtectedRoute({ children }) {
-  const { user, profile, loading, profileChecked, recovery } = useAuth();
+  const { user, profile, loading, profileChecked, recovery, needsMfa } = useAuth();
   if (loading) return <PageLoader />;
   if (!user)   return <Navigate to="/login" replace />;
   if (recovery) return <Navigate to="/reset-password" replace />;
+  if (needsMfa) return <Navigate to="/verify-2fa" replace />;
   // signed in, but no profile yet -> finish it first
   if (profileChecked && !profile) return <Navigate to="/complete-profile" replace />;
   return children;
@@ -118,6 +122,13 @@ function AppShell() {
       return () => clearTimeout(t);
     }
   }, [splashDone]);
+
+  // Theme, text size and media settings follow the person to a new device
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase.from('user_settings').select('theme,font_size,data_saver,autoplay_videos,video_quality,image_quality')
+      .eq('user_id', user.id).maybeSingle().then(({ data }) => adoptServerSettings(data)).catch(() => {});
+  }, [user?.id]);
 
   // Real online / last-seen: starts when signed in, stops on sign-out.
   useEffect(() => {
@@ -161,6 +172,7 @@ function AppShell() {
           <Route path="/reset-password"  element={<ResetPassword />} />
           <Route path="/verify"          element={<PublicRoute><OTPVerify /></PublicRoute>} />
           <Route path="/complete-profile" element={<CompleteProfile />} />
+          <Route path="/verify-2fa" element={<Verify2FA />} />
 
           {/* Core */}
           <Route path="/"              element={<ProtectedRoute><Home /></ProtectedRoute>} />

@@ -1,365 +1,223 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabaseClient';
 import {
-  ArrowLeft, ExternalLink, Mail, MessageCircle,
-  Copy, CheckCircle, ChevronRight,
+  ArrowLeft, X, Mail, MessageCircle, LifeBuoy, ChevronRight, Share2, Download, RefreshCw, Smartphone, CheckCircle2,
+  FileText, ShieldCheck, ScrollText, Image as ImageIcon, CircleDot, Coins, Briefcase, Bell, Target, Users,
 } from 'lucide-react';
-
-const APP_VERSION  = '2.0.0';
-const BUILD_DATE   = '2025';
-const SUPPORT_EMAIL = 'bilgates072@gmail.com';
-const WA_LINK       = 'https://wa.me/254740309980';
+import {
+  APP_NAME, APP_TAGLINE, APP_VERSION, SUPPORT_EMAIL, SUPPORT_WHATSAPP, LEGAL_UPDATED,
+} from '../../config/appInfo';
+import { useInstallPrompt, isInstalled, isIos, reloadLatest } from '../../lib/pwa';
 
 const FEATURES = [
-  { emoji:'📸', title:'Posts',         desc:'Share photos, videos, and thoughts with your community' },
-  { emoji:'💬', title:'Chats',         desc:'Real-time messaging with reactions and media sharing'   },
-  { emoji:'🔔', title:'Notifications', desc:'Stay updated with instant activity notifications'        },
-  { emoji:'📊', title:'Status',        desc:'Share moments that last 24 hours with your followers'   },
-  { emoji:'🪙', title:'Coins & Wallet',desc:'In-app currency for reactions, gifts, and boosts'       },
-  { emoji:'💼', title:'Business Tools',desc:'Analytics, ads, and contact tools for brands'           },
+  { Icon: ImageIcon, title: 'Posts', desc: 'Share photos, videos and thoughts with your community' },
+  { Icon: MessageCircle, title: 'Chats', desc: 'Private messaging with reactions and photos' },
+  { Icon: CircleDot, title: 'Status', desc: 'Moments for your friends that last 24 hours' },
+  { Icon: Users, title: 'Friends', desc: 'Follow each other to become friends' },
+  { Icon: Coins, title: 'Coins and wallet', desc: 'Support creators and boost your posts' },
+  { Icon: Briefcase, title: 'Business tools', desc: 'Insights and tools for brands' },
+  { Icon: Bell, title: 'Notifications', desc: 'Stay updated, your way' },
+  { Icon: ShieldCheck, title: 'Safety', desc: 'Block, mute, report and two-step verification' },
 ];
 
-const LEGAL_LINKS = [
+const LEGAL = [
   {
-    label: 'Privacy Policy',
-    icon:  '🔒',
-    text: `B-Link Privacy Policy
+    key: 'privacy', label: 'Privacy Policy', Icon: ShieldCheck,
+    text: `${APP_NAME} Privacy Policy
+Last updated: ${LEGAL_UPDATED}
 
-Last updated: 2025
+1. What we collect
+Your name, username, email or phone number, profile photo, posts, comments, messages, statuses and basic usage information such as when you were last active.
 
-1. Data We Collect
-We collect your name, email, username, profile photo, posts, messages, and usage data when you use B-Link.
+2. How we use it
+To run ${APP_NAME}, keep your account safe, show you relevant content, prevent abuse and improve the service. We do not sell your personal data.
 
-2. How We Use Your Data
-Your data is used to provide B-Link services, personalise your experience, and improve the platform. We do not sell your personal data to third parties.
+3. Who can see what
+Your profile and public posts can be seen by other members. Statuses are visible only to your friends. Messages are visible only to the people in the conversation. You control who can message, comment on and follow you in Settings.
 
-3. Data Storage
-Your data is stored securely using Supabase (PostgreSQL) with row-level security. Media is stored on Cloudinary.
+4. Storage and security
+Your data is stored with trusted infrastructure providers and protected with access controls and encryption in transit. We also offer two-step verification.
 
-4. Your Rights
-You may request your data, update your information, or delete your account at any time via Settings.
+5. Your choices
+You can edit your information, download your data, deactivate or permanently delete your account in Settings at any time.
 
-5. Cookies
-We use cookies and localStorage for session management and user preferences only.
+6. Children
+${APP_NAME} is not intended for people under 13.
 
-6. Contact
-For privacy concerns, email bilgates072@gmail.com.
-
-© ${BUILD_DATE} B-Link. All rights reserved.`,
+7. Contact
+Use the Help Center in the app and choose "New request".`,
   },
   {
-    label: 'Terms of Service',
-    icon:  '📋',
-    text: `B-Link Terms of Service
-
-Last updated: 2025
+    key: 'terms', label: 'Terms of Service', Icon: ScrollText,
+    text: `${APP_NAME} Terms of Service
+Last updated: ${LEGAL_UPDATED}
 
 1. Acceptance
-By using B-Link, you agree to these terms. If you do not agree, do not use the app.
+By using ${APP_NAME} you agree to these terms.
 
-2. Acceptable Use
-You must not: post illegal content, harass other users, spam, impersonate others, or attempt to hack the platform.
+2. Acceptable use
+Do not post illegal content, harass others, spam, impersonate people, attempt to hack the service, or try to access accounts that are not yours.
 
-3. Content Ownership
-You retain ownership of content you post. By posting, you grant B-Link a non-exclusive licence to display your content on the platform.
+3. Your content
+You keep ownership of what you post. You give ${APP_NAME} a licence to display it on the platform. You are responsible for what you share.
 
-4. Account Termination
-B-Link may suspend or delete accounts that violate these terms without prior notice.
+4. Accounts
+Keep your sign-in details private. We may restrict, suspend or remove accounts that break these terms.
 
 5. Payments
-All payments are final and non-refundable unless otherwise stated. Services activate only after admin verification of M-Pesa payments.
+Payments for coins, plans and boosts are final unless stated otherwise. Services start after the payment is verified.
 
-6. Liability
-B-Link is provided "as is." We are not liable for data loss, service interruptions, or user disputes.
+6. Service
+${APP_NAME} is provided "as is". We work hard to keep it available but cannot promise it will never be interrupted.
 
 7. Changes
-We may update these terms. Continued use after changes means you accept the new terms.
-
-Contact: bilgates072@gmail.com`,
+We may update these terms. Continuing to use the app means you accept the new terms.`,
   },
   {
-    label: 'Community Guidelines',
-    icon:  '🌍',
-    text: `B-Link Community Guidelines
+    key: 'guidelines', label: 'Community Guidelines', Icon: FileText,
+    text: `${APP_NAME} Community Guidelines
 
-We want B-Link to be a safe, positive, and creative space for all African GenZ users.
+We want ${APP_NAME} to be a safe, positive and creative space for young Africans.
 
-✅ Do:
-• Be respectful and kind to other users
-• Share original and creative content
-• Use hashtags to help your content get discovered
-• Report violations using the report button
-• Support fellow creators with reactions and comments
+Do
+- Be respectful and kind
+- Share original, creative content
+- Report anything that breaks these rules
+- Support other creators
 
-🚫 Don't:
-• Post hateful, racist, or discriminatory content
-• Bully, harass, or threaten other users
-• Share explicit sexual or violent content
-• Spread misinformation or fake news
-• Impersonate other users or public figures
-• Spam or post repetitive promotional content
-• Share personal information of others without consent
+Don't
+- Post hateful, racist or discriminatory content
+- Bully, harass or threaten anyone
+- Share explicit sexual or violent content
+- Spread misinformation
+- Impersonate other people
+- Spam or repeat promotions
+- Share other people's private information
 
-Violations may result in content removal, account restriction, suspension, or permanent ban depending on severity.
-
-Report violations using the ⋯ menu on any post or the Help Center.
-
-Together we build a better community. 🌍`,
+Breaking these rules can lead to content removal, restriction, suspension or a permanent ban depending on how serious it is.`,
   },
 ];
 
-const LIBRARIES = [
-  { name:'React',                    purpose:'UI framework',               link:'https://react.dev' },
-  { name:'React Router',             purpose:'Client-side navigation',     link:'https://reactrouter.com' },
-  { name:'Supabase',                 purpose:'Database & authentication',  link:'https://supabase.com' },
-  { name:'Cloudinary',               purpose:'Media storage & CDN',        link:'https://cloudinary.com' },
-  { name:'Tailwind CSS',             purpose:'Utility-first styling',      link:'https://tailwindcss.com' },
-  { name:'Lucide React',             purpose:'Icon library',               link:'https://lucide.dev' },
-  { name:'Vercel',                   purpose:'Hosting & deployment',       link:'https://vercel.com' },
-];
-
-/* ── Legal text modal ── */
-function LegalModal({ item, onClose }) {
+function Sheet({ item, onClose }) {
   return (
-    <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-end justify-center" onClick={onClose}>
-      <div className="w-full max-w-[540px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5 pb-8 max-h-[85vh] flex flex-col"
-        onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/75 z-50 flex items-end justify-center" onClick={onClose}>
+      <div className="w-full max-w-[540px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5 pb-8 max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4 flex-shrink-0">
-          <p className="text-white font-bold text-base">{item.icon} {item.label}</p>
-          <button onClick={onClose} className="text-[#8E8C88] hover:text-white text-lg font-bold">✕</button>
+          <p className="text-white font-bold text-base flex items-center gap-2"><item.Icon size={18} className="text-[#FF5A1F]" /> {item.label}</p>
+          <button onClick={onClose} aria-label="Close" className="text-[#8E8C88] p-1"><X size={20} /></button>
         </div>
-        <div className="flex-1 overflow-y-auto scrollbar-none">
-          <pre className="text-white/70 text-[12px] leading-relaxed whitespace-pre-wrap font-sans">{item.text}</pre>
+        <div className="flex-1 overflow-y-auto">
+          <pre className="text-white/70 text-[13px] leading-relaxed whitespace-pre-wrap font-sans">{item.text}</pre>
         </div>
       </div>
     </div>
   );
 }
 
+function Row({ icon: Icon, label, sub, onClick, href, right }) {
+  const inner = (
+    <>
+      <span className="w-9 h-9 rounded-xl bg-[#FF5A1F]/10 flex items-center justify-center flex-shrink-0"><Icon size={17} className="text-[#FF8A5C]" /></span>
+      <span className="flex-1 min-w-0 text-left"><span className="block text-white/90 font-semibold text-[14px]">{label}</span>{sub && <span className="block text-[#8E8C88] text-[12px] mt-0.5">{sub}</span>}</span>
+      {right || <ChevronRight size={16} className="text-[#8E8C88]" />}
+    </>
+  );
+  const cls = 'w-full flex items-center gap-3 px-4 py-3.5 active:bg-white/[0.06]';
+  return href ? <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>{inner}</a> : <button onClick={onClick} className={cls}>{inner}</button>;
+}
+
 export default function AboutPage() {
   const navigate = useNavigate();
-  const [memberCount,   setMemberCount]   = useState(null);
-  const [apiStatus,     setApiStatus]     = useState('checking'); // checking | online | offline
-  const [copiedEmail,   setCopiedEmail]   = useState(false);
-  const [legalModal,    setLegalModal]    = useState(null);
+  const [legal, setLegal] = useState(null);
+  const [toast, setToast] = useState('');
+  const { canInstall, install } = useInstallPrompt();
+  const installed = isInstalled();
 
-  useEffect(() => {
-    fetchMemberCount();
-    checkApiStatus();
-  }, []);
-
-  const fetchMemberCount = async () => {
-    const { count } = await supabase.from('users')
-      .select('id', { count:'exact', head:true }).neq('is_banned', true);
-    setMemberCount(count || 0);
+  const say = (t) => { setToast(t); setTimeout(() => setToast(''), 2400); };
+  const share = async () => {
+    const url = window.location.origin;
+    try { if (navigator.share) await navigator.share({ title: APP_NAME, text: `Join me on ${APP_NAME}`, url }); else { await navigator.clipboard.writeText(url); say('Link copied'); } } catch { /* cancelled */ }
   };
-
-  const checkApiStatus = async () => {
-    try {
-      const start = Date.now();
-      await supabase.from('users').select('id', { count:'exact', head:true }).limit(1);
-      const ms = Date.now() - start;
-      setApiStatus(ms < 2000 ? 'online' : 'slow');
-    } catch {
-      setApiStatus('offline');
-    }
-  };
-
-  const copyEmail = async () => {
-    await navigator.clipboard.writeText(SUPPORT_EMAIL);
-    setCopiedEmail(true);
-    setTimeout(() => setCopiedEmail(false), 2000);
-  };
-
-  const statusColor = apiStatus === 'online' ? '#2ECC71' : apiStatus === 'slow' ? '#FFD700' : '#EF4444';
-  const statusLabel = apiStatus === 'online' ? '● Online' : apiStatus === 'slow' ? '● Slow' : '● Offline';
 
   return (
     <div className="min-h-screen bg-[#0D0C0B] pb-24">
+      {toast && <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[60] bg-white text-black text-[13px] font-semibold rounded-full px-5 py-2.5 shadow-xl">{toast}</div>}
+      {legal && <Sheet item={legal} onClose={() => setLegal(null)} />}
 
-      {/* Legal modal */}
-      {legalModal && <LegalModal item={legalModal} onClose={() => setLegalModal(null)} />}
-
-      {/* Top bar */}
-      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="text-[#8E8C88] hover:text-white transition-colors">
-          <ArrowLeft size={22} />
-        </button>
-        <h1 className="text-white font-bold text-[15px]">About B-Link</h1>
+      <div className="sticky top-0 z-20 bg-[#0D0C0B]/95 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => navigate(-1)} aria-label="Back" className="text-[#8E8C88] hover:text-white"><ArrowLeft size={22} /></button>
+        <h1 className="text-white font-bold text-[16px]">About {APP_NAME}</h1>
       </div>
 
-      {/* Hero */}
       <div className="flex flex-col items-center px-6 pt-8 pb-6 text-center">
         <div className="w-24 h-24 rounded-[28px] bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center shadow-2xl shadow-[#FF5A1F]/40 mb-4">
           <span className="text-white font-black text-4xl">B</span>
         </div>
-        <h2 className="text-white font-black text-3xl tracking-tight mb-1">B-Link</h2>
-        <p className="text-transparent font-bold text-sm mb-1"
-          style={{ background:'linear-gradient(90deg,#FF5A1F,#FF6B35,#FFD700)', WebkitBackgroundClip:'text', backgroundClip:'text' }}>
-          Africa's GenZ Social Platform
-        </p>
-        <div className="flex items-center gap-3 mt-2">
-          <span className="text-white/30 text-xs bg-white/[0.06] px-3 py-1 rounded-full">v{APP_VERSION}</span>
-          <span className="text-white/30 text-xs bg-white/[0.06] px-3 py-1 rounded-full">Build {BUILD_DATE}</span>
-          {memberCount !== null && (
-            <span className="text-white/30 text-xs bg-white/[0.06] px-3 py-1 rounded-full">{memberCount.toLocaleString()} members</span>
-          )}
-        </div>
+        <h2 className="text-white font-black text-3xl tracking-tight">{APP_NAME}</h2>
+        <p className="text-[#FF8A5C] font-semibold text-sm mt-1">{APP_TAGLINE}</p>
+        <span className="text-white/40 text-xs bg-white/[0.06] px-3 py-1 rounded-full mt-3">Version {APP_VERSION}</span>
       </div>
 
       <div className="px-4 space-y-4">
-
-        {/* Description */}
         <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4">
-          <p className="text-white font-bold text-sm mb-2">What is B-Link?</p>
+          <p className="text-white font-bold text-sm mb-2">What is {APP_NAME}?</p>
           <p className="text-white/60 text-[13px] leading-relaxed">
-            B-Link is a fast, modern social media platform built specifically for African GenZ users. Connect with friends, share moments, discover trending content, and grow your personal or business brand — all in one place.
+            {APP_NAME} is a fast, modern social platform made for young Africans. Connect with friends, share moments, discover what is trending and grow your personal or business brand, all in one place.
           </p>
         </div>
 
-        {/* Mission */}
         <div className="bg-gradient-to-br from-[#FF5A1F]/10 to-[#FF2D78]/10 border border-[#FF5A1F]/20 rounded-2xl p-4">
-          <p className="text-white font-bold text-sm mb-2">🎯 Our Mission</p>
+          <p className="text-white font-bold text-sm mb-2 flex items-center gap-2"><Target size={16} className="text-[#FF5A1F]" /> Our mission</p>
           <p className="text-white/65 text-[13px] leading-relaxed">
-            To connect millions of young Africans in a fast, lightweight, and genuinely African social platform — built by Africans, for Africans. Every feature is designed to work well even on limited data connections.
+            To connect millions of young Africans on a fast, lightweight platform that works well even on limited data, built for the way Africa actually uses the internet.
           </p>
         </div>
 
-        {/* Features */}
         <div>
-          <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-widest mb-3">Platform Features</p>
+          <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-widest mb-3">What you can do</p>
           <div className="grid grid-cols-2 gap-2">
-            {FEATURES.map(f => (
-              <div key={f.title} className="bg-white/[0.04] border border-white/[0.07] rounded-2xl p-3">
-                <p className="text-2xl mb-2">{f.emoji}</p>
-                <p className="text-white font-bold text-[13px]">{f.title}</p>
-                <p className="text-white/40 text-[11px] mt-0.5 leading-snug">{f.desc}</p>
+            {FEATURES.map(({ Icon, title, desc }) => (
+              <div key={title} className="bg-white/[0.04] border border-white/[0.07] rounded-2xl p-3">
+                <span className="w-9 h-9 rounded-xl bg-[#FF5A1F]/10 flex items-center justify-center mb-2"><Icon size={17} className="text-[#FF8A5C]" /></span>
+                <p className="text-white font-bold text-[13px]">{title}</p>
+                <p className="text-white/40 text-[11px] mt-0.5 leading-snug">{desc}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Legal */}
+        <div>
+          <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-widest mb-2">The app</p>
+          <div className="bg-white/[0.035] border border-white/[0.07] rounded-2xl overflow-hidden divide-y divide-white/[0.06]">
+            {installed ? (
+              <Row icon={Smartphone} label="Installed on this device" right={<CheckCircle2 size={18} className="text-[#2ECC71]" />} onClick={() => {}} />
+            ) : canInstall ? (
+              <Row icon={Download} label={`Install ${APP_NAME}`} sub="Add it to your home screen for a full-screen app" onClick={async () => { if (await install()) say('Installed'); }} />
+            ) : isIos() ? (
+              <Row icon={Download} label={`Install ${APP_NAME}`} sub="Tap Share, then Add to Home Screen" onClick={() => say('Tap Share, then Add to Home Screen')} />
+            ) : null}
+            <Row icon={RefreshCw} label="Get the latest version" sub="Reloads the app with the newest updates" onClick={reloadLatest} />
+            <Row icon={Share2} label={`Invite friends to ${APP_NAME}`} onClick={share} />
+          </div>
+        </div>
+
         <div>
           <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-widest mb-2">Legal</p>
-          <div className="bg-white/[0.03] border border-white/[0.07] rounded-2xl overflow-hidden">
-            {LEGAL_LINKS.map((item, i) => (
-              <div key={item.label}>
-                <button
-                  onClick={() => setLegalModal(item)}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.05] transition-colors text-left"
-                >
-                  <span className="text-lg flex-shrink-0">{item.icon}</span>
-                  <span className="flex-1 text-white/80 font-semibold text-[14px]">{item.label}</span>
-                  <ExternalLink size={14} className="text-[#8E8C88] flex-shrink-0" />
-                </button>
-                {i < LEGAL_LINKS.length - 1 && <div className="h-px bg-white/[0.06] mx-4" />}
-              </div>
-            ))}
+          <div className="bg-white/[0.035] border border-white/[0.07] rounded-2xl overflow-hidden divide-y divide-white/[0.06]">
+            {LEGAL.map((l) => <Row key={l.key} icon={l.Icon} label={l.label} onClick={() => setLegal(l)} />)}
           </div>
         </div>
 
-        {/* Technical info */}
         <div>
-          <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-widest mb-2">Technical Info</p>
-          <div className="bg-white/[0.03] border border-white/[0.07] rounded-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
-              <p className="text-white/60 text-[13px]">App Version</p>
-              <p className="text-white font-bold text-[13px]">{APP_VERSION}</p>
-            </div>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
-              <p className="text-white/60 text-[13px]">Platform</p>
-              <p className="text-white font-bold text-[13px]">Web (React PWA)</p>
-            </div>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
-              <p className="text-white/60 text-[13px]">Database</p>
-              <p className="text-white font-bold text-[13px]">Supabase (PostgreSQL)</p>
-            </div>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
-              <p className="text-white/60 text-[13px]">Hosting</p>
-              <p className="text-white font-bold text-[13px]">Vercel</p>
-            </div>
-            <div className="flex items-center justify-between px-4 py-3">
-              <p className="text-white/60 text-[13px]">API Status</p>
-              <button onClick={checkApiStatus} className="flex items-center gap-1.5">
-                <span className="text-[13px] font-bold" style={{ color: statusColor }}>{statusLabel}</span>
-              </button>
-            </div>
+          <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-widest mb-2">Need help?</p>
+          <div className="bg-white/[0.035] border border-white/[0.07] rounded-2xl overflow-hidden divide-y divide-white/[0.06]">
+            <Row icon={LifeBuoy} label="Help Center" sub="Answers, and contact support" onClick={() => navigate('/help')} />
+            {SUPPORT_EMAIL && <Row icon={Mail} label="Email support" sub={SUPPORT_EMAIL} href={`mailto:${SUPPORT_EMAIL}`} />}
+            {SUPPORT_WHATSAPP && <Row icon={MessageCircle} label="WhatsApp support" href={`https://wa.me/${SUPPORT_WHATSAPP}`} />}
           </div>
         </div>
 
-        {/* Libraries */}
-        <div>
-          <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-widest mb-2">Open Source Libraries</p>
-          <div className="bg-white/[0.03] border border-white/[0.07] rounded-2xl overflow-hidden">
-            {LIBRARIES.map((lib, i) => (
-              <div key={lib.name}>
-                <div className="flex items-center gap-3 px-4 py-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-semibold text-[13px]">{lib.name}</p>
-                    <p className="text-[#8E8C88] text-[11px]">{lib.purpose}</p>
-                  </div>
-                  <a href={lib.link} target="_blank" rel="noopener noreferrer"
-                    className="text-[#FF5A1F] flex-shrink-0 p-1 hover:text-[#d9480f]">
-                    <ExternalLink size={14} />
-                  </a>
-                </div>
-                {i < LIBRARIES.length - 1 && <div className="h-px bg-white/[0.06] mx-4" />}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Credits */}
-        <div className="bg-gradient-to-br from-[#FFD700]/10 to-[#FF6B35]/10 border border-[#FFD700]/20 rounded-2xl p-5 text-center">
-          <p className="text-3xl mb-3">👑</p>
-          <p className="text-white font-black text-lg mb-1">Built by Bilgate Mukhayo</p>
-          <p className="text-white/50 text-sm mb-1">CEO & Lead Developer, B-Link</p>
-          <p className="text-white/30 text-xs mb-3">Kibabii University · BIT Year 2 · Kenya 🇰🇪</p>
-          <p className="text-white/40 text-xs leading-relaxed">
-            B-Link is a solo-built African social media platform crafted with passion, designed for GenZ, and built to scale.
-          </p>
-        </div>
-
-        {/* Contact */}
-        <div>
-          <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-widest mb-2">Contact</p>
-          <div className="bg-white/[0.03] border border-white/[0.07] rounded-2xl overflow-hidden">
-            <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.06]">
-              <div className="w-9 h-9 rounded-xl bg-[#FF5A1F]/15 flex items-center justify-center flex-shrink-0">
-                <Mail size={16} className="text-[#FF5A1F]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-white/60 text-[11px] font-bold uppercase">Email</p>
-                <p className="text-white text-[13px] font-semibold truncate">{SUPPORT_EMAIL}</p>
-              </div>
-              <button onClick={copyEmail} className="flex-shrink-0 flex items-center gap-1 bg-white/10 hover:bg-white/15 px-3 py-1.5 rounded-xl transition-colors">
-                {copiedEmail
-                  ? <><CheckCircle size={12} className="text-green-400" /><span className="text-green-400 text-xs font-bold">Copied</span></>
-                  : <><Copy size={12} className="text-white/60" /><span className="text-white/60 text-xs">Copy</span></>
-                }
-              </button>
-            </div>
-            <a href={WA_LINK} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.04] transition-colors">
-              <div className="w-9 h-9 rounded-xl bg-green-500/15 flex items-center justify-center flex-shrink-0">
-                <MessageCircle size={16} className="text-green-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-white/60 text-[11px] font-bold uppercase">WhatsApp Support</p>
-                <p className="text-white text-[13px] font-semibold">+254 740 309 980</p>
-              </div>
-              <ExternalLink size={15} className="text-[#8E8C88] flex-shrink-0" />
-            </a>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="text-center pt-2 pb-4">
-          <p className="text-white/20 text-[11px]">© {BUILD_DATE} B-Link · Made with ❤️ for Africa</p>
-          <p className="text-white/10 text-[10px] mt-1">All rights reserved · bilgates072@gmail.com</p>
-        </div>
+        <p className="text-center text-white/25 text-[11px] pt-2 pb-4">© {new Date().getFullYear()} {APP_NAME}. All rights reserved.</p>
       </div>
     </div>
   );

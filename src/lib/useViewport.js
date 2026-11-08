@@ -5,7 +5,8 @@ import { useState, useEffect } from 'react';
 
 const read = () => {
   const vv = window.visualViewport;
-  return { h: vv ? vv.height : window.innerHeight, top: vv ? vv.offsetTop : 0 };
+  const z = parseFloat(window.getComputedStyle(document.documentElement).zoom) || 1;   // text-size setting
+  return { h: (vv ? vv.height : window.innerHeight) / z, top: (vv ? vv.offsetTop : 0) / z };
 };
 
 export default function useViewport() {

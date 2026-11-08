@@ -1,11 +1,18 @@
 // src/lib/imageUtils.js
 // Client-side image preparation + Cloudinary delivery helpers.
 import { uploadToCloudinary } from './cloudinary';
+import { getPref } from './prefs';
 
 /* Shrink + (optionally) square-crop an image BEFORE upload. A 4 MB phone
    photo becomes ~60-150 KB, so uploads finish in a second or two even on
    slow mobile data, and everything downstream loads faster. */
-export async function compressImage(file, { maxSize = 1080, quality = 0.84, square = false } = {}) {
+export async function compressImage(file, opts = {}) {
+  // the person's "image upload quality" setting is the default
+  const q = getPref('image_quality');
+  const preset = q === 'low' ? { m: 960, q: 0.62 } : q === 'medium' ? { m: 1280, q: 0.75 } : { m: 1600, q: 0.86 };
+  const maxSize = Math.min(opts.maxSize ?? preset.m, preset.m);
+  const quality = opts.quality ?? preset.q;
+  const square = !!opts.square;
   try {
     if (!file || !file.type?.startsWith('image/')) return file;
     if (file.type === 'image/gif') return file; // keep animation
@@ -80,7 +87,17 @@ export function avatarUrl(url, px = 80) {
 
 export function feedImageUrl(url, width = 800) {
   if (!isPlainCloudinary(url)) return url;
-  return url.replace('/upload/', `/upload/f_auto,q_auto,c_limit,w_${width}/`);
+  const saver = getPref('data_saver');
+  const w = saver ? Math.min(width, 640) : width;
+  return url.replace('/upload/', `/upload/f_auto,q_auto${saver ? ':low' : ''},c_limit,w_${w}/`);
+}
+
+/* Video delivery honours the video quality / data saver settings */
+export function videoSrc(url) {
+  if (typeof url !== 'string' || !url.includes('res.cloudinary.com') || !url.includes('/video/upload/') || /\/upload\/[a-z]{1,3}_[^/]*\//.test(url)) return url;
+  const q = getPref('data_saver') ? 'low' : getPref('video_quality');
+  const t = q === 'low' ? 'q_auto:low,w_480' : q === 'medium' ? 'q_auto:good,w_720' : q === 'high' ? 'q_auto:best' : 'q_auto';
+  return url.replace('/upload/', `/upload/${t}/`);
 }
 
 export function thumbUrl(url, width = 360) {

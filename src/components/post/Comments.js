@@ -17,6 +17,7 @@ import {
   fetchComments, addComment, editComment, hideComment, pinComment, deleteComment, toggleCommentLike,
 } from '../../lib/posts';
 
+const friendly = (e, fallback) => (/does not exist|could not find|schema cache/i.test(e?.message || '') ? 'This needs the latest database update.' : (e?.message && e.message.length < 90 ? e.message : fallback));
 const QUICK_EMOJI = ['❤️', '🙌', '🔥', '😂', '😮', '😢', '👏', '😍'];
 const MAX_LEN = 1000;
 const PAGE = 20;
@@ -186,9 +187,9 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, inline =
     const was = !!c.my_reaction;
     patchItem(c.id, { my_reaction: was ? null : '❤️', reaction_count: Math.max(0, (c.reaction_count || 0) + (was ? -1 : 1)) });
     try {
-      const r = await toggleCommentLike(c.id);
+      const r = await toggleCommentLike(c.id, was);
       patchItem(c.id, { my_reaction: r.liked ? '❤️' : null, reaction_count: r.count });
-    } catch { patchItem(c.id, { my_reaction: c.my_reaction, reaction_count: c.reaction_count }); say("Couldn't update like", true); }
+    } catch (e) { patchItem(c.id, { my_reaction: c.my_reaction, reaction_count: c.reaction_count }); say(friendly(e, "Couldn't update like. Try again."), true); }
   };
 
   const toggleReplies = async (c) => {
@@ -220,7 +221,7 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, inline =
         const row = await editComment(editing.id, body);
         patchItem(editing.id, { body: row?.body || body, edited: true });
         setEditing(null); setText('');
-      } catch (e) { say(e.message || "Couldn't save the edit", true); }
+      } catch (e) { say(friendly(e, "Couldn't save the edit"), true); }
       setSending(false);
       return;
     }
@@ -252,7 +253,7 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, inline =
       if (parentId) setReplies((p) => ({ ...p, [parentId]: { ...p[parentId], items: drop(p[parentId]?.items || []) } })); else setItems(drop);
       onCountChange?.(-1);
       setText(body);
-      say(e.message || "Couldn't post. Try again.", true);
+      say(friendly(e, "Couldn't post. Try again."), true);
     }
     setSending(false);
   };
@@ -265,7 +266,7 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, inline =
     setReplies((p) => { const n = { ...p }; if (c.parent_id && n[c.parent_id]) n[c.parent_id] = { ...n[c.parent_id], items: n[c.parent_id].items.filter((x) => x.id !== c.id) }; return n; });
     if (c.parent_id) setItems((prev) => prev.map((x) => (x.id === c.parent_id ? { ...x, reply_count: Math.max(0, (x.reply_count || 1) - 1) } : x)));
     onCountChange?.(-(c.parent_id ? 1 : removed));
-    try { await deleteComment(c.id); } catch (e) { setItems(snapshot); onCountChange?.(c.parent_id ? 1 : removed); say(e.message || "Couldn't delete", true); }
+    try { await deleteComment(c.id); } catch (e) { setItems(snapshot); onCountChange?.(c.parent_id ? 1 : removed); say(friendly(e, "Couldn't delete"), true); }
   };
 
   const doHide = async (c) => {
@@ -273,14 +274,14 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, inline =
     const hide = !c.is_hidden;
     patchItem(c.id, { is_hidden: hide });
     try { await hideComment(c.id, hide); say(hide ? 'Comment hidden from others' : 'Comment visible again'); }
-    catch (e) { patchItem(c.id, { is_hidden: !hide }); say(e.message || "Couldn't update", true); }
+    catch (e) { patchItem(c.id, { is_hidden: !hide }); say(friendly(e, "Couldn't update"), true); }
   };
 
   const doPin = async (c) => {
     setMenu(null);
     const pin = !c.is_pinned;
     try { await pinComment(c.id, pin); say(pin ? 'Comment pinned' : 'Comment unpinned'); load(true); }
-    catch (e) { say(e.message || "Couldn't pin", true); }
+    catch (e) { say(friendly(e, "Couldn't pin"), true); }
   };
 
   const doReport = async (reason) => {

@@ -252,7 +252,7 @@ const Verification = () => {
             <div className="bg-[#FFD700]/10 border border-[#FFD700]/20 rounded-xl p-3">
               <p className="text-[#FFD700] text-xs font-semibold">Privacy note</p>
               <p className="text-white/60 text-xs mt-1">
-                Your ID is uploaded to a private Cloudinary folder and only accessed by B-Link verification staff. It is never shared or sold.
+                Your ID is stored privately and only reviewed by B-Link verification staff. It is never shared or sold.
               </p>
             </div>
 

@@ -3,7 +3,7 @@
 // sign-in and password recovery. Handles paste, auto-submit, resend
 // cooldown and wrong-code lockout.
 import { useEffect, useRef, useState } from 'react';
-import { Mail, Smartphone, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Mail, Smartphone, ShieldCheck, ArrowLeft, RefreshCw } from 'lucide-react';
 import { friendlyAuthError, lockState, recordFailure, recordSuccess, formatWait } from '../../lib/authSecurity';
 
 const LEN = 6;
@@ -72,7 +72,7 @@ export default function VerifyCode({ kind = 'email', target, title, hint, onVeri
     else { setInfo('A new code is on its way.'); setCooldown(COOLDOWN); }
   };
 
-  const Icon = kind === 'phone' ? Smartphone : Mail;
+  const Icon = kind === 'totp' ? ShieldCheck : kind === 'phone' ? Smartphone : Mail;
 
   return (
     <div className="flex flex-col items-center px-6 pt-6 pb-10">
@@ -106,10 +106,12 @@ export default function VerifyCode({ kind = 'email', target, title, hint, onVeri
         {busy && <p className="text-[#8E8C88] text-sm text-center">Verifying…</p>}
       </div>
 
-      <button onClick={resend} disabled={cooldown > 0}
-        className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-[#FF5A1F] disabled:text-[#8E8C88]">
-        <RefreshCw size={14} /> {cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}
-      </button>
+      {onResend && (
+        <button onClick={resend} disabled={cooldown > 0}
+          className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-[#FF5A1F] disabled:text-[#8E8C88]">
+          <RefreshCw size={14} /> {cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}
+        </button>
+      )}
 
       {onBack && (
         <button onClick={onBack} className="mt-6 inline-flex items-center gap-1.5 text-sm text-[#8E8C88] hover:text-white">
