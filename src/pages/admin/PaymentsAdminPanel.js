@@ -183,6 +183,16 @@ export default function PaymentsAdminPanel() {
     try {
       const now = new Date();
 
+      // Preferred path: one atomic server function (cannot double-credit, checks the price list).
+      const viaServer = await supabase.rpc('admin_confirm_payment', { p_payment_id: payment.id });
+      if (!viaServer.error) {
+        setFeedback({ type: 'success', msg: `Payment confirmed and service activated for ${payment.user?.display_name}` });
+        fetchPayments(); fetchStats(); setBusy(false);
+        return;
+      }
+      if (!/does not exist|could not find|schema cache/i.test(viaServer.error.message || '')) throw new Error(viaServer.error.message);
+      // older database without the function: continue with the previous step-by-step method
+
       // 1. Update payment status to confirmed
       const { error: payErr } = await supabase.from('payments').update({
         status:             'confirmed',
@@ -364,6 +374,18 @@ export default function PaymentsAdminPanel() {
 
     setBusy(true);
     setSelected(null);
+
+    const viaServer = await supabase.rpc('admin_reject_payment', { p_payment_id: payment.id, p_reason: reason.trim() });
+    if (!viaServer.error) {
+      setFeedback({ type: 'info', msg: 'Payment rejected and user notified.' });
+      setBusy(false); fetchPayments(); fetchStats();
+      return;
+    }
+    if (!/does not exist|could not find|schema cache/i.test(viaServer.error.message || '')) {
+      setFeedback({ type: 'error', msg: 'Rejection failed: ' + viaServer.error.message });
+      setBusy(false);
+      return;
+    }
 
     const { error } = await supabase.from('payments').update({
       status:           'rejected',

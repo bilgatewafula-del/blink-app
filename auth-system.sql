@@ -246,3 +246,8 @@ do $$ begin
   exception when others then raise notice 'pg_cron not available: run select public.purge_unconfirmed_accounts(3); now and then';
   end;
 end $$;
+
+-- the clean-up job is for the database scheduler / owner only
+do $$ begin
+  revoke execute on function public.purge_unconfirmed_accounts(integer) from public, anon, authenticated;
+exception when others then raise notice 'permission cleanup: %', sqlerrm; end $$;

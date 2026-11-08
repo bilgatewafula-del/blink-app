@@ -488,3 +488,11 @@ do $$ begin
   begin alter publication supabase_realtime add table public.users;              exception when others then null; end;
 end $$;
 alter table public.message_reactions replica identity full;
+
+-- 8. Internal helpers must never be callable from the app ------------------------------------
+-- (_cascade_delete deletes rows by id with owner privileges; only the admin / self-delete functions may call it)
+do $$ begin
+  revoke execute on function public._cascade_delete(regclass, text, text[], integer, jsonb) from public, anon, authenticated;
+  revoke execute on function public._admin_guard(uuid, text) from public, anon, authenticated;
+  revoke execute on function public.mark_stale_offline() from public, anon, authenticated;
+exception when others then raise notice 'permission cleanup: %', sqlerrm; end $$;
