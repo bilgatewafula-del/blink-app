@@ -25,7 +25,7 @@ import { bgCss, textSizeFor } from '../lib/storyPalette';
 import { videoSrc } from '../lib/imageUtils';
 import { getPref } from '../lib/prefs';
 import {
-  requestPostState, patchPostState, requestQuotedPost, isPostHidden, isUserMuted, hidePost, muteUser, recordShare,
+  requestPostState, patchPostState, requestQuotedPost, isPostHidden, isUserMuted, hidePost, muteUser, recordShare, toggleSave,
 } from '../lib/posts';
 
 /* ── One active video at a time ── */
@@ -523,9 +523,8 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
   // Was a client read-then-write (select existing, then insert/delete) —
   // now one atomic RPC call, consistent with the main card's handleSave.
   const handleSave = () => run('save', async () => {
-    const { data, error } = await supabase.rpc('toggle_post_save', { p_post_id: post.id });
-    if (error) throw error;
-    showToast(data ? '✅ Post saved!' : 'Removed from saved');
+    const nowSaved = await toggleSave(post.id, !!post.is_saved);
+    showToast(nowSaved ? 'Post saved' : 'Removed from saved');
     onActionDone('save');
   });
 
@@ -806,10 +805,9 @@ function PostCard({
     const prevSaved = saved;
     setSaved(!saved);
     try {
-      const { data, error } = await supabase.rpc('toggle_post_save', { p_post_id: post.id });
-      if (error) throw error;
-      setSaved(!!data);
-      showToast(data ? '✅ Post saved' : 'Removed from saved');
+      const nowSaved = await toggleSave(post.id, prevSaved);
+      setSaved(nowSaved);
+      showToast(nowSaved ? 'Post saved' : 'Removed from saved');
     } catch (err) {
       setSaved(prevSaved);
       showToast('Couldn\u2019t update — try again');

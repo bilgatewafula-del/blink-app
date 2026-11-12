@@ -297,7 +297,7 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, inline =
 
   const m = menu;
   const mMine = m?.user_id === me;
-  const canDelete = mMine || isPostOwner || staff;
+  const canDelete = mMine || staff;   // the post owner can HIDE, only the author (or moderators) can delete
 
   return (
     <div className={'relative flex flex-col ' + (inline ? '' : 'h-full min-h-0')}>

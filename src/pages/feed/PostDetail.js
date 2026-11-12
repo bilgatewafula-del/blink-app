@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import VerifiedBadge from '../../components/VerifiedBadge';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { CommentsPanel } from '../../components/post/Comments';
+import { toggleSave } from '../../lib/posts';
 import TextPost, { isColoredTextPost } from '../../components/post/TextPost';
 import { ShareSheet, InsightsSheet } from '../../components/post/Sheets';
 import { supabase } from '../../lib/supabaseClient';
@@ -446,9 +447,7 @@ export default function PostDetail() {
     const prevSaved = saved;
     setSaved(!saved);
     try {
-      const { data, error } = await supabase.rpc('toggle_post_save', { p_post_id: id });
-      if (error) throw error;
-      setSaved(!!data);
+      setSaved(await toggleSave(id, prevSaved));
     } catch (err) {
       setSaved(prevSaved);
       showToast('Couldn\u2019t update — try again');

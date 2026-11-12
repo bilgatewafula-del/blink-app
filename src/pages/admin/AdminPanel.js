@@ -643,10 +643,14 @@ export default function AdminPanel() {
 
   const fetchUsers = async () => {
     const { data, error } = await supabase.from('users')
-      .select('id,username,display_name,avatar_url,role,is_banned,is_restricted,suspended_until,ban_reason,restriction_reason,created_at,followers_count,posts_count')
+      .select('id,username,display_name,avatar_url,role,is_banned,is_restricted,suspended_until,created_at,followers_count,posts_count')
       .order('created_at', { ascending: false });
-    if (error) console.error('fetchUsers:', error.message);
-    else setUsers(data || []);
+    if (error) { console.error('fetchUsers:', error.message); return; }
+    // reasons are private: staff read them through a protected function
+    const { data: reasons } = await supabase.rpc('admin_user_reasons');
+    const byId = {};
+    (Array.isArray(reasons) ? reasons : []).forEach((r) => { byId[r.id] = r; });
+    setUsers((data || []).map((u) => ({ ...u, ban_reason: byId[u.id]?.ban_reason || null, restriction_reason: byId[u.id]?.restriction_reason || null })));
   };
 
   const fetchPosts = async () => {

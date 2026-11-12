@@ -163,8 +163,27 @@ export async function pinComment(id, pinned) {
   if (error) throw error;
 }
 export async function deleteComment(id) {
-  const { error } = await supabase.rpc('delete_post_comment', { p_comment_id: id });
+  let { error } = await supabase.rpc('delete_own_comment', { p_comment_id: id });
+  if (error && missingFn(error)) ({ error } = await supabase.rpc('delete_post_comment', { p_comment_id: id }));
   if (error) throw error;
+}
+
+/* Save / unsave a post. Uses the server function; falls back to the table itself so the
+   button never just says "couldn't update". Returns the new saved state. */
+export async function toggleSave(postId, wasSaved) {
+  const { data, error } = await supabase.rpc('toggle_post_save', { p_post_id: postId });
+  if (!error && typeof data === 'boolean') return data;
+  const { data: sess } = await supabase.auth.getSession();
+  const uid = sess?.session?.user?.id;
+  if (!uid) throw new Error('Please sign in again.');
+  if (wasSaved) {
+    const { error: e1 } = await supabase.from('saved_posts').delete().eq('post_id', postId).eq('user_id', uid);
+    if (e1) throw e1;
+    return false;
+  }
+  const { error: e2 } = await supabase.from('saved_posts').upsert({ post_id: postId, user_id: uid }, { onConflict: 'post_id,user_id' });
+  if (e2) throw e2;
+  return true;
 }
 export async function toggleCommentLike(id, wasLiked = false) {
   const { data, error } = await supabase.rpc('toggle_comment_like', { p_comment_id: id });

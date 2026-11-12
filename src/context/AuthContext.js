@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { markActive, isIdleTooLong, setAuthNotice, rememberAccount } from '../lib/authSecurity';
+import { fetchMyPrivate, clearPrivateCache } from '../lib/privateProfile';
 
 const AuthContext = createContext(null);
 
@@ -11,10 +12,7 @@ const PROFILE_FIELDS = `
   id, username, display_name, avatar_url, bio, country,
   is_verified, verified_at, role, is_banned, is_restricted,
   suspended_until, followers_count, posts_count,
-  subscription_plan, subscription_expires_at,
-  coins_balance, is_business,
-  posts_today, posts_today_date,
-  username_changed_at, display_name_changed_at
+  subscription_plan, is_business, cover_url
 `;
 
 export function AuthProvider({ children }) {
@@ -62,7 +60,11 @@ export function AuthProvider({ children }) {
     fetchingRef.current = true;
 
     try {
-      const { data, error } = await supabase.from('users').select(PROFILE_FIELDS).eq('id', uid).maybeSingle();
+      const [{ data: pub, error }, priv] = await Promise.all([
+        supabase.from('users').select(PROFILE_FIELDS).eq('id', uid).maybeSingle(),
+        fetchMyPrivate(uid, { force: true }),
+      ]);
+      const data = pub ? { ...pub, ...(priv || {}) } : pub;
 
       if (error) {
         if (error.message?.includes('JWT') || error.code === 'PGRST301') {
@@ -231,7 +233,7 @@ export function AuthProvider({ children }) {
   }, [user, fetchProfile]);
 
   const signOut = useCallback(async () => {
-    _profileCache = null;
+    _profileCache = null; clearPrivateCache();
     if (mountedRef.current) { setProfile(null); setUser(null); setProfileChecked(false); setRecovery(false); }
     await supabase.auth.signOut();
   }, []);

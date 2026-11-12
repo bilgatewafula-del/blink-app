@@ -15,6 +15,7 @@ import {
   fetchFollowersList, fetchFollowingList, fetchFriendsList, onFollowChange,
 } from '../../lib/follows';
 import { compressImage, uploadImage, feedImageUrl, thumbUrl } from '../../lib/imageUtils';
+import { fetchMyPrivate } from '../../lib/privateProfile';
 import {
   ArrowLeft, Settings, MoreHorizontal, MessageCircle, Coins, ChevronRight, X,
   UserMinus, Grid, List, Camera, Link2, MapPin, CalendarDays, Share2, Flag, Ban,
@@ -34,7 +35,7 @@ const OWN_PROFILE_FIELDS = `
   id, username, display_name, avatar_url, bio, country, is_verified,
   role, is_business, is_banned, is_restricted, created_at,
   followers_count, following_count, posts_count,
-  subscription_plan, subscription_expires_at, coins_balance
+  subscription_plan
 `.trim();
 
 const PUBLIC_PROFILE_FIELDS = `
@@ -267,9 +268,10 @@ export default function Profile() {
     (async () => {
       try {
         const base = supabase.from('users');
-        const { data: pd, error } = isOwnProfile
+        const { data: pd0, error } = isOwnProfile
           ? await base.select(OWN_PROFILE_FIELDS).eq('id', user.id).maybeSingle()
           : await base.select(PUBLIC_PROFILE_FIELDS).eq('username', username.toLowerCase()).maybeSingle();
+        const pd = pd0 && isOwnProfile ? { ...pd0, ...(await fetchMyPrivate(user.id)) } : pd0;
         if (cancelled) return;
         if (error) throw error;
         if (!pd) { setProfile(null); setLoading(false); setFeed((f) => ({ ...f, posts: { ...f.posts, loading: false } })); return; }

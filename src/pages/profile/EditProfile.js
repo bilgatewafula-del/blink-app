@@ -166,7 +166,6 @@ export default function EditProfile() {
       if (Object.keys(updates).length === 0) { navigate('/profile'); return; }
 
       setStage('Saving…');
-      updates.updated_at = new Date().toISOString();
       const { error: dbErr } = await supabase.from('users').update(sanitiseUserUpdate(updates)).eq('id', user.id);
       if (dbErr) {
         const msg = dbErr.message || '';
@@ -179,7 +178,9 @@ export default function EditProfile() {
       setSuccess(true);
       setTimeout(() => navigate('/profile'), 700);
     } catch (err) {
+      console.error('Profile save failed:', err);
       setError(err.message || 'Save failed. Try again.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     setStage('');
     setSaving(false);
@@ -211,6 +212,9 @@ export default function EditProfile() {
         </div>
       )}
 
+      {error && (
+        <div className="sticky top-[57px] z-20 mx-4 mt-3 bg-red-500/95 text-white text-[13px] font-semibold rounded-xl px-4 py-3 shadow-xl">{error}</div>
+      )}
       <div className="px-4 pt-6 space-y-5">
         {/* avatar */}
         <div className="flex flex-col items-center">
