@@ -3,20 +3,21 @@ import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import {
-  Home, Compass, Zap, MessageCircle, User
+  Home, Compass, Bell, MessageCircle, User
 } from 'lucide-react';
 
 export default function BottomNav() {
   const navigate     = useNavigate();
   const location     = useLocation();
   const { user }     = useAuth();
+  const [unread, setUnread] = useState(0);
   const [unreadMsg, setUnreadMsg] = useState(0);
 
   useEffect(() => {
     if (!user?.id) return;
     fetchCounts();
 
-    const ch = supabase.channel('nav:message-counts:' + user.id)
+    const ch = supabase.channel('nav:counts:' + user.id)
       .on('postgres_changes', {
         event: '*', schema: 'public', table: 'notifications',
         filter: 'user_id=eq.' + user.id,
@@ -27,17 +28,24 @@ export default function BottomNav() {
   }, [user?.id]);
 
   const fetchCounts = async () => {
-    const { count: m } = await supabase.from('notifications')
+    const [{ count: n }, { count: m }] = await Promise.all([
+      supabase.from('notifications')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', user.id).eq('is_read', false)
-        .eq('type', 'message');
+        .not('type', 'eq', 'message'),
+      supabase.from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id).eq('is_read', false)
+        .eq('type', 'message'),
+    ]);
+    setUnread(n || 0);
     setUnreadMsg(m || 0);
   };
 
   const tabs = [
     { path: '/',              icon: Home,          label: 'Home'    },
     { path: '/discover',      icon: Compass,       label: 'Discover'},
-    { path: '/flash',         icon: Zap,           label: 'B-FLASH' },
+    { path: '/notifications', icon: Bell,          label: 'Activity', badge: unread    },
     { path: '/chats',         icon: MessageCircle, label: 'Chats',    badge: unreadMsg },
     { path: '/profile',       icon: User,          label: 'Profile' },
   ];
