@@ -85,11 +85,13 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
    reflects whether the API is reachable and your key works. */
 export async function checkConnection() {
   try {
-    const res = await fetchWithTimeout(SUPABASE_URL + '/rest/v1/users?select=id&limit=1', {
-      method: 'HEAD',
+    // The sign-in service's health endpoint needs no table permissions. ANY answer from the
+    // server (even 401/403) proves we are connected; only network failures or 5xx count as down.
+    const res = await fetchWithTimeout(SUPABASE_URL + '/auth/v1/health', {
+      method: 'GET',
       headers: { apikey: SUPABASE_ANON },
     });
-    return res.ok;
+    return res.status < 500;
   } catch {
     return navigator.onLine;
   }

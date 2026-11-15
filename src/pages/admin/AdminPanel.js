@@ -74,6 +74,39 @@ function StatCard({ icon: Icon, label, value, color }) {
    the `allowed`flags below remain purely for UI/UX and are
    NOT the security boundary.
 ══════════════════════════════════════════════ */
+function PrivateDetails({ target }) {
+  const [d, setD] = useState(null);
+  const [err, setErr] = useState('');
+  useEffect(() => {
+    let live = true;
+    supabase.rpc('admin_get_user_private', { p_user_id: target.id }).then(({ data, error }) => {
+      if (!live) return;
+      if (error) setErr(/does not exist|could not find/i.test(error.message || '') ? 'Account details need the latest database update.' : error.message);
+      else setD(data);
+    });
+    return () => { live = false; };
+  }, [target.id]);
+  const when = (t) => (t ? new Date(t).toLocaleString('en-KE', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) : '-');
+  const rows = d ? [
+    ['Email', d.login_email || d.email || '-'], ['Phone', d.phone || d.phone_number || '-'],
+    ['Email confirmed', d.email_confirmed ? 'Yes' : 'No'], ['Last sign-in', when(d.last_sign_in_at)],
+    ['Birthday', d.date_of_birth || '-'], ['Gender', d.gender || '-'],
+    ['Coins', d.coins_balance ?? 0], ['Plan until', when(d.subscription_expires_at)],
+  ] : [];
+  return (
+    <div className="mx-5 mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-3.5">
+      <p className="text-[#8E8C88] text-[10px] font-bold uppercase tracking-wider mb-2">Account details (staff only)</p>
+      {err ? <p className="text-red-400 text-xs">{err}</p> : !d ? <p className="text-[#8E8C88] text-xs">Loading…</p> : (
+        <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+          {rows.map(([k, v]) => (
+            <div key={k} className="min-w-0"><p className="text-[#8E8C88] text-[10px]">{k}</p><p className="text-white text-[12px] font-medium break-all">{String(v)}</p></div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function UserActionModal({ target, myRole, onClose, onSuccess }) {
   const [action,  setAction]  = useState('');
   const [reason,  setReason]  = useState('');
@@ -248,6 +281,7 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
             <XCircle size={22} />
           </button>
         </div>
+        <PrivateDetails target={target} />
 
         {done ? (
           <div className="text-center py-8">

@@ -261,7 +261,7 @@ const ChatList = () => {
         <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center" onClick={() => setDeleteTarget(null)}>
           <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5 pb-8" onClick={(e) => e.stopPropagation()}>
             <p className="text-white font-bold text-base text-center">Delete this conversation?</p>
-            <p className="text-[#8E8C88] text-sm text-center mt-1">It is removed from your list. This cannot be undone.</p>
+            <p className="text-[#8E8C88] text-sm text-center mt-1">This deletes the conversation and all its messages for both of you. This cannot be undone.</p>
             <div className="space-y-2 mt-4">
               <button onClick={confirmDelete} className="w-full py-3 rounded-xl bg-red-500/15 text-red-400 font-bold border border-red-500/30">Delete</button>
               <button onClick={() => setDeleteTarget(null)} className="w-full py-3 rounded-xl bg-white/[0.07] text-white font-bold">Cancel</button>

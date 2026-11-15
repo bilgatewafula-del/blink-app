@@ -133,10 +133,13 @@ export default function EditProfile() {
 
   const handleSave = async () => {
     if (saving) return;
-    const displayErr = validateDisplayName(displayName);
-    if (displayErr) { setError(displayErr); return; }
-    const usernameErr = validateUsername(username);
-    if (usernameErr) { setError(usernameErr); return; }
+    const isStaff = ['blink', 'admin'].includes(profile?.role);            // the owner / admins are never limited by name rules
+    const displayErr = displayNameChanged && !isStaff ? validateDisplayName(displayName)
+      : (displayName.trim().length < 2 ? 'Enter your name.' : null);
+    if (displayErr) { setError(displayErr); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    const usernameErr = usernameChanged && !isStaff ? validateUsername(username)
+      : (username.trim().length < 2 ? 'Enter a username.' : null);
+    if (usernameErr) { setError(usernameErr); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
     if (usernameChanged && usernameCooldownDays > 0) { setError(`You can change your username again in ${usernameCooldownDays} day${usernameCooldownDays !== 1 ? 's' : ''}.`); return; }
     if (displayNameChanged && displayNameCooldownDays > 0) { setError(`You can change your display name again in ${displayNameCooldownDays} day${displayNameCooldownDays !== 1 ? 's' : ''}.`); return; }
     if (usernameChanged && usernameState === 'taken') { setError('Username already taken.'); return; }

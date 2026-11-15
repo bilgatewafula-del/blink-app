@@ -19,7 +19,7 @@ export default function NetworkBanner() {
     window.addEventListener('online',  handleOnline);
 
     // Periodic background health check every 15s
-    pollRef.current = setInterval(verifyConnection, 15000);
+    pollRef.current = setInterval(verifyConnection, 30000);
 
     return () => {
       window.removeEventListener('offline', handleOffline);
@@ -32,7 +32,8 @@ export default function NetworkBanner() {
     if (!navigator.onLine) { setStatus('offline'); return; }
     setChecking(true);
     const start = Date.now();
-    const ok = await checkConnection();
+    let ok = await checkConnection();
+    if (!ok) { await new Promise((r) => setTimeout(r, 2500)); ok = await checkConnection(); }   // one quiet retry before alarming anyone
     const elapsed = Date.now() - start;
     setChecking(false);
 

@@ -370,6 +370,7 @@ export default function SettingsPage() {
   const [toast, setToast] = useState('');
   const [sheet, setSheet] = useState(null);
   const [mutedIds, setMutedIds] = useState(getMutedUserIds());
+  const [blockedIds, setBlockedIds] = useState(null);
   const toastTimer = useRef(null);
 
   const say = useCallback((t) => { setToast(t); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(''), 2400); }, []);
@@ -391,6 +392,10 @@ export default function SettingsPage() {
     const { error } = await supabase.from('user_settings').update({ [key]: value, updated_at: new Date().toISOString() }).eq('user_id', user.id);
     if (error) say("Couldn't save. Check your connection.");
   }, [user.id, say]);
+
+  useEffect(() => {
+    supabase.from('blocks').select('blocked_id').eq('blocker_id', user.id).then(({ data, error }) => { if (!error) setBlockedIds((data || []).map((r) => r.blocked_id)); });
+  }, [user.id]);
 
   const get = (k, d) => (settings && settings[k] != null ? settings[k] : d);
   const done = (msg) => { setSheet(null); if (msg) say(msg); };
@@ -421,7 +426,11 @@ export default function SettingsPage() {
     try { if (navigator.share) await navigator.share({ title: APP_NAME, text: `Join me on ${APP_NAME}`, url }); else { await navigator.clipboard.writeText(url); say('Link copied'); } } catch { /* cancelled */ }
   };
 
-  const unblock = async (id) => save('blocked_users', (get('blocked_users', []) || []).filter((x) => x !== id));
+  const unblock = async (id) => {
+    await supabase.from('blocks').delete().eq('blocker_id', user.id).eq('blocked_id', id);
+    setBlockedIds((l) => (l || []).filter((x) => x !== id));
+    if ((get('blocked_users', []) || []).includes(id)) save('blocked_users', (get('blocked_users', []) || []).filter((x) => x !== id));
+  };
   const unmute = async (id) => { unmuteUser(id); setMutedIds(getMutedUserIds()); };
 
   const deactivate = async () => {
@@ -447,7 +456,7 @@ export default function SettingsPage() {
       {sheet === 'email' && <EmailSheet user={user} onClose={() => setSheet(null)} onDone={done} />}
       {sheet === 'phone' && <PhoneSheet user={user} onClose={() => setSheet(null)} onDone={done} />}
       {sheet === 'twostep' && <TwoStepSheet onClose={() => setSheet(null)} onDone={done} />}
-      {sheet === 'blocked' && <PeopleSheet title="Blocked accounts" ids={get('blocked_users', []) || []} empty="You have not blocked anyone." actionLabel="Unblock" onAction={unblock} onClose={() => setSheet(null)} />}
+      {sheet === 'blocked' && <PeopleSheet title="Blocked accounts" ids={blockedIds ?? (get('blocked_users', []) || [])} empty="You have not blocked anyone." actionLabel="Unblock" onAction={unblock} onClose={() => setSheet(null)} />}
       {sheet === 'muted' && <PeopleSheet title="Muted accounts" ids={mutedIds} empty="You have not muted anyone." actionLabel="Unmute" onAction={unmute} onClose={() => setSheet(null)} />}
       {sheet === 'deactivate' && <DangerSheet title="Deactivate account" text="Your profile and posts are hidden until you sign in again. Nothing is deleted." button="Deactivate" onConfirm={deactivate} onClose={() => setSheet(null)} />}
       {sheet === 'delete' && <DangerSheet title="Delete account" text="This permanently erases your profile, posts, comments, chats and followers. It cannot be undone." confirmWord="DELETE" button="Delete everything" onConfirm={deleteAccount} onClose={() => setSheet(null)} />}
@@ -477,7 +486,7 @@ export default function SettingsPage() {
         <Row icon={MessageCircle} label="Who can message you" sub={who('who_can_message')} onPress={() => setSheet({ select: 'who_can_message', title: 'Who can message you', options: WHO, current: get('who_can_message', 'everyone') })} />
         <Row icon={MessagesSquare} label="Who can comment on your posts" sub={who('who_can_comment')} onPress={() => setSheet({ select: 'who_can_comment', title: 'Who can comment on your posts', options: WHO, current: get('who_can_comment', 'everyone') })} />
         <Row icon={UserPlus} label="Who can follow you" sub={get('who_can_follow', 'everyone') === 'nobody' ? 'Nobody (new follows are blocked)' : 'Everyone'} onPress={() => setSheet({ select: 'who_can_follow', title: 'Who can follow you', options: [{ key: 'everyone', label: 'Everyone' }, { key: 'nobody', label: 'Nobody' }], current: get('who_can_follow', 'everyone') })} />
-        <Row icon={Ban} label="Blocked accounts" sub={`${(get('blocked_users', []) || []).length} blocked`} onPress={() => setSheet('blocked')} />
+        <Row icon={Ban} label="Blocked accounts" sub={`${(blockedIds ?? (get('blocked_users', []) || [])).length} blocked`} onPress={() => setSheet('blocked')} />
         <Row icon={VolumeX} label="Muted accounts" sub={`${mutedIds.length} muted`} onPress={() => { setMutedIds(getMutedUserIds()); setSheet('muted'); }} />
         <Row icon={EyeOff} label="Hidden posts" sub={`${hiddenPostCount()} hidden from your feed`} onPress={() => { if (hiddenPostCount()) { clearHiddenPosts(); say('Hidden posts will show again'); } else say('No hidden posts'); }} />
       </Section>
