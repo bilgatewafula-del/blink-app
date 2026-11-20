@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+
+  <!-- Open connections early: faster first data + image load -->
+  <link rel="preconnect" href="%REACT_APP_SUPABASE_URL%" crossorigin />
+  <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
+
+  <!-- App Icons -->
+  <link rel="icon" href="%PUBLIC_URL%/favicon.png" />
+  <link rel="icon" href="%PUBLIC_URL%/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="%PUBLIC_URL%/apple-touch-icon.png" />
+  <link rel="icon" type="image/svg+xml" href="%PUBLIC_URL%/logo.svg" />
+
+  <!-- Mobile -->
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content"
+  />
+
+  <!-- Theme (matches manifest.json so there is no colour flash at launch) -->
+  <meta name="theme-color" content="#0D0C0B" />
+
+  <!-- PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="black-translucent"
+  />
+  <meta name="apple-mobile-web-app-title" content="B-Link" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- SEO -->
+  <meta
+    name="description"
+    content="B-Link - Africa's Social Platform for GenZ"
+  />
+
+  <meta
+    name="keywords"
+    content="B-Link, Africa, social media, Kenya, GenZ, community"
+  />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="B-Link" />
+  <meta
+    property="og:description"
+    content="Africa's Lightweight Social Platform"
+  />
+  <meta property="og:type" content="website" />
+
+  <!-- Manifest -->
+  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+
+  <title>B-Link</title>
+</head>
+
+<body>
+  <noscript>You need to enable JavaScript to run B-Link.</noscript>
+
+  <div id="root"></div>
+</body>
+</html>
