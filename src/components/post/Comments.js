@@ -48,21 +48,21 @@ function Row({ c, isReply, me, postOwnerId, replies, onLike, onReply, onMenu, on
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap text-[12px]">
-            <button onClick={() => onProfile(user.username)} className="text-white font-bold">{user.username || user.display_name}</button>
+            <button onClick={() => onProfile(user.username)} className="text-[#1C1E21] font-bold">{user.username || user.display_name}</button>
             {user.is_verified && <VerifiedBadge size={12} />}
             {c.user_id === postOwnerId && <span className="bg-[#FF5A1F]/20 text-[#FF5A1F] text-[9px] px-1.5 py-[1px] rounded-full font-bold">Author</span>}
-            <span className="text-[#8E8C88]">{formatTime(c.created_at)}</span>
-            {c.is_pinned && <span className="inline-flex items-center gap-0.5 text-[#8E8C88]"><Pin size={10} /> Pinned</span>}
-            {c.is_hidden && <span className="inline-flex items-center gap-0.5 text-[#8E8C88]"><EyeOff size={10} /> Hidden</span>}
+            <span className="text-[#65676B]">{formatTime(c.created_at)}</span>
+            {c.is_pinned && <span className="inline-flex items-center gap-0.5 text-[#65676B]"><Pin size={10} /> Pinned</span>}
+            {c.is_hidden && <span className="inline-flex items-center gap-0.5 text-[#65676B]"><EyeOff size={10} /> Hidden</span>}
           </div>
-          <p className="text-white/90 text-[14px] leading-snug break-words whitespace-pre-wrap mt-0.5">
+          <p className="text-[#1C1E21] text-[14px] leading-snug break-words whitespace-pre-wrap mt-0.5">
             <RichText text={c.body} onTag={onTag} onMention={onMention} />
-            {c.edited && <span className="text-[#8E8C88] text-[11px]"> (edited)</span>}
+            {c.edited && <span className="text-[#65676B] text-[11px]"> (edited)</span>}
           </p>
           <div className="flex items-center gap-4 mt-1">
-            <button onClick={() => onReply(c)} className="text-[#8E8C88] text-[12px] font-semibold active:text-white">Reply</button>
+            <button onClick={() => onReply(c)} className="text-[#65676B] text-[12px] font-semibold active:text-[#1C1E21]">Reply</button>
             {!isReply && c.reply_count > 0 && (
-              <button onClick={() => onToggleReplies(c)} className="text-[#8E8C88] text-[12px] font-semibold inline-flex items-center gap-1">
+              <button onClick={() => onToggleReplies(c)} className="text-[#65676B] text-[12px] font-semibold inline-flex items-center gap-1">
                 <span className="w-5 h-px bg-white/25" />
                 {replies?.loading ? 'Loading…' : replies?.open ? 'Hide replies' : `View ${c.reply_count} ${c.reply_count === 1 ? 'reply' : 'replies'}`}
                 <ChevronDown size={12} className={replies?.open ? 'rotate-180' : ''} />
@@ -72,10 +72,10 @@ function Row({ c, isReply, me, postOwnerId, replies, onLike, onReply, onMenu, on
         </div>
         <div className="flex flex-col items-center gap-0.5 flex-shrink-0 pt-0.5">
           <button onClick={() => onLike(c)} aria-label={c.my_reaction ? 'Unlike comment' : 'Like comment'} className="p-1 active:scale-125 transition-transform">
-            <Heart size={16} className={c.my_reaction ? 'text-[#EF4444]' : 'text-[#8E8C88]'} fill={c.my_reaction ? '#EF4444' : 'none'} />
+            <Heart size={16} className={c.my_reaction ? 'text-[#EF4444]' : 'text-[#65676B]'} fill={c.my_reaction ? '#EF4444' : 'none'} />
           </button>
-          {c.reaction_count > 0 && <span className="text-[11px] text-[#8E8C88] tabular-nums">{formatNumber(c.reaction_count)}</span>}
-          <button onClick={() => onMenu(c)} aria-label="Comment options" className="p-1 text-[#8E8C88]"><MoreHorizontal size={15} /></button>
+          {c.reaction_count > 0 && <span className="text-[11px] text-[#65676B] tabular-nums">{formatNumber(c.reaction_count)}</span>}
+          <button onClick={() => onMenu(c)} aria-label="Comment options" className="p-1 text-[#65676B]"><MoreHorizontal size={15} /></button>
         </div>
       </div>
 
@@ -94,7 +94,7 @@ function Row({ c, isReply, me, postOwnerId, replies, onLike, onReply, onMenu, on
 function Sheet({ onClose, children }) {
   return (
     <div className="absolute inset-0 z-30 bg-black/55 flex items-end" onClick={onClose}>
-      <div className="w-full bg-[#1d1c1a] rounded-t-3xl border-t border-white/10 pb-[max(14px,env(safe-area-inset-bottom))] max-h-[80%] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full bg-white rounded-t-3xl border-t border-[#E4E6EB] pb-[max(14px,env(safe-area-inset-bottom))] max-h-[80%] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mt-2.5 mb-1" />
         {children}
       </div>
@@ -104,8 +104,8 @@ function Sheet({ onClose, children }) {
 
 function MenuRow({ icon: Icon, label, onClick, red }) {
   return (
-    <button onClick={onClick} className={'w-full flex items-center gap-3.5 px-5 py-3.5 text-left active:bg-white/[0.06] ' + (red ? 'text-red-400' : 'text-white')}>
-      <Icon size={19} className={red ? 'text-red-400' : 'text-white/70'} /> <span className="text-[15px] font-medium">{label}</span>
+    <button onClick={onClick} className={'w-full flex items-center gap-3.5 px-5 py-3.5 text-left active:bg-[#F1F2F4] ' + (red ? 'text-red-400' : 'text-[#1C1E21]')}>
+      <Icon size={19} className={red ? 'text-red-400' : 'text-[#65676B]'} /> <span className="text-[15px] font-medium">{label}</span>
     </button>
   );
 }
@@ -301,18 +301,18 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, inline =
 
   return (
     <div className={'relative flex flex-col ' + (inline ? '' : 'h-full min-h-0')}>
-      <div className="flex items-center justify-between px-4 pt-1 pb-2.5 flex-shrink-0 border-b border-white/[0.07]">
-        <p className="text-white font-bold text-[15px]">{formatNumber(Math.max(0, count ?? items.length))} comments</p>
-        <div className="flex bg-white/[0.07] rounded-full p-0.5">
+      <div className="flex items-center justify-between px-4 pt-1 pb-2.5 flex-shrink-0 border-b border-[#E4E6EB]">
+        <p className="text-[#1C1E21] font-bold text-[15px]">{formatNumber(Math.max(0, count ?? items.length))} comments</p>
+        <div className="flex bg-[#F1F2F4] rounded-full p-0.5">
           {[['top', 'Top'], ['new', 'Newest']].map(([k, l]) => (
-            <button key={k} onClick={() => setSort(k)} className={'px-3 py-1 rounded-full text-[12px] font-bold ' + (sort === k ? 'bg-white text-black' : 'text-white/60')}>{l}</button>
+            <button key={k} onClick={() => setSort(k)} className={'px-3 py-1 rounded-full text-[12px] font-bold ' + (sort === k ? 'bg-[#1C1E21] text-white' : 'text-[#65676B]')}>{l}</button>
           ))}
         </div>
       </div>
 
       <div className={inline ? '' : 'flex-1 min-h-0 overflow-y-auto'} style={{ overscrollBehavior: 'contain' }}>
         {fresh > 0 && (
-          <button onClick={() => load(true)} className="sticky top-2 z-10 mx-auto flex items-center gap-1.5 bg-[#FF5A1F] text-white text-[12px] font-bold rounded-full px-3.5 py-1.5 shadow-lg mt-2">
+          <button onClick={() => load(true)} className="sticky top-2 z-10 mx-auto flex items-center gap-1.5 bg-[#FF5A1F] text-[#1C1E21] text-[12px] font-bold rounded-full px-3.5 py-1.5 shadow-lg mt-2">
             <ArrowDown size={13} /> {fresh} new comment{fresh === 1 ? '' : 's'}
           </button>
         )}
@@ -320,8 +320,8 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, inline =
           <div className="flex justify-center py-12 text-[#FF5A1F]"><Spinner size={22} /></div>
         ) : items.length === 0 ? (
           <div className="text-center px-8 py-12">
-            <p className="text-white font-bold">No comments yet</p>
-            <p className="text-[#8E8C88] text-sm mt-1">{disabled ? 'Comments are turned off for this post.' : 'Start the conversation.'}</p>
+            <p className="text-[#1C1E21] font-bold">No comments yet</p>
+            <p className="text-[#65676B] text-sm mt-1">{disabled ? 'Comments are turned off for this post.' : 'Start the conversation.'}</p>
           </div>
         ) : (
           <>
@@ -340,18 +340,18 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, inline =
       </div>
 
       {/* composer */}
-      <div className={'flex-shrink-0 border-t border-white/[0.08] bg-[#171614] ' + (inline ? 'sticky bottom-0 z-10' : '')} style={{ paddingBottom: 'max(10px, env(safe-area-inset-bottom))' }}>
+      <div className={'flex-shrink-0 border-t border-[#E4E6EB] bg-white ' + (inline ? 'sticky bottom-0 z-10' : '')} style={{ paddingBottom: 'max(10px, env(safe-area-inset-bottom))' }}>
         {disabled ? (
-          <p className="text-[#8E8C88] text-sm text-center py-4 flex items-center justify-center gap-2"><MessageSquareOff size={15} /> Comments are turned off</p>
+          <p className="text-[#65676B] text-sm text-center py-4 flex items-center justify-center gap-2"><MessageSquareOff size={15} /> Comments are turned off</p>
         ) : (
           <>
             {(replyTo || editing) && (
               <div className="flex items-center gap-2.5 px-4 pt-2.5">
                 <div className="w-[3px] self-stretch bg-[#FF5A1F] rounded-full" />
-                <p className="flex-1 min-w-0 text-[12px] text-[#8E8C88] truncate">
+                <p className="flex-1 min-w-0 text-[12px] text-[#65676B] truncate">
                   {editing ? 'Editing your comment' : <>Replying to <span className="text-[#FF5A1F] font-bold">@{replyTo.user?.username}</span></>}
                 </p>
-                <button onClick={() => { setReplyTo(null); setEditing(null); setText(''); }} aria-label="Cancel" className="text-[#8E8C88] p-1"><X size={16} /></button>
+                <button onClick={() => { setReplyTo(null); setEditing(null); setText(''); }} aria-label="Cancel" className="text-[#65676B] p-1"><X size={16} /></button>
               </div>
             )}
             <div className="flex gap-3 px-4 pt-2.5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
@@ -361,18 +361,18 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, inline =
             </div>
             <div className="flex items-end gap-2.5 px-3 pt-2">
               <Avatar url={profile?.avatar_url} name={profile?.display_name} size={8} />
-              <div className="flex-1 min-w-0 bg-white/[0.08] border border-white/10 rounded-3xl px-4 flex items-end focus-within:border-[#FF5A1F]/50">
+              <div className="flex-1 min-w-0 bg-[#F1F2F4] border border-[#E4E6EB] rounded-3xl px-4 flex items-end focus-within:border-[#FF5A1F]/50">
                 <textarea
                   ref={inputRef} value={text} rows={1} maxLength={MAX_LEN + 20} enterKeyHint="send"
                   onChange={(e) => { setText(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 110) + 'px'; }}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && window.matchMedia('(pointer: fine)').matches) { e.preventDefault(); submit(); } }}
                   placeholder={replyTo ? 'Add a reply…' : 'Add a comment…'}
-                  className="flex-1 min-w-0 bg-transparent text-white outline-none resize-none placeholder-[#8E8C88] py-2.5"
+                  className="flex-1 min-w-0 bg-transparent text-[#1C1E21] outline-none resize-none placeholder-[#65676B] py-2.5"
                   style={{ fontSize: 16, lineHeight: '20px', maxHeight: 110 }}
                 />
               </div>
               <button onClick={submit} disabled={!text.trim() || sending} aria-label="Post comment"
-                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 disabled:opacity-40 active:scale-90 transition-transform text-white"
+                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 disabled:opacity-40 active:scale-90 transition-transform text-[#1C1E21]"
                 style={{ background: 'linear-gradient(135deg,#FF5A1F,#FF2D78)' }}>
                 {sending ? <Spinner size={15} /> : <Send size={17} className="-ml-0.5" />}
               </button>
@@ -382,7 +382,7 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, inline =
       </div>
 
       {toast && (
-        <div className={'absolute left-4 right-4 z-40 rounded-2xl px-4 py-3 text-[13px] font-semibold text-center shadow-xl ' + (toast.error ? 'bg-red-500 text-white' : 'bg-white text-black')} style={{ bottom: 150 }}>{toast.t}</div>
+        <div className={'absolute left-4 right-4 z-40 rounded-2xl px-4 py-3 text-[13px] font-semibold text-center shadow-xl ' + (toast.error ? 'bg-red-500 text-[#1C1E21]' : 'bg-[#1C1E21] text-white')} style={{ bottom: 150 }}>{toast.t}</div>
       )}
 
       {m && (
@@ -400,20 +400,20 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, inline =
       {confirmDel && (
         <Sheet onClose={() => setConfirmDel(null)}>
           <div className="px-5 pt-3 text-center">
-            <p className="text-white font-bold text-base">Delete this comment?</p>
-            <p className="text-[#8E8C88] text-sm mt-1">{confirmDel.reply_count > 0 ? 'Its replies are removed too.' : 'This cannot be undone.'}</p>
+            <p className="text-[#1C1E21] font-bold text-base">Delete this comment?</p>
+            <p className="text-[#65676B] text-sm mt-1">{confirmDel.reply_count > 0 ? 'Its replies are removed too.' : 'This cannot be undone.'}</p>
           </div>
           <div className="px-5 pt-4 space-y-2">
             <button onClick={() => doDelete(confirmDel)} className="w-full py-3 rounded-xl bg-red-500/15 text-red-400 font-bold border border-red-500/30">Delete</button>
-            <button onClick={() => setConfirmDel(null)} className="w-full py-3 rounded-xl bg-white/[0.07] text-white font-bold">Cancel</button>
+            <button onClick={() => setConfirmDel(null)} className="w-full py-3 rounded-xl bg-[#F1F2F4] text-[#1C1E21] font-bold">Cancel</button>
           </div>
         </Sheet>
       )}
 
       {reportFor && (
         <Sheet onClose={() => setReportFor(null)}>
-          <p className="text-white font-bold text-[15px] px-5 pt-2 pb-1">Report this comment</p>
-          {REPORT_REASONS.map((r) => <button key={r} onClick={() => doReport(r)} className="w-full text-left px-5 py-3.5 text-white text-[15px] active:bg-white/[0.06]">{r}</button>)}
+          <p className="text-[#1C1E21] font-bold text-[15px] px-5 pt-2 pb-1">Report this comment</p>
+          {REPORT_REASONS.map((r) => <button key={r} onClick={() => doReport(r)} className="w-full text-left px-5 py-3.5 text-[#1C1E21] text-[15px] active:bg-[#F1F2F4]">{r}</button>)}
         </Sheet>
       )}
     </div>
@@ -424,11 +424,11 @@ export function CommentsSheet({ post, count, onCountChange, onClose, onNavigate 
   const vp = useViewport();
   return (
     <div className="fixed left-0 right-0 z-[70] bg-black/60 flex items-end justify-center" style={{ top: vp.top, height: vp.h }} onClick={onClose}>
-      <div className="relative w-full max-w-[620px] bg-[#171614] rounded-t-3xl border-t border-white/10 flex flex-col"
+      <div className="relative w-full max-w-[620px] bg-white rounded-t-3xl border-t border-[#E4E6EB] flex flex-col"
         style={{ height: Math.min(Math.round(vp.h * 0.8), vp.h - 24) }} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-center pt-2.5 pb-1.5 flex-shrink-0 relative">
           <div className="w-10 h-1 rounded-full bg-white/25" />
-          <button onClick={onClose} aria-label="Close comments" className="absolute right-3 top-1.5 p-1.5 text-[#8E8C88]"><X size={20} /></button>
+          <button onClick={onClose} aria-label="Close comments" className="absolute right-3 top-1.5 p-1.5 text-[#65676B]"><X size={20} /></button>
         </div>
         <div className="flex-1 min-h-0 flex flex-col">
           <CommentsPanel post={post} count={count} onCountChange={onCountChange}
