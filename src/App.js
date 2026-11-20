@@ -18,6 +18,7 @@ const CompleteProfile = lazy(() => import('./pages/auth/CompleteProfile'));
 const Verify2FA = lazy(() => import('./pages/auth/Verify2FA'));
 const Home               = lazy(() => import('./pages/feed/Home'));
 const Discover           = lazy(() => import('./pages/discover/Discover'));
+const BFlash             = lazy(() => import('./pages/flash/BFlash'));
 const Notifications      = lazy(() => import('./pages/notifications/Notifications'));
 const Profile            = lazy(() => import('./pages/profile/Profile'));
 const EditProfile        = lazy(() => import('./pages/profile/EditProfile'));
@@ -109,7 +110,7 @@ function PublicRoute({ children }) {
 }
 
 /* ── Nav ── */
-const NAV_PATHS = ['/', '/discover', '/notifications', '/chats', '/profile'];
+const NAV_PATHS = ['/', '/discover', '/flash', '/notifications', '/chats', '/profile'];
 
 function AppShell() {
   const { user, loading } = useAuth();
@@ -144,6 +145,7 @@ function AppShell() {
     const t = setTimeout(() => {
       [
         () => import('./pages/discover/Discover'),
+        () => import('./pages/flash/BFlash'),
         () => import('./pages/notifications/Notifications'),
         () => import('./pages/chat/ChatList'),
         () => import('./pages/profile/Profile'),
@@ -177,6 +179,7 @@ function AppShell() {
           {/* Core */}
           <Route path="/"              element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/discover"      element={<ProtectedRoute><Discover /></ProtectedRoute>} />
+          <Route path="/flash"         element={<ProtectedRoute><BFlash /></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
           <Route path="/chats"         element={<ProtectedRoute><Chats /></ProtectedRoute>} />
           <Route path="/chats/:id"     element={<ProtectedRoute><ChatDetail /></ProtectedRoute>} />
