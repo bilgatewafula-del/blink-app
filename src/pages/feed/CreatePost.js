@@ -404,8 +404,7 @@ export default function CreatePost() {
 
       setSuccess(true);
       setTimeout(() => {
-        if (editPostId) navigate(-1);
-        else navigate('/', createdPost ? { state: { newPost: createdPost } } : undefined);
+        navigate('/', createdPost ? { state: { newPost: createdPost } } : undefined);
       }, 800);
 
     } catch (err) {

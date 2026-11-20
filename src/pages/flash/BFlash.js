@@ -7,7 +7,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   Heart, MessageCircle, Bookmark, Share2, EllipsisVertical, Play, Volume2, VolumeX,
   Plus, X, Zap, Flag, SlidersHorizontal, Clapperboard, EyeOff, UserX, RefreshCw,
-  Ban, Copy, Pencil, Trash2, Gauge, UserRound,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
@@ -22,7 +21,7 @@ import { formatNumber } from '../../utils/formatNumber';
 import { usePrefs, setPrefs } from '../../lib/prefs';
 import useViewport from '../../lib/useViewport';
 import {
-  requestPostState, patchPostState, toggleSave, isPostHidden, isUserMuted, hidePost, muteUser, unmuteUser,
+  requestPostState, patchPostState, toggleSave, isPostHidden, isUserMuted, hidePost, muteUser,
 } from '../../lib/posts';
 
 /* ── design tokens (change the brand colour in ONE place) ── */
@@ -119,17 +118,14 @@ function SheetRow({ icon: Icon, label, onClick, danger }) {
 
 /* ── one video panel ── */
 function Slide({
-  post, index, active, isNext, muted, canPlay, split, loopVideo, saver, st, playbackSpeed,
-  onLike, onDoubleLike, onComment, onSave, onShare, onMore, onProfile, onEnded, onLongPress, onSwipeBack, onSoundBlocked,
+  post, index, active, isNext, muted, canPlay, split, loopVideo, saver, st,
+  onLike, onDoubleLike, onComment, onSave, onShare, onMore, onProfile, onEnded,
 }) {
   const vref = useRef(null);
   const barRef = useRef(null);
   const userPaused = useRef(false);
   const lastTap = useRef(0);
   const tapTimer = useRef(null);
-  const holdTimer = useRef(null);
-  const gestureStart = useRef(null);
-  const holdFired = useRef(false);
   const [paused, setPaused] = useState(false);
   const [buffering, setBuffering] = useState(false);
   const [landscape, setLandscape] = useState(false);
@@ -137,19 +133,15 @@ function Slide({
   const src = videoSrc(post.video_url);
   const u = post.users || {};
 
-  useEffect(() => { if (vref.current) { vref.current.muted = muted; vref.current.playbackRate = playbackSpeed || 1; } }, [muted, playbackSpeed]);
-  useEffect(() => () => { clearTimeout(tapTimer.current); clearTimeout(holdTimer.current); }, []);
+  useEffect(() => { if (vref.current) vref.current.muted = muted; }, [muted]);
+  useEffect(() => () => clearTimeout(tapTimer.current), []);
 
   const tryPlay = useCallback(() => {
     const v = vref.current;
     if (!v) return;
     const p = v.play();
-    if (p && p.then) p.then(() => setPaused(false)).catch(() => {
-      // Browsers may reject autoplay with sound. Retry muted instead of leaving a blank player.
-      if (!v.muted) { v.muted = true; onSoundBlocked?.(); const retry = v.play(); if (retry?.catch) retry.catch(() => setPaused(true)); else setPaused(false); }
-      else setPaused(true);
-    });
-  }, [onSoundBlocked]);
+    if (p && p.then) p.then(() => setPaused(false)).catch(() => setPaused(true));
+  }, []);
 
   // play only the visible video, and only when the viewer's settings allow it
   useEffect(() => {
@@ -224,39 +216,7 @@ function Slide({
           onCanPlay={() => setBuffering(false)}
           onEnded={onEnded}
         />
-        <div
-          className="absolute inset-0 touch-pan-y select-none"
-          onPointerDown={(e) => {
-            gestureStart.current = { x: e.clientX, y: e.clientY };
-            holdFired.current = false;
-            clearTimeout(holdTimer.current);
-            holdTimer.current = setTimeout(() => { holdFired.current = true; onLongPress?.(); }, 550);
-          }}
-          onPointerMove={(e) => {
-            if (!gestureStart.current) return;
-            const dx = Math.abs(e.clientX - gestureStart.current.x);
-            const dy = Math.abs(e.clientY - gestureStart.current.y);
-            if (dx > 12 || dy > 12) clearTimeout(holdTimer.current);
-          }}
-          onPointerUp={(e) => {
-            clearTimeout(holdTimer.current);
-            if (gestureStart.current) {
-              const dx = e.clientX - gestureStart.current.x;
-              const dy = e.clientY - gestureStart.current.y;
-              if (!holdFired.current && Math.abs(dx) > 85 && Math.abs(dx) > Math.abs(dy) * 1.25) {
-                if (dx < 0) onProfile?.();
-                else onSwipeBack?.();
-                gestureStart.current = null;
-                return;
-              }
-            }
-            gestureStart.current = null;
-            if (!holdFired.current) onTap();
-          }}
-          onPointerCancel={() => { clearTimeout(holdTimer.current); gestureStart.current = null; }}
-          onContextMenu={(e) => { e.preventDefault(); onLongPress?.(); }}
-          role="button" aria-label={paused ? 'Play video' : 'Pause video'}
-        />
+        <div className="absolute inset-0" onClick={onTap} role="button" aria-label={paused ? 'Play video' : 'Pause video'} />
 
         {paused && active && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -325,21 +285,19 @@ export default function BFlash() {
 
   const [fp, setFp] = useState(readFlashPrefs);
   const [tab, setTab] = useState('foryou');
-  const previousTabRef = useRef('foryou');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [active, setActive] = useState(0);
-  const [muted, setMuted] = useState(() => { try { return localStorage.getItem('blink_flash_muted') === 'true'; } catch { return false; } });
+  const [muted, setMuted] = useState(true);
   const [ov, setOv] = useState({});               // per-video overrides: liked, saved, likes, comments
   const [commentsId, setCommentsId] = useState(null);
   const [shareFor, setShareFor] = useState(null);
   const [moreFor, setMoreFor] = useState(null);
   const [reportFor, setReportFor] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [toast, setToast] = useState(null);
   const [navH, setNavH] = useState(80);
 
@@ -367,9 +325,6 @@ export default function BFlash() {
   useEffect(() => () => clearTimeout(toastT.current), []);
   const say = (t) => { setToast(t); clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(null), 2200); };
 
-  const changeMuted = (value) => { setMuted(value); try { localStorage.setItem('blink_flash_muted', String(value)); } catch { /* storage blocked */ } };
-  const handleSoundBlocked = useCallback(() => { setMuted(true); try { localStorage.setItem('blink_flash_muted', 'true'); } catch { /* storage blocked */ } }, []);
-
   const setFlashPref = (patch) => {
     setFp((p) => {
       const next = { ...p, ...patch };
@@ -395,7 +350,7 @@ export default function BFlash() {
       .eq('audience', 'public')
       .neq('status', 'deleted')
       .neq('status', 'hidden')
-      .order(which === 'trending' ? 'views_count' : 'created_at', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
       .limit(PAGE);
     if (cursor) q = q.lt('created_at', cursor);
 
@@ -439,7 +394,6 @@ export default function BFlash() {
   }, [fetchPage, hydrate]);
 
   useEffect(() => { if (user?.id) loadFirst(tab); }, [tab, user?.id, loadFirst]);
-  const changeTab = (next) => { if (next !== tab) { previousTabRef.current = tab; setTab(next); } };
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore || loading || !cursorRef.current) return;
@@ -562,7 +516,7 @@ export default function BFlash() {
                   <Slide
                     post={p} index={i}
                     active={i === active} isNext={i === active + 1}
-                    muted={muted} canPlay={canPlay} saver={saver} playbackSpeed={playbackSpeed}
+                    muted={muted} canPlay={canPlay} saver={saver}
                     split={commentsId === p.id}
                     loopVideo={!fp.autoscroll}
                     st={sOf(p)}
@@ -574,9 +528,6 @@ export default function BFlash() {
                     onMore={() => setMoreFor(p.id)}
                     onProfile={() => openProfile(p)}
                     onEnded={() => goNext(i)}
-                    onLongPress={() => setMoreFor(p.id)}
-                    onSwipeBack={() => { if (previousTabRef.current !== tab) changeTab(previousTabRef.current); }}
-                    onSoundBlocked={handleSoundBlocked}
                   />
                 )}
               </div>
@@ -596,14 +547,14 @@ export default function BFlash() {
               <span className="text-white font-extrabold text-[17px] tracking-tight">B-Flash</span>
             </div>
             <div className="flex items-center pointer-events-auto">
-              <TopIcon icon={muted ? VolumeX : Volume2} label={muted ? 'Unmute' : 'Mute'} onClick={() => changeMuted(!muted)} />
+              <TopIcon icon={muted ? VolumeX : Volume2} label={muted ? 'Unmute' : 'Mute'} onClick={() => setMuted((m) => !m)} />
               <TopIcon icon={SlidersHorizontal} label="Playback settings" onClick={() => setSettingsOpen(true)} />
               <TopIcon icon={Plus} label="Create a video post" onClick={() => navigate('/create')} />
             </div>
           </div>
           <div className="flex items-center justify-center gap-7 pb-3 pointer-events-auto">
-            {[['foryou', 'For You'], ['following', 'Following'], ['trending', 'Trending'], ['latest', 'Latest']].map(([k, l]) => (
-              <button key={k} onClick={() => changeTab(k)} aria-pressed={tab === k}
+            {[['following', 'Following'], ['foryou', 'For You']].map(([k, l]) => (
+              <button key={k} onClick={() => setTab(k)} aria-pressed={tab === k}
                 className="relative py-2 text-[15px] font-bold transition-colors" style={{ color: tab === k ? '#fff' : 'rgba(255,255,255,.6)' }}>
                 {l}
                 {tab === k && <span className="absolute left-1/2 -translate-x-1/2 bottom-0 w-5 h-[3px] rounded-full" style={{ background: ACCENT }} />}
@@ -638,7 +589,7 @@ export default function BFlash() {
 
         {/* SplitView comments: the video stays visible above */}
         {commentsPost && (
-          <div className="absolute left-0 right-0 bottom-0 z-20 bg-white rounded-t-3xl border-t border-[#E4E6EB] flex flex-col" style={{ height: '62%' }}>
+          <div className="absolute left-0 right-0 bottom-0 z-20 bg-[#171614] rounded-t-3xl border-t border-white/10 flex flex-col" style={{ height: '62%' }}>
             <div className="flex items-center justify-center pt-2.5 pb-1.5 flex-shrink-0 relative">
               <div className="w-10 h-1 rounded-full bg-white/25" />
               <button onClick={() => setCommentsId(null)} aria-label="Close comments" className="absolute right-1 top-0 w-11 h-11 flex items-center justify-center text-[#8E8C88]">
@@ -666,33 +617,11 @@ export default function BFlash() {
       {shareFor && <ShareSheet post={shareFor} onClose={() => setShareFor(null)} onDone={(m) => { setShareFor(null); if (m) say(m); }} />}
 
       {morePost && (
-        <Sheet onClose={() => setMoreFor(null)} title={morePost.user_id === user?.id ? 'Manage your video' : 'Video options'}>
-          {morePost.user_id === user?.id ? (
+        <Sheet onClose={() => setMoreFor(null)}>
+          {morePost.user_id !== user?.id && (
             <>
-              <SheetRow icon={Pencil} label="Edit caption and publishing details" onClick={() => { setMoreFor(null); navigate('/create?edit=' + morePost.id); }} />
-              <SheetRow icon={Copy} label="Copy video link" onClick={async () => { try { await navigator.clipboard.writeText(window.location.origin + '/flash/watch/' + morePost.id); say('Video link copied'); } catch { say('Could not copy link'); } setMoreFor(null); }} />
-              <SheetRow icon={Trash2} label="Delete video" danger onClick={async () => {
-                setMoreFor(null);
-                if (!window.confirm('Delete this video? This cannot be undone.')) return;
-                const { error: delError } = await supabase.from('posts').delete().eq('id', morePost.id).eq('user_id', user.id);
-                if (delError) { say(delError.message || 'Could not delete video'); return; }
-                removeFromFeed((p) => p.id === morePost.id); say('Video deleted');
-              }} />
-            </>
-          ) : (
-            <>
-              <SheetRow icon={Gauge} label="Playback speed" onClick={() => { setMoreFor(null); setSettingsOpen(true); }} />
-              <SheetRow icon={Copy} label="Copy video link" onClick={async () => { try { await navigator.clipboard.writeText(window.location.origin + '/flash/watch/' + morePost.id); say('Video link copied'); } catch { say('Could not copy link'); } setMoreFor(null); }} />
-              <SheetRow icon={UserRound} label="View creator profile" onClick={() => { setMoreFor(null); openProfile(morePost); }} />
               <SheetRow icon={EyeOff} label="Not interested" onClick={() => { hidePost(morePost.id); removeFromFeed((p) => p.id === morePost.id); setMoreFor(null); say('We’ll show fewer videos like this'); }} />
-              <SheetRow icon={UserX} label={isUserMuted(morePost.user_id) ? 'Unmute creator' : 'Mute creator'} onClick={() => { if (isUserMuted(morePost.user_id)) { unmuteUser(morePost.user_id); say('Creator unmuted'); } else { muteUser(morePost.user_id); removeFromFeed((p) => p.user_id === morePost.user_id); say('Creator muted on this device'); } setMoreFor(null); }} />
-              <SheetRow icon={Ban} label="Block creator" danger onClick={async () => {
-                setMoreFor(null);
-                if (!window.confirm('Block this creator? Their content will be hidden from you.')) return;
-                const { error: blockError } = await supabase.rpc('block_user', { p_target_id: morePost.user_id });
-                if (blockError) { say(blockError.message || 'Could not block creator'); return; }
-                removeFromFeed((p) => p.user_id === morePost.user_id); say('Creator blocked');
-              }} />
+              <SheetRow icon={UserX} label="Hide this creator" onClick={() => { muteUser(morePost.user_id); removeFromFeed((p) => p.user_id === morePost.user_id); setMoreFor(null); say('Creator hidden'); }} />
               <SheetRow icon={Flag} label="Report video" danger onClick={() => { setReportFor(morePost.id); setMoreFor(null); }} />
             </>
           )}
@@ -712,15 +641,6 @@ export default function BFlash() {
             on={fp.pauseOnComments} onChange={(v) => setFlashPref({ pauseOnComments: v })} />
           <Toggle label="Data saver" desc="Lower video quality and no preloading. Autoplay stays off."
             on={saver} onChange={(v) => setPrefs({ data_saver: v })} />
-          <div className="px-5 py-3">
-            <label className="block text-white text-sm font-semibold mb-2">Playback speed</label>
-            <div className="flex flex-wrap gap-2">
-              {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
-                <button key={rate} onClick={() => setPlaybackSpeed(rate)} className="px-3 py-2 rounded-full text-sm font-semibold"
-                  style={{ background: playbackSpeed === rate ? ACCENT : 'rgba(255,255,255,.1)', color: '#fff' }}>{rate}×</button>
-              ))}
-            </div>
-          </div>
         </Sheet>
       )}
     </div>
