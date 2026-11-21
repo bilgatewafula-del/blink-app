@@ -1,70 +1,28 @@
-# Getting Started with Create React App
+# B-Link App Hub
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Owner-only Android APK distribution portal. Visitors can browse published apps, download APKs, share links to WhatsApp/Telegram, and open QR codes. Only the authorized owner account can sign in and upload/publish applications.
 
-## Available Scripts
+## Stack
+- React + Vite
+- Supabase Auth, Postgres and Storage
+- Public APK downloads; uploads and management restricted by database/storage RLS to the configured owner UUID.
 
-In the project directory, you can run:
+## Local setup
+1. Copy `.env.example` to `.env.local`.
+2. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+3. Run `npm install` then `npm run dev`.
 
-### `npm start`
+## Deploy on Vercel
+Create a Vite project connected to the repository with Root Directory `app-hub`. Add the two environment variables above for Production, Preview and Development. Build command `npm run build`; output directory `dist`.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Owner account
+The app is locked to the owner UUID configured in `src/App.jsx` and in the SQL migration. The owner must sign in using the corresponding existing Supabase Auth account. Do not change the UUID in only one place. Never put a Supabase service-role key in this frontend.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## APK sharing
+Share links point to the public app detail page. To share the actual `.apk` file as an attachment, download it to the phone first, then attach it from Files in WhatsApp or Telegram. Android may require users to permit installation from the app/browser used to open the APK.
 
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## Security notes
+- The APK bucket is public-read so direct downloads work without a login.
+- Only the owner UUID can insert, update or delete APK objects and app records.
+- APK files are limited to 300 MB and the browser computes SHA-256 at upload time.
+- This starter does not claim malware scanning or Android signature verification. Verify release signatures and scan APKs before publishing.
