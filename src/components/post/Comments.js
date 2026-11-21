@@ -2,14 +2,13 @@
 // Compact, Instagram/TikTok-style comments: opens as a bottom sheet from the
 // feed (CommentsSheet) or inline on the post page (CommentsPanel).
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import {
-  Heart, MoreHorizontal, Reply, Copy, Pencil, Trash2, EyeOff, Eye, Pin, PinOff, Flag, X, Send, ChevronDown, MessageSquareOff, ArrowDown, Smile,
+  Heart, MoreHorizontal, Reply, Copy, Pencil, Trash2, EyeOff, Eye, Pin, PinOff, Flag, X, Send, ChevronDown, MessageSquareOff, ArrowDown, Smile, Keyboard,
 } from 'lucide-react';
 import Avatar from '../Avatar';
-import SmartEmojiPicker from '../SmartEmojiPicker';
+import EmojiPanel from '../EmojiPanel';
 import VerifiedBadge from '../VerifiedBadge';
 import { Spinner } from '../ui';
 import useViewport from '../../lib/useViewport';
@@ -20,7 +19,7 @@ import {
 } from '../../lib/posts';
 
 const friendly = (e, fallback) => (/does not exist|could not find|schema cache/i.test(e?.message || '') ? 'This needs the latest database update.' : (e?.message && e.message.length < 90 ? e.message : fallback));
-const QUICK_EMOJI = ['❤️', '🙌', '🔥', '😂', '😮', '😢', '👏', '😍'];
+const QUICK_EMOJI = ['❤️', '😂', '🔥', '😍', '👏', '😮', '😢', '🙌'];
 const MAX_LEN = 1000;
 const PAGE = 20;
 const REPORT_REASONS = ['Spam or scam', 'Harassment or bullying', 'Hate speech', 'Inappropriate content', 'Something else'];
@@ -112,7 +111,7 @@ function MenuRow({ icon: Icon, label, onClick, red }) {
   );
 }
 
-export function CommentsPanel({ post, count, onCountChange, onNavigate, inline = false }) {
+export function CommentsPanel({ post, count, onCountChange, onNavigate, onEmojiToggle, inline = false }) {
   const { user, profile } = useAuth();
   const me = user?.id;
   const postId = post.id;
@@ -137,17 +136,47 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, inline =
   const [toast, setToast] = useState(null);
   const [fresh, setFresh] = useState(0);
   const inputRef = useRef(null);
-  const emojiBtn = useRef(null);
   const [emojiOpen, setEmojiOpen] = useState(false);
-  const insertEmoji = (data) => {
-    const emoji = (data && data.emoji) || '';
-    if (!emoji) return;
+  const [focused, setFocused] = useState(false);
+
+  // keep the box a comfortable size: grows with the text, up to ~5 lines
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 124) + 'px';
+  }, [text]);
+  useEffect(() => { if (onEmojiToggle) onEmojiToggle(emojiOpen); }, [emojiOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const caretRef = useRef(null);
+  const addEmoji = (emoji) => {
     const el = inputRef.current;
     const a = el ? el.selectionStart : text.length;
     const b = el ? el.selectionEnd : text.length;
+    const pos = a + emoji.length;
+    caretRef.current = pos;
     setText((t) => t.slice(0, a) + emoji + t.slice(b));
-    requestAnimationFrame(() => { if (el) { el.focus(); const pos = a + emoji.length; el.setSelectionRange(pos, pos); } });
+    requestAnimationFrame(() => { if (el) { try { el.setSelectionRange(pos, pos); } catch { /* not focusable */ } } });
   };
+  const backspaceEmoji = () => {
+    const el = inputRef.current;
+    const a = el ? el.selectionStart : text.length;
+    const b = el ? el.selectionEnd : text.length;
+    let from = a;
+    if (a === b) {
+      const before = text.slice(0, a);
+      const parts = (typeof Intl !== 'undefined' && Intl.Segmenter)
+        ? Array.from(new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(before), (x) => x.segment)
+        : Array.from(before);
+      parts.pop();
+      from = parts.join('').length;
+    }
+    caretRef.current = from;
+    setText((t) => t.slice(0, from) + t.slice(b));
+    requestAnimationFrame(() => { if (el) { try { el.setSelectionRange(from, from); } catch { /* not focusable */ } } });
+  };
+  const openEmoji = () => { if (inputRef.current) inputRef.current.blur(); setEmojiOpen(true); };
+  const closeEmoji = () => { setEmojiOpen(false); setTimeout(() => inputRef.current && inputRef.current.focus(), 30); };
   const toastT = useRef(null);
   const alive = useRef(true);
 
@@ -367,41 +396,46 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, inline =
                 <button onClick={() => { setReplyTo(null); setEditing(null); setText(''); }} aria-label="Cancel" className="text-[#65676B] p-1"><X size={16} /></button>
               </div>
             )}
-            <div className="flex gap-3 px-4 pt-2.5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-              {QUICK_EMOJI.map((e) => (
-                <button key={e} onClick={() => { setText((t) => t + e); inputRef.current?.focus(); }} className="text-[22px] flex-shrink-0 active:scale-125 transition-transform">{e}</button>
-              ))}
-            </div>
-            <div className="flex items-end gap-2.5 px-3 pt-2">
-              <Avatar url={profile?.avatar_url} name={profile?.display_name} size={8} />
-              <div className="flex-1 min-w-0 bg-[#F1F2F4] border border-[#E4E6EB] rounded-3xl px-4 flex items-end focus-within:border-[#FF5A1F]/50">
-                <button ref={emojiBtn} type="button" onClick={() => setEmojiOpen((v) => !v)} aria-label="Add emoji" aria-pressed={emojiOpen}
-                  className="self-end py-2.5 pr-2.5 text-[#65676B] active:scale-90 transition-transform" style={emojiOpen ? { color: '#FF5A1F' } : undefined}>
-                  <Smile size={22} strokeWidth={1.8} />
-                </button>
+            {(focused || emojiOpen) && (
+              <div className="flex gap-1 px-3 pt-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }} onPointerDown={(e) => e.preventDefault()}>
+                {QUICK_EMOJI.map((e) => (
+                  <button key={e} onClick={() => addEmoji(e)} aria-label={'Add ' + e}
+                    className="w-11 h-11 flex-shrink-0 flex items-center justify-center text-[26px] rounded-full active:scale-125 active:bg-[#F1F2F4] transition-transform">{e}</button>
+                ))}
+              </div>
+            )}
+            <div className="flex items-end gap-2.5 px-3 pt-2 pb-1">
+              <Avatar url={profile?.avatar_url} name={profile?.display_name} size={9} />
+              <div className="flex-1 min-w-0 bg-[#F1F2F4] border border-[#E4E6EB] rounded-[26px] pl-4 pr-1 flex items-end focus-within:border-[#FF5A1F]/50 transition-colors" style={{ minHeight: 52 }}>
                 <textarea
                   ref={inputRef} value={text} rows={1} maxLength={MAX_LEN + 20} enterKeyHint="send"
-                  onChange={(e) => { setText(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 110) + 'px'; }}
+                  onChange={(e) => setText(e.target.value)}
+                  onFocus={() => { setFocused(true); setEmojiOpen(false); }}
+                  onBlur={() => setFocused(false)}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && window.matchMedia('(pointer: fine)').matches) { e.preventDefault(); submit(); } }}
                   placeholder={replyTo ? 'Add a reply…' : 'Add a comment…'}
-                  className="flex-1 min-w-0 bg-transparent text-[#1C1E21] outline-none resize-none placeholder-[#65676B] py-2.5"
-                  style={{ fontSize: 16, lineHeight: '20px', maxHeight: 110 }}
+                  className="flex-1 min-w-0 bg-transparent text-[#1C1E21] outline-none resize-none placeholder-[#65676B]"
+                  style={{ fontSize: 16, lineHeight: '22px', maxHeight: 124, padding: '15px 0' }}
                 />
+                <button type="button" onClick={emojiOpen ? closeEmoji : openEmoji} aria-label={emojiOpen ? 'Show keyboard' : 'Show emojis'} aria-pressed={emojiOpen}
+                  className="w-11 h-11 mb-1 flex-shrink-0 flex items-center justify-center active:scale-90 transition-transform"
+                  style={{ color: emojiOpen ? '#FF5A1F' : '#65676B' }}>
+                  {emojiOpen ? <Keyboard size={24} strokeWidth={1.8} /> : <Smile size={24} strokeWidth={1.8} />}
+                </button>
               </div>
-              <button onClick={submit} disabled={!text.trim() || sending} aria-label="Post comment"
-                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 disabled:opacity-40 active:scale-90 transition-transform text-white"
-                style={{ background: 'linear-gradient(135deg,#FF5A1F,#FF2D78)' }}>
-                {sending ? <Spinner size={15} /> : <Send size={17} className="-ml-0.5" />}
-              </button>
+              {(text.trim() || sending) && (
+                <button onClick={submit} disabled={!text.trim() || sending} aria-label="Post comment"
+                  className="w-12 h-12 mb-0.5 rounded-full flex items-center justify-center flex-shrink-0 disabled:opacity-60 active:scale-90 transition-transform text-white"
+                  style={{ background: 'linear-gradient(135deg,#FF5A1F,#FF2D78)', animation: 'bfSendIn .18s ease-out' }}>
+                  {sending ? <Spinner size={16} /> : <Send size={20} className="-ml-0.5" />}
+                </button>
+              )}
             </div>
+            <style>{'@keyframes bfSendIn{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}'}</style>
+            {emojiOpen && <EmojiPanel onPick={addEmoji} onBackspace={backspaceEmoji} height={244} />}
           </>
         )}
       </div>
-
-      {createPortal(
-        <SmartEmojiPicker open={emojiOpen} onClose={() => setEmojiOpen(false)} onEmojiClick={insertEmoji} triggerRef={emojiBtn} />,
-        document.body
-      )}
 
       {toast && (
         <div className={'absolute left-4 right-4 z-40 rounded-2xl px-4 py-3 text-[13px] font-semibold text-center shadow-xl ' + (toast.error ? 'bg-red-500 text-white' : 'bg-[#1C1E21] text-white')} style={{ bottom: 150 }}>{toast.t}</div>

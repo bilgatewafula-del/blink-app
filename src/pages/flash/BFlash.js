@@ -104,6 +104,12 @@ const spreadCreators = (rows) => {
   return out;
 };
 
+/* ── remember where you were (tab, hashtag, video) so coming back lands in the same place ── */
+const SKEY = 'blink_flash_session_v1';
+const readSession = () => {
+  try { const x = JSON.parse(sessionStorage.getItem(SKEY)); return x && Date.now() - x.t < 6 * 36e5 ? x : null; } catch { return null; }
+};
+
 const BF_CSS = `
 .bflash-sc{scrollbar-width:none}.bflash-sc::-webkit-scrollbar{display:none}
 @keyframes bfRing{0%{transform:scale(.8);opacity:.9}100%{transform:scale(1.7);opacity:0}}
@@ -155,14 +161,6 @@ function RailButton({ icon: Icon, label, count, active, fill, tone = '#fff', ani
   );
 }
 
-function TopIcon({ icon: Icon, label, onClick }) {
-  return (
-    <button onClick={onClick} aria-label={label} className="w-11 h-11 flex items-center justify-center active:scale-90 transition-transform">
-      <Icon size={22} strokeWidth={STROKE} color="#fff" />
-    </button>
-  );
-}
-
 function PlusButton({ onClick }) {
   return (
     <button onClick={onClick} aria-label="Create a video" className="w-11 h-11 flex items-center justify-center active:scale-90 transition-transform">
@@ -194,8 +192,11 @@ function Sheet({ onClose, title, children }) {
     <div className="fixed inset-0 z-[100] bg-black/65 flex items-end justify-center" onClick={onClose}>
       <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl pb-[max(16px,env(safe-area-inset-bottom))] max-h-[86vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}>
-        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mt-2.5 mb-1" />
-        {title && <p className="text-white font-bold text-[15px] px-5 pt-2 pb-2">{title}</p>}
+        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mt-2.5" />
+        <div className="flex items-center justify-between pl-5 pr-1.5">
+          <p className="text-white font-bold text-[15px] py-3">{title || ''}</p>
+          <button onClick={onClose} aria-label="Close" className="w-11 h-11 flex items-center justify-center text-[#8E8C88] active:scale-90 transition-transform"><X size={20} /></button>
+        </div>
         {children}
       </div>
     </div>,
@@ -625,8 +626,9 @@ export default function BFlash() {
   const vp = useViewport();
 
   const [fp, setFp] = useState(readFlashPrefs);
-  const [tab, setTab] = useState(() => readFlashPrefs().defaultTab || 'foryou');
-  const [tagFilter, setTagFilter] = useState(null);
+  const [tab, setTab] = useState(() => (readSession() || {}).tab || readFlashPrefs().defaultTab || 'foryou');
+  const [tagFilter, setTagFilter] = useState(() => (readSession() || {}).tag || null);
+  const [cEmoji, setCEmoji] = useState(false);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -656,6 +658,10 @@ export default function BFlash() {
   const toastT = useRef(null);
   const videoEls = useRef({});
   const remixOn = useRef(true);
+  const restoreId = useRef((readSession() || {}).id || null);
+  const synced = useRef(false);
+  const entryPushed = useRef(false);
+  const stateRef = useRef({});
   const viewed = useRef(new Set());
 
   const saver = !!prefs.data_saver;
@@ -789,7 +795,50 @@ export default function BFlash() {
     }
   }, [fetchPage, hydrate]);
 
-  useEffect(() => { if (user?.id) loadFirst(tab); }, [tab, user?.id, loadFirst]);
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      if (!synced.current) {
+        synced.current = true;
+        try {
+          await withTimeout((async () => {
+            const [m, h] = await Promise.all([
+              supabase.from('user_mutes').select('muted_id').limit(1000),
+              supabase.from('post_hides').select('post_id').limit(1000),
+            ]);
+            (m.data || []).forEach((r) => muteUser(r.muted_id));
+            (h.data || []).forEach((r) => hidePost(r.post_id));
+          })(), 4000);
+        } catch { /* offline or tables not created yet: this device's list still applies */ }
+      }
+      loadFirst(tab);
+    })();
+  }, [tab, user?.id, loadFirst]);
+
+  // coming back to the video you were watching (after a profile, a settings page, or a refresh)
+  useEffect(() => {
+    const id = restoreId.current;
+    if (loading || !id || items.length === 0) return;
+    restoreId.current = null;
+    const idx = items.findIndex((p) => p.id === id);
+    if (idx > 0) {
+      const el = scRef.current && scRef.current.querySelector('[data-index="' + idx + '"]');
+      if (el) { scRef.current.scrollTop = el.offsetTop; setActive(idx); }
+    } else if (idx < 0) {
+      supabase.from('posts').select(SELECT).eq('id', id).eq('audience', 'public').not('video_url', 'is', null).neq('status', 'deleted').maybeSingle()
+        .then(({ data }) => {
+          if (!data || isUserMuted(data.user_id)) return;
+          const row = { ...data, users: data['users!posts_user_id_fkey'] || data.users || null };
+          setItems((prev) => [row, ...prev.filter((p) => p.id !== id)]);
+          setActive(0);
+          hydrate([row]);
+        }, () => {});
+    }
+  }, [loading, items, hydrate]);
+  useEffect(() => {
+    const p = items[active];
+    try { sessionStorage.setItem(SKEY, JSON.stringify({ tab, tag: tagFilter, id: p ? p.id : null, t: Date.now() })); } catch { /* storage blocked */ }
+  }, [tab, tagFilter, items, active]);
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore || loading) return;
@@ -914,8 +963,8 @@ export default function BFlash() {
     const fn = v.requestFullscreen || v.webkitRequestFullscreen || v.webkitEnterFullscreen || v.msRequestFullscreen;
     if (fn) { try { fn.call(v); } catch { say('Full screen isn’t available here'); } } else say('Full screen isn’t available here');
   };
-  const notInterested = (p) => { hidePost(p.id); removeFromFeed((x) => x.id === p.id); setMenuId(null); setCreatorId(null); say('We’ll show fewer videos like this'); };
-  const muteCreator = (p) => { muteUser(p.user_id); removeFromFeed((x) => x.user_id === p.user_id); setMenuId(null); setCreatorId(null); say('Creator muted'); };
+  const notInterested = (p) => { hidePost(p.id); supabase.from('post_hides').upsert({ user_id: user.id, post_id: p.id }).then(() => {}, () => {}); removeFromFeed((x) => x.id === p.id); setMenuId(null); setCreatorId(null); say('We’ll show fewer videos like this'); };
+  const muteCreator = (p) => { muteUser(p.user_id); supabase.from('user_mutes').upsert({ user_id: user.id, muted_id: p.user_id }).then(() => {}, () => {}); removeFromFeed((x) => x.user_id === p.user_id); setMenuId(null); setCreatorId(null); say('Creator muted'); };
   const blockCreator = async (p) => {
     setPanel(null);
     try {
@@ -944,6 +993,50 @@ export default function BFlash() {
     } catch (e) { say('Delete failed: ' + (e.message || 'try again')); }
   };
 
+  /* Back button logic: Back closes the top-most open panel first; only then does it leave B-Flash */
+  stateRef.current = { commentsId, creatorId, menuId, shareFor, panel, settingsOpen };
+  const overlayOpen = !!(commentsId || creatorId || menuId || shareFor || panel || settingsOpen);
+  const closeTop = useCallback(() => {
+    const st = stateRef.current;
+    if (st.panel) setPanel(null);
+    else if (st.settingsOpen) setSettingsOpen(false);
+    else if (st.shareFor) setShareFor(null);
+    else if (st.menuId) setMenuId(null);
+    else if (st.commentsId) setCommentsId(null);
+    else if (st.creatorId) setCreatorId(null);
+  }, []);
+  useEffect(() => {
+    if (overlayOpen && !entryPushed.current) {
+      const st = window.history.state || {};
+      window.history.pushState({ ...st, bfOverlay: true, idx: (st.idx || 0) + 1 }, '');
+      entryPushed.current = true;
+    } else if (!overlayOpen && entryPushed.current) {
+      entryPushed.current = false;
+      if (window.history.state && window.history.state.bfOverlay) window.history.back();
+    }
+  }, [overlayOpen]);
+  useEffect(() => {
+    const onPop = () => { if (entryPushed.current) { entryPushed.current = false; closeTop(); } };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [closeTop]);
+  const go = useCallback((path, state) => {
+    const replace = entryPushed.current;           // the panel's history entry becomes the new page, so Back returns to B-Flash
+    entryPushed.current = false;
+    setCommentsId(null); setCreatorId(null); setMenuId(null); setShareFor(null); setPanel(null); setSettingsOpen(false);
+    navigate(path, { replace, state });
+  }, [navigate]);
+
+  // after a refresh the browser blocks sound until you touch the screen; your first tap turns it on (no hunting for the button)
+  useEffect(() => {
+    if (!soundBlocked || !fp.sound) return undefined;
+    const unlock = () => { setMuted(false); setSoundBlocked(false); };
+    const evs = ['pointerup', 'touchend', 'keydown', 'click'];
+    evs.forEach((e) => window.addEventListener(e, unlock, { passive: true }));
+    return () => evs.forEach((e) => window.removeEventListener(e, unlock));
+  }, [soundBlocked, fp.sound]);
+
+  useEffect(() => { if (!commentsId) setCEmoji(false); }, [commentsId]);
   const commentsPost = items.find((p) => p.id === commentsId) || null;
   const creatorPost = items.find((p) => p.id === creatorId) || null;
   const menuPost = items.find((p) => p.id === menuId) || null;
@@ -971,8 +1064,8 @@ export default function BFlash() {
                     split={commentsId === p.id}
                     isMine={p.user_id === user?.id}
                     leftHanded={fp.leftHanded} clean={fp.clean} showProgress={fp.progress}
-                    quality={prefs.video_quality} onSource={() => p.remix_of && navigate('/post/' + p.remix_of)}
-                    onMention={(name) => navigate('/profile/' + name)}
+                    quality={prefs.video_quality} onSource={() => p.remix_of && go('/post/' + p.remix_of)}
+                    onMention={(name) => go('/profile/' + name)}
                     onHashtag={(t) => setTagFilter(String(t).replace(/[^\w]/g, '') || null)}
                     loopVideo={!fp.autoscroll}
                     st={sOf(p)}
@@ -1005,8 +1098,7 @@ export default function BFlash() {
               <span className="text-white font-extrabold text-[17px] tracking-tight">B-Flash</span>
             </div>
             <div className="flex items-center pointer-events-auto">
-              <TopIcon icon={Settings} label="B-Flash settings" onClick={() => setSettingsOpen(true)} />
-              <PlusButton onClick={() => navigate('/flash/create')} />
+              <PlusButton onClick={() => go('/flash/create')} />
             </div>
           </div>
           <div className="flex items-center justify-center gap-5 pb-3 pointer-events-auto">
@@ -1053,14 +1145,15 @@ export default function BFlash() {
               {tab === 'following' && (
                 <button onClick={() => setTab('foryou')} className="px-5 py-2.5 rounded-xl text-white font-bold bg-white/10">Explore For You</button>
               )}
-              <button onClick={() => navigate('/flash/create')} className="px-5 py-2.5 rounded-xl text-white font-bold" style={{ background: ACCENT }}>Post a video</button>
+              <button onClick={() => setSettingsOpen(true)} className="px-5 py-2.5 rounded-xl text-white font-bold bg-white/10">Settings</button>
+              <button onClick={() => go('/flash/create')} className="px-5 py-2.5 rounded-xl text-white font-bold" style={{ background: ACCENT }}>Post a video</button>
             </EmptyState>
           </div>
         )}
 
         {/* SplitView comments (light design) */}
         {commentsPost && (
-          <div className="absolute left-0 right-0 bottom-0 z-20 bg-white rounded-t-3xl border-t border-[#E4E6EB] flex flex-col" style={{ height: '64%' }}>
+          <div className="absolute left-0 right-0 bottom-0 z-20 bg-white rounded-t-3xl border-t border-[#E4E6EB] flex flex-col" style={{ height: cEmoji ? '90%' : '64%', transition: 'height .2s ease' }}>
             <div className="flex items-center justify-between h-12 px-2 flex-shrink-0 border-b border-[#E4E6EB]">
               <span className="w-11" />
               <div className="w-10 h-1 rounded-full bg-[#CED0D4]" />
@@ -1073,7 +1166,8 @@ export default function BFlash() {
                 post={commentsPost}
                 count={sOf(commentsPost).comments}
                 onCountChange={(d) => bumpComments(commentsPost, d)}
-                onNavigate={(path) => navigate(path)}
+                onNavigate={(path) => go(path)}
+                onEmojiToggle={setCEmoji}
               />
             </div>
           </div>
@@ -1084,7 +1178,7 @@ export default function BFlash() {
             post={creatorPost}
             isMe={creatorPost.user_id === user?.id}
             onClose={() => setCreatorId(null)}
-            onOpenProfile={() => creatorPost.users?.username && navigate('/profile/' + creatorPost.users.username)}
+            onOpenProfile={() => creatorPost.users?.username && go('/profile/' + creatorPost.users.username)}
             onMute={() => muteCreator(creatorPost)}
             onBlock={() => setPanel({ type: 'confirm-block', id: creatorPost.id })}
           />
@@ -1109,7 +1203,7 @@ export default function BFlash() {
         const vid = videoEls.current[menuPost.id];
         const isPaused = !vid || vid.paused;
         return (
-          <Sheet onClose={() => setMenuId(null)}>
+          <Sheet onClose={() => setMenuId(null)} title="Video options">
             <p className="px-5 pb-1 text-[12px] font-bold uppercase tracking-wide text-[#8E8C88]">Playback speed</p>
             <Chips options={SPEEDS} value={fp.speed} onPick={(v) => setFlashPref({ speed: v })} format={(v) => v + '×'} />
             <div className="h-px bg-white/10 my-1" />
@@ -1147,8 +1241,8 @@ export default function BFlash() {
             <SheetRow icon={muted ? Volume2 : VolumeX} label={muted ? 'Turn sound on' : 'Turn sound off'} onClick={() => { toggleSound(); setMenuId(null); }} />
             {!mine && menuPost.allow_remix !== false && menuPost.audience === 'public' && (
               <>
-                <SheetRow icon={Columns2} label="Duet with this video" onClick={() => { setMenuId(null); navigate('/flash/create?remix=' + menuPost.id + '&type=duet'); }} />
-                <SheetRow icon={Combine} label="Stitch this video" onClick={() => { setMenuId(null); navigate('/flash/create?remix=' + menuPost.id + '&type=stitch'); }} />
+                <SheetRow icon={Columns2} label="Duet with this video" onClick={() => go('/flash/create?remix=' + menuPost.id + '&type=duet')} />
+                <SheetRow icon={Combine} label="Stitch this video" onClick={() => go('/flash/create?remix=' + menuPost.id + '&type=stitch')} />
               </>
             )}
             {!mine && (
@@ -1244,12 +1338,12 @@ export default function BFlash() {
           <SheetRow icon={RotateCcw} label="Clear watched history" value="For You starts fresh"
             onClick={() => { try { localStorage.removeItem(SEEN_KEY); } catch { /* storage blocked */ } say('Watched history cleared'); }} />
           <SheetRow icon={EyeOff} label="Show hidden videos again" value={String(hiddenPostCount())}
-            onClick={() => { clearHiddenPosts(); say('Hidden videos will show again'); loadFirst(tab); }} />
+            onClick={() => { clearHiddenPosts(); supabase.from('post_hides').delete().eq('user_id', user.id).then(() => {}, () => {}); say('Hidden videos will show again'); loadFirst(tab); }} />
           <SheetRow icon={BellOff} label="Unmute all creators" value={String(getMutedUserIds().length)}
-            onClick={() => { getMutedUserIds().forEach(unmuteUser); say('Creators unmuted'); loadFirst(tab); }} />
+            onClick={() => { getMutedUserIds().forEach(unmuteUser); supabase.from('user_mutes').delete().eq('user_id', user.id).then(() => {}, () => {}); say('Creators unmuted'); loadFirst(tab); }} />
 
           <SectionLabel>Safety</SectionLabel>
-          <SheetRow icon={Ban} label="Blocked accounts" value="Manage" onClick={() => { setSettingsOpen(false); navigate('/settings'); }} />
+          <SheetRow icon={Ban} label="Blocked accounts" value="Manage" onClick={() => go('/settings', { open: 'blocked' })} />
         </Sheet>
       )}
     </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -364,6 +364,7 @@ function DangerSheet({ title, text, confirmWord, button, onConfirm, onClose }) {
 /* ═════════════ the page ═════════════ */
 export default function SettingsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, profile, signOut } = useAuth();
   const prefs = usePrefs();
   const [settings, setSettings] = useState(settingsCache);
@@ -372,6 +373,7 @@ export default function SettingsPage() {
   const [mutedIds, setMutedIds] = useState(getMutedUserIds());
   const [blockedIds, setBlockedIds] = useState(null);
   const toastTimer = useRef(null);
+  useEffect(() => { if (location.state && location.state.open === 'blocked') setSheet('blocked'); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const say = useCallback((t) => { setToast(t); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(''), 2400); }, []);
   useEffect(() => () => clearTimeout(toastTimer.current), []);

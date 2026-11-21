@@ -271,6 +271,7 @@ export default function FlashStudio() {
   const [problem, setProblem] = useState(false);                  // edited video could not be produced
   const [done, setDone] = useState(false);
   const [toast, setToast] = useState('');
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
 
   const vref = useRef(null);
   const sref = useRef(null);
@@ -457,7 +458,7 @@ export default function FlashStudio() {
       }
       if (dbErr) throw new Error(dbErr.message);
       setDone(true);
-      setTimeout(() => navigate('/flash'), 900);
+      setTimeout(() => navigate('/flash', { replace: true }), 900);
     } catch (err) {
       const raw = err.message || '';
       if (raw.includes('Daily post limit')) setError('Daily post limit reached. Come back tomorrow!');
@@ -471,7 +472,7 @@ export default function FlashStudio() {
 
   const back = () => {
     if (step === 'details') { setStep('edit'); return; }
-    if (step === 'edit' && !busy) { if (window.confirm('Discard this video?')) { setStep('pick'); setFile(null); } return; }
+    if (step === 'edit' && !busy) { setConfirmDiscard(true); return; }
     navigate(-1);
   };
 
@@ -813,6 +814,19 @@ export default function FlashStudio() {
           ))}
         </div>
       </div>
+
+      {confirmDiscard && (
+        <div className="fixed inset-0 z-[90] bg-black/70 flex items-end justify-center" onClick={() => setConfirmDiscard(false)}>
+          <div className="w-full max-w-[520px] bg-[#171614] border-t border-white/10 rounded-t-3xl px-5 pt-5 pb-[max(20px,env(safe-area-inset-bottom))]" onClick={(e) => e.stopPropagation()}>
+            <p className="text-white font-bold text-[16px] mb-1">Discard this video?</p>
+            <p className="text-[#8E8C88] text-[13px] leading-snug mb-4">Your edits will be lost. Your original video on your phone is not affected.</p>
+            <div className="flex flex-col gap-2.5">
+              <button onClick={() => { setConfirmDiscard(false); setStep('pick'); setFile(null); }} className="h-12 rounded-xl bg-[#E5484D] text-white font-bold">Discard</button>
+              <button onClick={() => setConfirmDiscard(false)} className="h-12 rounded-xl bg-white/10 text-white font-bold">Keep editing</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast && <div className="fixed left-1/2 -translate-x-1/2 bottom-28 z-[95] bg-black/85 text-white text-[13px] font-semibold px-4 py-2 rounded-full">{toast}</div>}
       {renderBusy()}
