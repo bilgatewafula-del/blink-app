@@ -3,12 +3,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import {
-  ArrowLeft, Image, Video, MapPin, Hash,
+  ArrowLeft, ImagePlus, Clapperboard, MapPin, Hash, Camera, SwitchCamera,
   X, Globe, Users, Lock, ChevronDown,
   Loader, CheckCircle, Ban, Type } from 'lucide-react';
 import { CLOUDINARY_CLOUD_NAME } from '../../lib/cloudinary';
 import { STORY_BACKGROUNDS, bgCss, textSizeFor } from '../../lib/storyPalette';
 import Avatar from '../../components/Avatar';
+import MentionTextarea from '../../components/MentionTextarea';
 import { DAILY_POST_LIMIT } from '../../utils/usernameValidation';
 
 /* ── Image compression — unchanged, already solid ── */
@@ -133,6 +134,10 @@ export default function CreatePost() {
 
   const fileInputRef  = useRef();
   const videoInputRef = useRef();
+  const camPhotoRef = useRef();
+  const camVideoRef = useRef();
+  const [camSheet, setCamSheet] = useState(false);
+  const [camFacing, setCamFacing] = useState('user');
   const textareaRef   = useRef();
   const locationInputRef = useRef();
   const audienceMenuRef  = useRef();
@@ -523,15 +528,15 @@ export default function CreatePost() {
             />
           </div>
         ) : (
-          <textarea
-            ref={textareaRef}
+          <MentionTextarea
+            textareaRef={textareaRef}
             value={caption}
-            onChange={e => setCaption(e.target.value)}
+            onChange={setCaption}
             placeholder="What's on your mind? Use # for hashtags, @ to mention..."
             rows={5}
             maxLength={charLimit + 50}
-            className="w-full bg-transparent text-white text-[17px] placeholder-[#8E8C88] focus:outline-none resize-none leading-relaxed mb-2"
-            style={{ minHeight: 120 }}
+            hashtagIdeas={HASHTAG_SUGGESTIONS}
+            className="text-[17px] leading-relaxed"
           />
         )}
         {textOnly && (
@@ -680,49 +685,27 @@ export default function CreatePost() {
 
       <div className="fixed bottom-0 left-0 right-0 max-w-[620px] mx-auto bg-[#171614] border-t border-white/[0.08]"
         style={{ paddingBottom:'max(12px, env(safe-area-inset-bottom))' }}>
-        <div className="flex items-center gap-1 px-4 py-2">
+        <div className="flex items-start gap-1 px-3 pt-2 pb-1">
 
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={submitting}
-            aria-label="Add photo"
-            className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-white/60 hover:text-[#FF5A1F] hover:bg-[#FF5A1F]/10 transition-all disabled:opacity-40"
-          >
-            <Image size={20} />
-            <span className="text-sm font-semibold">Photo</span>
-          </button>
+          {[
+            { key: 'photo', icon: ImagePlus, label: 'Photo', onClick: () => fileInputRef.current?.click(), off: submitting },
+            { key: 'video', icon: Clapperboard, label: 'Video', onClick: () => videoInputRef.current?.click(), off: submitting || mediaFiles.some(m => m.type === 'video') || !!existingMedia.video },
+            { key: 'camera', icon: Camera, label: 'Camera', onClick: () => setCamSheet(true), off: submitting },
+            { key: 'tags', icon: Hash, label: 'Tags', onClick: () => setShowHashtags(!showHashtags), off: submitting, active: showHashtags },
+            { key: 'place', icon: MapPin, label: 'Place', onClick: handleLocationToggle, off: submitting, active: showLocation },
+          ].map(({ key, icon: Icon, label, onClick, off, active }) => (
+            <button key={key} onClick={onClick} disabled={off} aria-label={label}
+              className="flex-1 flex flex-col items-center gap-1.5 py-1 disabled:opacity-40 active:scale-95 transition-transform">
+              <span className={`w-11 h-11 rounded-2xl flex items-center justify-center border transition-colors ${active ? 'bg-[#FF5A1F]/15 border-[#FF5A1F]/50 text-[#FF5A1F]' : 'bg-white/[0.06] border-white/10 text-white/80'}`}>
+                <Icon size={22} strokeWidth={1.8} />
+              </span>
+              <span className={`text-[11px] font-semibold ${active ? 'text-[#FF5A1F]' : 'text-[#8E8C88]'}`}>{label}</span>
+            </button>
+          ))}
           <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
-
-          <button
-            onClick={() => videoInputRef.current?.click()}
-            disabled={submitting || mediaFiles.some(m => m.type === 'video') || !!existingMedia.video}
-            aria-label="Add video"
-            className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-white/60 hover:text-[#FF5A1F] hover:bg-[#FF5A1F]/10 transition-all disabled:opacity-40"
-          >
-            <Video size={20} />
-            <span className="text-sm font-semibold">Video</span>
-          </button>
           <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={handleVideoSelect} />
-
-          <button
-            onClick={() => setShowHashtags(!showHashtags)}
-            disabled={submitting}
-            aria-label="Hashtags"
-            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all disabled:opacity-40 ${showHashtags ? 'text-[#FF5A1F] bg-[#FF5A1F]/10' : 'text-white/60 hover:text-[#FF5A1F] hover:bg-[#FF5A1F]/10'}`}
-          >
-            <Hash size={20} />
-            <span className="text-sm font-semibold">Tags</span>
-          </button>
-
-          <button
-            onClick={handleLocationToggle}
-            disabled={submitting}
-            aria-label="Add location"
-            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all disabled:opacity-40 ${showLocation ? 'text-[#FF5A1F] bg-[#FF5A1F]/10' : 'text-white/60 hover:text-[#FF5A1F] hover:bg-[#FF5A1F]/10'}`}
-          >
-            <MapPin size={20} />
-            <span className="text-sm font-semibold">Location</span>
-          </button>
+          <input ref={camPhotoRef} type="file" accept="image/*" capture={camFacing} className="hidden" onChange={handleImageSelect} />
+          <input ref={camVideoRef} type="file" accept="video/*" capture={camFacing} className="hidden" onChange={handleVideoSelect} />
 
           {totalMediaCount > 0 && (
             <div className="ml-auto bg-[#FF5A1F]/20 px-2.5 py-1 rounded-full">
@@ -731,6 +714,31 @@ export default function CreatePost() {
           )}
         </div>
       </div>
+      {camSheet && (
+        <div className="fixed inset-0 z-[80] bg-black/65 flex items-end justify-center" onClick={() => setCamSheet(false)}>
+          <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl pb-[max(16px,env(safe-area-inset-bottom))]" onClick={(e) => e.stopPropagation()}>
+            <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mt-2.5 mb-2" />
+            <p className="text-white font-bold text-[15px] px-5 pb-2">Use your camera</p>
+            <div className="flex gap-2 px-5 pb-3">
+              {[['user', 'Front'], ['environment', 'Back']].map(([k, l]) => (
+                <button key={k} onClick={() => setCamFacing(k)} aria-pressed={camFacing === k}
+                  className={`flex-1 h-11 rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 ${camFacing === k ? 'bg-[#FF5A1F] text-white' : 'bg-white/[0.07] text-white/80'}`}>
+                  <SwitchCamera size={17} /> {l}
+                </button>
+              ))}
+            </div>
+            <button onClick={() => { setCamSheet(false); setTimeout(() => camPhotoRef.current?.click(), 50); }}
+              className="w-full flex items-center gap-3.5 px-5 py-3.5 active:bg-white/[0.05] text-left">
+              <Camera size={22} strokeWidth={1.8} className="text-white" /><span className="text-white text-[15px] font-semibold">Take a photo</span>
+            </button>
+            <button onClick={() => { setCamSheet(false); setTimeout(() => camVideoRef.current?.click(), 50); }}
+              disabled={mediaFiles.some(m => m.type === 'video') || !!existingMedia.video}
+              className="w-full flex items-center gap-3.5 px-5 py-3.5 active:bg-white/[0.05] text-left disabled:opacity-40">
+              <Clapperboard size={22} strokeWidth={1.8} className="text-white" /><span className="text-white text-[15px] font-semibold">Record a video</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

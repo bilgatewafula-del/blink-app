@@ -3,11 +3,13 @@
 // Same account, same posts table, same likes / saves / comments / share / block systems.
 // Videos appear here (and on profiles) but never on Home.
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   Heart, MessageCircle, Bookmark, Share2, EllipsisVertical, Play, Pause, Volume2, VolumeX,
   Plus, X, Zap, Flag, Settings, Clapperboard, EyeOff, BellOff, Ban, RefreshCw, Link2,
   Maximize, Pin, PinOff, Pencil, Trash2, Eye, Globe, Users, Lock, MessageSquareOff, User, Check,
+  HeartCrack, RotateCcw, Columns2, Combine,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
@@ -17,6 +19,8 @@ import FollowButton from '../../components/FollowButton';
 import { EmptyState, Spinner } from '../../components/ui';
 import { CommentsPanel } from '../../components/post/Comments';
 import { ShareSheet } from '../../components/post/Sheets';
+import RichText from '../../components/RichText';
+import MentionTextarea from '../../components/MentionTextarea';
 import { notifyAdminOnReport } from '../../utils/notifyAdmin';
 import { videoSrc } from '../../lib/imageUtils';
 import { formatNumber } from '../../utils/formatNumber';
@@ -24,6 +28,7 @@ import { usePrefs, setPrefs } from '../../lib/prefs';
 import useViewport from '../../lib/useViewport';
 import {
   requestPostState, patchPostState, toggleSave, isPostHidden, isUserMuted, hidePost, muteUser, postLink,
+  getMutedUserIds, unmuteUser, hiddenPostCount, clearHiddenPosts,
 } from '../../lib/posts';
 
 /* ── design tokens (change the brand colour in ONE place) ── */
@@ -50,10 +55,25 @@ const SELECT = `
   likes_count, comments_count, shares_count, views_count, comments_disabled, created_at, user_id,
   users!posts_user_id_fkey(id,username,display_name,avatar_url,is_verified,role)
 `.trim();
+// duets & stitches: needs the Stage 3 SQL. If those columns don't exist yet the feed falls back to SELECT.
+const REMIX_SELECT = `, allow_remix, remix_of, remix_type, remix_clip_end,
+  remix_src:posts!remix_of(id, video_url, video_thumbnail, video_duration, users!posts_user_id_fkey(username, display_name))`;
+
+// edited videos already carry Cloudinary edits; add the viewer's quality choice after them
+const QUALITY = { low: 'q_auto:low,w_480', medium: 'q_auto:good,w_720', high: 'q_auto:best' };
+const flashSrc = (url, saver, quality) => {
+  const base = videoSrc(url);
+  if (base !== url || !url || !url.includes('/video/upload/')) return base;     // plain videos: handled by videoSrc
+  const t = saver ? QUALITY.low : QUALITY[quality];
+  return t ? url.replace(/(\/video\/upload\/(?:[^/]+\/)*?)(v\d+\/)/, '$1' + t + '/$2') : url;
+};
 
 /* ── device settings that are specific to B-Flash ── */
 const FKEY = 'blink_flash_prefs_v1';
-const FDEFAULT = { autoscroll: false, pauseOnComments: false, sound: true, speed: 1 };
+const FDEFAULT = {
+  autoscroll: false, pauseOnComments: false, sound: true, speed: 1,
+  leftHanded: false, clean: false, progress: true, motion: true, haptics: true, defaultTab: 'foryou',
+};
 const readFlashPrefs = () => {
   try { return { ...FDEFAULT, ...(JSON.parse(localStorage.getItem(FKEY)) || {}) }; } catch { return { ...FDEFAULT }; }
 };
@@ -84,6 +104,20 @@ const spreadCreators = (rows) => {
   return out;
 };
 
+const BF_CSS = `
+.bflash-sc{scrollbar-width:none}.bflash-sc::-webkit-scrollbar{display:none}
+@keyframes bfRing{0%{transform:scale(.8);opacity:.9}100%{transform:scale(1.7);opacity:0}}
+@keyframes bfPop{0%{transform:scale(1)}35%{transform:scale(1.45)}70%{transform:scale(.9)}100%{transform:scale(1)}}
+@keyframes bfBounce{0%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}60%{transform:translateY(1px)}}
+@keyframes bfSwing{0%{transform:rotate(0)}25%{transform:rotate(-16deg)}60%{transform:rotate(10deg)}100%{transform:rotate(0)}}
+@keyframes bfNudge{0%{transform:translate(0,0)}40%{transform:translate(4px,-4px)}100%{transform:translate(0,0)}}
+@keyframes bfWiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(90deg)}}
+@keyframes bfPlus{0%{box-shadow:0 0 0 0 rgba(255,90,31,.55)}70%{box-shadow:0 0 0 12px rgba(255,90,31,0)}100%{box-shadow:0 0 0 0 rgba(255,90,31,0)}}
+@keyframes bfBroken{0%{transform:translate(-50%,-50%) scale(.6);opacity:1}100%{transform:translate(-50%,calc(-50% + 40px)) scale(1.1) rotate(8deg);opacity:0}}
+.bf-nomotion .bfa{animation:none!important}
+@media (prefers-reduced-motion:reduce){.bfa{animation:none!important}}
+`;
+
 const withTimeout = (promise, ms = LOAD_TIMEOUT) => Promise.race([
   promise,
   new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms)),
@@ -92,21 +126,30 @@ const withTimeout = (promise, ms = LOAD_TIMEOUT) => Promise.race([
 const parseTags = (text) => [...new Set((text || '').split(/[\s,]+/).map((t) => t.replace(/^#/, '').replace(/[^\w]/g, '')).filter(Boolean))].slice(0, 15);
 
 /* ── small shared UI ── */
-function RailButton({ icon: Icon, label, count, active, fill, onClick }) {
+const TONE = { like: '#FF4D6D', comment: '#4DB6FF', save: '#FFC24D', share: '#34D6A0', more: '#FFFFFF' };
+
+function RailButton({ icon: Icon, label, count, active, fill, tone = '#fff', anim, onClick }) {
+  const [n, setN] = useState(0);
   return (
     <button
-      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      onClick={(e) => { e.stopPropagation(); setN((x) => x + 1); onClick(); }}
       aria-label={label}
       aria-pressed={active === undefined ? undefined : !!active}
-      className="flex flex-col items-center gap-1 active:scale-90 transition-transform"
+      className="relative flex flex-col items-center gap-1 active:scale-90 transition-transform"
     >
-      <span className="w-11 h-11 rounded-full flex items-center justify-center bg-black/35">
-        <Icon size={ICON} strokeWidth={STROKE} color={active ? ACCENT : '#fff'} fill={active && fill ? ACCENT : 'none'} />
+      <span className="relative w-11 h-11 rounded-full flex items-center justify-center"
+        style={{
+          background: 'rgba(18,16,14,.40)', border: '1px solid rgba(255,255,255,.16)',
+          backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+          boxShadow: active ? '0 0 16px ' + tone + '66' : 'none',
+        }}>
+        {n > 0 && <span key={'r' + n} className="bfa absolute inset-0 rounded-full pointer-events-none" style={{ border: '2px solid ' + tone, animation: 'bfRing .55s ease-out forwards' }} />}
+        <span key={'i' + n} className="bfa flex" style={{ animation: n > 0 && anim ? anim + ' .5s ease-out' : undefined }}>
+          <Icon size={ICON - 2} strokeWidth={STROKE} color={active ? tone : '#fff'} fill={active && fill ? tone : 'none'} />
+        </span>
       </span>
       {count !== undefined && (
-        <span className="text-white text-[12px] font-semibold leading-none" style={{ textShadow: '0 1px 3px rgba(0,0,0,.7)' }}>
-          {formatNumber(count)}
-        </span>
+        <span className="text-white text-[12px] font-bold leading-none" style={{ textShadow: '0 1px 3px rgba(0,0,0,.7)' }}>{formatNumber(count)}</span>
       )}
     </button>
   );
@@ -116,6 +159,17 @@ function TopIcon({ icon: Icon, label, onClick }) {
   return (
     <button onClick={onClick} aria-label={label} className="w-11 h-11 flex items-center justify-center active:scale-90 transition-transform">
       <Icon size={22} strokeWidth={STROKE} color="#fff" />
+    </button>
+  );
+}
+
+function PlusButton({ onClick }) {
+  return (
+    <button onClick={onClick} aria-label="Create a video" className="w-11 h-11 flex items-center justify-center active:scale-90 transition-transform">
+      <span className="bfa w-8 h-8 rounded-full flex items-center justify-center"
+        style={{ background: 'linear-gradient(135deg,#FF5A1F,#FF2D78)', animation: 'bfPlus 2.2s ease-out 3', boxShadow: '0 2px 10px rgba(255,90,31,.45)' }}>
+        <Plus size={19} strokeWidth={2.6} color="#fff" />
+      </span>
     </button>
   );
 }
@@ -136,16 +190,21 @@ function Toggle({ label, desc, on, onChange }) {
 }
 
 function Sheet({ onClose, title, children }) {
-  return (
-    <div className="fixed inset-0 z-[70] bg-black/65 flex items-end justify-center" onClick={onClose}>
+  return createPortal(
+    <div className="fixed inset-0 z-[100] bg-black/65 flex items-end justify-center" onClick={onClose}>
       <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl pb-[max(16px,env(safe-area-inset-bottom))] max-h-[86vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}>
         <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mt-2.5 mb-1" />
         {title && <p className="text-white font-bold text-[15px] px-5 pt-2 pb-2">{title}</p>}
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
+}
+
+function SectionLabel({ children }) {
+  return <p className="px-5 pt-4 pb-1 text-[12px] font-bold uppercase tracking-wide text-[#8E8C88]">{children}</p>;
 }
 
 function SheetRow({ icon: Icon, label, value, onClick, danger }) {
@@ -243,9 +302,10 @@ function CreatorPanel({ post, isMe, onClose, onOpenProfile, onMute, onBlock }) {
 
 /* ── one video panel ── */
 function Slide({
-  post, active, isNext, muted, canPlay, split, loopVideo, saver, speed, toggleReq, st,
+  post, active, isNext, muted, canPlay, split, loopVideo, saver, speed, toggleReq, st, isMine,
+  leftHanded, clean, showProgress, quality, onSource,
   onVideoRef, onSoundBlocked, onLike, onDoubleLike, onComment, onSave, onShare, onMore, onLongPress,
-  onCreator, onEnded,
+  onCreator, onEnded, onMention, onHashtag,
 }) {
   const vref = useRef(null);
   const barRef = useRef(null);
@@ -253,17 +313,31 @@ function Slide({
   const lastTap = useRef(0);
   const tapTimer = useRef(null);
   const pressTimer = useRef(null);
+  const stallTimer = useRef(null);
   const gesture = useRef(null);
+  const recoveries = useRef(0);
+  const activeRef = useRef(active);
+  const canPlayRef = useRef(canPlay);
   const [paused, setPaused] = useState(false);
   const [buffering, setBuffering] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [landscape, setLandscape] = useState(false);
-  const [burst, setBurst] = useState(0);
-  const src = videoSrc(post.video_url);
+  const [burst, setBurst] = useState({ n: 0, type: 'like' });
+  const sref = useRef(null);
+  const rsrc = post.remix_src && post.remix_type ? post.remix_src : null;       // the original video of a duet / stitch
+  const isDuet = !!rsrc && post.remix_type === 'duet';
+  const isStitch = !!rsrc && post.remix_type === 'stitch';
+  const clipEnd = Number(post.remix_clip_end) || 3;
+  const [phase, setPhase] = useState('src');                                      // stitch: 'src' clip first, then 'own'
+  const showingSrc = isStitch && phase === 'src';
+  const src = showingSrc ? flashSrc(rsrc.video_url, saver, quality) : flashSrc(post.video_url, saver, quality);
   const u = post.users || {};
+  activeRef.current = active;
+  canPlayRef.current = canPlay;
 
   useEffect(() => { if (vref.current) vref.current.muted = muted; }, [muted]);
   useEffect(() => { if (vref.current) vref.current.playbackRate = speed; }, [speed]);
-  useEffect(() => () => { clearTimeout(tapTimer.current); clearTimeout(pressTimer.current); }, []);
+  useEffect(() => () => { clearTimeout(tapTimer.current); clearTimeout(pressTimer.current); clearTimeout(stallTimer.current); }, []);
 
   const tryPlay = useCallback(() => {
     const v = vref.current;
@@ -276,9 +350,27 @@ function Slide({
         onSoundBlocked();
         const p2 = v.play();
         if (p2 && p2.then) p2.then(() => setPaused(false)).catch(() => setPaused(true));
-      } else setPaused(true);
+      } else if (!err || err.name !== 'AbortError') setPaused(true);
     });
   }, [onSoundBlocked]);
+
+  // reload the video at the same position (after the app was in the background, or the network dropped)
+  const recover = useCallback((manual) => {
+    const v = vref.current;
+    if (!v) return;
+    if (!manual && recoveries.current >= 2) { setFailed(true); setBuffering(false); return; }
+    recoveries.current += 1;
+    const t = v.currentTime || 0;
+    setFailed(false);
+    setBuffering(true);
+    const onMeta = () => {
+      v.removeEventListener('loadedmetadata', onMeta);
+      try { if (t > 0.5) v.currentTime = t; } catch { /* not seekable yet */ }
+      if (activeRef.current && canPlayRef.current && !userPaused.current) tryPlay();
+    };
+    v.addEventListener('loadedmetadata', onMeta);
+    v.load();
+  }, [tryPlay]);
 
   const toggle = useCallback(() => {
     const v = vref.current;
@@ -286,6 +378,11 @@ function Slide({
     if (v.paused) { userPaused.current = false; tryPlay(); }
     else { userPaused.current = true; v.pause(); setPaused(true); }
   }, [tryPlay]);
+
+  useEffect(() => { if (!active) setPhase('src'); }, [active]);
+  useEffect(() => { // stitch moved on to the creator's own video: keep playing
+    if (isStitch && activeRef.current && canPlayRef.current && !userPaused.current) tryPlay();
+  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // pause / resume requested from the video menu
   useEffect(() => { if (active && toggleReq.n && toggleReq.id === post.id) toggle(); }, [toggleReq.n]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -297,34 +394,50 @@ function Slide({
     if (!active) {
       v.pause();
       userPaused.current = false;
+      recoveries.current = 0;
       try { v.currentTime = 0; } catch { /* not ready yet */ }
       if (barRef.current) barRef.current.style.transform = 'scaleX(0)';
-      setPaused(false);
+      setPaused(false); setFailed(false);
       return;
     }
     if (canPlay && !userPaused.current) tryPlay();
     else { v.pause(); setPaused(true); }
   }, [active, canPlay, tryPlay]);
 
-  // pause when the app goes to the background
+  // app went to the background and came back: resume, or reload if the browser dropped the video
   useEffect(() => {
-    const onVis = () => {
+    const wake = () => {
       const v = vref.current;
-      if (!v || !active) return;
-      if (document.hidden) v.pause();
-      else if (canPlay && !userPaused.current) tryPlay();
+      if (!v || !activeRef.current) return;
+      if (document.hidden) { v.pause(); return; }
+      if (v.error || v.readyState < 2 || v.networkState === 3) { recover(true); return; }
+      if (canPlayRef.current && !userPaused.current) tryPlay();
     };
-    document.addEventListener('visibilitychange', onVis);
-    return () => document.removeEventListener('visibilitychange', onVis);
-  }, [active, canPlay, tryPlay]);
+    const online = () => { const v = vref.current; if (v && activeRef.current && (v.error || v.readyState < 3)) recover(true); };
+    document.addEventListener('visibilitychange', wake);
+    window.addEventListener('pageshow', wake);
+    window.addEventListener('online', online);
+    return () => {
+      document.removeEventListener('visibilitychange', wake);
+      window.removeEventListener('pageshow', wake);
+      window.removeEventListener('online', online);
+    };
+  }, [recover, tryPlay]);
 
-  /* tap = play/pause · double tap = like · hold = menu · horizontal swipe = creator */
+  // stuck on the spinner for 10 seconds: reload once or twice, then offer a retry button
+  useEffect(() => {
+    clearTimeout(stallTimer.current);
+    if (active && buffering && !paused && !failed) stallTimer.current = setTimeout(() => recover(false), 10000);
+    return () => clearTimeout(stallTimer.current);
+  }, [active, buffering, paused, failed, recover]);
+
+  /* tap = play/pause · double tap = like / unlike · hold = menu · swipe left = creator */
   const handleTap = () => {
     const now = Date.now();
     if (now - lastTap.current < 280) {
       clearTimeout(tapTimer.current);
       lastTap.current = 0;
-      setBurst((b) => b + 1);
+      setBurst((b) => ({ n: b.n + 1, type: st.liked ? 'unlike' : 'like' }));
       onDoubleLike();
       return;
     }
@@ -363,9 +476,25 @@ function Slide({
 
   const onTimeUpdate = () => {
     const v = vref.current, b = barRef.current;
-    if (!v || !b || !v.duration) return;
-    b.style.transform = 'scaleX(' + Math.min(1, v.currentTime / v.duration) + ')';
+    if (!v) return;
+    if (isStitch && phase === 'src' && v.currentTime >= clipEnd) { setPhase('own'); return; }
+    if (isDuet && sref.current && v.currentTime < 0.3 && sref.current.currentTime > 1) sref.current.currentTime = 0;
+    if (!b || !v.duration) return;
+    let pct = v.currentTime / v.duration;
+    if (isStitch) {
+      const own = Number(post.video_duration) || 0;
+      const total = clipEnd + own;
+      if (total > 0) pct = ((phase === 'src' ? 0 : clipEnd) + v.currentTime) / total;
+    }
+    b.style.transform = 'scaleX(' + Math.min(1, Math.max(0, pct)) + ')';
   };
+  const handleEnded = () => {
+    if (isStitch && phase === 'src') { setPhase('own'); return; }        // the original clip was shorter than planned
+    if (isStitch && loopVideo) { setPhase('src'); return; }               // repeat the whole stitch
+    onEnded();
+  };
+
+  const side = leftHanded ? 'left-3' : 'right-3';
 
   return (
     <section className="relative w-full h-full overflow-hidden bg-black" aria-label={'Video by ' + (u.username || 'creator')}>
@@ -373,20 +502,28 @@ function Slide({
         <video
           ref={(el) => { vref.current = el; onVideoRef(post.id, el); }}
           src={src}
-          poster={post.video_thumbnail || undefined}
+          poster={(showingSrc ? rsrc.video_thumbnail : post.video_thumbnail) || undefined}
           playsInline
           muted={muted}
-          loop={loopVideo}
+          loop={isStitch ? false : loopVideo}
           preload={active ? 'auto' : (isNext && !saver ? 'metadata' : 'none')}
-          className="absolute inset-0 w-full h-full"
-          style={{ objectFit: landscape || split ? 'contain' : 'cover' }}
+          className={isDuet ? 'absolute top-0 bottom-0 right-0 w-1/2' : 'absolute inset-0 w-full h-full'}
+          style={{ objectFit: isDuet ? 'cover' : (landscape || split ? 'contain' : 'cover') }}
+          onPlay={() => { if (sref.current) sref.current.play().catch(() => {}); }}
+          onPause={() => { if (sref.current) sref.current.pause(); }}
           onLoadedMetadata={() => { const v = vref.current; if (v) { setLandscape(v.videoWidth > v.videoHeight); v.playbackRate = speed; } }}
           onTimeUpdate={onTimeUpdate}
           onWaiting={() => setBuffering(true)}
-          onPlaying={() => { setBuffering(false); setPaused(false); }}
+          onStalled={() => { if (activeRef.current) setBuffering(true); }}
+          onPlaying={() => { setBuffering(false); setPaused(false); setFailed(false); recoveries.current = 0; }}
           onCanPlay={() => setBuffering(false)}
-          onEnded={onEnded}
+          onError={() => { if (activeRef.current && post.video_url) recover(false); }}
+          onEnded={handleEnded}
         />
+        {isDuet && (
+          <video ref={sref} src={flashSrc(rsrc.video_url, saver, quality)} poster={rsrc.video_thumbnail || undefined} muted loop playsInline
+            preload={active ? 'auto' : 'none'} className="absolute top-0 bottom-0 left-0 w-1/2 pointer-events-none" style={{ objectFit: 'cover' }} />
+        )}
         <div
           className="absolute inset-0 select-none"
           style={{ touchAction: 'pan-y', WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none', WebkitTapHighlightColor: 'transparent' }}
@@ -395,48 +532,85 @@ function Slide({
           role="button" aria-label={paused ? 'Play video' : 'Pause video'}
         />
 
-        {paused && active && (
+        {paused && active && !failed && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <span className="w-16 h-16 rounded-full bg-black/45 flex items-center justify-center"><Play size={30} color="#fff" fill="#fff" /></span>
           </div>
         )}
-        {buffering && active && !paused && (
+        {buffering && active && !paused && !failed && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-white"><Spinner size={28} /></div>
         )}
-        {burst > 0 && (
-          <Heart key={burst} size={96} color={ACCENT} fill={ACCENT}
-            className="absolute pointer-events-none motion-reduce:hidden"
+        {failed && active && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/65">
+            <p className="text-white font-semibold text-[14px]">Couldn’t play this video</p>
+            <button onClick={() => recover(true)} className="px-5 h-10 rounded-full bg-white/15 text-white font-bold flex items-center gap-2">
+              <RotateCcw size={16} /> Try again
+            </button>
+          </div>
+        )}
+        {burst.n > 0 && burst.type === 'like' && (
+          <Heart key={burst.n} size={96} color={TONE.like} fill={TONE.like}
+            className="bfa absolute pointer-events-none"
             style={{ left: '50%', top: '50%', animation: 'heartPop .8s ease-out forwards' }} />
         )}
-        <div className="absolute left-0 right-0 bottom-0 h-[3px] bg-white/20 pointer-events-none">
-          <div ref={barRef} className="h-full origin-left" style={{ background: ACCENT, transform: 'scaleX(0)' }} />
-        </div>
+        {burst.n > 0 && burst.type === 'unlike' && (
+          <HeartCrack key={burst.n} size={84} color="#fff" strokeWidth={1.8}
+            className="bfa absolute pointer-events-none"
+            style={{ left: '50%', top: '50%', animation: 'bfBroken .7s ease-in forwards' }} />
+        )}
+        {showProgress && (
+          <div className="absolute left-0 right-0 bottom-0 h-[3px] bg-white/20 pointer-events-none">
+            <div ref={barRef} className="h-full origin-left" style={{ background: ACCENT, transform: 'scaleX(0)' }} />
+          </div>
+        )}
       </div>
 
-      {!split && (
+      {!split && clean && (
+        <div className={'absolute bottom-[18px] ' + side}>
+          <RailButton icon={EllipsisVertical} label="Video options" tone={TONE.more} anim="bfWiggle" onClick={onMore} />
+        </div>
+      )}
+
+      {!split && !clean && (
         <>
           <div className="absolute inset-x-0 bottom-0 h-[42%] pointer-events-none" style={{ background: 'linear-gradient(to top, rgba(0,0,0,.78), transparent)' }} />
-          <div className="absolute left-4 right-[76px] bottom-[18px] pointer-events-none">
-            <button onClick={onCreator} className="pointer-events-auto flex items-center gap-2 mb-2 max-w-full">
-              <span className="text-white font-bold text-[15px] truncate" style={{ textShadow: '0 1px 3px rgba(0,0,0,.7)' }}>@{u.username || 'unknown'}</span>
-              {u.is_verified && <VerifiedBadge size={15} />}
-              {post.is_pinned && <Pin size={13} color="#fff" />}
-            </button>
+          <div className={'absolute bottom-[18px] pointer-events-none ' + (leftHanded ? 'left-[76px] right-4' : 'left-4 right-[76px]')}>
+            <div className="flex items-center gap-2 mb-2 max-w-full">
+              <button onClick={onCreator} className="pointer-events-auto flex items-center gap-1.5 min-w-0">
+                <span className="text-white font-bold text-[15px] truncate" style={{ textShadow: '0 1px 3px rgba(0,0,0,.7)' }}>@{u.username || 'unknown'}</span>
+                {u.is_verified && <VerifiedBadge size={15} />}
+                {post.is_pinned && <Pin size={13} color="#fff" />}
+              </button>
+              {!isMine && u.id && (
+                <span className="pointer-events-auto flex-shrink-0">
+                  <FollowButton targetId={u.id} username={u.username} displayName={u.display_name} avatarUrl={u.avatar_url} size="sm" />
+                </span>
+              )}
+            </div>
+            {rsrc && (
+              <button onClick={onSource} className="pointer-events-auto mb-1.5 h-7 px-2.5 rounded-full flex items-center gap-1.5 text-white text-[12px] font-bold max-w-full"
+                style={{ background: 'rgba(255,255,255,.16)', backdropFilter: 'blur(6px)' }}>
+                {isStitch ? <Combine size={13} /> : <Columns2 size={13} />}
+                <span className="truncate">{isStitch ? 'Stitch with' : 'Duet with'} @{(rsrc.users && rsrc.users.username) || 'creator'}</span>
+              </button>
+            )}
             {post.caption && (
-              <p className="text-white text-[14px] leading-snug line-clamp-2" style={{ textShadow: '0 1px 3px rgba(0,0,0,.7)' }}>{post.caption}</p>
+              <p className="text-white text-[14px] leading-snug line-clamp-2" style={{ textShadow: '0 1px 3px rgba(0,0,0,.7)' }}>
+                <RichText text={post.caption} onMention={onMention} onHashtag={onHashtag} />
+              </p>
             )}
           </div>
-          <div className="absolute right-3 bottom-[18px] flex flex-col items-center gap-4">
+          <div className={'absolute bottom-[18px] flex flex-col items-center gap-3.5 ' + side}>
             <button onClick={onCreator} aria-label={'Open ' + (u.username || 'creator') + ' details'} className="active:scale-90 transition-transform">
-              <span className="block rounded-full p-[2px]" style={{ background: ACCENT }}>
+              <span className="block rounded-full p-[2px]" style={{ background: 'linear-gradient(135deg,#FF5A1F,#FF2D78)' }}>
                 <Avatar url={u.avatar_url} name={u.display_name || u.username} size={10} />
               </span>
             </button>
-            <RailButton icon={Heart} label={st.liked ? 'Unlike' : 'Like'} active={st.liked} fill count={st.likes} onClick={onLike} />
-            <RailButton icon={MessageCircle} label="Comments" count={st.comments} onClick={onComment} />
-            <RailButton icon={Bookmark} label={st.saved ? 'Remove from saved' : 'Save'} active={st.saved} fill onClick={onSave} />
-            <RailButton icon={Share2} label="Share" onClick={onShare} />
-            <RailButton icon={EllipsisVertical} label="Video options" onClick={onMore} />
+            <RailButton icon={Heart} label={st.liked ? 'Unlike' : 'Like'} active={st.liked} fill tone={TONE.like} anim="bfPop" count={st.likes} onClick={onLike} />
+            <RailButton icon={MessageCircle} label="Comments" tone={TONE.comment} anim="bfBounce" count={st.comments} onClick={onComment} />
+            <RailButton icon={Bookmark} label={st.saved ? 'Remove from saved' : 'Save'} active={st.saved} fill tone={TONE.save} anim="bfSwing" onClick={onSave} />
+            <RailButton icon={Share2} label="Share" tone={TONE.share} anim="bfNudge" onClick={onShare} />
+            <RailButton icon={EllipsisVertical} label="Video options" tone={TONE.more} anim="bfWiggle" onClick={onMore} />
           </div>
         </>
       )}
@@ -451,7 +625,8 @@ export default function BFlash() {
   const vp = useViewport();
 
   const [fp, setFp] = useState(readFlashPrefs);
-  const [tab, setTab] = useState('foryou');
+  const [tab, setTab] = useState(() => readFlashPrefs().defaultTab || 'foryou');
+  const [tagFilter, setTagFilter] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -480,6 +655,8 @@ export default function BFlash() {
   const failedAt = useRef(-1);
   const toastT = useRef(null);
   const videoEls = useRef({});
+  const remixOn = useRef(true);
+  const viewed = useRef(new Set());
 
   const saver = !!prefs.data_saver;
   const kb = typeof window !== 'undefined' && window.innerHeight - vp.h > 150;
@@ -523,23 +700,41 @@ export default function BFlash() {
     });
   }, [user?.id]);
 
-  const baseQuery = useCallback(() => supabase.from('posts').select(SELECT)
-    .not('video_url', 'is', null)
-    .eq('is_draft', false)
-    .eq('audience', 'public')
-    .neq('status', 'deleted')
-    .neq('status', 'hidden'), []);
+  const baseQuery = useCallback(() => {
+    let q = supabase.from('posts').select(remixOn.current ? SELECT + REMIX_SELECT : SELECT)
+      .not('video_url', 'is', null)
+      .eq('is_draft', false)
+      .eq('audience', 'public')
+      .neq('status', 'deleted')
+      .neq('status', 'hidden');
+    if (tagFilter) q = q.or('hashtags.cs.{' + tagFilter + '},hashtags.cs.{' + tagFilter.toLowerCase() + '}');
+    return q;
+  }, [tagFilter]);
 
   const clean = (raw) => raw
-    .map((p) => ({ ...p, users: p['users!posts_user_id_fkey'] || p.users || null }))
+    .map((p) => ({
+      ...p,
+      users: p['users!posts_user_id_fkey'] || p.users || null,
+      remix_src: p.remix_src ? { ...p.remix_src, users: p.remix_src['users!posts_user_id_fkey'] || p.remix_src.users || null } : null,
+    }))
     .filter((p) => !isPostHidden(p.id) && !isUserMuted(p.user_id));
+
+  // run a feed query; if the database doesn't have the duet/stitch columns yet, retry without them
+  const exec = async (build) => {
+    let r = await build();
+    if (r.error && remixOn.current && /remix|allow_remix|relationship|schema cache|column/i.test(r.error.message || '')) {
+      remixOn.current = false;
+      r = await build();
+    }
+    return r;
+  };
 
   // returns { rows, done } and advances cursor / offset for the next page
   const fetchPage = useCallback(async (which, first) => {
     if (which === 'trending') {
       if (first) {
         const since = new Date(Date.now() - 7 * 864e5).toISOString();
-        const { data, error: e } = await baseQuery().gte('created_at', since).order('likes_count', { ascending: false }).limit(80);
+        const { data, error: e } = await exec(() => baseQuery().gte('created_at', since).order('likes_count', { ascending: false }).limit(80));
         if (e) throw e;
         const perCreator = {};
         trendRef.current = clean(data || [])
@@ -552,17 +747,18 @@ export default function BFlash() {
       return { rows, done: offsetRef.current >= trendRef.current.length };
     }
 
-    let q = baseQuery().order('created_at', { ascending: false }).limit(which === 'foryou' ? PAGE * 2 : PAGE);
-    if (!first && cursorRef.current) q = q.lt('created_at', cursorRef.current);
-    if (which === 'following') {
-      if (!followRef.current) {
-        const { data, error: e } = await supabase.from('follows').select('following_id').eq('follower_id', user.id);
-        if (e) throw e;
-        followRef.current = [...(data || []).map((f) => f.following_id), user.id];
-      }
-      q = q.in('user_id', followRef.current);
+    if (which === 'following' && !followRef.current) {
+      const { data: fl, error: fe } = await supabase.from('follows').select('following_id').eq('follower_id', user.id);
+      if (fe) throw fe;
+      followRef.current = [...(fl || []).map((f) => f.following_id), user.id];
     }
-    const { data, error: e } = await q;
+    const build = () => {
+      let q = baseQuery().order('created_at', { ascending: false }).limit(which === 'foryou' ? PAGE * 2 : PAGE);
+      if (!first && cursorRef.current) q = q.lt('created_at', cursorRef.current);
+      if (which === 'following') q = q.in('user_id', followRef.current);
+      return q;
+    };
+    const { data, error: e } = await exec(build);
     if (e) throw e;
     const raw = data || [];
     if (raw.length) cursorRef.current = raw[raw.length - 1].created_at;
@@ -625,7 +821,13 @@ export default function BFlash() {
   useEffect(() => {
     const p = items[active];
     if (!p) return undefined;
-    const t = setTimeout(() => markSeen(p.id), 1500);
+    const t = setTimeout(() => {
+      markSeen(p.id);
+      if (!viewed.current.has(p.id) && !document.hidden) {
+        viewed.current.add(p.id);
+        supabase.rpc('record_post_view', { p_post_id: p.id }).then(() => {}, () => {});
+      }
+    }, 2000);
     return () => clearTimeout(t);
   }, [active, items]);
 
@@ -660,9 +862,9 @@ export default function BFlash() {
   const updateItem = (id, v) => setItems((prev) => prev.map((p) => (p.id === id ? { ...p, ...v } : p)));
   const removeFromFeed = (pred) => setItems((prev) => prev.filter((p) => !pred(p)));
 
-  const like = async (p, onlyAdd = false) => {
+  const like = async (p) => {
     const s = sOf(p);
-    if (onlyAdd && s.liked) return;
+    if (fp.haptics) { try { if (navigator.vibrate) navigator.vibrate(10); } catch { /* unsupported */ } }
     const prev = { liked: s.liked, reaction: s.reaction, likes: s.likes };
     const next = !s.liked;
     const type = s.liked ? (s.reaction || 'like') : 'like';
@@ -751,8 +953,8 @@ export default function BFlash() {
   const frozen = !!(commentsId || creatorId);
 
   return (
-    <div className="fixed left-0 right-0 z-20 bg-black" style={boxStyle}>
-      <style>{'.bflash-sc{scrollbar-width:none}.bflash-sc::-webkit-scrollbar{display:none}'}</style>
+    <div className={'bf-root fixed left-0 right-0 z-20 bg-black' + (fp.motion ? '' : ' bf-nomotion')} style={boxStyle}>
+      <style>{BF_CSS}</style>
       <div className="relative h-full w-full max-w-[480px] mx-auto overflow-hidden">
 
         <div ref={scRef} className="bflash-sc absolute inset-0 snap-y snap-mandatory"
@@ -767,11 +969,16 @@ export default function BFlash() {
                     active={i === active} isNext={i === active + 1}
                     muted={muted} canPlay={canPlay} saver={saver} speed={fp.speed} toggleReq={toggleReq}
                     split={commentsId === p.id}
+                    isMine={p.user_id === user?.id}
+                    leftHanded={fp.leftHanded} clean={fp.clean} showProgress={fp.progress}
+                    quality={prefs.video_quality} onSource={() => p.remix_of && navigate('/post/' + p.remix_of)}
+                    onMention={(name) => navigate('/profile/' + name)}
+                    onHashtag={(t) => setTagFilter(String(t).replace(/[^\w]/g, '') || null)}
                     loopVideo={!fp.autoscroll}
                     st={sOf(p)}
                     onVideoRef={onVideoRef} onSoundBlocked={onSoundBlocked}
                     onLike={() => like(p)}
-                    onDoubleLike={() => like(p, true)}
+                    onDoubleLike={() => like(p)}
                     onComment={() => setCommentsId(p.id)}
                     onSave={() => save(p)}
                     onShare={() => setShareFor(p)}
@@ -798,9 +1005,8 @@ export default function BFlash() {
               <span className="text-white font-extrabold text-[17px] tracking-tight">B-Flash</span>
             </div>
             <div className="flex items-center pointer-events-auto">
-              <TopIcon icon={muted ? VolumeX : Volume2} label={muted ? 'Turn sound on' : 'Turn sound off'} onClick={toggleSound} />
               <TopIcon icon={Settings} label="B-Flash settings" onClick={() => setSettingsOpen(true)} />
-              <TopIcon icon={Plus} label="Create a video post" onClick={() => navigate('/create')} />
+              <PlusButton onClick={() => navigate('/flash/create')} />
             </div>
           </div>
           <div className="flex items-center justify-center gap-5 pb-3 pointer-events-auto">
@@ -814,7 +1020,16 @@ export default function BFlash() {
           </div>
         </div>
 
-        {soundBlocked && muted && !frozen && items.length > 0 && (
+        {tagFilter && (
+          <div className="absolute left-0 right-0 z-10 flex justify-center pointer-events-none" style={{ top: 'calc(max(6px, env(safe-area-inset-top)) + 92px)' }}>
+            <button onClick={() => setTagFilter(null)} aria-label="Clear hashtag filter"
+              className="pointer-events-auto h-8 pl-3 pr-2 rounded-full flex items-center gap-1.5 text-[13px] font-bold text-white" style={{ background: 'rgba(77,182,255,.28)', border: '1px solid rgba(77,182,255,.6)' }}>
+              #{tagFilter} <X size={14} />
+            </button>
+          </div>
+        )}
+
+        {soundBlocked && muted && !frozen && items.length > 0 && !tagFilter && (
           <button onClick={toggleSound}
             className="absolute left-1/2 -translate-x-1/2 z-10 px-4 h-10 rounded-full bg-black/70 text-white text-[13px] font-bold flex items-center gap-2"
             style={{ top: 'calc(max(6px, env(safe-area-inset-top)) + 98px)' }}>
@@ -838,18 +1053,19 @@ export default function BFlash() {
               {tab === 'following' && (
                 <button onClick={() => setTab('foryou')} className="px-5 py-2.5 rounded-xl text-white font-bold bg-white/10">Explore For You</button>
               )}
-              <button onClick={() => navigate('/create')} className="px-5 py-2.5 rounded-xl text-white font-bold" style={{ background: ACCENT }}>Post a video</button>
+              <button onClick={() => navigate('/flash/create')} className="px-5 py-2.5 rounded-xl text-white font-bold" style={{ background: ACCENT }}>Post a video</button>
             </EmptyState>
           </div>
         )}
 
         {/* SplitView comments (light design) */}
         {commentsPost && (
-          <div className="absolute left-0 right-0 bottom-0 z-20 bg-white rounded-t-3xl border-t border-[#E4E6EB] flex flex-col" style={{ height: '62%' }}>
-            <div className="flex items-center justify-center pt-2.5 pb-1.5 flex-shrink-0 relative">
+          <div className="absolute left-0 right-0 bottom-0 z-20 bg-white rounded-t-3xl border-t border-[#E4E6EB] flex flex-col" style={{ height: '64%' }}>
+            <div className="flex items-center justify-between h-12 px-2 flex-shrink-0 border-b border-[#E4E6EB]">
+              <span className="w-11" />
               <div className="w-10 h-1 rounded-full bg-[#CED0D4]" />
-              <button onClick={() => setCommentsId(null)} aria-label="Close comments" className="absolute right-1 top-0 w-11 h-11 flex items-center justify-center text-[#65676B]">
-                <X size={20} />
+              <button onClick={() => setCommentsId(null)} aria-label="Close comments" className="w-11 h-11 flex items-center justify-center text-[#65676B] active:scale-90 transition-transform">
+                <X size={22} />
               </button>
             </div>
             <div className="flex-1 min-h-0 flex flex-col">
@@ -881,7 +1097,10 @@ export default function BFlash() {
         )}
       </div>
 
-      {shareFor && <ShareSheet post={shareFor} onClose={() => setShareFor(null)} onDone={(m) => { setShareFor(null); if (m) say(m); }} />}
+      {shareFor && createPortal(
+        <ShareSheet post={shareFor} onClose={() => setShareFor(null)} onDone={(m) => { setShareFor(null); if (m) say(m); }} />,
+        document.body
+      )}
 
       {/* ── video menu: long-press or ⋮ ── */}
       {menuPost && (() => {
@@ -894,18 +1113,30 @@ export default function BFlash() {
             <p className="px-5 pb-1 text-[12px] font-bold uppercase tracking-wide text-[#8E8C88]">Playback speed</p>
             <Chips options={SPEEDS} value={fp.speed} onPick={(v) => setFlashPref({ speed: v })} format={(v) => v + '×'} />
             <div className="h-px bg-white/10 my-1" />
+            {mine && (
+              <div className="grid grid-cols-3 gap-2.5 px-5 py-2">
+                {[[Pencil, 'Edit', 'edit'], [Eye, 'Analytics', 'insights'], [Trash2, 'Delete', 'confirm-delete']].map(([Ic, l, t]) => (
+                  <button key={t} onClick={() => { setPanel({ type: t, id: menuPost.id }); setMenuId(null); }}
+                    className="flex flex-col items-center gap-1.5 py-3 rounded-2xl active:scale-95 transition-transform"
+                    style={{ background: t === 'confirm-delete' ? 'rgba(229,72,77,.14)' : 'rgba(255,255,255,.07)' }}>
+                    <Ic size={22} strokeWidth={1.8} color={t === 'confirm-delete' ? '#FF6B6B' : '#fff'} />
+                    <span className="text-[12px] font-bold" style={{ color: t === 'confirm-delete' ? '#FF6B6B' : '#fff' }}>{l}</span>
+                  </button>
+                ))}
+              </div>
+            )}
             <SheetRow icon={isPaused ? Play : Pause} label={isPaused ? 'Resume video' : 'Pause video'}
               onClick={() => { setToggleReq((r) => ({ id: menuPost.id, n: r.n + 1 })); setMenuId(null); }} />
             {mine ? (
               <>
-                <SheetRow icon={Pencil} label="Edit caption & hashtags" onClick={() => { setPanel({ type: 'edit', id: menuPost.id }); setMenuId(null); }} />
                 <SheetRow icon={Globe} label="Who can watch" value={(AUDIENCES.find((a) => a.key === menuPost.audience) || AUDIENCES[0]).label}
                   onClick={() => { setPanel({ type: 'visibility', id: menuPost.id }); setMenuId(null); }} />
                 <SheetRow icon={menuPost.comments_disabled ? MessageCircle : MessageSquareOff} label={menuPost.comments_disabled ? 'Turn comments on' : 'Turn comments off'}
                   onClick={() => { ownerUpdate(menuPost, { comments_disabled: !menuPost.comments_disabled }, menuPost.comments_disabled ? 'Comments on' : 'Comments off'); setMenuId(null); }} />
+                <SheetRow icon={Columns2} label="Duets & stitches" value={menuPost.allow_remix === false ? 'Off' : 'On'}
+                  onClick={() => { ownerUpdate(menuPost, { allow_remix: menuPost.allow_remix === false }, menuPost.allow_remix === false ? 'Duets & stitches on' : 'Duets & stitches off'); setMenuId(null); }} />
                 <SheetRow icon={menuPost.is_pinned ? PinOff : Pin} label={menuPost.is_pinned ? 'Unpin from profile' : 'Pin to profile'}
                   onClick={() => { ownerUpdate(menuPost, { is_pinned: !menuPost.is_pinned }, menuPost.is_pinned ? 'Unpinned' : 'Pinned to your profile'); setMenuId(null); }} />
-                <SheetRow icon={Eye} label="View analytics" onClick={() => { setPanel({ type: 'insights', id: menuPost.id }); setMenuId(null); }} />
               </>
             ) : (
               <SheetRow icon={Bookmark} label={s.saved ? 'Remove from saved' : 'Save video'} onClick={() => { save(menuPost); setMenuId(null); }} />
@@ -913,9 +1144,14 @@ export default function BFlash() {
             <SheetRow icon={Link2} label="Copy link" onClick={() => copyLink(menuPost)} />
             <SheetRow icon={Share2} label="Share" onClick={() => { setShareFor(menuPost); setMenuId(null); }} />
             <SheetRow icon={Maximize} label="Full screen" onClick={() => fullscreen(menuPost)} />
-            {mine ? (
-              <SheetRow icon={Trash2} label="Delete video" danger onClick={() => { setPanel({ type: 'confirm-delete', id: menuPost.id }); setMenuId(null); }} />
-            ) : (
+            <SheetRow icon={muted ? Volume2 : VolumeX} label={muted ? 'Turn sound on' : 'Turn sound off'} onClick={() => { toggleSound(); setMenuId(null); }} />
+            {!mine && menuPost.allow_remix !== false && menuPost.audience === 'public' && (
+              <>
+                <SheetRow icon={Columns2} label="Duet with this video" onClick={() => { setMenuId(null); navigate('/flash/create?remix=' + menuPost.id + '&type=duet'); }} />
+                <SheetRow icon={Combine} label="Stitch this video" onClick={() => { setMenuId(null); navigate('/flash/create?remix=' + menuPost.id + '&type=stitch'); }} />
+              </>
+            )}
+            {!mine && (
               <>
                 <SheetRow icon={User} label="View creator" onClick={() => { setCreatorId(menuPost.id); setMenuId(null); }} />
                 <SheetRow icon={EyeOff} label="Not interested" onClick={() => notInterested(menuPost)} />
@@ -924,6 +1160,8 @@ export default function BFlash() {
                 <SheetRow icon={Ban} label="Block creator" danger onClick={() => { setPanel({ type: 'confirm-block', id: menuPost.id }); setMenuId(null); }} />
               </>
             )}
+            <div className="h-px bg-white/10 my-1" />
+            <SheetRow icon={Settings} label="B-Flash settings" onClick={() => { setMenuId(null); setSettingsOpen(true); }} />
           </Sheet>
         );
       })()}
@@ -966,7 +1204,7 @@ export default function BFlash() {
       {/* ── B-Flash settings ── */}
       {settingsOpen && (
         <Sheet onClose={() => setSettingsOpen(false)} title="B-Flash settings">
-          <p className="px-5 pt-1 text-[12px] font-bold uppercase tracking-wide text-[#8E8C88]">Playback</p>
+          <SectionLabel>Playback</SectionLabel>
           <Toggle label="Autoplay videos" desc="Start each video as soon as it’s on screen."
             on={!!prefs.autoplay_videos} onChange={(v) => setPrefs({ autoplay_videos: v })} />
           <Toggle label="Auto-scroll" desc="Move to the next video when one finishes. Off: the video repeats."
@@ -975,15 +1213,43 @@ export default function BFlash() {
             on={fp.pauseOnComments} onChange={(v) => setFlashPref({ pauseOnComments: v })} />
           <p className="px-5 pt-2 text-[#8E8C88] text-[12px]">Default speed</p>
           <Chips options={SPEEDS} value={fp.speed} onPick={(v) => setFlashPref({ speed: v })} format={(v) => v + '×'} />
-          <p className="px-5 pt-3 text-[12px] font-bold uppercase tracking-wide text-[#8E8C88]">Sound</p>
-          <Toggle label="Play with sound when possible" desc="If your browser blocks sound, videos start muted and you can tap to turn it on."
-            on={fp.sound} onChange={(v) => { setFlashPref({ sound: v }); setMuted(!v); setSoundBlocked(false); }} />
-          <p className="px-5 pt-3 text-[12px] font-bold uppercase tracking-wide text-[#8E8C88]">Data & quality</p>
+
+          <SectionLabel>Sound</SectionLabel>
+          <Toggle label="Sound" desc="If your browser blocks sound, videos start muted and you can tap to turn it on."
+            on={!muted} onChange={() => toggleSound()} />
+
+          <SectionLabel>Data & quality</SectionLabel>
           <Toggle label="Data saver" desc="Lower video quality and no preloading. Autoplay stays off."
             on={saver} onChange={(v) => setPrefs({ data_saver: v })} />
           <p className="px-5 pt-2 text-[#8E8C88] text-[12px]">Video quality</p>
           <Chips options={['auto', 'high', 'medium', 'low']} value={prefs.video_quality} onPick={(v) => setPrefs({ video_quality: v })}
             format={(v) => v.charAt(0).toUpperCase() + v.slice(1)} />
+
+          <SectionLabel>Layout & display</SectionLabel>
+          <Toggle label="Left-handed controls" desc="Move the buttons to the left side of the screen."
+            on={fp.leftHanded} onChange={(v) => setFlashPref({ leftHanded: v })} />
+          <Toggle label="Clean mode" desc="Hide captions and buttons so only the video shows. Hold the video for the menu."
+            on={fp.clean} onChange={(v) => setFlashPref({ clean: v })} />
+          <Toggle label="Progress line" desc="Show how far through the video you are."
+            on={fp.progress} onChange={(v) => setFlashPref({ progress: v })} />
+          <Toggle label="Animations" desc="Button and like animations."
+            on={fp.motion} onChange={(v) => setFlashPref({ motion: v })} />
+          <Toggle label="Vibration feedback" desc="A small buzz when you like or hold a video."
+            on={fp.haptics} onChange={(v) => setFlashPref({ haptics: v })} />
+
+          <SectionLabel>Your feed</SectionLabel>
+          <p className="px-5 text-[#8E8C88] text-[12px]">Open B-Flash on</p>
+          <Chips options={TABS.map((t) => t[0])} value={fp.defaultTab} onPick={(v) => setFlashPref({ defaultTab: v })}
+            format={(v) => (TABS.find((t) => t[0] === v) || [0, v])[1]} />
+          <SheetRow icon={RotateCcw} label="Clear watched history" value="For You starts fresh"
+            onClick={() => { try { localStorage.removeItem(SEEN_KEY); } catch { /* storage blocked */ } say('Watched history cleared'); }} />
+          <SheetRow icon={EyeOff} label="Show hidden videos again" value={String(hiddenPostCount())}
+            onClick={() => { clearHiddenPosts(); say('Hidden videos will show again'); loadFirst(tab); }} />
+          <SheetRow icon={BellOff} label="Unmute all creators" value={String(getMutedUserIds().length)}
+            onClick={() => { getMutedUserIds().forEach(unmuteUser); say('Creators unmuted'); loadFirst(tab); }} />
+
+          <SectionLabel>Safety</SectionLabel>
+          <SheetRow icon={Ban} label="Blocked accounts" value="Manage" onClick={() => { setSettingsOpen(false); navigate('/settings'); }} />
         </Sheet>
       )}
     </div>
@@ -1007,9 +1273,9 @@ function EditSheet({ post, onClose, onSave }) {
     <Sheet onClose={onClose} title="Edit video details">
       <div className="px-5 flex flex-col gap-3">
         <label className="text-[#8E8C88] text-[12px] font-bold">Caption</label>
-        <textarea value={caption} onChange={(e) => setCaption(e.target.value)} rows={4} maxLength={500}
-          className="w-full bg-white/[0.07] border border-white/10 rounded-2xl px-4 py-3 text-white outline-none resize-none focus:border-[#FF5A1F]/60"
-          style={{ fontSize: 16 }} />
+        <div className="bg-white/[0.07] border border-white/10 rounded-2xl px-4 py-3 focus-within:border-[#FF5A1F]/60">
+          <MentionTextarea value={caption} onChange={setCaption} rows={4} maxLength={500} placeholder="Write a caption…" className="text-[16px] leading-snug" />
+        </div>
         <p className="text-right text-[11px] text-[#8E8C88]">{caption.length}/500</p>
         <label className="text-[#8E8C88] text-[12px] font-bold">Hashtags</label>
         <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="#comedy #nairobi"

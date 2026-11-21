@@ -19,6 +19,7 @@ const Verify2FA = lazy(() => import('./pages/auth/Verify2FA'));
 const Home               = lazy(() => import('./pages/feed/Home'));
 const Discover           = lazy(() => import('./pages/discover/Discover'));
 const BFlash             = lazy(() => import('./pages/flash/BFlash'));
+const FlashStudio        = lazy(() => import('./pages/flash/FlashStudio'));
 const Notifications      = lazy(() => import('./pages/notifications/Notifications'));
 const Profile            = lazy(() => import('./pages/profile/Profile'));
 const EditProfile        = lazy(() => import('./pages/profile/EditProfile'));
@@ -180,6 +181,7 @@ function AppShell() {
           <Route path="/"              element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/discover"      element={<ProtectedRoute><Discover /></ProtectedRoute>} />
           <Route path="/flash"         element={<ProtectedRoute><BFlash /></ProtectedRoute>} />
+          <Route path="/flash/create"  element={<ProtectedRoute><FlashStudio /></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
           <Route path="/chats"         element={<ProtectedRoute><Chats /></ProtectedRoute>} />
           <Route path="/chats/:id"     element={<ProtectedRoute><ChatDetail /></ProtectedRoute>} />

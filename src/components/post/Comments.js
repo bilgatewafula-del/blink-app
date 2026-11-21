@@ -2,12 +2,14 @@
 // Compact, Instagram/TikTok-style comments: opens as a bottom sheet from the
 // feed (CommentsSheet) or inline on the post page (CommentsPanel).
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import {
-  Heart, MoreHorizontal, Reply, Copy, Pencil, Trash2, EyeOff, Eye, Pin, PinOff, Flag, X, Send, ChevronDown, MessageSquareOff, ArrowDown,
+  Heart, MoreHorizontal, Reply, Copy, Pencil, Trash2, EyeOff, Eye, Pin, PinOff, Flag, X, Send, ChevronDown, MessageSquareOff, ArrowDown, Smile,
 } from 'lucide-react';
 import Avatar from '../Avatar';
+import SmartEmojiPicker from '../SmartEmojiPicker';
 import VerifiedBadge from '../VerifiedBadge';
 import { Spinner } from '../ui';
 import useViewport from '../../lib/useViewport';
@@ -135,6 +137,17 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, inline =
   const [toast, setToast] = useState(null);
   const [fresh, setFresh] = useState(0);
   const inputRef = useRef(null);
+  const emojiBtn = useRef(null);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const insertEmoji = (data) => {
+    const emoji = (data && data.emoji) || '';
+    if (!emoji) return;
+    const el = inputRef.current;
+    const a = el ? el.selectionStart : text.length;
+    const b = el ? el.selectionEnd : text.length;
+    setText((t) => t.slice(0, a) + emoji + t.slice(b));
+    requestAnimationFrame(() => { if (el) { el.focus(); const pos = a + emoji.length; el.setSelectionRange(pos, pos); } });
+  };
   const toastT = useRef(null);
   const alive = useRef(true);
 
@@ -362,6 +375,10 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, inline =
             <div className="flex items-end gap-2.5 px-3 pt-2">
               <Avatar url={profile?.avatar_url} name={profile?.display_name} size={8} />
               <div className="flex-1 min-w-0 bg-[#F1F2F4] border border-[#E4E6EB] rounded-3xl px-4 flex items-end focus-within:border-[#FF5A1F]/50">
+                <button ref={emojiBtn} type="button" onClick={() => setEmojiOpen((v) => !v)} aria-label="Add emoji" aria-pressed={emojiOpen}
+                  className="self-end py-2.5 pr-2.5 text-[#65676B] active:scale-90 transition-transform" style={emojiOpen ? { color: '#FF5A1F' } : undefined}>
+                  <Smile size={22} strokeWidth={1.8} />
+                </button>
                 <textarea
                   ref={inputRef} value={text} rows={1} maxLength={MAX_LEN + 20} enterKeyHint="send"
                   onChange={(e) => { setText(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 110) + 'px'; }}
@@ -380,6 +397,11 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, inline =
           </>
         )}
       </div>
+
+      {createPortal(
+        <SmartEmojiPicker open={emojiOpen} onClose={() => setEmojiOpen(false)} onEmojiClick={insertEmoji} triggerRef={emojiBtn} />,
+        document.body
+      )}
 
       {toast && (
         <div className={'absolute left-4 right-4 z-40 rounded-2xl px-4 py-3 text-[13px] font-semibold text-center shadow-xl ' + (toast.error ? 'bg-red-500 text-white' : 'bg-[#1C1E21] text-white')} style={{ bottom: 150 }}>{toast.t}</div>
