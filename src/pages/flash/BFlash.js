@@ -9,7 +9,7 @@ import {
   Heart, MessageCircle, Bookmark, Share2, EllipsisVertical, Play, Pause, Volume2, VolumeX,
   Plus, X, Zap, Flag, Settings, Clapperboard, EyeOff, BellOff, Ban, RefreshCw, Link2,
   Maximize, Pin, PinOff, Pencil, Trash2, Eye, Globe, Users, Lock, MessageSquareOff, User, Check,
-  HeartCrack, RotateCcw, Columns2, Combine,
+  HeartCrack, RotateCcw, Columns2, Combine, Search, BarChart3, Captions,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
@@ -19,6 +19,8 @@ import FollowButton from '../../components/FollowButton';
 import { EmptyState, Spinner } from '../../components/ui';
 import { CommentsPanel } from '../../components/post/Comments';
 import { ShareSheet } from '../../components/post/Sheets';
+import FlashSearch from './FlashSearch';
+import { REL, fetchRelationships, setFollow, iFollowThem, onFollowChange } from '../../lib/follows';
 import RichText from '../../components/RichText';
 import MentionTextarea from '../../components/MentionTextarea';
 import { notifyAdminOnReport } from '../../utils/notifyAdmin';
@@ -59,6 +61,9 @@ const SELECT = `
 const REMIX_SELECT = `, allow_remix, remix_of, remix_type, remix_clip_end,
   remix_src:posts!remix_of(id, video_url, video_thumbnail, video_duration, users!posts_user_id_fkey(username, display_name))`;
 
+const POLL_SELECT = ', poll:post_polls(question, options)';
+const CAP_SELECT = ', captions';
+
 // edited videos already carry Cloudinary edits; add the viewer's quality choice after them
 const QUALITY = { low: 'q_auto:low,w_480', medium: 'q_auto:good,w_720', high: 'q_auto:best' };
 const flashSrc = (url, saver, quality) => {
@@ -72,7 +77,7 @@ const flashSrc = (url, saver, quality) => {
 const FKEY = 'blink_flash_prefs_v1';
 const FDEFAULT = {
   autoscroll: false, pauseOnComments: false, sound: true, speed: 1,
-  leftHanded: false, clean: false, progress: true, motion: true, haptics: true, defaultTab: 'foryou',
+  leftHanded: false, clean: false, progress: true, motion: true, haptics: true, defaultTab: 'foryou', captions: true,
 };
 const readFlashPrefs = () => {
   try { return { ...FDEFAULT, ...(JSON.parse(localStorage.getItem(FKEY)) || {}) }; } catch { return { ...FDEFAULT }; }
@@ -304,7 +309,7 @@ function CreatorPanel({ post, isMe, onClose, onOpenProfile, onMute, onBlock }) {
 /* ── one video panel ── */
 function Slide({
   post, active, isNext, muted, canPlay, split, loopVideo, saver, speed, toggleReq, st, isMine,
-  leftHanded, clean, showProgress, quality, onSource,
+  leftHanded, clean, showProgress, quality, onSource, rel, onFollow, showCaptions, onPoll,
   onVideoRef, onSoundBlocked, onLike, onDoubleLike, onComment, onSave, onShare, onMore, onLongPress,
   onCreator, onEnded, onMention, onHashtag,
 }) {
@@ -329,6 +334,10 @@ function Slide({
   const isDuet = !!rsrc && post.remix_type === 'duet';
   const isStitch = !!rsrc && post.remix_type === 'stitch';
   const clipEnd = Number(post.remix_clip_end) || 3;
+  const [capText, setCapText] = useState('');
+  const capRef = useRef('');
+  const caps = Array.isArray(post.captions) && post.captions.length ? post.captions : null;
+  const poll = post.poll && Array.isArray(post.poll.options) ? post.poll : null;
   const [phase, setPhase] = useState('src');                                      // stitch: 'src' clip first, then 'own'
   const showingSrc = isStitch && phase === 'src';
   const src = showingSrc ? flashSrc(rsrc.video_url, saver, quality) : flashSrc(post.video_url, saver, quality);
@@ -380,7 +389,7 @@ function Slide({
     else { userPaused.current = true; v.pause(); setPaused(true); }
   }, [tryPlay]);
 
-  useEffect(() => { if (!active) setPhase('src'); }, [active]);
+  useEffect(() => { if (!active) { setPhase('src'); capRef.current = ''; setCapText(''); } }, [active]);
   useEffect(() => { // stitch moved on to the creator's own video: keep playing
     if (isStitch && activeRef.current && canPlayRef.current && !userPaused.current) tryPlay();
   }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -480,6 +489,12 @@ function Slide({
     if (!v) return;
     if (isStitch && phase === 'src' && v.currentTime >= clipEnd) { setPhase('own'); return; }
     if (isDuet && sref.current && v.currentTime < 0.3 && sref.current.currentTime > 1) sref.current.currentTime = 0;
+    if (caps && showCaptions && !(isStitch && phase === 'src')) {                 // subtitle line for this moment
+      const tNow = v.currentTime;
+      const line = caps.find((c) => tNow >= c.s && tNow < c.e);
+      const txt = line ? line.t : '';
+      if (txt !== capRef.current) { capRef.current = txt; setCapText(txt); }
+    }
     if (!b || !v.duration) return;
     let pct = v.currentTime / v.duration;
     if (isStitch) {
@@ -559,6 +574,11 @@ function Slide({
             className="bfa absolute pointer-events-none"
             style={{ left: '50%', top: '50%', animation: 'bfBroken .7s ease-in forwards' }} />
         )}
+        {capText && showCaptions && !showingSrc && (
+          <div className="absolute pointer-events-none flex justify-center" style={{ left: 16, right: leftHanded ? 16 : 72, bottom: split ? 10 : '24%' }}>
+            <span className="px-2.5 py-1 rounded-lg text-white text-[15px] font-bold leading-snug text-center" style={{ background: 'rgba(0,0,0,.62)' }}>{capText}</span>
+          </div>
+        )}
         {showProgress && (
           <div className="absolute left-0 right-0 bottom-0 h-[3px] bg-white/20 pointer-events-none">
             <div ref={barRef} className="h-full origin-left" style={{ background: ACCENT, transform: 'scaleX(0)' }} />
@@ -582,17 +602,18 @@ function Slide({
                 {u.is_verified && <VerifiedBadge size={15} />}
                 {post.is_pinned && <Pin size={13} color="#fff" />}
               </button>
-              {!isMine && u.id && (
-                <span className="pointer-events-auto flex-shrink-0">
-                  <FollowButton targetId={u.id} username={u.username} displayName={u.display_name} avatarUrl={u.avatar_url} size="sm" />
-                </span>
-              )}
             </div>
             {rsrc && (
               <button onClick={onSource} className="pointer-events-auto mb-1.5 h-7 px-2.5 rounded-full flex items-center gap-1.5 text-white text-[12px] font-bold max-w-full"
                 style={{ background: 'rgba(255,255,255,.16)', backdropFilter: 'blur(6px)' }}>
                 {isStitch ? <Combine size={13} /> : <Columns2 size={13} />}
                 <span className="truncate">{isStitch ? 'Stitch with' : 'Duet with'} @{(rsrc.users && rsrc.users.username) || 'creator'}</span>
+              </button>
+            )}
+            {poll && (
+              <button onClick={onPoll} className="pointer-events-auto mb-1.5 h-7 px-2.5 rounded-full flex items-center gap-1.5 text-white text-[12px] font-bold max-w-full"
+                style={{ background: 'rgba(77,182,255,.30)', border: '1px solid rgba(77,182,255,.55)' }}>
+                <BarChart3 size={13} /> <span className="truncate">Poll: {poll.question}</span>
               </button>
             )}
             {post.caption && (
@@ -602,11 +623,21 @@ function Slide({
             )}
           </div>
           <div className={'absolute bottom-[18px] flex flex-col items-center gap-3.5 ' + side}>
-            <button onClick={onCreator} aria-label={'Open ' + (u.username || 'creator') + ' details'} className="active:scale-90 transition-transform">
-              <span className="block rounded-full p-[2px]" style={{ background: 'linear-gradient(135deg,#FF5A1F,#FF2D78)' }}>
-                <Avatar url={u.avatar_url} name={u.display_name || u.username} size={10} />
-              </span>
-            </button>
+            <div className="relative mb-2">
+              <button onClick={onCreator} aria-label={'Open ' + (u.username || 'creator') + ' details'} className="active:scale-90 transition-transform">
+                <span className="block rounded-full p-[2px]" style={{ background: 'linear-gradient(135deg,#FF5A1F,#FF2D78)' }}>
+                  <Avatar url={u.avatar_url} name={u.display_name || u.username} size={10} />
+                </span>
+              </button>
+              {!isMine && u.id && rel !== undefined && !iFollowThem(rel) && (
+                <button onClick={(e) => { e.stopPropagation(); onFollow(); }} aria-label={'Follow @' + (u.username || 'creator')}
+                  className="absolute left-1/2 -translate-x-1/2 -bottom-4 w-10 h-10 flex items-center justify-center active:scale-90 transition-transform">
+                  <span className="w-[22px] h-[22px] rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#FF5A1F,#FF2D78)', border: '2px solid #0D0C0B' }}>
+                    <Plus size={13} strokeWidth={3} color="#fff" />
+                  </span>
+                </button>
+              )}
+            </div>
             <RailButton icon={Heart} label={st.liked ? 'Unlike' : 'Like'} active={st.liked} fill tone={TONE.like} anim="bfPop" count={st.likes} onClick={onLike} />
             <RailButton icon={MessageCircle} label="Comments" tone={TONE.comment} anim="bfBounce" count={st.comments} onClick={onComment} />
             <RailButton icon={Bookmark} label={st.saved ? 'Remove from saved' : 'Save'} active={st.saved} fill tone={TONE.save} anim="bfSwing" onClick={onSave} />
@@ -629,6 +660,9 @@ export default function BFlash() {
   const [tab, setTab] = useState(() => (readSession() || {}).tab || readFlashPrefs().defaultTab || 'foryou');
   const [tagFilter, setTagFilter] = useState(() => (readSession() || {}).tag || null);
   const [cEmoji, setCEmoji] = useState(false);
+  const [rels, setRels] = useState({});
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [pollFor, setPollFor] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -658,6 +692,9 @@ export default function BFlash() {
   const toastT = useRef(null);
   const videoEls = useRef({});
   const remixOn = useRef(true);
+  const pollOn = useRef(true);
+  const capOn = useRef(true);
+  const searchRef = useRef(null);
   const restoreId = useRef((readSession() || {}).id || null);
   const synced = useRef(false);
   const entryPushed = useRef(false);
@@ -697,8 +734,10 @@ export default function BFlash() {
   const onVideoRef = useCallback((id, el) => { if (el) videoEls.current[id] = el; else delete videoEls.current[id]; }, []);
 
   /* ── data ── */
+  useEffect(() => onFollowChange(({ targetId, relationship }) => setRels((r) => ({ ...r, [targetId]: relationship }))), []);
   const hydrate = useCallback((rows) => {
     if (!user?.id) return;
+    fetchRelationships(user.id, [...new Set(rows.map((r) => r.user_id))]).then((m) => setRels((r) => ({ ...r, ...m })), () => {});
     rows.forEach((p) => {
       requestPostState(user.id, p.id).then((st) => {
         setOv((o) => ({ ...o, [p.id]: { liked: st.liked, saved: st.saved, reaction: st.reaction, ...(o[p.id] || {}) } }));
@@ -707,7 +746,7 @@ export default function BFlash() {
   }, [user?.id]);
 
   const baseQuery = useCallback(() => {
-    let q = supabase.from('posts').select(remixOn.current ? SELECT + REMIX_SELECT : SELECT)
+    let q = supabase.from('posts').select(selectStr())
       .not('video_url', 'is', null)
       .eq('is_draft', false)
       .eq('audience', 'public')
@@ -717,19 +756,26 @@ export default function BFlash() {
     return q;
   }, [tagFilter]);
 
-  const clean = (raw) => raw
-    .map((p) => ({
-      ...p,
-      users: p['users!posts_user_id_fkey'] || p.users || null,
-      remix_src: p.remix_src ? { ...p.remix_src, users: p.remix_src['users!posts_user_id_fkey'] || p.remix_src.users || null } : null,
-    }))
-    .filter((p) => !isPostHidden(p.id) && !isUserMuted(p.user_id));
+  // the optional parts (duets, polls, captions) need the SQL updates; if one is missing the feed still loads without it
+  const selectStr = () => SELECT + (remixOn.current ? REMIX_SELECT : '') + (pollOn.current ? POLL_SELECT : '') + (capOn.current ? CAP_SELECT : '');
+  const normalizeRow = (p) => ({
+    ...p,
+    users: p['users!posts_user_id_fkey'] || p.users || null,
+    remix_src: p.remix_src ? { ...p.remix_src, users: p.remix_src['users!posts_user_id_fkey'] || p.remix_src.users || null } : null,
+    poll: Array.isArray(p.poll) ? (p.poll[0] || null) : (p.poll || null),
+    captions: Array.isArray(p.captions) ? p.captions : null,
+  });
+  const clean = (raw) => raw.map(normalizeRow).filter((p) => !isPostHidden(p.id) && !isUserMuted(p.user_id));
 
-  // run a feed query; if the database doesn't have the duet/stitch columns yet, retry without them
+  // run a feed query; if the database doesn't have a newer column or table yet, retry without just that part
   const exec = async (build) => {
     let r = await build();
-    if (r.error && remixOn.current && /remix|allow_remix|relationship|schema cache|column/i.test(r.error.message || '')) {
-      remixOn.current = false;
+    for (let i = 0; i < 3 && r.error; i += 1) {
+      const msg = r.error.message || '';
+      if (pollOn.current && /post_polls|poll/i.test(msg)) pollOn.current = false;
+      else if (capOn.current && /captions/i.test(msg)) capOn.current = false;
+      else if (remixOn.current && /remix|allow_remix|relationship|schema cache|column/i.test(msg)) remixOn.current = false;
+      else break;
       r = await build();
     }
     return r;
@@ -825,10 +871,10 @@ export default function BFlash() {
       const el = scRef.current && scRef.current.querySelector('[data-index="' + idx + '"]');
       if (el) { scRef.current.scrollTop = el.offsetTop; setActive(idx); }
     } else if (idx < 0) {
-      supabase.from('posts').select(SELECT).eq('id', id).eq('audience', 'public').not('video_url', 'is', null).neq('status', 'deleted').maybeSingle()
+      supabase.from('posts').select(selectStr()).eq('id', id).eq('audience', 'public').not('video_url', 'is', null).neq('status', 'deleted').maybeSingle()
         .then(({ data }) => {
           if (!data || isUserMuted(data.user_id)) return;
-          const row = { ...data, users: data['users!posts_user_id_fkey'] || data.users || null };
+          const row = normalizeRow(data);
           setItems((prev) => [row, ...prev.filter((p) => p.id !== id)]);
           setActive(0);
           hydrate([row]);
@@ -932,6 +978,20 @@ export default function BFlash() {
     }
   };
 
+  const followCreator = async (p) => {
+    const id = p.user_id;
+    const prev = rels[id] || REL.NONE;
+    setRels((r) => ({ ...r, [id]: REL.FOLLOWING }));                        // the + disappears straight away
+    try {
+      const fin = await setFollow(user.id, id, true, prev);
+      setRels((r) => ({ ...r, [id]: fin }));
+      say('Following @' + ((p.users && p.users.username) || 'creator'));
+    } catch {
+      setRels((r) => ({ ...r, [id]: prev }));
+      say('Couldn’t follow. Try again.');
+    }
+  };
+
   const save = async (p) => {
     const s = sOf(p);
     patch(p.id, { saved: !s.saved });
@@ -993,12 +1053,32 @@ export default function BFlash() {
     } catch (e) { say('Delete failed: ' + (e.message || 'try again')); }
   };
 
+  searchRef.current = async (term) => {
+    const t = term.replace(/"/g, '');
+    const tagLike = /^[\p{L}\p{N}_]+$/u.test(t);
+    const ors = ['caption.ilike."%' + t + '%"'];
+    if (tagLike) { ors.push('hashtags.cs.{' + t + '}'); if (t.toLowerCase() !== t) ors.push('hashtags.cs.{' + t.toLowerCase() + '}'); }
+    const { data, error: e } = await exec(() => baseQuery().or(ors.join(',')).order('created_at', { ascending: false }).limit(24));
+    if (e) throw e;
+    return clean(data || []);
+  };
+  const searchVideos = useCallback((term) => searchRef.current(term), []);
+  const openFromSearch = (row) => {
+    setSearchOpen(false);
+    setItems((prev) => [row, ...prev.filter((p) => p.id !== row.id)]);
+    setActive(0);
+    if (scRef.current) scRef.current.scrollTop = 0;
+    hydrate([row]);
+  };
+
   /* Back button logic: Back closes the top-most open panel first; only then does it leave B-Flash */
-  stateRef.current = { commentsId, creatorId, menuId, shareFor, panel, settingsOpen };
-  const overlayOpen = !!(commentsId || creatorId || menuId || shareFor || panel || settingsOpen);
+  stateRef.current = { commentsId, creatorId, menuId, shareFor, panel, settingsOpen, searchOpen, pollFor };
+  const overlayOpen = !!(commentsId || creatorId || menuId || shareFor || panel || settingsOpen || searchOpen || pollFor);
   const closeTop = useCallback(() => {
     const st = stateRef.current;
-    if (st.panel) setPanel(null);
+    if (st.pollFor) setPollFor(null);
+    else if (st.searchOpen) setSearchOpen(false);
+    else if (st.panel) setPanel(null);
     else if (st.settingsOpen) setSettingsOpen(false);
     else if (st.shareFor) setShareFor(null);
     else if (st.menuId) setMenuId(null);
@@ -1023,7 +1103,7 @@ export default function BFlash() {
   const go = useCallback((path, state) => {
     const replace = entryPushed.current;           // the panel's history entry becomes the new page, so Back returns to B-Flash
     entryPushed.current = false;
-    setCommentsId(null); setCreatorId(null); setMenuId(null); setShareFor(null); setPanel(null); setSettingsOpen(false);
+    setCommentsId(null); setCreatorId(null); setMenuId(null); setShareFor(null); setPanel(null); setSettingsOpen(false); setSearchOpen(false); setPollFor(null);
     navigate(path, { replace, state });
   }, [navigate]);
 
@@ -1064,6 +1144,7 @@ export default function BFlash() {
                     split={commentsId === p.id}
                     isMine={p.user_id === user?.id}
                     leftHanded={fp.leftHanded} clean={fp.clean} showProgress={fp.progress}
+                    rel={rels[p.user_id]} onFollow={() => followCreator(p)} showCaptions={fp.captions} onPoll={() => setPollFor(p.id)}
                     quality={prefs.video_quality} onSource={() => p.remix_of && go('/post/' + p.remix_of)}
                     onMention={(name) => go('/profile/' + name)}
                     onHashtag={(t) => setTagFilter(String(t).replace(/[^\w]/g, '') || null)}
@@ -1098,6 +1179,9 @@ export default function BFlash() {
               <span className="text-white font-extrabold text-[17px] tracking-tight">B-Flash</span>
             </div>
             <div className="flex items-center pointer-events-auto">
+              <button onClick={() => setSearchOpen(true)} aria-label="Search B-Flash" className="w-11 h-11 flex items-center justify-center active:scale-90 transition-transform">
+                <Search size={22} strokeWidth={STROKE} color="#fff" />
+              </button>
               <PlusButton onClick={() => go('/flash/create')} />
             </div>
           </div>
@@ -1184,6 +1268,16 @@ export default function BFlash() {
           />
         )}
 
+        {searchOpen && (
+          <FlashSearch
+            onClose={() => setSearchOpen(false)}
+            searchVideos={searchVideos}
+            onOpenVideo={openFromSearch}
+            onOpenCreator={(c) => go('/profile/' + c.username)}
+            onPickTag={(t) => { setSearchOpen(false); setTagFilter(String(t).replace(/[^\w]/g, '') || null); }}
+          />
+        )}
+
         {toast && (
           <div className="absolute left-1/2 -translate-x-1/2 bottom-6 z-40 bg-black/85 text-white text-[13px] font-semibold px-4 py-2 rounded-full whitespace-nowrap">
             {toast}
@@ -1239,6 +1333,9 @@ export default function BFlash() {
             <SheetRow icon={Share2} label="Share" onClick={() => { setShareFor(menuPost); setMenuId(null); }} />
             <SheetRow icon={Maximize} label="Full screen" onClick={() => fullscreen(menuPost)} />
             <SheetRow icon={muted ? Volume2 : VolumeX} label={muted ? 'Turn sound on' : 'Turn sound off'} onClick={() => { toggleSound(); setMenuId(null); }} />
+            {Array.isArray(menuPost.captions) && menuPost.captions.length > 0 && (
+              <SheetRow icon={Captions} label="Captions" value={fp.captions ? 'On' : 'Off'} onClick={() => { setFlashPref({ captions: !fp.captions }); setMenuId(null); }} />
+            )}
             {!mine && menuPost.allow_remix !== false && menuPost.audience === 'public' && (
               <>
                 <SheetRow icon={Columns2} label="Duet with this video" onClick={() => go('/flash/create?remix=' + menuPost.id + '&type=duet')} />
@@ -1260,6 +1357,7 @@ export default function BFlash() {
         );
       })()}
 
+      {pollFor && (() => { const pp = items.find((x) => x.id === pollFor); return pp && pp.poll ? <PollSheet post={pp} mine={pp.user_id === user?.id} onClose={() => setPollFor(null)} /> : null; })()}
       {panel && panelPost && panel.type === 'edit' && (
         <EditSheet post={panelPost} onClose={() => setPanel(null)}
           onSave={async (caption, tags) => { const ok = await ownerUpdate(panelPost, { caption, hashtags: tags }, 'Saved'); if (ok) setPanel(null); }} />
@@ -1305,6 +1403,8 @@ export default function BFlash() {
             on={fp.autoscroll} onChange={(v) => setFlashPref({ autoscroll: v })} />
           <Toggle label="Pause while commenting" desc="Stop the video while the comments are open."
             on={fp.pauseOnComments} onChange={(v) => setFlashPref({ pauseOnComments: v })} />
+          <Toggle label="Show captions" desc="Subtitles typed by the creator, when a video has them."
+            on={fp.captions} onChange={(v) => setFlashPref({ captions: v })} />
           <p className="px-5 pt-2 text-[#8E8C88] text-[12px]">Default speed</p>
           <Chips options={SPEEDS} value={fp.speed} onPick={(v) => setFlashPref({ speed: v })} format={(v) => v + '×'} />
 
@@ -1453,6 +1553,60 @@ function ReportSheet({ post, userId, onClose, onDone }) {
           {sending ? <Spinner size={16} /> : 'Submit report'}
         </button>
       </div>
+    </Sheet>
+  );
+}
+
+/* ── poll: vote once, results show after you vote ── */
+function PollSheet({ post, mine, onClose }) {
+  const poll = post.poll;
+  const [res, setRes] = useState(null);                 // { voted, total, counts, mine }
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  useEffect(() => {
+    let alive = true;
+    supabase.rpc('poll_results', { p_post_id: post.id }).then(({ data, error: e }) => {
+      if (!alive) return;
+      if (e) setErr('Polls aren’t available yet.'); else setRes(data || { voted: false, total: 0, counts: null, mine: null });
+    });
+    return () => { alive = false; };
+  }, [post.id]);
+  const vote = async (i) => {
+    if (busy || (res && res.voted)) return;
+    setBusy(true); setErr('');
+    const { data, error: e } = await supabase.rpc('vote_post_poll', { p_post_id: post.id, p_option: i });
+    setBusy(false);
+    if (e) { setErr(e.message || 'Couldn’t save your vote.'); return; }
+    setRes(data);
+  };
+  const showResults = res && res.counts;
+  const total = res ? res.total : 0;
+  return (
+    <Sheet onClose={onClose} title="Poll">
+      <p className="px-5 pb-3 text-white font-extrabold text-[18px] leading-snug">{poll.question}</p>
+      <div className="px-5 flex flex-col gap-2.5">
+        {poll.options.map((o, i) => {
+          const n = showResults ? res.counts[i] || 0 : 0;
+          const pct = total ? Math.round((n / total) * 100) : 0;
+          const picked = res && res.mine === i;
+          return (
+            <button key={i} onClick={() => vote(i)} disabled={busy || !res || res.voted}
+              className="relative h-12 rounded-xl overflow-hidden text-left disabled:opacity-100"
+              style={{ background: 'rgba(255,255,255,.08)', border: '1px solid ' + (picked ? ACCENT : 'rgba(255,255,255,.12)') }}>
+              {showResults && <span className="absolute inset-y-0 left-0" style={{ width: pct + '%', background: picked ? 'rgba(255,90,31,.45)' : 'rgba(255,255,255,.14)', transition: 'width .5s ease' }} />}
+              <span className="relative h-full flex items-center justify-between gap-3 px-4">
+                <span className="text-white font-semibold text-[15px] truncate flex items-center gap-2">{picked && <Check size={16} color={ACCENT} />}{o}</span>
+                {showResults && <span className="text-white font-bold text-[14px]">{pct}%</span>}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <p className="px-5 pt-3 text-[#8E8C88] text-[12px]">
+        {!res ? (err || 'Loading…') : res.voted ? total + ' vote' + (total === 1 ? '' : 's') + ' so far. Thanks for voting!'
+          : mine ? total + ' vote' + (total === 1 ? '' : 's') + ' so far.' : 'Pick one to see the results. You can’t change your vote.'}
+      </p>
+      {err && res && <p className="px-5 pt-1 text-[#FF6B6B] text-[13px]">{err}</p>}
     </Sheet>
   );
 }

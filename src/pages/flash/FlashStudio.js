@@ -11,7 +11,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   X, Scissors, Sparkles, Type, Volume2, VolumeX, Crop, Image as ImageIcon, Camera, SwitchCamera, Images,
-  Check, Play, Pause, Trash2, Plus, Globe, Users, Lock, Columns2, Combine, ChevronLeft,
+  Check, Play, Pause, Trash2, Plus, Globe, Users, Lock, Columns2, Combine, ChevronLeft, Captions, Minus, BarChart3,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
@@ -24,6 +24,7 @@ const MAX_LEN = 180;           // seconds
 const MIN_LEN = 1;
 const MAX_MB = 100;
 const MAX_TEXTS = 4;
+const MAX_CAPS = 40;
 const TEXT_COLORS = ['#FFFFFF', '#FFD23F', '#FF5A1F', '#4DB6FF', '#34D6A0', '#FF4D6D', '#000000'];
 const TAG_IDEAS = ['kenya', 'nairobi', 'comedy', 'music', 'dance', 'fashion', 'tech', 'sports', 'food', 'travel', 'education', 'business'];
 
@@ -55,6 +56,7 @@ const TOOLS = [
   { key: 'text', icon: Type, label: 'Text' },
   { key: 'sound', icon: Volume2, label: 'Sound' },
   { key: 'frame', icon: Crop, label: 'Frame' },
+  { key: 'caption', icon: Captions, label: 'Captions' },
   { key: 'cover', icon: ImageIcon, label: 'Cover' },
 ];
 
@@ -272,6 +274,11 @@ export default function FlashStudio() {
   const [done, setDone] = useState(false);
   const [toast, setToast] = useState('');
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [caps, setCaps] = useState([]);                           // subtitle lines, times relative to the trimmed video
+  const [pollOn, setPollOn] = useState(false);
+  const [pollQ, setPollQ] = useState('');
+  const [pollOpts, setPollOpts] = useState(['', '']);
+  const [note, setNote] = useState('');
 
   const vref = useRef(null);
   const sref = useRef(null);
@@ -326,7 +333,7 @@ export default function FlashStudio() {
     setFile(f); setObjUrl(URL.createObjectURL(f)); setMeta(m);
     setTrim({ start: 0, end: Math.min(m.duration, MAX_LEN) });
     setCoverT(Math.min(0.5, m.duration / 2)); setCoverMode('frame'); setCoverFile(null); setCoverPreview('');
-    setFilter('none'); setVolume(100); setTexts([]); setSelText(null); setPlaying(false);
+    setFilter('none'); setVolume(100); setTexts([]); setSelText(null); setPlaying(false); setCaps([]);
     setFrame(remixId && remixType === 'duet' ? 'fill' : 'orig');
     setStep('edit'); setTool('trim');
   };
@@ -401,12 +408,54 @@ export default function FlashStudio() {
   };
   const textUp = () => { dragText.current = null; };
 
+  /* ── phone Back button: details → edit, edit → "Discard?" (instead of silently leaving) ── */
+  const guard = useRef(false);
+  const stepRef = useRef(step); stepRef.current = step;
+  const busyRef = useRef(busy); busyRef.current = busy;
+  const pushGuard = () => {
+    const st = window.history.state || {};
+    window.history.pushState({ ...st, bfStudio: true, idx: (st.idx || 0) + 1 }, '');
+    guard.current = true;
+  };
+  const dropGuard = () => new Promise((resolve) => {
+    if (!guard.current) { resolve(); return; }
+    guard.current = false;
+    const h = () => { window.removeEventListener('popstate', h); resolve(); };
+    window.addEventListener('popstate', h);
+    window.history.back();
+    setTimeout(resolve, 300);
+  });
+  useEffect(() => { if (step !== 'pick' && !guard.current) pushGuard(); }, [step]);
+  useEffect(() => {
+    const onPop = () => {
+      if (!guard.current) return;
+      guard.current = false;
+      pushGuard();                                        // keep the guard in place
+      if (busyRef.current) return;
+      if (stepRef.current === 'details') setStep('edit');
+      else if (stepRef.current === 'edit') setConfirmDiscard(true);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  /* ── captions ── */
+  const addCap = () => {
+    if (caps.length >= MAX_CAPS) { say('Up to ' + MAX_CAPS + ' lines'); return; }
+    const sNow = clamp(now - trim.start, 0, Math.max(0, trimLen - 0.5));
+    setCaps((c) => [...c, { id: Date.now() + '' + c.length, s: sNow, e: Math.min(trimLen, sNow + 2.5), t: 'Caption' }].sort((a, b) => a.s - b.s));
+  };
+  const patchCap = (id, v) => setCaps((arr) => arr.map((c) => (c.id === id ? { ...c, ...v } : c)));
+  const capNow = caps.find((c) => now - trim.start >= c.s && now - trim.start < c.e);
+
   /* ── publish ── */
   const fileKey = file ? file.name + ':' + file.size + ':' + file.lastModified : '';
   const publish = async (opts = {}) => {
     if (busy || !file || !user) return;
     if (trimLen < MIN_LEN || trimLen > MAX_LEN + 0.5) { setError('Pick between 1 second and 3 minutes.'); return; }
     if (caption.length > 500) { setError('Caption is too long.'); return; }
+    const pollOptions = pollOpts.map((o) => o.trim()).filter(Boolean);
+    if (pollOn && (!pollQ.trim() || pollOptions.length < 2)) { setError('A poll needs a question and at least 2 options.'); return; }
     setError(''); setProblem(false); setBusy(true);
     try {
       let up = uploadRef.current;
@@ -451,14 +500,35 @@ export default function FlashStudio() {
       };
       if (source) { payload.remix_of = source.id; payload.remix_type = remixType; if (stitch) payload.remix_clip_end = clipEnd; }
 
-      let { error: dbErr } = await supabase.from('posts').insert(payload);
+      const lines = caps
+        .filter((c) => c.t.trim() && c.s < trimLen)
+        .map((c) => ({ s: Math.round(c.s * 100) / 100, e: Math.round(Math.min(c.e, trimLen + 0.5) * 100) / 100, t: c.t.trim().slice(0, 100) }))
+        .filter((c) => c.e > c.s).sort((a, b) => a.s - b.s).slice(0, MAX_CAPS);
+      if (lines.length) payload.captions = lines;
+
+      const insertPost = (pl) => supabase.from('posts').insert(pl).select('id').single();
+      let { data: row, error: dbErr } = await insertPost(payload);
+      let extra = '';
       if (dbErr && !source && /allow_remix|comments_disabled/i.test(dbErr.message || '')) {   // older database
         delete payload.allow_remix; delete payload.comments_disabled;
-        ({ error: dbErr } = await supabase.from('posts').insert(payload));
+        ({ data: row, error: dbErr } = await insertPost(payload));
+      }
+      if (dbErr && payload.captions && /captions/i.test(dbErr.message || '')) {              // Stage 5 SQL not run yet
+        delete payload.captions;
+        extra = 'Posted without captions: they need the Stage 5 database update. ';
+        ({ data: row, error: dbErr } = await insertPost(payload));
       }
       if (dbErr) throw new Error(dbErr.message);
+
+      if (pollOn && row && row.id) {
+        const { error: pe } = await supabase.from('post_polls').insert({ post_id: row.id, question: pollQ.trim().slice(0, 120), options: pollOptions.map((o) => o.slice(0, 40)) });
+        if (pe) extra += 'The poll couldn’t be added: it needs the Stage 5 database update.';
+      }
+      setNote(extra);
       setDone(true);
-      setTimeout(() => navigate('/flash', { replace: true }), 900);
+      await new Promise((r) => setTimeout(r, extra ? 2600 : 900));
+      await dropGuard();
+      navigate('/flash', { replace: true });
     } catch (err) {
       const raw = err.message || '';
       if (raw.includes('Daily post limit')) setError('Daily post limit reached. Come back tomorrow!');
@@ -600,6 +670,34 @@ export default function FlashStudio() {
             </button>
           ))}
 
+          <button onClick={() => setPollOn(!pollOn)} role="switch" aria-checked={pollOn} className="w-full flex items-center gap-3 py-3 text-left">
+            <span className="flex-1 min-w-0">
+              <span className="block text-white text-[15px] font-semibold flex items-center gap-2"><BarChart3 size={17} /> Add a poll</span>
+              <span className="block text-[#8E8C88] text-[12px] mt-0.5 leading-snug">Ask viewers a question. Results show after they vote.</span>
+            </span>
+            <span className="w-11 h-6 rounded-full flex-shrink-0 relative transition-colors" style={{ background: pollOn ? ACCENT : 'rgba(255,255,255,.18)' }}>
+              <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all" style={{ left: pollOn ? 22 : 2 }} />
+            </span>
+          </button>
+          {pollOn && (
+            <div className="rounded-2xl bg-white/[0.05] border border-white/10 p-3 flex flex-col gap-2.5 mb-2">
+              <input value={pollQ} onChange={(e) => setPollQ(e.target.value.slice(0, 120))} placeholder="Your question" aria-label="Poll question"
+                className="h-12 rounded-xl bg-white/[0.07] px-4 text-white outline-none" style={{ fontSize: 16 }} />
+              {pollOpts.map((o, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <input value={o} onChange={(e) => setPollOpts((a) => a.map((x, j) => (j === i ? e.target.value.slice(0, 40) : x)))} placeholder={'Option ' + (i + 1)} aria-label={'Poll option ' + (i + 1)}
+                    className="flex-1 min-w-0 h-11 rounded-xl bg-white/[0.07] px-4 text-white outline-none" style={{ fontSize: 16 }} />
+                  {pollOpts.length > 2 && (
+                    <button onClick={() => setPollOpts((a) => a.filter((_, j) => j !== i))} aria-label={'Remove option ' + (i + 1)} className="w-10 h-10 flex items-center justify-center text-[#FF6B6B]"><Minus size={18} /></button>
+                  )}
+                </div>
+              ))}
+              {pollOpts.length < 4 && (
+                <button onClick={() => setPollOpts((a) => [...a, ''])} className="h-10 rounded-xl bg-white/[0.07] text-white text-[13px] font-bold flex items-center justify-center gap-1.5"><Plus size={15} /> Add option</button>
+              )}
+            </div>
+          )}
+
           <div className="mt-3 rounded-2xl bg-white/[0.05] border border-white/10 px-4 py-3 text-[13px] text-[#B8B6B2] leading-snug">
             {hasEdits ? 'Your edits are applied when your video is processed: ' : 'No edits: your video is posted as it is. '}
             {hasEdits && [
@@ -627,6 +725,7 @@ export default function FlashStudio() {
             <>
               <span className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center" style={{ background: ACCENT }}><Check size={28} color="#fff" /></span>
               <p className="text-white font-bold">Posted to B-Flash</p>
+              {note && <p className="text-[#B8B6B2] text-[12px] leading-snug mt-2">{note}</p>}
             </>
           ) : problem ? (
             <>
@@ -672,6 +771,11 @@ export default function FlashStudio() {
               onLoadedMetadata={() => seek(coverT)}
               className="absolute inset-0 w-full h-full" style={{ objectFit: objFit, filter: fcss || undefined }} />
             <div className="absolute inset-0" ref={ownRef} onClick={togglePlay} role="button" aria-label={playing ? 'Pause' : 'Play'}>
+              {capNow && (
+                <div className="absolute left-3 right-3 flex justify-center pointer-events-none" style={{ bottom: '12%' }}>
+                  <span className="px-2 py-0.5 rounded-md text-white font-bold text-center leading-snug" style={{ background: 'rgba(0,0,0,.62)', fontSize: Math.max(11, box.h * 0.03) }}>{capNow.t}</span>
+                </div>
+              )}
               {texts.map((t) => (
                 <div key={t.id} onPointerDown={(e) => textDown(e, t.id)} onPointerMove={textMove} onPointerUp={textUp} onPointerCancel={textUp}
                   className="absolute select-none font-extrabold text-center whitespace-nowrap rounded-md"
@@ -771,6 +875,41 @@ export default function FlashStudio() {
               ))}
             </div>
           )}
+          {tool === 'caption' && (
+            <div className="px-5">
+              <div className="flex items-center justify-between mb-2">
+                <button onClick={addCap} className="h-9 px-3.5 rounded-full text-white text-[13px] font-bold flex items-center gap-1.5" style={{ background: ACCENT }}>
+                  <Plus size={15} /> Add line at {fmt(Math.max(0, now - trim.start))}
+                </button>
+                <span className="text-[11px] text-[#8E8C88]">{caps.length}/{MAX_CAPS}</span>
+              </div>
+              {caps.length === 0 ? (
+                <p className="text-[12px] text-[#8E8C88] leading-snug">Play or scrub the video, then add a line where someone starts speaking. Viewers can turn captions on or off.</p>
+              ) : (
+                <div className="flex flex-col gap-2 max-h-[132px] overflow-y-auto pb-1">
+                  {caps.map((c) => (
+                    <div key={c.id} className="rounded-xl bg-white/[0.06] p-2 flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2">
+                        <input value={c.t} onChange={(e) => patchCap(c.id, { t: e.target.value.slice(0, 100) })} aria-label="Caption text"
+                          className="flex-1 min-w-0 h-9 rounded-lg bg-white/[0.08] px-3 text-white outline-none" style={{ fontSize: 16 }} />
+                        <button onClick={() => setCaps((a) => a.filter((x) => x.id !== c.id))} aria-label="Delete line" className="w-9 h-9 flex items-center justify-center text-[#FF6B6B]"><Trash2 size={16} /></button>
+                      </div>
+                      <div className="flex items-center justify-between text-[12px] text-[#B8B6B2]">
+                        {[['Start', 's', -0.5, 0.5], ['End', 'e', -0.5, 0.5]].map(([l, k]) => (
+                          <span key={k} className="flex items-center gap-1.5">
+                            {l}
+                            <button onClick={() => patchCap(c.id, { [k]: clamp(c[k] - 0.5, k === 's' ? 0 : c.s + 0.5, k === 's' ? c.e - 0.5 : trimLen) })} aria-label={l + ' earlier'} className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white"><Minus size={13} /></button>
+                            <span className="w-10 text-center text-white font-bold">{c[k].toFixed(1)}s</span>
+                            <button onClick={() => patchCap(c.id, { [k]: clamp(c[k] + 0.5, k === 's' ? 0 : c.s + 0.5, k === 's' ? c.e - 0.5 : trimLen) })} aria-label={l + ' later'} className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white"><Plus size={13} /></button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           {tool === 'cover' && (
             <div className="px-5">
               <div className="flex gap-2 mb-2.5">
@@ -801,13 +940,13 @@ export default function FlashStudio() {
           )}
         </div>
 
-        <div className="flex items-center justify-around px-1 pb-[max(8px,env(safe-area-inset-bottom))] pt-1 border-t border-white/[0.06]">
+        <div className="flex items-center justify-around px-1 pb-[max(8px,env(safe-area-inset-bottom))] pt-1 border-t border-white/[0.06] overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           <button onClick={togglePlay} aria-label={playing ? 'Pause' : 'Play'} className="w-11 h-11 flex items-center justify-center text-white">
             {playing ? <Pause size={22} /> : <Play size={22} />}
           </button>
           {tools.map((t) => (
             <button key={t.key} onClick={() => { setTool(t.key); if (t.key === 'text' && !texts.length) addText(); }} aria-pressed={tool === t.key}
-              className="flex flex-col items-center gap-1 py-1 w-12">
+              className="flex flex-col items-center gap-1 py-1 w-[52px] flex-shrink-0">
               <t.icon size={21} strokeWidth={1.9} color={tool === t.key ? ACCENT : '#fff'} />
               <span className="text-[10px] font-bold" style={{ color: tool === t.key ? ACCENT : '#B8B6B2' }}>{t.label}</span>
             </button>
@@ -821,7 +960,7 @@ export default function FlashStudio() {
             <p className="text-white font-bold text-[16px] mb-1">Discard this video?</p>
             <p className="text-[#8E8C88] text-[13px] leading-snug mb-4">Your edits will be lost. Your original video on your phone is not affected.</p>
             <div className="flex flex-col gap-2.5">
-              <button onClick={() => { setConfirmDiscard(false); setStep('pick'); setFile(null); }} className="h-12 rounded-xl bg-[#E5484D] text-white font-bold">Discard</button>
+              <button onClick={() => { setConfirmDiscard(false); dropGuard(); setStep('pick'); setFile(null); }} className="h-12 rounded-xl bg-[#E5484D] text-white font-bold">Discard</button>
               <button onClick={() => setConfirmDiscard(false)} className="h-12 rounded-xl bg-white/10 text-white font-bold">Keep editing</button>
             </div>
           </div>

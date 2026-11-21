@@ -13,6 +13,10 @@ import Captcha, { captchaEnabled } from '../../components/auth/Captcha';
 import VerifyCode from '../../components/auth/VerifyCode';
 import { Spinner } from '../../components/ui';
 
+// Phone sign-in is switched off for now (SMS costs money). The phone code below is kept on purpose:
+// set this to true to show the Phone tab again.
+const SHOW_PHONE_SIGNIN = false;
+
 const COUNTRIES = [
   { code: 'KE', name: 'Kenya' }, { code: 'NG', name: 'Nigeria' }, { code: 'GH', name: 'Ghana' },
   { code: 'UG', name: 'Uganda' }, { code: 'TZ', name: 'Tanzania' }, { code: 'ZA', name: 'South Africa' },
@@ -224,6 +228,7 @@ export default function SignUp() {
 
       {step === 1 && (
         <div className="flex flex-col gap-3 px-5">
+          {SHOW_PHONE_SIGNIN && (
           <div className="flex bg-white/[0.06] rounded-2xl p-1">
             {[['email', 'Email', Mail], ['phone', 'Phone', Smartphone]].map(([key, label, Icon]) => (
               <button key={key} onClick={() => { setMethod(key); setError(''); setHint(''); }}
@@ -233,6 +238,7 @@ export default function SignUp() {
               </button>
             ))}
           </div>
+          )}
 
           {method === 'email' ? (
             <div className="relative">

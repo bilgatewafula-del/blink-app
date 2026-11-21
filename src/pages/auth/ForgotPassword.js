@@ -8,6 +8,10 @@ import VerifyCode from '../../components/auth/VerifyCode';
 import { Spinner } from '../../components/ui';
 import { PHONE_COUNTRIES, normalisePhone, friendlyAuthError, submitGuard, maskIdentifier } from '../../lib/authSecurity';
 
+// Phone sign-in is switched off for now (SMS costs money). The phone code below is kept on purpose:
+// set this to true to show the Phone tab again.
+const SHOW_PHONE_SIGNIN = false;
+
 const inputCls = 'w-full bg-white/[0.07] border border-white/10 rounded-2xl pl-11 pr-4 py-4 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 transition-all';
 
 export default function ForgotPassword() {
@@ -108,6 +112,7 @@ export default function ForgotPassword() {
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3 px-5">
+        {SHOW_PHONE_SIGNIN && (
         <div className="flex bg-white/[0.06] rounded-2xl p-1">
           {[['email', 'Email', Mail], ['phone', 'Phone', Smartphone]].map(([key, label, Icon]) => (
             <button type="button" key={key} onClick={() => { setTab(key); setError(''); }}
@@ -116,6 +121,7 @@ export default function ForgotPassword() {
             </button>
           ))}
         </div>
+        )}
 
         {tab === 'email' ? (
           <div className="relative">

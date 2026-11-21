@@ -478,16 +478,18 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, onEmojiT
 
 export function CommentsSheet({ post, count, onCountChange, onClose, onNavigate }) {
   const vp = useViewport();
+  const [emoji, setEmoji] = useState(false);          // taller sheet while the emoji keyboard is open
   return (
     <div className="fixed left-0 right-0 z-[70] bg-black/60 flex items-end justify-center" style={{ top: vp.top, height: vp.h }} onClick={onClose}>
       <div className="relative w-full max-w-[620px] bg-white rounded-t-3xl border-t border-[#E4E6EB] flex flex-col"
-        style={{ height: Math.min(Math.round(vp.h * 0.8), vp.h - 24) }} onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-center pt-2.5 pb-1.5 flex-shrink-0 relative">
+        style={{ height: Math.min(Math.round(vp.h * (emoji ? 0.94 : 0.8)), vp.h - 24), transition: 'height .2s ease' }} onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between h-12 px-2 flex-shrink-0 border-b border-[#E4E6EB]">
+          <span className="w-11" />
           <div className="w-10 h-1 rounded-full bg-[#CED0D4]" />
-          <button onClick={onClose} aria-label="Close comments" className="absolute right-3 top-1.5 p-1.5 text-[#65676B]"><X size={20} /></button>
+          <button onClick={onClose} aria-label="Close comments" className="w-11 h-11 flex items-center justify-center text-[#65676B] active:scale-90 transition-transform"><X size={22} /></button>
         </div>
         <div className="flex-1 min-h-0 flex flex-col">
-          <CommentsPanel post={post} count={count} onCountChange={onCountChange}
+          <CommentsPanel post={post} count={count} onCountChange={onCountChange} onEmojiToggle={setEmoji}
             onNavigate={(path) => { onClose(); onNavigate?.(path); }} />
         </div>
       </div>

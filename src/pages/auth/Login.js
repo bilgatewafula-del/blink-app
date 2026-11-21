@@ -12,6 +12,10 @@ import {
   formatWait, submitGuard, takeAuthNotice, getRememberedAccount, forgetAccount, maskIdentifier,
 } from '../../lib/authSecurity';
 
+// Phone sign-in is switched off for now (SMS costs money). The phone code below is kept on purpose:
+// set this to true to show the Phone tab again.
+const SHOW_PHONE_SIGNIN = false;
+
 const NOTICES = {
   inactive:  { tone: 'info',  text: 'You have been away for a while. For your security, please sign in again.' },
   expired:   { tone: 'info',  text: 'Your session expired. Please sign in again.' },
@@ -211,7 +215,7 @@ export default function Login() {
           <button onClick={() => { forgetAccount(); setRemembered(null); setPassword(''); setError(''); }}
             className="text-[#FF5A1F] text-sm font-semibold mt-3">Not you? Use another account</button>
         </div>
-      ) : (
+      ) : SHOW_PHONE_SIGNIN ? (
         <div className="flex mx-5 mb-5 bg-white/[0.06] rounded-2xl p-1">
           {[['email', 'Email', Mail], ['phone', 'Phone', Smartphone]].map(([key, label, Icon]) => (
             <button key={key} onClick={() => { setTab(key); setError(''); }}
@@ -221,7 +225,7 @@ export default function Login() {
             </button>
           ))}
         </div>
-      )}
+      ) : null}
 
       <form onSubmit={submit} className="flex flex-col gap-3 px-5">
         {!remembered && tab === 'email' && (
