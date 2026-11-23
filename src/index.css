@@ -19,8 +19,8 @@ body {
   margin: 0;
   padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  background-color: #0D0C0B;
-  color: white;
+  background-color: #FFFFFF;
+  color: #202938;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior: none;
@@ -96,21 +96,21 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px #171614 inset !important;
-  -webkit-text-fill-color: white !important;
-  caret-color: white !important;
+  -webkit-box-shadow: 0 0 0 1000px #F1F5F9 inset !important;
+  -webkit-text-fill-color: #202938 !important;
+  caret-color: #202938 !important;
   transition: background-color 9999s ease-in-out 0s;
 }
 
-/* ── Select dark ── */
-select option { background: #171614; color: white; }
+/* ── Select ── */
+select option { background: #FFFFFF; color: #202938; }
 
 /* ── Input & textarea base ── */
 input, textarea, select, button {
   font-family: inherit;
 }
 input, textarea {
-  color: white;
+  color: #202938;
 }
 
 /* ── Safe areas ── */
@@ -128,19 +128,19 @@ input, textarea {
   overflow: hidden;
 }
 
-/* ── Emoji picker dark theme ── */
+/* ── Emoji picker (light) ── */
 .EmojiPickerReact {
-  --epr-bg-color:                 #1d1c1a !important;
-  --epr-category-label-bg-color:  #171614 !important;
-  --epr-hover-bg-color:           rgba(255,255,255,0.08) !important;
-  --epr-search-input-bg-color:    rgba(255,255,255,0.08) !important;
-  --epr-text-color:               #ffffff !important;
-  --epr-search-input-text-color:  #ffffff !important;
-  --epr-search-border-color:      rgba(255,255,255,0.15) !important;
-  --epr-picker-border-color:      rgba(255,255,255,0.1) !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
+  --epr-bg-color:                 #FFFFFF !important;
+  --epr-category-label-bg-color:  #F8FAFC !important;
+  --epr-hover-bg-color:           #F1F5F9 !important;
+  --epr-search-input-bg-color:    #F1F5F9 !important;
+  --epr-text-color:               #202938 !important;
+  --epr-search-input-text-color:  #202938 !important;
+  --epr-search-border-color:      #E2E8F0 !important;
+  --epr-picker-border-color:      #E2E8F0 !important;
+  border: 1px solid #E2E8F0 !important;
   border-radius: 16px !important;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.6) !important;
+  box-shadow: 0 8px 24px rgba(15,23,42,0.12) !important;
 }
 
 /* ── Image viewer ── */
@@ -159,7 +159,7 @@ input, textarea {
   100% { background-position:  200% 0; }
 }
 .skeleton {
-  background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 75%);
+  background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 8px;
@@ -170,10 +170,10 @@ input, textarea {
   position: fixed;
   bottom: 0; left: 0; right: 0;
   z-index: 30;
-  background: rgba(13, 12, 11, 0.97);
+  background: rgba(255, 255, 255, 0.97);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(255,255,255,0.07);
+  border-top: 1px solid #E2E8F0;
   padding-bottom: env(safe-area-inset-bottom);
 }
 
@@ -184,15 +184,21 @@ input, textarea {
   100% { transform: translate(-50%, -80%) scale(1); opacity: 0; }
 }
 @keyframes msgFlash {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255,90,31,0); }
-  30%      { box-shadow: 0 0 0 4px rgba(255,90,31,0.55); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(249,115,22,0); }
+  30%      { box-shadow: 0 0 0 4px rgba(249,115,22,0.55); }
 }
 .msg-flash { animation: msgFlash 1.2s ease-out 1; }
 
 
-/* AMOLED theme: pure black backgrounds for OLED screens */
+/* Dark / AMOLED themes are a possible future option. Light is the default, so these rules stay dormant. */
 html.theme-amoled body,
 html.theme-amoled [class*="bg-[#0D0C0B]"] { background-color: #000 !important; }
 html.theme-amoled [class*="bg-[#171614]"] { background-color: #070707 !important; }
 html.theme-amoled [class*="bg-[#1d1c1a]"] { background-color: #0C0C0C !important; }
 html.theme-amoled { color-scheme: dark; }
+
+
+/* ── Chat: your own messages are orange bubbles with white text ── */
+.bubble-mine, .bubble-mine p, .bubble-mine span, .bubble-mine svg, .bubble-mine a, .bubble-mine div { color: #FFFFFF !important; }
+.bubble-mine .text-\[\#64748B\] { color: rgba(255,255,255,0.82) !important; }
+.bubble-mine a { text-decoration: underline; }

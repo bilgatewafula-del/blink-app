@@ -1,6 +1,6 @@
 // src/lib/storyPalette.js — backgrounds for text statuses (key is stored in the database)
 export const STORY_BACKGROUNDS = [
-  { key: 'sunset',   css: 'linear-gradient(160deg,#FF5A1F 0%,#FF2D78 100%)' },
+  { key: 'sunset',   css: 'linear-gradient(160deg,#F97316 0%,#F97316 100%)' },
   { key: 'ember',    css: 'linear-gradient(160deg,#FF9A1F 0%,#FF4D2D 100%)' },
   { key: 'gold',     css: 'linear-gradient(160deg,#FFD23F 0%,#FF8A00 100%)' },
   { key: 'rose',     css: 'linear-gradient(160deg,#FF5C8A 0%,#C2185B 100%)' },

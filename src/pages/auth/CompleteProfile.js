@@ -66,48 +66,48 @@ export default function CompleteProfile() {
   };
 
   if (loading || !user || (!profileChecked && !profile)) {
-    return <div className="min-h-screen bg-[#0D0C0B] flex items-center justify-center text-[#FF5A1F]"><Spinner size={28} /></div>;
+    return <div className="min-h-screen bg-white flex items-center justify-center text-[#EA580C]"><Spinner size={28} /></div>;
   }
 
   return (
-    <div className="min-h-screen bg-[#0D0C0B] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
+    <div className="min-h-screen bg-white flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
       <div className="px-6 pt-14 pb-6">
-        <h1 className="text-white font-black text-2xl">Finish your profile</h1>
-        <p className="text-[#8E8C88] text-sm mt-2">One last step. Pick how people will find you.</p>
+        <h1 className="text-[#202938] font-black text-2xl">Finish your profile</h1>
+        <p className="text-[#64748B] text-sm mt-2">One last step. Pick how people will find you.</p>
       </div>
       <form onSubmit={submit} className="flex flex-col gap-3 px-5">
         <div className="relative">
-          <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8C88] pointer-events-none" />
+          <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" />
           <input value={displayName} onChange={(e) => { setDisplayName(e.target.value); setError(''); }} placeholder="Display name" maxLength={40}
-            className="w-full bg-white/[0.07] border border-white/10 rounded-2xl pl-11 pr-4 py-4 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60" />
+            className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-11 pr-4 py-4 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60" />
         </div>
         <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8C88] font-bold pointer-events-none">@</span>
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] font-bold pointer-events-none">@</span>
           <input value={username} onChange={(e) => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')); setError(''); }} placeholder="username" maxLength={20} autoCapitalize="none"
-            className="w-full bg-white/[0.07] border border-white/10 rounded-2xl pl-9 pr-10 py-4 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60" />
-          {status === 'checking' && <Spinner size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8E8C88]" />}
+            className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-9 pr-10 py-4 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60" />
+          {status === 'checking' && <Spinner size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748B]" />}
           {status === 'available' && <CheckCircle2 size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#2ECC71]" />}
-          {status === 'taken' && <XCircle size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-red-400" />}
+          {status === 'taken' && <XCircle size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-red-600" />}
         </div>
         <div className="relative">
-          <Globe size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8C88] pointer-events-none z-10" />
+          <Globe size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none z-10" />
           <select value={country} onChange={(e) => setCountry(e.target.value)}
-            className="w-full bg-white/[0.07] border border-white/10 rounded-2xl pl-11 pr-10 py-4 text-white text-[15px] focus:outline-none appearance-none" style={{ WebkitAppearance: 'none' }}>
-            {COUNTRIES.map((c) => <option key={c.code} value={c.code} style={{ background: '#171614' }}>{c.name}</option>)}
+            className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-11 pr-10 py-4 text-[#202938] text-[15px] focus:outline-none appearance-none" style={{ WebkitAppearance: 'none' }}>
+            {COUNTRIES.map((c) => <option key={c.code} value={c.code} style={{ background: '#FFFFFF' }}>{c.name}</option>)}
           </select>
-          <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8E8C88] pointer-events-none" />
+          <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" />
         </div>
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm flex items-start gap-2">
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-600 text-sm flex items-start gap-2">
             <AlertCircle size={16} className="flex-shrink-0 mt-0.5" /> <span>{error}</span>
           </div>
         )}
         <button type="submit" disabled={busy}
           className="w-full py-4 rounded-2xl font-bold text-white text-[15px] disabled:opacity-50 flex items-center justify-center gap-2"
-          style={{ background: 'linear-gradient(135deg, #FF5A1F, #FF2D78)', boxShadow: '0 8px 24px rgba(255,90,31,0.35)' }}>
+          style={{ background: '#F97316', boxShadow: '0 8px 24px rgba(255,90,31,0.35)' }}>
           {busy ? <><Spinner size={18} /> Saving…</> : 'Continue'}
         </button>
-        <button type="button" onClick={signOut} className="text-[#8E8C88] text-sm font-semibold py-2">Sign out</button>
+        <button type="button" onClick={signOut} className="text-[#64748B] text-sm font-semibold py-2">Sign out</button>
       </form>
     </div>
   );

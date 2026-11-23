@@ -7,7 +7,7 @@ import { ArrowLeft, Lock, Eye, Heart, Users, MessageCircle, Search } from 'lucid
 const Toggle = ({ value, onChange }) => (
   <button
     onClick={() => onChange(!value)}
-    className={`w-12 h-6 rounded-full transition-colors flex-shrink-0 ${value ? 'bg-[#1E6FFF]' : 'bg-white/20'}`}
+    className={`w-12 h-6 rounded-full transition-colors flex-shrink-0 ${value ? 'bg-[#2563EB]' : 'bg-[#E2E8F0]'}`}
   >
     <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform mx-0.5 ${value ? 'translate-x-6' : 'translate-x-0'}`} />
   </button>
@@ -44,28 +44,28 @@ const PrivacySettings = () => {
     <select
       value={settings[key]}
       onChange={(e) => update(key, e.target.value)}
-      className="bg-[#111827] border border-white/10 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none"
+      className="bg-[#111827] border border-[#E2E8F0] text-[#202938] text-xs rounded-lg px-2 py-1.5 focus:outline-none"
     >
       {options.map((o) => (
-        <option key={o.value} value={o.value} className="bg-[#0A1628]">{o.label}</option>
+        <option key={o.value} value={o.value} className="bg-[#F8FAFC]">{o.label}</option>
       ))}
     </select>
   );
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-24">
-      <div className="sticky top-0 z-20 bg-[#0A1628] border-b border-white/10 px-4 py-3 flex items-center justify-between">
-        <button onClick={() => navigate('/settings')} className="text-[#6B7280] hover:text-white">
+    <div className="min-h-screen bg-[#F8FAFC] pb-24">
+      <div className="sticky top-0 z-20 bg-[#F8FAFC] border-b border-[#E2E8F0] px-4 py-3 flex items-center justify-between">
+        <button onClick={() => navigate('/settings')} className="text-[#64748B] hover:text-[#202938]">
           <ArrowLeft size={22} />
         </button>
-        <h1 className="text-white font-bold text-lg">Privacy</h1>
-        <button onClick={handleSave} disabled={saving} className="text-[#1E6FFF] font-bold text-sm disabled:opacity-50">
+        <h1 className="text-[#202938] font-bold text-lg">Privacy</h1>
+        <button onClick={handleSave} disabled={saving} className="text-[#2563EB] font-bold text-sm disabled:opacity-50">
           {saving ? 'Saving...' : 'Save'}
         </button>
       </div>
 
       <div className="px-4 py-4 space-y-5">
-        {success && <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-3"><p className="text-green-400 text-sm">{success}</p></div>}
+        {success && <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-3"><p className="text-green-700 text-sm">{success}</p></div>}
 
         {[
           {
@@ -81,7 +81,7 @@ const PrivacySettings = () => {
                 icon: Search, label: 'Show in Search',
                 sub: 'Let others find you in search',
                 type: 'toggle', key: 'show_in_search',
-                color: 'text-[#1E6FFF]', bg: 'bg-[#1E6FFF]/20',
+                color: 'text-[#2563EB]', bg: 'bg-[#2563EB]/20',
               },
               {
                 icon: Eye, label: 'Activity Status',
@@ -98,7 +98,7 @@ const PrivacySettings = () => {
                 icon: Heart, label: 'Hide Like Counts',
                 sub: 'Others cannot see how many likes your posts get',
                 type: 'toggle', key: 'hide_likes',
-                color: 'text-red-400', bg: 'bg-red-400/20',
+                color: 'text-red-600', bg: 'bg-red-400/20',
               },
               {
                 icon: Users, label: 'Hide Follower Count',
@@ -110,7 +110,7 @@ const PrivacySettings = () => {
                 icon: Users, label: 'Allow Tagging',
                 sub: 'Let others tag you in posts',
                 type: 'toggle', key: 'allow_tagging',
-                color: 'text-[#FFD700]', bg: 'bg-[#FFD700]/20',
+                color: 'text-[#B45309]', bg: 'bg-[#FFD700]/20',
               },
             ],
           },
@@ -121,7 +121,7 @@ const PrivacySettings = () => {
                 icon: MessageCircle, label: 'Who can comment',
                 sub: 'Control who comments on your posts',
                 type: 'select', key: 'allow_comments',
-                color: 'text-[#1E6FFF]', bg: 'bg-[#1E6FFF]/20',
+                color: 'text-[#2563EB]', bg: 'bg-[#2563EB]/20',
                 options: [
                   { value: 'everyone', label: 'Everyone' },
                   { value: 'followers', label: 'Followers' },
@@ -143,16 +143,16 @@ const PrivacySettings = () => {
           },
         ].map((section) => (
           <div key={section.title}>
-            <p className="text-[#6B7280] text-xs font-bold uppercase tracking-widest mb-2 px-1">{section.title}</p>
-            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+            <p className="text-[#64748B] text-xs font-bold uppercase tracking-widest mb-2 px-1">{section.title}</p>
+            <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl overflow-hidden">
               {section.items.map((item, idx) => (
-                <div key={item.key} className={`flex items-center gap-4 px-4 py-4 ${idx < section.items.length - 1 ? 'border-b border-white/5' : ''}`}>
+                <div key={item.key} className={`flex items-center gap-4 px-4 py-4 ${idx < section.items.length - 1 ? 'border-b border-[#E2E8F0]' : ''}`}>
                   <div className={`w-9 h-9 rounded-xl ${item.bg} flex items-center justify-center flex-shrink-0`}>
                     <item.icon size={18} className={item.color} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white text-sm font-semibold">{item.label}</p>
-                    <p className="text-[#6B7280] text-xs leading-relaxed">{item.sub}</p>
+                    <p className="text-[#202938] text-sm font-semibold">{item.label}</p>
+                    <p className="text-[#64748B] text-xs leading-relaxed">{item.sub}</p>
                   </div>
                   {item.type === 'toggle' ? (
                     <Toggle value={settings[item.key]} onChange={(v) => update(item.key, v)} />

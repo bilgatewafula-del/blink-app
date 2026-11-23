@@ -9,7 +9,7 @@ import VerifiedBadge from '../../components/VerifiedBadge';
 import { Spinner } from '../../components/ui';
 import { formatNumber } from '../../utils/formatNumber';
 
-const ACCENT = '#FF5A1F';
+const ACCENT = '#F97316';
 const RKEY = 'blink_flash_search_v1';
 const TOPICS = [
   ['Entertainment', 'entertainment'], ['Comedy', 'comedy'], ['Education', 'education'], ['Tech', 'tech'],
@@ -85,16 +85,16 @@ export default function FlashSearch({ onClose, searchVideos, onOpenVideo, onOpen
   const countOf = (tag) => (trending.find((t) => t.tag === tag) || {}).n;
 
   return (
-    <div className="absolute inset-0 z-40 bg-[#0D0C0B] flex flex-col">
+    <div className="absolute inset-0 z-40 bg-white flex flex-col">
       <div className="flex items-center gap-1 px-1 pt-[max(8px,env(safe-area-inset-top))] pb-2 flex-shrink-0">
-        <button onClick={onClose} aria-label="Close search" className="w-11 h-11 flex items-center justify-center text-white"><ArrowLeft size={22} /></button>
-        <div className="flex-1 h-11 rounded-full bg-white/[0.08] flex items-center gap-2 px-4 focus-within:ring-1 focus-within:ring-[#FF5A1F]/60">
-          <Search size={18} className="text-[#8E8C88] flex-shrink-0" />
+        <button onClick={onClose} aria-label="Close search" className="w-11 h-11 flex items-center justify-center text-[#202938]"><ArrowLeft size={22} /></button>
+        <div className="flex-1 h-11 rounded-full bg-[#F1F5F9] flex items-center gap-2 px-4 focus-within:ring-1 focus-within:ring-[#F97316]/60">
+          <Search size={18} className="text-[#64748B] flex-shrink-0" />
           <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value.slice(0, 60))}
             onKeyDown={(e) => { if (e.key === 'Enter') remember(term); }}
             placeholder="Search videos, creators, #tags" aria-label="Search B-Flash" enterKeyHint="search"
-            className="flex-1 min-w-0 bg-transparent text-white outline-none placeholder-[#8E8C88]" style={{ fontSize: 16 }} />
-          {q && <button onClick={() => setQ('')} aria-label="Clear search" className="text-[#8E8C88]"><X size={18} /></button>}
+            className="flex-1 min-w-0 bg-transparent text-[#202938] outline-none placeholder-[#94A3B8]" style={{ fontSize: 16 }} />
+          {q && <button onClick={() => setQ('')} aria-label="Clear search" className="text-[#64748B]"><X size={18} /></button>}
         </div>
       </div>
 
@@ -103,28 +103,28 @@ export default function FlashSearch({ onClose, searchVideos, onOpenVideo, onOpen
           <div className="flex gap-2 px-4 pb-2 flex-shrink-0">
             {[['videos', 'Videos', videos.length], ['creators', 'Creators', creators.length], ['tags', 'Tags', tags.length]].map(([k, l, n]) => (
               <button key={k} onClick={() => setTab(k)} aria-pressed={tab === k}
-                className="h-9 px-4 rounded-full text-[13px] font-bold" style={{ background: tab === k ? ACCENT : 'rgba(255,255,255,.08)', color: '#fff' }}>
+                className="h-9 px-4 rounded-full text-[13px] font-bold" style={{ background: tab === k ? ACCENT : '#F1F5F9', color: tab === k ? '#fff' : '#202938' }}>
                 {l}{n > 0 && <span className="opacity-70"> {n}</span>}
               </button>
             ))}
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto px-3 pb-6" style={{ overscrollBehavior: 'contain' }}>
-            {loading && <div className="flex justify-center py-10 text-white"><Spinner size={24} /></div>}
-            {!loading && failed && <p className="text-center text-[#8E8C88] text-[14px] py-10">Search isn’t working right now. Check your connection and try again.</p>}
+            {loading && <div className="flex justify-center py-10 text-[#202938]"><Spinner size={24} /></div>}
+            {!loading && failed && <p className="text-center text-[#64748B] text-[14px] py-10">Search isn’t working right now. Check your connection and try again.</p>}
 
             {!loading && !failed && tab === 'videos' && (
               videos.length === 0 ? (
-                <p className="text-center text-[#8E8C88] text-[14px] py-10">No videos match “{term}”.</p>
+                <p className="text-center text-[#64748B] text-[14px] py-10">No videos match “{term}”.</p>
               ) : (
                 <div className="grid grid-cols-3 gap-1.5">
                   {videos.map((v) => (
                     <button key={v.id} onClick={() => { remember(term); onOpenVideo(v); }} aria-label={'Open video by ' + (v.users && v.users.username)}
-                      className="relative aspect-[9/16] rounded-xl overflow-hidden bg-white/[0.06] active:scale-[.97] transition-transform">
+                      className="relative aspect-[9/16] rounded-xl overflow-hidden bg-[#F1F5F9] active:scale-[.97] transition-transform">
                       {v.video_thumbnail ? <img src={v.video_thumbnail} alt="" loading="lazy" className="w-full h-full object-cover" />
-                        : <span className="w-full h-full flex items-center justify-center text-[#8E8C88]"><Film size={22} /></span>}
+                        : <span className="w-full h-full flex items-center justify-center text-[#64748B]"><Film size={22} /></span>}
                       <span className="absolute inset-x-0 bottom-0 px-1.5 pt-6 pb-1.5 text-left" style={{ background: 'linear-gradient(to top, rgba(0,0,0,.8), transparent)' }}>
-                        <span className="block text-white text-[11px] font-bold truncate">@{(v.users && v.users.username) || 'creator'}</span>
-                        <span className="flex items-center gap-1 text-white/80 text-[10px]"><Heart size={10} fill="currentColor" /> {formatNumber(v.likes_count || 0)}</span>
+                        <span className="block text-[#202938] text-[11px] font-bold truncate">@{(v.users && v.users.username) || 'creator'}</span>
+                        <span className="flex items-center gap-1 text-[#202938] text-[10px]"><Heart size={10} fill="currentColor" /> {formatNumber(v.likes_count || 0)}</span>
                       </span>
                     </button>
                   ))}
@@ -134,13 +134,13 @@ export default function FlashSearch({ onClose, searchVideos, onOpenVideo, onOpen
 
             {!loading && !failed && tab === 'creators' && (
               creators.length === 0 ? (
-                <p className="text-center text-[#8E8C88] text-[14px] py-10">No creators match “{term}”.</p>
+                <p className="text-center text-[#64748B] text-[14px] py-10">No creators match “{term}”.</p>
               ) : creators.map((c) => (
-                <button key={c.id} onClick={() => { remember(term); onOpenCreator(c); }} className="w-full flex items-center gap-3 px-2 py-2.5 rounded-xl active:bg-white/[0.05] text-left">
+                <button key={c.id} onClick={() => { remember(term); onOpenCreator(c); }} className="w-full flex items-center gap-3 px-2 py-2.5 rounded-xl active:bg-[#F8FAFC] text-left">
                   <Avatar url={c.avatar_url} name={c.display_name || c.username} size={11} />
                   <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-1 text-white font-bold text-[15px] truncate">{c.display_name || c.username}{c.is_verified && <VerifiedBadge size={14} />}</span>
-                    <span className="block text-[#8E8C88] text-[13px] truncate">@{c.username}{c.followers_count ? ' · ' + formatNumber(c.followers_count) + ' followers' : ''}</span>
+                    <span className="flex items-center gap-1 text-[#202938] font-bold text-[15px] truncate">{c.display_name || c.username}{c.is_verified && <VerifiedBadge size={14} />}</span>
+                    <span className="block text-[#64748B] text-[13px] truncate">@{c.username}{c.followers_count ? ' · ' + formatNumber(c.followers_count) + ' followers' : ''}</span>
                   </span>
                 </button>
               ))
@@ -148,13 +148,13 @@ export default function FlashSearch({ onClose, searchVideos, onOpenVideo, onOpen
 
             {!loading && !failed && tab === 'tags' && (
               tags.length === 0 ? (
-                <p className="text-center text-[#8E8C88] text-[14px] py-10">No tags match “{term}”.</p>
+                <p className="text-center text-[#64748B] text-[14px] py-10">No tags match “{term}”.</p>
               ) : tags.map((t) => (
-                <button key={t} onClick={() => { remember(term); onPickTag(t); }} className="w-full flex items-center gap-3 px-2 py-3 rounded-xl active:bg-white/[0.05] text-left">
-                  <span className="w-10 h-10 rounded-full bg-white/[0.08] flex items-center justify-center text-[#4DB6FF]"><Hash size={18} /></span>
+                <button key={t} onClick={() => { remember(term); onPickTag(t); }} className="w-full flex items-center gap-3 px-2 py-3 rounded-xl active:bg-[#F8FAFC] text-left">
+                  <span className="w-10 h-10 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[#4DB6FF]"><Hash size={18} /></span>
                   <span className="flex-1 min-w-0">
-                    <span className="block text-white font-bold text-[15px] truncate">#{t}</span>
-                    {countOf(t) ? <span className="block text-[#8E8C88] text-[12px]">{countOf(t)} recent video{countOf(t) === 1 ? '' : 's'}</span> : null}
+                    <span className="block text-[#202938] font-bold text-[15px] truncate">#{t}</span>
+                    {countOf(t) ? <span className="block text-[#64748B] text-[12px]">{countOf(t)} recent video{countOf(t) === 1 ? '' : 's'}</span> : null}
                   </span>
                 </button>
               ))
@@ -166,13 +166,13 @@ export default function FlashSearch({ onClose, searchVideos, onOpenVideo, onOpen
           {recents.length > 0 && (
             <>
               <div className="flex items-center justify-between pt-2 pb-1">
-                <p className="text-[12px] font-bold uppercase tracking-wide text-[#8E8C88]">Recent</p>
-                <button onClick={() => { try { localStorage.removeItem(RKEY); } catch { /* storage blocked */ } setRecents([]); }} className="text-[12px] font-bold text-[#8E8C88]">Clear</button>
+                <p className="text-[12px] font-bold uppercase tracking-wide text-[#64748B]">Recent</p>
+                <button onClick={() => { try { localStorage.removeItem(RKEY); } catch { /* storage blocked */ } setRecents([]); }} className="text-[12px] font-bold text-[#64748B]">Clear</button>
               </div>
               <div className="flex flex-wrap gap-2 pb-3">
                 {recents.map((r) => (
-                  <button key={r} onClick={() => setQ(r)} className="h-9 pl-3 pr-4 rounded-full bg-white/[0.07] text-white text-[13px] font-semibold flex items-center gap-1.5">
-                    <Clock size={13} className="text-[#8E8C88]" /> {r}
+                  <button key={r} onClick={() => setQ(r)} className="h-9 pl-3 pr-4 rounded-full bg-[#F1F5F9] text-[#202938] text-[13px] font-semibold flex items-center gap-1.5">
+                    <Clock size={13} className="text-[#64748B]" /> {r}
                   </button>
                 ))}
               </div>
@@ -180,7 +180,7 @@ export default function FlashSearch({ onClose, searchVideos, onOpenVideo, onOpen
           )}
           {trending.length > 0 && (
             <>
-              <p className="text-[12px] font-bold uppercase tracking-wide text-[#8E8C88] pt-2 pb-2 flex items-center gap-1.5"><TrendingUp size={14} /> Trending tags</p>
+              <p className="text-[12px] font-bold uppercase tracking-wide text-[#64748B] pt-2 pb-2 flex items-center gap-1.5"><TrendingUp size={14} /> Trending tags</p>
               <div className="flex flex-wrap gap-2 pb-3">
                 {trending.map((t) => (
                   <button key={t.tag} onClick={() => onPickTag(t.tag)} className="h-9 px-3.5 rounded-full text-[13px] font-bold" style={{ background: 'rgba(77,182,255,.14)', color: '#4DB6FF' }}>#{t.tag}</button>
@@ -188,10 +188,10 @@ export default function FlashSearch({ onClose, searchVideos, onOpenVideo, onOpen
               </div>
             </>
           )}
-          <p className="text-[12px] font-bold uppercase tracking-wide text-[#8E8C88] pt-2 pb-2">Explore topics</p>
+          <p className="text-[12px] font-bold uppercase tracking-wide text-[#64748B] pt-2 pb-2">Explore topics</p>
           <div className="flex flex-wrap gap-2">
             {TOPICS.map(([label, t]) => (
-              <button key={t} onClick={() => setQ(t)} className="h-10 px-4 rounded-full text-[13px] font-bold text-white" style={{ background: 'rgba(255,90,31,.16)', border: '1px solid rgba(255,90,31,.35)' }}>{label}</button>
+              <button key={t} onClick={() => setQ(t)} className="h-10 px-4 rounded-full text-[13px] font-bold text-[#202938]" style={{ background: 'rgba(255,90,31,.16)', border: '1px solid rgba(255,90,31,.35)' }}>{label}</button>
             ))}
           </div>
         </div>

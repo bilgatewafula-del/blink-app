@@ -8,6 +8,7 @@ import {
   APP_NAME, APP_TAGLINE, APP_VERSION, SUPPORT_EMAIL, SUPPORT_WHATSAPP, LEGAL_UPDATED,
 } from '../../config/appInfo';
 import { useInstallPrompt, isInstalled, isIos, reloadLatest } from '../../lib/pwa';
+import { goBack } from '../../lib/nav';
 
 const FEATURES = [
   { Icon: ImageIcon, title: 'Posts', desc: 'Share photos, videos and thoughts with your community' },
@@ -101,13 +102,13 @@ Breaking these rules can lead to content removal, restriction, suspension or a p
 function Sheet({ item, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/75 z-50 flex items-end justify-center" onClick={onClose}>
-      <div className="w-full max-w-[540px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5 pb-8 max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-[540px] bg-white border-t border-[#E2E8F0] rounded-t-3xl p-5 pb-8 max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4 flex-shrink-0">
-          <p className="text-white font-bold text-base flex items-center gap-2"><item.Icon size={18} className="text-[#FF5A1F]" /> {item.label}</p>
-          <button onClick={onClose} aria-label="Close" className="text-[#8E8C88] p-1"><X size={20} /></button>
+          <p className="text-[#202938] font-bold text-base flex items-center gap-2"><item.Icon size={18} className="text-[#EA580C]" /> {item.label}</p>
+          <button onClick={onClose} aria-label="Close" className="text-[#64748B] p-1"><X size={20} /></button>
         </div>
         <div className="flex-1 overflow-y-auto">
-          <pre className="text-white/70 text-[13px] leading-relaxed whitespace-pre-wrap font-sans">{item.text}</pre>
+          <pre className="text-[#64748B] text-[13px] leading-relaxed whitespace-pre-wrap font-sans">{item.text}</pre>
         </div>
       </div>
     </div>
@@ -117,12 +118,12 @@ function Sheet({ item, onClose }) {
 function Row({ icon: Icon, label, sub, onClick, href, right }) {
   const inner = (
     <>
-      <span className="w-9 h-9 rounded-xl bg-[#FF5A1F]/10 flex items-center justify-center flex-shrink-0"><Icon size={17} className="text-[#FF8A5C]" /></span>
-      <span className="flex-1 min-w-0 text-left"><span className="block text-white/90 font-semibold text-[14px]">{label}</span>{sub && <span className="block text-[#8E8C88] text-[12px] mt-0.5">{sub}</span>}</span>
-      {right || <ChevronRight size={16} className="text-[#8E8C88]" />}
+      <span className="w-9 h-9 rounded-xl bg-[#F97316]/10 flex items-center justify-center flex-shrink-0"><Icon size={17} className="text-[#EA580C]" /></span>
+      <span className="flex-1 min-w-0 text-left"><span className="block text-[#202938] font-semibold text-[14px]">{label}</span>{sub && <span className="block text-[#64748B] text-[12px] mt-0.5">{sub}</span>}</span>
+      {right || <ChevronRight size={16} className="text-[#64748B]" />}
     </>
   );
-  const cls = 'w-full flex items-center gap-3 px-4 py-3.5 active:bg-white/[0.06]';
+  const cls = 'w-full flex items-center gap-3 px-4 py-3.5 active:bg-[#F1F5F9]';
   return href ? <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>{inner}</a> : <button onClick={onClick} className={cls}>{inner}</button>;
 }
 
@@ -140,55 +141,55 @@ export default function AboutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0D0C0B] pb-24">
-      {toast && <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[60] bg-white text-black text-[13px] font-semibold rounded-full px-5 py-2.5 shadow-xl">{toast}</div>}
+    <div className="min-h-screen bg-white pb-24">
+      {toast && <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[60] bg-[#202938] text-white text-[13px] font-semibold rounded-full px-5 py-2.5 shadow-xl">{toast}</div>}
       {legal && <Sheet item={legal} onClose={() => setLegal(null)} />}
 
-      <div className="sticky top-0 z-20 bg-[#0D0C0B]/95 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} aria-label="Back" className="text-[#8E8C88] hover:text-white"><ArrowLeft size={22} /></button>
-        <h1 className="text-white font-bold text-[16px]">About {APP_NAME}</h1>
+      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => goBack(navigate, '/')} aria-label="Back" className="text-[#64748B] hover:text-[#202938]"><ArrowLeft size={22} /></button>
+        <h1 className="text-[#202938] font-bold text-[16px]">About {APP_NAME}</h1>
       </div>
 
       <div className="flex flex-col items-center px-6 pt-8 pb-6 text-center">
-        <div className="w-24 h-24 rounded-[28px] bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center shadow-2xl shadow-[#FF5A1F]/40 mb-4">
-          <span className="text-white font-black text-4xl">B</span>
+        <div className="w-24 h-24 rounded-[28px] bg-[#F97316] flex items-center justify-center   mb-4">
+          <span className="text-[#202938] font-black text-4xl">B</span>
         </div>
-        <h2 className="text-white font-black text-3xl tracking-tight">{APP_NAME}</h2>
-        <p className="text-[#FF8A5C] font-semibold text-sm mt-1">{APP_TAGLINE}</p>
-        <span className="text-white/40 text-xs bg-white/[0.06] px-3 py-1 rounded-full mt-3">Version {APP_VERSION}</span>
+        <h2 className="text-[#202938] font-black text-3xl tracking-tight">{APP_NAME}</h2>
+        <p className="text-[#EA580C] font-semibold text-sm mt-1">{APP_TAGLINE}</p>
+        <span className="text-[#94A3B8] text-xs bg-[#F1F5F9] px-3 py-1 rounded-full mt-3">Version {APP_VERSION}</span>
       </div>
 
       <div className="px-4 space-y-4">
-        <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4">
-          <p className="text-white font-bold text-sm mb-2">What is {APP_NAME}?</p>
-          <p className="text-white/60 text-[13px] leading-relaxed">
+        <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
+          <p className="text-[#202938] font-bold text-sm mb-2">What is {APP_NAME}?</p>
+          <p className="text-[#64748B] text-[13px] leading-relaxed">
             {APP_NAME} is a fast, modern social platform made for young Africans. Connect with friends, share moments, discover what is trending and grow your personal or business brand, all in one place.
           </p>
         </div>
 
-        <div className="bg-gradient-to-br from-[#FF5A1F]/10 to-[#FF2D78]/10 border border-[#FF5A1F]/20 rounded-2xl p-4">
-          <p className="text-white font-bold text-sm mb-2 flex items-center gap-2"><Target size={16} className="text-[#FF5A1F]" /> Our mission</p>
-          <p className="text-white/65 text-[13px] leading-relaxed">
+        <div className="bg-gradient-to-br from-[#F97316]/10 to-[#F97316]/10 border border-[#F97316]/20 rounded-2xl p-4">
+          <p className="text-[#202938] font-bold text-sm mb-2 flex items-center gap-2"><Target size={16} className="text-[#EA580C]" /> Our mission</p>
+          <p className="text-[#64748B] text-[13px] leading-relaxed">
             To connect millions of young Africans on a fast, lightweight platform that works well even on limited data, built for the way Africa actually uses the internet.
           </p>
         </div>
 
         <div>
-          <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-widest mb-3">What you can do</p>
+          <p className="text-[#64748B] text-[11px] font-bold uppercase tracking-widest mb-3">What you can do</p>
           <div className="grid grid-cols-2 gap-2">
             {FEATURES.map(({ Icon, title, desc }) => (
-              <div key={title} className="bg-white/[0.04] border border-white/[0.07] rounded-2xl p-3">
-                <span className="w-9 h-9 rounded-xl bg-[#FF5A1F]/10 flex items-center justify-center mb-2"><Icon size={17} className="text-[#FF8A5C]" /></span>
-                <p className="text-white font-bold text-[13px]">{title}</p>
-                <p className="text-white/40 text-[11px] mt-0.5 leading-snug">{desc}</p>
+              <div key={title} className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-3">
+                <span className="w-9 h-9 rounded-xl bg-[#F97316]/10 flex items-center justify-center mb-2"><Icon size={17} className="text-[#EA580C]" /></span>
+                <p className="text-[#202938] font-bold text-[13px]">{title}</p>
+                <p className="text-[#94A3B8] text-[11px] mt-0.5 leading-snug">{desc}</p>
               </div>
             ))}
           </div>
         </div>
 
         <div>
-          <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-widest mb-2">The app</p>
-          <div className="bg-white/[0.035] border border-white/[0.07] rounded-2xl overflow-hidden divide-y divide-white/[0.06]">
+          <p className="text-[#64748B] text-[11px] font-bold uppercase tracking-widest mb-2">The app</p>
+          <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl overflow-hidden divide-y divide-[#E2E8F0]">
             {installed ? (
               <Row icon={Smartphone} label="Installed on this device" right={<CheckCircle2 size={18} className="text-[#2ECC71]" />} onClick={() => {}} />
             ) : canInstall ? (
@@ -202,22 +203,22 @@ export default function AboutPage() {
         </div>
 
         <div>
-          <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-widest mb-2">Legal</p>
-          <div className="bg-white/[0.035] border border-white/[0.07] rounded-2xl overflow-hidden divide-y divide-white/[0.06]">
+          <p className="text-[#64748B] text-[11px] font-bold uppercase tracking-widest mb-2">Legal</p>
+          <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl overflow-hidden divide-y divide-[#E2E8F0]">
             {LEGAL.map((l) => <Row key={l.key} icon={l.Icon} label={l.label} onClick={() => setLegal(l)} />)}
           </div>
         </div>
 
         <div>
-          <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-widest mb-2">Need help?</p>
-          <div className="bg-white/[0.035] border border-white/[0.07] rounded-2xl overflow-hidden divide-y divide-white/[0.06]">
+          <p className="text-[#64748B] text-[11px] font-bold uppercase tracking-widest mb-2">Need help?</p>
+          <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl overflow-hidden divide-y divide-[#E2E8F0]">
             <Row icon={LifeBuoy} label="Help Center" sub="Answers, and contact support" onClick={() => navigate('/help')} />
             {SUPPORT_EMAIL && <Row icon={Mail} label="Email support" sub={SUPPORT_EMAIL} href={`mailto:${SUPPORT_EMAIL}`} />}
             {SUPPORT_WHATSAPP && <Row icon={MessageCircle} label="WhatsApp support" href={`https://wa.me/${SUPPORT_WHATSAPP}`} />}
           </div>
         </div>
 
-        <p className="text-center text-white/25 text-[11px] pt-2 pb-4">© {new Date().getFullYear()} {APP_NAME}. All rights reserved.</p>
+        <p className="text-center text-[#94A3B8] text-[11px] pt-2 pb-4">© {new Date().getFullYear()} {APP_NAME}. All rights reserved.</p>
       </div>
     </div>
   );

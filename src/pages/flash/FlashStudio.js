@@ -10,22 +10,23 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  X, Scissors, Sparkles, Type, Volume2, VolumeX, Crop, Image as ImageIcon, Camera, SwitchCamera, Images,
+  X, Scissors, Sparkles, Type, Volume2, VolumeX, Crop, Image as ImageIcon, Camera, Images, UploadCloud, Clock, Film, SlidersHorizontal,
   Check, Play, Pause, Trash2, Plus, Globe, Users, Lock, Columns2, Combine, ChevronLeft, Captions, Minus, BarChart3,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
-import { CLOUDINARY_CLOUD_NAME } from '../../lib/cloudinary';
+import { uploadToCloudinary as uploadAsset } from '../../lib/upload';
 import MentionTextarea from '../../components/MentionTextarea';
 import { Spinner } from '../../components/ui';
+import { goBack } from '../../lib/nav';
 
-const ACCENT = '#FF5A1F';
+const ACCENT = '#F97316';
 const MAX_LEN = 180;           // seconds
 const MIN_LEN = 1;
 const MAX_MB = 100;
 const MAX_TEXTS = 4;
 const MAX_CAPS = 40;
-const TEXT_COLORS = ['#FFFFFF', '#FFD23F', '#FF5A1F', '#4DB6FF', '#34D6A0', '#FF4D6D', '#000000'];
+const TEXT_COLORS = ['#FFFFFF', '#FFD23F', '#F97316', '#4DB6FF', '#34D6A0', '#FF4D6D', '#000000'];
 const TAG_IDEAS = ['kenya', 'nairobi', 'comedy', 'music', 'dance', 'fashion', 'tech', 'sports', 'food', 'travel', 'education', 'business'];
 
 const FILTERS = [
@@ -63,30 +64,6 @@ const TOOLS = [
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const fmt = (s) => { const t = Math.max(0, s || 0); return Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0'); };
 const filterOf = (k) => FILTERS.find((f) => f.key === k) || FILTERS[0];
-
-/* ── upload one file to Cloudinary (same unsigned preset as the rest of B-Link) ── */
-function uploadAsset(file, resourceType, onProgress) {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', 'blink_uploads');
-  formData.append('cloud_name', CLOUDINARY_CLOUD_NAME);
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD_NAME + '/' + resourceType + '/upload');
-    xhr.upload.onprogress = (e) => { if (onProgress && e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)); };
-    xhr.onload = () => {
-      let data = null;
-      try { data = JSON.parse(xhr.responseText); } catch { /* not JSON */ }
-      if (data && data.secure_url) resolve(data);
-      else if (xhr.status === 413) reject(new Error('That file is too large to upload.'));
-      else reject(new Error((data && data.error && data.error.message) || 'Upload failed. Please try again.'));
-    };
-    xhr.ontimeout = () => reject(new Error('Upload timed out. Check your connection.'));
-    xhr.timeout = 10 * 60 * 1000;
-    xhr.onerror = () => reject(new Error('Network error during upload'));
-    xhr.send(formData);
-  });
-}
 
 /* ── Cloudinary URL for the edited video ── */
 const encodeLayerText = (t) => encodeURIComponent(t)
@@ -210,7 +187,7 @@ function TrimBar({ duration, start, end, now, onChange, onScrub }) {
   const pct = (t) => (t / duration) * 100 + '%';
   return (
     <div ref={ref} className="relative h-14 mx-5 select-none" style={{ touchAction: 'none' }} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
-      <div className="absolute inset-x-0 top-2 bottom-2 rounded-lg bg-white/10" />
+      <div className="absolute inset-x-0 top-2 bottom-2 rounded-lg bg-[#F1F5F9]" />
       <div className="absolute top-2 bottom-2 rounded-lg" style={{ left: pct(start), width: ((end - start) / duration) * 100 + '%', background: 'rgba(255,90,31,.28)', borderTop: '2px solid ' + ACCENT, borderBottom: '2px solid ' + ACCENT }} />
       {now >= start && now <= end && <div className="absolute top-1 bottom-1 w-0.5 bg-white pointer-events-none" style={{ left: pct(now) }} />}
       {[['start', start], ['end', end]].map(([k, t]) => (
@@ -227,7 +204,7 @@ function Pill({ active, onClick, children, ariaLabel }) {
   return (
     <button onClick={onClick} aria-label={ariaLabel} aria-pressed={!!active}
       className="px-3.5 h-9 rounded-full text-[13px] font-bold flex-shrink-0 transition-colors"
-      style={{ background: active ? ACCENT : 'rgba(255,255,255,.08)', color: '#fff' }}>{children}</button>
+      style={{ background: active ? ACCENT : '#F1F5F9', color: active ? '#fff' : '#202938' }}>{children}</button>
   );
 }
 
@@ -253,7 +230,6 @@ export default function FlashStudio() {
   const [coverT, setCoverT] = useState(0);
   const [coverFile, setCoverFile] = useState(null);
   const [coverPreview, setCoverPreview] = useState('');
-  const [facing, setFacing] = useState('user');
   const [playing, setPlaying] = useState(false);
   const [now, setNow] = useState(0);
   const [box, setBox] = useState({ w: 0, h: 0 });
@@ -288,6 +264,8 @@ export default function FlashStudio() {
   const camRef = useRef(null);
   const coverInputRef = useRef(null);
   const uploadRef = useRef(null);
+  const abortRef = useRef(null);
+  const cancelRef = useRef(false);
   const coverCache = useRef(null);
   const dragText = useRef(null);
   const trimRef = useRef(trim);
@@ -319,9 +297,8 @@ export default function FlashStudio() {
   }, [remixId]);
 
   /* ── choosing a file ── */
-  const onFile = async (e) => {
-    const f = e.target.files && e.target.files[0];
-    e.target.value = '';
+  const onFile = (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ''; handleFile(f); };
+  const handleFile = async (f) => {
     if (!f) return;
     setError('');
     if (!f.type.startsWith('video/')) { setError('Please choose a video file.'); return; }
@@ -457,11 +434,13 @@ export default function FlashStudio() {
     const pollOptions = pollOpts.map((o) => o.trim()).filter(Boolean);
     if (pollOn && (!pollQ.trim() || pollOptions.length < 2)) { setError('A poll needs a question and at least 2 options.'); return; }
     setError(''); setProblem(false); setBusy(true);
+    const ctrl = new AbortController();
+    abortRef.current = ctrl; cancelRef.current = false;
     try {
       let up = uploadRef.current;
       if (!up || up.key !== fileKey) {                         // upload once; retries reuse it
         setPhase('upload'); setProgress(0);
-        const r = await uploadAsset(file, 'video', setProgress);
+        const r = await uploadAsset(file, 'video', setProgress, { signal: ctrl.signal });
         up = { key: fileKey, url: r.secure_url, duration: r.duration || meta.duration };
         uploadRef.current = up;
       }
@@ -472,7 +451,9 @@ export default function FlashStudio() {
       if (useEdits) {
         const edited = buildEditUrl(up.url, { trim, meta, filter, frame, volume, texts });
         setPhase('process');
-        if (!(await verifyPlayable(edited))) { setProblem(true); setBusy(false); setPhase(''); return; }
+        const ok = await verifyPlayable(edited);
+        if (cancelRef.current) throw Object.assign(new Error('Cancelled'), { name: 'AbortError' });
+        if (!ok) { setProblem(true); setBusy(false); setPhase(''); return; }
         videoUrl = edited;
         duration = Math.round(trimLen);
       }
@@ -485,7 +466,7 @@ export default function FlashStudio() {
           const img = coverMode === 'file' && coverFile
             ? coverFile
             : await captureCover(objUrl, coverMode === 'frame' ? coverT : trim.start, useEdits ? filterOf(filter).css : '', useEdits ? frame : 'orig', meta);
-          thumb = (await uploadAsset(img, 'image')).secure_url;
+          thumb = (await uploadAsset(img, 'image', null, { signal: ctrl.signal })).secure_url;
           coverCache.current = { key: coverKey, url: thumb };
         } catch { thumb = videoUrl.replace(/\.\w+$/, '.jpg'); }
       }
@@ -530,6 +511,7 @@ export default function FlashStudio() {
       await dropGuard();
       navigate('/flash', { replace: true });
     } catch (err) {
+      if (err.name === 'AbortError') { setBusy(false); setPhase(''); say('Upload cancelled'); return; }
       const raw = err.message || '';
       if (raw.includes('Daily post limit')) setError('Daily post limit reached. Come back tomorrow!');
       else if (raw.includes('Duplicate post')) setError('You already posted this. Wait a bit before reposting the same content.');
@@ -543,16 +525,16 @@ export default function FlashStudio() {
   const back = () => {
     if (step === 'details') { setStep('edit'); return; }
     if (step === 'edit' && !busy) { setConfirmDiscard(true); return; }
-    navigate(-1);
+    goBack(navigate, '/flash');
   };
 
   /* ───────────── screens ───────────── */
   const header = (
     <div className="flex items-center justify-between px-2 pt-[max(8px,env(safe-area-inset-top))] pb-1 flex-shrink-0">
-      <button onClick={back} aria-label="Back" className="w-11 h-11 flex items-center justify-center text-white">
+      <button onClick={back} aria-label="Back" className="w-11 h-11 flex items-center justify-center text-[#202938]">
         {step === 'pick' ? <X size={22} /> : <ChevronLeft size={24} />}
       </button>
-      <p className="text-white font-extrabold text-[16px]">
+      <p className="text-[#202938] font-extrabold text-[16px]">
         {step === 'pick' ? (source ? (stitch ? 'Stitch' : 'Duet') : 'New video') : step === 'edit' ? 'Edit' : 'Details'}
       </p>
       {step === 'edit' ? (
@@ -566,7 +548,7 @@ export default function FlashStudio() {
 
   if (remixId && sourceErr) {
     return (
-      <div className="fixed inset-0 z-[60] bg-[#0D0C0B] flex flex-col">
+      <div className="fixed inset-0 z-[60] bg-white flex flex-col">
         {header}
         <div className="flex-1 flex flex-col items-center justify-center gap-4 px-8 text-center">
           <p className="text-white font-semibold">{sourceErr}</p>
@@ -579,45 +561,52 @@ export default function FlashStudio() {
   /* pick */
   if (step === 'pick') {
     return (
-      <div className="fixed inset-0 z-[60] bg-[#0D0C0B] flex flex-col overflow-y-auto">
+      <div className="fixed inset-0 z-[60] bg-white flex flex-col overflow-y-auto">
         {header}
-        <div className="flex-1 px-5 pt-4 pb-8 flex flex-col gap-4 max-w-[520px] w-full mx-auto">
+        <div className="flex-1 px-5 pt-3 pb-10 flex flex-col gap-4 max-w-[520px] w-full mx-auto">
           {source && (
-            <div className="flex items-center gap-3 rounded-2xl p-3 bg-white/[0.06] border border-white/10">
+            <div className="flex items-center gap-3 rounded-2xl p-3 bg-[#F8FAFC] border border-[#E2E8F0]">
               <div className="w-14 h-20 rounded-xl bg-black overflow-hidden flex-shrink-0">
                 {source.video_thumbnail && <img src={source.video_thumbnail} alt="" className="w-full h-full object-cover" />}
               </div>
               <div className="min-w-0">
-                <p className="text-white font-bold text-[15px] flex items-center gap-2">{stitch ? <Combine size={17} /> : <Columns2 size={17} />}{stitch ? 'Stitch with' : 'Duet with'} @{source.users && source.users.username}</p>
-                <p className="text-[#8E8C88] text-[13px] leading-snug mt-1">
+                <p className="text-[#202938] font-bold text-[15px] flex items-center gap-2">{stitch ? <Combine size={17} /> : <Columns2 size={17} />}{stitch ? 'Stitch with' : 'Duet with'} @{source.users && source.users.username}</p>
+                <p className="text-[#64748B] text-[13px] leading-snug mt-1">
                   {stitch ? 'Viewers see the first seconds of their video, then yours.' : 'Their video plays next to yours. Their name is shown on your video.'}
                 </p>
               </div>
             </div>
           )}
-          <div className="flex gap-2">
-            {[['user', 'Front camera'], ['environment', 'Back camera']].map(([k, l]) => (
-              <button key={k} onClick={() => setFacing(k)} aria-pressed={facing === k}
-                className="flex-1 h-11 rounded-xl text-[13px] font-bold flex items-center justify-center gap-2"
-                style={{ background: facing === k ? ACCENT : 'rgba(255,255,255,.07)', color: '#fff' }}>
-                <SwitchCamera size={16} /> {l}
-              </button>
+
+          <div onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); handleFile(e.dataTransfer.files && e.dataTransfer.files[0]); }}
+            className="rounded-3xl border-2 border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-6 py-9 flex flex-col items-center text-center">
+            <span className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: 'rgba(249,115,22,.12)' }}><UploadCloud size={30} color="#F97316" strokeWidth={1.8} /></span>
+            <p className="text-[#202938] font-extrabold text-[19px]">Upload a video</p>
+            <p className="text-[#64748B] text-[13px] mt-1 leading-snug">MP4 or MOV · up to 3 minutes · up to {MAX_MB} MB</p>
+            <button onClick={() => galleryRef.current && galleryRef.current.click()}
+              className="mt-5 h-12 px-8 rounded-full text-white font-bold text-[15px] flex items-center gap-2 active:scale-95 transition-transform" style={{ background: '#F97316' }}>
+              <Images size={19} /> Choose from gallery
+            </button>
+            <button onClick={() => camRef.current && camRef.current.click()}
+              className="mt-2.5 h-11 px-6 rounded-full text-[#202938] font-bold text-[14px] flex items-center gap-2 border border-[#E2E8F0] bg-white active:scale-95 transition-transform">
+              <Camera size={18} /> Record with camera
+            </button>
+          </div>
+          {error && <p className="text-[#DC2626] text-[13px] text-center">{error}</p>}
+
+          <div className="rounded-2xl border border-[#E2E8F0] divide-y divide-[#E2E8F0]">
+            {[[Film, 'Vertical works best', 'Hold your phone upright (9:16) so your video fills the screen.'],
+              [Clock, 'Short and sharp', 'The first 3 seconds decide whether people keep watching.'],
+              [SlidersHorizontal, 'Polish it next', 'Trim, filters, text, captions, a cover and a poll come after you pick a video.']].map(([Icon, t, d]) => (
+              <div key={t} className="flex items-start gap-3 px-4 py-3">
+                <Icon size={18} className="text-[#64748B] mt-0.5 flex-shrink-0" />
+                <div><p className="text-[#202938] text-[14px] font-semibold">{t}</p><p className="text-[#64748B] text-[12px] leading-snug">{d}</p></div>
+              </div>
             ))}
           </div>
-          <button onClick={() => camRef.current && camRef.current.click()}
-            className="h-28 rounded-3xl flex flex-col items-center justify-center gap-2 text-white font-extrabold text-[16px] active:scale-[.98] transition-transform"
-            style={{ background: 'linear-gradient(135deg,#FF5A1F,#FF2D78)' }}>
-            <Camera size={32} strokeWidth={1.8} /> Record with camera
-          </button>
-          <button onClick={() => galleryRef.current && galleryRef.current.click()}
-            className="h-20 rounded-3xl flex items-center justify-center gap-3 text-white font-bold text-[15px] bg-white/[0.07] border border-white/10 active:scale-[.98] transition-transform">
-            <Images size={24} strokeWidth={1.8} /> Choose from gallery
-          </button>
-          <p className="text-[#8E8C88] text-[12px] text-center leading-snug">Up to {MAX_MB} MB. You can trim to 3 minutes. Your original video is never changed.</p>
-          {error && <p className="text-[#FF6B6B] text-[13px] text-center">{error}</p>}
         </div>
         <input ref={galleryRef} type="file" accept="video/*" className="hidden" onChange={onFile} />
-        <input ref={camRef} type="file" accept="video/*" capture={facing} className="hidden" onChange={onFile} />
+        <input ref={camRef} type="file" accept="video/*" capture className="hidden" onChange={onFile} />
       </div>
     );
   }
@@ -629,7 +618,7 @@ export default function FlashStudio() {
   /* details */
   if (step === 'details') {
     return (
-      <div className="fixed inset-0 z-[60] bg-[#0D0C0B] flex flex-col">
+      <div className="fixed inset-0 z-[60] bg-white flex flex-col">
         {header}
         <div className="flex-1 overflow-y-auto px-5 pt-3 pb-10 max-w-[560px] w-full mx-auto">
           {source && (
@@ -637,18 +626,18 @@ export default function FlashStudio() {
               {stitch ? <Combine size={16} /> : <Columns2 size={16} />}{stitch ? 'Stitch of' : 'Duet with'} @{source.users && source.users.username}
             </p>
           )}
-          <div className="bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3 mb-1">
+          <div className="bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-3 mb-1">
             <MentionTextarea value={caption} onChange={setCaption} rows={4} maxLength={500} hashtagIdeas={TAG_IDEAS}
               placeholder="Write a caption… use # for hashtags and @ to mention" className="text-[16px] leading-snug" />
           </div>
-          <p className="text-right text-[11px] text-[#8E8C88] mb-3">{caption.length}/500</p>
+          <p className="text-right text-[11px] text-[#64748B] mb-3">{caption.length}/500</p>
 
-          <p className="text-[12px] font-bold uppercase tracking-wide text-[#8E8C88] mb-2">Who can watch</p>
+          <p className="text-[12px] font-bold uppercase tracking-wide text-[#64748B] mb-2">Who can watch</p>
           <div className="flex gap-2 mb-4">
             {AUDIENCES.map((a) => (
               <button key={a.key} onClick={() => setAudience(a.key)} aria-pressed={audience === a.key}
                 className="flex-1 h-12 rounded-xl text-[13px] font-bold flex items-center justify-center gap-2"
-                style={{ background: audience === a.key ? ACCENT : 'rgba(255,255,255,.07)', color: '#fff' }}>
+                style={{ background: audience === a.key ? ACCENT : '#F1F5F9', color: audience === a.key ? '#fff' : '#202938' }}>
                 <a.icon size={16} /> {a.label}
               </button>
             ))}
@@ -661,10 +650,10 @@ export default function FlashStudio() {
             <button key={l} onClick={() => !off && set(!on)} disabled={off} role="switch" aria-checked={on}
               className="w-full flex items-center gap-3 py-3 text-left disabled:opacity-50">
               <span className="flex-1 min-w-0">
-                <span className="block text-white text-[15px] font-semibold">{l}</span>
-                <span className="block text-[#8E8C88] text-[12px] mt-0.5 leading-snug">{d}</span>
+                <span className="block text-[#202938] text-[15px] font-semibold">{l}</span>
+                <span className="block text-[#64748B] text-[12px] mt-0.5 leading-snug">{d}</span>
               </span>
-              <span className="w-11 h-6 rounded-full flex-shrink-0 relative transition-colors" style={{ background: on ? ACCENT : 'rgba(255,255,255,.18)' }}>
+              <span className="w-11 h-6 rounded-full flex-shrink-0 relative transition-colors" style={{ background: on ? ACCENT : '#E2E8F0' }}>
                 <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all" style={{ left: on ? 22 : 2 }} />
               </span>
             </button>
@@ -672,33 +661,33 @@ export default function FlashStudio() {
 
           <button onClick={() => setPollOn(!pollOn)} role="switch" aria-checked={pollOn} className="w-full flex items-center gap-3 py-3 text-left">
             <span className="flex-1 min-w-0">
-              <span className="block text-white text-[15px] font-semibold flex items-center gap-2"><BarChart3 size={17} /> Add a poll</span>
-              <span className="block text-[#8E8C88] text-[12px] mt-0.5 leading-snug">Ask viewers a question. Results show after they vote.</span>
+              <span className="block text-[#202938] text-[15px] font-semibold flex items-center gap-2"><BarChart3 size={17} /> Add a poll</span>
+              <span className="block text-[#64748B] text-[12px] mt-0.5 leading-snug">Ask viewers a question. Results show after they vote.</span>
             </span>
-            <span className="w-11 h-6 rounded-full flex-shrink-0 relative transition-colors" style={{ background: pollOn ? ACCENT : 'rgba(255,255,255,.18)' }}>
+            <span className="w-11 h-6 rounded-full flex-shrink-0 relative transition-colors" style={{ background: pollOn ? ACCENT : '#E2E8F0' }}>
               <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all" style={{ left: pollOn ? 22 : 2 }} />
             </span>
           </button>
           {pollOn && (
-            <div className="rounded-2xl bg-white/[0.05] border border-white/10 p-3 flex flex-col gap-2.5 mb-2">
+            <div className="rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] p-3 flex flex-col gap-2.5 mb-2">
               <input value={pollQ} onChange={(e) => setPollQ(e.target.value.slice(0, 120))} placeholder="Your question" aria-label="Poll question"
-                className="h-12 rounded-xl bg-white/[0.07] px-4 text-white outline-none" style={{ fontSize: 16 }} />
+                className="h-12 rounded-xl bg-[#F1F5F9] px-4 text-[#202938] outline-none" style={{ fontSize: 16 }} />
               {pollOpts.map((o, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <input value={o} onChange={(e) => setPollOpts((a) => a.map((x, j) => (j === i ? e.target.value.slice(0, 40) : x)))} placeholder={'Option ' + (i + 1)} aria-label={'Poll option ' + (i + 1)}
-                    className="flex-1 min-w-0 h-11 rounded-xl bg-white/[0.07] px-4 text-white outline-none" style={{ fontSize: 16 }} />
+                    className="flex-1 min-w-0 h-11 rounded-xl bg-[#F1F5F9] px-4 text-[#202938] outline-none" style={{ fontSize: 16 }} />
                   {pollOpts.length > 2 && (
                     <button onClick={() => setPollOpts((a) => a.filter((_, j) => j !== i))} aria-label={'Remove option ' + (i + 1)} className="w-10 h-10 flex items-center justify-center text-[#FF6B6B]"><Minus size={18} /></button>
                   )}
                 </div>
               ))}
               {pollOpts.length < 4 && (
-                <button onClick={() => setPollOpts((a) => [...a, ''])} className="h-10 rounded-xl bg-white/[0.07] text-white text-[13px] font-bold flex items-center justify-center gap-1.5"><Plus size={15} /> Add option</button>
+                <button onClick={() => setPollOpts((a) => [...a, ''])} className="h-10 rounded-xl bg-[#F1F5F9] text-[#202938] text-[13px] font-bold flex items-center justify-center gap-1.5"><Plus size={15} /> Add option</button>
               )}
             </div>
           )}
 
-          <div className="mt-3 rounded-2xl bg-white/[0.05] border border-white/10 px-4 py-3 text-[13px] text-[#B8B6B2] leading-snug">
+          <div className="mt-3 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] px-4 py-3 text-[13px] text-[#64748B] leading-snug">
             {hasEdits ? 'Your edits are applied when your video is processed: ' : 'No edits: your video is posted as it is. '}
             {hasEdits && [
               (trim.start > 0.05 || trim.end < meta.duration - 0.05) && 'trimmed to ' + Math.round(trimLen) + 's',
@@ -708,7 +697,7 @@ export default function FlashStudio() {
               texts.filter((t) => t.text.trim()).length > 0 && texts.filter((t) => t.text.trim()).length + ' text',
             ].filter(Boolean).join(' · ')}
           </div>
-          {error && <div className="mt-3 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3"><p className="text-red-400 text-sm">{error}</p></div>}
+          {error && <div className="mt-3 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3"><p className="text-red-600 text-sm">{error}</p></div>}
         </div>
         {renderBusy()}
       </div>
@@ -720,33 +709,36 @@ export default function FlashStudio() {
     if (!busy && !problem && !done) return null;
     return (
       <div className="fixed inset-0 z-[90] bg-black/80 flex items-center justify-center px-8">
-        <div className="w-full max-w-[340px] rounded-3xl bg-[#171614] border border-white/10 p-6 text-center">
+        <div className="w-full max-w-[340px] rounded-3xl bg-white border border-[#E2E8F0] p-6 text-center">
           {done ? (
             <>
               <span className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center" style={{ background: ACCENT }}><Check size={28} color="#fff" /></span>
-              <p className="text-white font-bold">Posted to B-Flash</p>
-              {note && <p className="text-[#B8B6B2] text-[12px] leading-snug mt-2">{note}</p>}
+              <p className="text-[#202938] font-bold">Posted to B-Flash</p>
+              {note && <p className="text-[#64748B] text-[12px] leading-snug mt-2">{note}</p>}
             </>
           ) : problem ? (
             <>
-              <p className="text-white font-bold mb-1">Your edits couldn’t be made</p>
-              <p className="text-[#8E8C88] text-[13px] leading-snug mb-4">The edited video didn’t load. You can try again, or post your original video without the edits.</p>
+              <p className="text-[#202938] font-bold mb-1">Your edits couldn’t be made</p>
+              <p className="text-[#64748B] text-[13px] leading-snug mb-4">The edited video didn’t load. You can try again, or post your original video without the edits.</p>
               <div className="flex flex-col gap-2.5">
                 <button onClick={() => publish()} className="h-11 rounded-xl text-white font-bold" style={{ background: ACCENT }}>Try again</button>
-                <button onClick={() => publish({ original: true })} className="h-11 rounded-xl text-white font-bold bg-white/10">Post original</button>
-                <button onClick={() => setProblem(false)} className="h-10 text-[#8E8C88] font-semibold">Cancel</button>
+                <button onClick={() => publish({ original: true })} className="h-11 rounded-xl text-[#202938] font-bold bg-[#F1F5F9]">Post original</button>
+                <button onClick={() => setProblem(false)} className="h-10 text-[#64748B] font-semibold">Cancel</button>
               </div>
             </>
           ) : (
             <>
-              <div className="flex justify-center text-white mb-3"><Spinner size={28} /></div>
-              <p className="text-white font-bold">
+              <div className="flex justify-center text-[#202938] mb-3"><Spinner size={28} /></div>
+              <p className="text-[#202938] font-bold">
                 {phase === 'upload' ? 'Uploading… ' + progress + '%' : phase === 'process' ? 'Applying your edits…' : phase === 'cover' ? 'Saving your cover…' : 'Publishing…'}
               </p>
               {phase === 'upload' && (
-                <div className="h-1.5 rounded-full bg-white/10 mt-3 overflow-hidden"><div className="h-full rounded-full" style={{ width: progress + '%', background: ACCENT }} /></div>
+                <div className="h-1.5 rounded-full bg-[#F1F5F9] mt-3 overflow-hidden"><div className="h-full rounded-full" style={{ width: progress + '%', background: ACCENT }} /></div>
               )}
-              <p className="text-[#8E8C88] text-[12px] mt-3">Keep this screen open.</p>
+              <p className="text-[#64748B] text-[12px] mt-3">Keep this screen open. If your signal drops, the upload waits and carries on.</p>
+              {phase !== 'save' && (
+                <button onClick={() => { cancelRef.current = true; if (abortRef.current) abortRef.current.abort(); }} className="mt-4 h-10 px-5 rounded-full bg-[#F1F5F9] text-[#202938] text-[13px] font-bold">Cancel upload</button>
+              )}
             </>
           )}
         </div>
@@ -756,7 +748,7 @@ export default function FlashStudio() {
 
   const tools = stitch ? [...TOOLS, { key: 'clip', icon: Combine, label: 'Clip' }] : TOOLS;
   return (
-    <div className="fixed inset-0 z-[60] bg-[#0D0C0B] flex flex-col">
+    <div className="fixed inset-0 z-[60] bg-white flex flex-col">
       {header}
 
       <div ref={wrapRef} className="flex-1 min-h-0 flex items-center justify-center overflow-hidden">
@@ -773,7 +765,7 @@ export default function FlashStudio() {
             <div className="absolute inset-0" ref={ownRef} onClick={togglePlay} role="button" aria-label={playing ? 'Pause' : 'Play'}>
               {capNow && (
                 <div className="absolute left-3 right-3 flex justify-center pointer-events-none" style={{ bottom: '12%' }}>
-                  <span className="px-2 py-0.5 rounded-md text-white font-bold text-center leading-snug" style={{ background: 'rgba(0,0,0,.62)', fontSize: Math.max(11, box.h * 0.03) }}>{capNow.t}</span>
+                  <span className="px-2 py-0.5 rounded-md text-[#202938] font-bold text-center leading-snug" style={{ background: 'rgba(0,0,0,.62)', fontSize: Math.max(11, box.h * 0.03) }}>{capNow.t}</span>
                 </div>
               )}
               {texts.map((t) => (
@@ -801,17 +793,17 @@ export default function FlashStudio() {
       </div>
 
       {/* tool panel */}
-      <div className="flex-shrink-0 bg-[#171614] border-t border-white/10" style={{ minHeight: 150 }}>
+      <div className="flex-shrink-0 bg-white border-t border-[#E2E8F0]" style={{ minHeight: 150 }}>
         <div className="pt-3 pb-2 min-h-[112px]">
           {tool === 'trim' && (
             <>
               <TrimBar duration={meta.duration} start={trim.start} end={trim.end} now={now} onChange={setTrim} onScrub={seek} />
-              <div className="flex items-center justify-between px-5 text-[12px] text-[#B8B6B2]">
+              <div className="flex items-center justify-between px-5 text-[12px] text-[#64748B]">
                 <span>Start {fmt(trim.start)}</span>
-                <span className="font-bold text-white">{Math.round(trimLen)}s selected</span>
+                <span className="font-bold text-[#202938]">{Math.round(trimLen)}s selected</span>
                 <span>End {fmt(trim.end)}</span>
               </div>
-              {meta.duration > MAX_LEN && <p className="px-5 pt-1 text-[11px] text-[#8E8C88]">This video is {fmt(meta.duration)} long. B-Flash videos can be up to 3 minutes.</p>}
+              {meta.duration > MAX_LEN && <p className="px-5 pt-1 text-[11px] text-[#64748B]">This video is {fmt(meta.duration)} long. B-Flash videos can be up to 3 minutes.</p>}
             </>
           )}
           {tool === 'filter' && (
@@ -831,7 +823,7 @@ export default function FlashStudio() {
                 {sel && (
                   <>
                     <input value={sel.text} onChange={(e) => patchText(sel.id, { text: e.target.value.slice(0, 40) })} aria-label="Text"
-                      className="flex-1 min-w-0 h-9 rounded-full bg-white/[0.08] px-4 text-white outline-none" style={{ fontSize: 16 }} />
+                      className="flex-1 min-w-0 h-9 rounded-full bg-[#F1F5F9] px-4 text-[#202938] outline-none" style={{ fontSize: 16 }} />
                     <button onClick={() => { setTexts((a) => a.filter((t) => t.id !== sel.id)); setSelText(null); }} aria-label="Delete text" className="w-9 h-9 flex items-center justify-center text-[#FF6B6B] flex-shrink-0"><Trash2 size={18} /></button>
                   </>
                 )}
@@ -841,25 +833,25 @@ export default function FlashStudio() {
                   <div className="flex items-center gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
                     {TEXT_COLORS.map((c) => (
                       <button key={c} onClick={() => patchText(sel.id, { color: c })} aria-label={'Colour ' + c}
-                        className="w-7 h-7 rounded-full flex-shrink-0" style={{ background: c, outline: sel.color === c ? '2px solid ' + ACCENT : '2px solid rgba(255,255,255,.25)', outlineOffset: 2 }} />
+                        className="w-7 h-7 rounded-full flex-shrink-0" style={{ background: c, outline: sel.color === c ? '2px solid ' + ACCENT : '2px solid #E2E8F0', outlineOffset: 2 }} />
                     ))}
                     <Pill active={sel.bg} onClick={() => patchText(sel.id, { bg: !sel.bg })}>Box</Pill>
                   </div>
                   <input type="range" min="3" max="10" step="0.5" value={sel.size * 100} onChange={(e) => patchText(sel.id, { size: Number(e.target.value) / 100 })}
                     aria-label="Text size" className="w-full" style={{ accentColor: ACCENT }} />
                 </>
-              ) : <p className="text-[12px] text-[#8E8C88]">Add text, then drag it on the video to place it. It shows for the whole video.</p>}
+              ) : <p className="text-[12px] text-[#64748B]">Add text, then drag it on the video to place it. It shows for the whole video.</p>}
             </div>
           )}
           {tool === 'sound' && (
             <div className="px-5">
               <div className="flex items-center gap-3">
                 <button onClick={() => setVolume(volume === 0 ? 100 : 0)} aria-label={volume === 0 ? 'Turn original sound on' : 'Mute original sound'}
-                  className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center text-white flex-shrink-0">{volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}</button>
+                  className="w-11 h-11 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[#202938] flex-shrink-0">{volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}</button>
                 <input type="range" min="0" max="150" step="5" value={volume} onChange={(e) => setVolume(Number(e.target.value))} aria-label="Original sound volume" className="flex-1" style={{ accentColor: ACCENT }} />
-                <span className="w-12 text-right text-white text-[13px] font-bold">{volume}%</span>
+                <span className="w-12 text-right text-[#202938] text-[13px] font-bold">{volume}%</span>
               </div>
-              <p className="text-[11px] text-[#8E8C88] mt-2 leading-snug">Changes the original sound of your video. The preview can’t play louder than 100%.</p>
+              <p className="text-[11px] text-[#64748B] mt-2 leading-snug">Changes the original sound of your video. The preview can’t play louder than 100%.</p>
             </div>
           )}
           {tool === 'frame' && (
@@ -867,10 +859,10 @@ export default function FlashStudio() {
               {FRAMES.map((f) => (
                 <button key={f.key} onClick={() => !duet && setFrame(f.key)} disabled={duet} aria-pressed={frame === f.key}
                   className="flex flex-col items-center gap-1 py-2 rounded-xl disabled:opacity-50"
-                  style={{ background: frame === f.key ? 'rgba(255,90,31,.18)' : 'rgba(255,255,255,.06)', border: '1px solid ' + (frame === f.key ? ACCENT : 'transparent') }}>
+                  style={{ background: frame === f.key ? 'rgba(255,90,31,.18)' : '#F1F5F9', border: '1px solid ' + (frame === f.key ? ACCENT : 'transparent') }}>
                   <span className="block border-2 rounded-sm" style={{ borderColor: frame === f.key ? ACCENT : '#B8B6B2', width: f.key === 'square' ? 22 : f.key === 'orig' ? 26 : 16, height: f.key === 'orig' ? 18 : f.key === 'square' ? 22 : 28 }} />
-                  <span className="text-[12px] font-bold text-white">{f.label}</span>
-                  <span className="text-[10px] text-[#8E8C88]">{f.sub}</span>
+                  <span className="text-[12px] font-bold text-[#202938]">{f.label}</span>
+                  <span className="text-[10px] text-[#64748B]">{f.sub}</span>
                 </button>
               ))}
             </div>
@@ -881,26 +873,26 @@ export default function FlashStudio() {
                 <button onClick={addCap} className="h-9 px-3.5 rounded-full text-white text-[13px] font-bold flex items-center gap-1.5" style={{ background: ACCENT }}>
                   <Plus size={15} /> Add line at {fmt(Math.max(0, now - trim.start))}
                 </button>
-                <span className="text-[11px] text-[#8E8C88]">{caps.length}/{MAX_CAPS}</span>
+                <span className="text-[11px] text-[#64748B]">{caps.length}/{MAX_CAPS}</span>
               </div>
               {caps.length === 0 ? (
-                <p className="text-[12px] text-[#8E8C88] leading-snug">Play or scrub the video, then add a line where someone starts speaking. Viewers can turn captions on or off.</p>
+                <p className="text-[12px] text-[#64748B] leading-snug">Play or scrub the video, then add a line where someone starts speaking. Viewers can turn captions on or off.</p>
               ) : (
                 <div className="flex flex-col gap-2 max-h-[132px] overflow-y-auto pb-1">
                   {caps.map((c) => (
-                    <div key={c.id} className="rounded-xl bg-white/[0.06] p-2 flex flex-col gap-1.5">
+                    <div key={c.id} className="rounded-xl bg-[#F1F5F9] p-2 flex flex-col gap-1.5">
                       <div className="flex items-center gap-2">
                         <input value={c.t} onChange={(e) => patchCap(c.id, { t: e.target.value.slice(0, 100) })} aria-label="Caption text"
-                          className="flex-1 min-w-0 h-9 rounded-lg bg-white/[0.08] px-3 text-white outline-none" style={{ fontSize: 16 }} />
+                          className="flex-1 min-w-0 h-9 rounded-lg bg-[#F1F5F9] px-3 text-[#202938] outline-none" style={{ fontSize: 16 }} />
                         <button onClick={() => setCaps((a) => a.filter((x) => x.id !== c.id))} aria-label="Delete line" className="w-9 h-9 flex items-center justify-center text-[#FF6B6B]"><Trash2 size={16} /></button>
                       </div>
-                      <div className="flex items-center justify-between text-[12px] text-[#B8B6B2]">
+                      <div className="flex items-center justify-between text-[12px] text-[#64748B]">
                         {[['Start', 's', -0.5, 0.5], ['End', 'e', -0.5, 0.5]].map(([l, k]) => (
                           <span key={k} className="flex items-center gap-1.5">
                             {l}
-                            <button onClick={() => patchCap(c.id, { [k]: clamp(c[k] - 0.5, k === 's' ? 0 : c.s + 0.5, k === 's' ? c.e - 0.5 : trimLen) })} aria-label={l + ' earlier'} className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white"><Minus size={13} /></button>
-                            <span className="w-10 text-center text-white font-bold">{c[k].toFixed(1)}s</span>
-                            <button onClick={() => patchCap(c.id, { [k]: clamp(c[k] + 0.5, k === 's' ? 0 : c.s + 0.5, k === 's' ? c.e - 0.5 : trimLen) })} aria-label={l + ' later'} className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white"><Plus size={13} /></button>
+                            <button onClick={() => patchCap(c.id, { [k]: clamp(c[k] - 0.5, k === 's' ? 0 : c.s + 0.5, k === 's' ? c.e - 0.5 : trimLen) })} aria-label={l + ' earlier'} className="w-7 h-7 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[#202938]"><Minus size={13} /></button>
+                            <span className="w-10 text-center text-[#202938] font-bold">{c[k].toFixed(1)}s</span>
+                            <button onClick={() => patchCap(c.id, { [k]: clamp(c[k] + 0.5, k === 's' ? 0 : c.s + 0.5, k === 's' ? c.e - 0.5 : trimLen) })} aria-label={l + ' later'} className="w-7 h-7 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[#202938]"><Plus size={13} /></button>
                           </span>
                         ))}
                       </div>
@@ -932,16 +924,16 @@ export default function FlashStudio() {
           )}
           {tool === 'clip' && stitch && (
             <div className="px-5">
-              <p className="text-white text-[14px] font-bold mb-1">Show {clipEnd}s of @{source.users && source.users.username}’s video first</p>
+              <p className="text-[#202938] text-[14px] font-bold mb-1">Show {clipEnd}s of @{source.users && source.users.username}’s video first</p>
               <input type="range" min="1" max={Math.min(5, Math.max(1, Math.floor(source.video_duration || 5)))} step="1" value={clipEnd}
                 onChange={(e) => setClipEnd(Number(e.target.value))} aria-label="Clip length" className="w-full" style={{ accentColor: ACCENT }} />
-              <p className="text-[11px] text-[#8E8C88] mt-1 leading-snug">Viewers see this clip from the start of their video, then your video. Clips are 1 to 5 seconds.</p>
+              <p className="text-[11px] text-[#64748B] mt-1 leading-snug">Viewers see this clip from the start of their video, then your video. Clips are 1 to 5 seconds.</p>
             </div>
           )}
         </div>
 
-        <div className="flex items-center justify-around px-1 pb-[max(8px,env(safe-area-inset-bottom))] pt-1 border-t border-white/[0.06] overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          <button onClick={togglePlay} aria-label={playing ? 'Pause' : 'Play'} className="w-11 h-11 flex items-center justify-center text-white">
+        <div className="flex items-center justify-around px-1 pb-[max(8px,env(safe-area-inset-bottom))] pt-1 border-t border-[#E2E8F0] overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          <button onClick={togglePlay} aria-label={playing ? 'Pause' : 'Play'} className="w-11 h-11 flex items-center justify-center text-[#202938]">
             {playing ? <Pause size={22} /> : <Play size={22} />}
           </button>
           {tools.map((t) => (
@@ -956,12 +948,12 @@ export default function FlashStudio() {
 
       {confirmDiscard && (
         <div className="fixed inset-0 z-[90] bg-black/70 flex items-end justify-center" onClick={() => setConfirmDiscard(false)}>
-          <div className="w-full max-w-[520px] bg-[#171614] border-t border-white/10 rounded-t-3xl px-5 pt-5 pb-[max(20px,env(safe-area-inset-bottom))]" onClick={(e) => e.stopPropagation()}>
-            <p className="text-white font-bold text-[16px] mb-1">Discard this video?</p>
-            <p className="text-[#8E8C88] text-[13px] leading-snug mb-4">Your edits will be lost. Your original video on your phone is not affected.</p>
+          <div className="w-full max-w-[520px] bg-white border-t border-[#E2E8F0] rounded-t-3xl px-5 pt-5 pb-[max(20px,env(safe-area-inset-bottom))]" onClick={(e) => e.stopPropagation()}>
+            <p className="text-[#202938] font-bold text-[16px] mb-1">Discard this video?</p>
+            <p className="text-[#64748B] text-[13px] leading-snug mb-4">Your edits will be lost. Your original video on your phone is not affected.</p>
             <div className="flex flex-col gap-2.5">
               <button onClick={() => { setConfirmDiscard(false); dropGuard(); setStep('pick'); setFile(null); }} className="h-12 rounded-xl bg-[#E5484D] text-white font-bold">Discard</button>
-              <button onClick={() => setConfirmDiscard(false)} className="h-12 rounded-xl bg-white/10 text-white font-bold">Keep editing</button>
+              <button onClick={() => setConfirmDiscard(false)} className="h-12 rounded-xl bg-[#F1F5F9] text-[#202938] font-bold">Keep editing</button>
             </div>
           </div>
         </div>

@@ -17,6 +17,7 @@ import {
   PHONE_COUNTRIES, normalisePhone, checkPassword, friendlyAuthError, lockState, recordFailure, recordSuccess, formatWait, maskIdentifier, submitGuard,
 } from '../../lib/authSecurity';
 import { APP_NAME } from '../../config/appInfo';
+import { goBack } from '../../lib/nav';
 
 let settingsCache = null;
 const NOTIF = [
@@ -30,14 +31,14 @@ const NOTIF = [
 const WHO = [{ key: 'everyone', label: 'Everyone' }, { key: 'followers', label: 'People who follow me' }, { key: 'nobody', label: 'Nobody' }];
 const LABEL = {
   everyone: 'Everyone', followers: 'People who follow me', nobody: 'Nobody', auto: 'Auto', high: 'High', medium: 'Medium', low: 'Low (saves data)',
-  small: 'Small', large: 'Large', dark: 'Dark', amoled: 'AMOLED black',
+  small: 'Small', large: 'Large', light: 'Light', dark: 'Dark', amoled: 'AMOLED black',
 };
 
 /* ── building blocks ── */
 function Toggle({ value, onChange }) {
   return (
     <button type="button" role="switch" aria-checked={!!value} onClick={(e) => { e.stopPropagation(); onChange(!value); }}
-      className={'relative w-12 h-7 rounded-full transition-colors duration-200 flex-shrink-0 ' + (value ? 'bg-[#FF5A1F]' : 'bg-white/20')}>
+      className={'relative w-12 h-7 rounded-full transition-colors duration-200 flex-shrink-0 ' + (value ? 'bg-[#F97316]' : 'bg-[#E2E8F0]')}>
       <span className={'absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ' + (value ? 'translate-x-6' : 'translate-x-1')} />
     </button>
   );
@@ -47,28 +48,28 @@ function Row({ icon: Icon, label, sub, onPress, right, danger, toggle }) {
   const Tag = onPress || toggle ? 'button' : 'div';
   return (
     <Tag onClick={toggle ? () => toggle.onChange(!toggle.value) : onPress}
-      className={'w-full flex items-center gap-3 px-4 py-3.5 text-left ' + ((onPress || toggle) ? 'active:bg-white/[0.06] ' : '')}>
+      className={'w-full flex items-center gap-3 px-4 py-3.5 text-left ' + ((onPress || toggle) ? 'active:bg-[#F1F5F9] ' : '')}>
       {Icon && (
-        <span className={'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ' + (danger ? 'bg-red-500/15' : 'bg-[#FF5A1F]/10')}>
-          <Icon size={17} className={danger ? 'text-red-400' : 'text-[#FF8A5C]'} />
+        <span className={'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ' + (danger ? 'bg-red-500/15' : 'bg-[#F97316]/10')}>
+          <Icon size={17} className={danger ? 'text-red-600' : 'text-[#EA580C]'} />
         </span>
       )}
       <span className="flex-1 min-w-0">
-        <span className={'block text-[14px] font-semibold ' + (danger ? 'text-red-400' : 'text-white/90')}>{label}</span>
-        {sub && <span className="block text-[#8E8C88] text-[12px] mt-0.5 truncate">{sub}</span>}
+        <span className={'block text-[14px] font-semibold ' + (danger ? 'text-red-600' : 'text-[#202938]')}>{label}</span>
+        {sub && <span className="block text-[#64748B] text-[12px] mt-0.5 truncate">{sub}</span>}
       </span>
-      {toggle ? <Toggle value={toggle.value} onChange={toggle.onChange} /> : right || (onPress && <ChevronRight size={16} className="text-[#8E8C88] flex-shrink-0" />)}
+      {toggle ? <Toggle value={toggle.value} onChange={toggle.onChange} /> : right || (onPress && <ChevronRight size={16} className="text-[#64748B] flex-shrink-0" />)}
     </Tag>
   );
 }
 
-const Divider = () => <div className="h-px bg-white/[0.06] ml-16 mr-4" />;
+const Divider = () => <div className="h-px bg-[#F1F5F9] ml-16 mr-4" />;
 
 function Section({ title, children }) {
   return (
     <div className="mb-1">
-      <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-widest px-5 pt-5 pb-2">{title}</p>
-      <div className="bg-white/[0.035] border border-white/[0.07] rounded-2xl mx-4 overflow-hidden">
+      <p className="text-[#64748B] text-[11px] font-bold uppercase tracking-widest px-5 pt-5 pb-2">{title}</p>
+      <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl mx-4 overflow-hidden">
         {(Array.isArray(children) ? children.filter(Boolean) : [children]).map((c, i, arr) => (
           <div key={i}>{c}{i < arr.length - 1 && <Divider />}</div>
         ))}
@@ -80,11 +81,11 @@ function Section({ title, children }) {
 function Sheet({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center" onClick={onClose}>
-      <div className="w-full max-w-[540px] bg-[#171614] border-t border-white/10 rounded-t-3xl pb-[max(20px,env(safe-area-inset-bottom))] max-h-[88vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mt-2.5" />
+      <div className="w-full max-w-[540px] bg-white border-t border-[#E2E8F0] rounded-t-3xl pb-[max(20px,env(safe-area-inset-bottom))] max-h-[88vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="w-10 h-1 rounded-full bg-[#E2E8F0] mx-auto mt-2.5" />
         <div className="flex items-center justify-between px-5 pt-3 pb-3">
-          <p className="text-white font-bold text-[16px]">{title}</p>
-          <button onClick={onClose} aria-label="Close" className="text-[#8E8C88] p-1"><X size={20} /></button>
+          <p className="text-[#202938] font-bold text-[16px]">{title}</p>
+          <button onClick={onClose} aria-label="Close" className="text-[#64748B] p-1"><X size={20} /></button>
         </div>
         <div className="px-5">{children}</div>
       </div>
@@ -92,13 +93,13 @@ function Sheet({ title, onClose, children }) {
   );
 }
 
-const inputCls = 'w-full bg-white/[0.07] border border-white/10 rounded-xl px-4 py-3.5 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60';
-const Label = ({ children }) => <label className="text-white/60 text-[11px] font-bold uppercase tracking-wider block mb-1.5">{children}</label>;
-const Err = ({ text }) => (text ? <p className="text-red-400 text-sm mt-2">{text}</p> : null);
+const inputCls = 'w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-xl px-4 py-3.5 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60';
+const Label = ({ children }) => <label className="text-[#64748B] text-[11px] font-bold uppercase tracking-wider block mb-1.5">{children}</label>;
+const Err = ({ text }) => (text ? <p className="text-red-600 text-sm mt-2">{text}</p> : null);
 const GradBtn = ({ busy, children, ...p }) => (
   <button {...p} disabled={busy || p.disabled}
     className="w-full py-3.5 rounded-2xl font-bold text-white disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
-    style={{ background: 'linear-gradient(135deg,#FF5A1F,#FF2D78)' }}>
+    style={{ background: '#F97316' }}>
     {busy ? <Spinner size={17} /> : children}
   </button>
 );
@@ -110,9 +111,9 @@ function SelectSheet({ title, options, value, onSelect, onClose }) {
         {options.map((o) => (
           <button key={o.key} onClick={() => { onSelect(o.key); onClose(); }}
             className={'w-full flex items-center justify-between px-4 py-3.5 rounded-xl border ' +
-              (value === o.key ? 'bg-[#FF5A1F]/15 border-[#FF5A1F]/40 text-white' : 'bg-white/[0.03] border-white/[0.07] text-white/80')}>
+              (value === o.key ? 'bg-[#F97316]/15 border-[#F97316]/40 text-white' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#202938]')}>
             <span className="font-semibold text-[14px]">{o.label}</span>
-            {value === o.key && <Check size={16} className="text-[#FF5A1F]" />}
+            {value === o.key && <Check size={16} className="text-[#EA580C]" />}
           </button>
         ))}
       </div>
@@ -197,7 +198,7 @@ function EmailSheet({ user, onClose, onDone }) {
   };
   return (
     <Sheet title={user.email ? 'Change email' : 'Add an email'} onClose={onClose}>
-      {user.email && <div className="bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3 mb-3"><p className="text-[#8E8C88] text-[11px] font-bold uppercase">Current email</p><p className="text-white text-[14px] mt-0.5">{user.email}</p></div>}
+      {user.email && <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-3 mb-3"><p className="text-[#64748B] text-[11px] font-bold uppercase">Current email</p><p className="text-[#202938] text-[14px] mt-0.5">{user.email}</p></div>}
       <Label>New email</Label>
       <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setErr(''); }} placeholder="you@example.com" inputMode="email" autoCapitalize="none" className={inputCls} />
       <div className="mt-3"><PasswordGate user={user} password={pw} setPassword={(v) => { setPw(v); setErr(''); }} captcha={captcha} setCaptcha={setCaptcha} resetKey={reset} /></div>
@@ -233,15 +234,15 @@ function PhoneSheet({ user, onClose, onDone }) {
   }
   return (
     <Sheet title={user.phone ? 'Change phone number' : 'Add a phone number'} onClose={onClose}>
-      {user.phone && <p className="text-[#8E8C88] text-sm mb-3">Current number: <span className="text-white">{maskIdentifier('+' + String(user.phone).replace(/^\+/, ''))}</span></p>}
+      {user.phone && <p className="text-[#64748B] text-sm mb-3">Current number: <span className="text-[#202938]">{maskIdentifier('+' + String(user.phone).replace(/^\+/, ''))}</span></p>}
       <Label>New phone number</Label>
       <div className="flex gap-2">
-        <select value={country} onChange={(e) => setCountry(e.target.value)} aria-label="Country code" className="bg-white/[0.07] border border-white/10 rounded-xl px-3 text-white text-[14px]" style={{ WebkitAppearance: 'none', width: 100 }}>
-          {PHONE_COUNTRIES.map((c) => <option key={c.code} value={c.code} style={{ background: '#171614' }}>{c.code} +{c.dial}</option>)}
+        <select value={country} onChange={(e) => setCountry(e.target.value)} aria-label="Country code" className="bg-[#F1F5F9] border border-[#E2E8F0] rounded-xl px-3 text-[#202938] text-[14px]" style={{ WebkitAppearance: 'none', width: 100 }}>
+          {PHONE_COUNTRIES.map((c) => <option key={c.code} value={c.code} style={{ background: '#FFFFFF' }}>{c.code} +{c.dial}</option>)}
         </select>
         <input type="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setErr(''); }} placeholder="712 345 678" inputMode="tel" className={inputCls} />
       </div>
-      <p className="text-[#8E8C88] text-[12px] mt-2">We will text you a code to confirm it is yours.</p>
+      <p className="text-[#64748B] text-[12px] mt-2">We will text you a code to confirm it is yours.</p>
       <Err text={err} />
       <GradBtn onClick={send} busy={busy}>Send code</GradBtn>
     </Sheet>
@@ -288,33 +289,33 @@ function TwoStepSheet({ onClose, onDone }) {
   const active = (factors || []).filter((f) => f.status === 'verified');
   return (
     <Sheet title="Two-step verification" onClose={() => { cancelEnroll(); onClose(); }}>
-      {factors === null ? <div className="flex justify-center py-8 text-[#FF5A1F]"><Spinner size={22} /></div>
+      {factors === null ? <div className="flex justify-center py-8 text-[#EA580C]"><Spinner size={22} /></div>
         : enroll ? (
           <>
-            <p className="text-white/70 text-[13px] mb-3">1. Open an authenticator app (Google Authenticator, Microsoft Authenticator, Authy) and scan this code.</p>
-            <div className="bg-white rounded-2xl p-3 w-fit mx-auto"><img src={enroll.qr} alt="Scan with your authenticator app" width={176} height={176} /></div>
-            <p className="text-[#8E8C88] text-[12px] text-center mt-3">Can't scan? Enter this key:</p>
-            <button onClick={() => navigator.clipboard?.writeText(enroll.secret)} className="mx-auto mt-1 flex items-center gap-2 text-white font-mono text-[13px] bg-white/[0.07] rounded-lg px-3 py-2">
-              {enroll.secret} <Copy size={13} className="text-[#8E8C88]" /></button>
-            <p className="text-white/70 text-[13px] mt-4 mb-2">2. Enter the 6-digit code it shows.</p>
+            <p className="text-[#64748B] text-[13px] mb-3">1. Open an authenticator app (Google Authenticator, Microsoft Authenticator, Authy) and scan this code.</p>
+            <div className="bg-[#F8FAFC] rounded-2xl p-3 w-fit mx-auto"><img src={enroll.qr} alt="Scan with your authenticator app" width={176} height={176} /></div>
+            <p className="text-[#64748B] text-[12px] text-center mt-3">Can't scan? Enter this key:</p>
+            <button onClick={() => navigator.clipboard?.writeText(enroll.secret)} className="mx-auto mt-1 flex items-center gap-2 text-[#202938] font-mono text-[13px] bg-[#F1F5F9] rounded-lg px-3 py-2">
+              {enroll.secret} <Copy size={13} className="text-[#64748B]" /></button>
+            <p className="text-[#64748B] text-[13px] mt-4 mb-2">2. Enter the 6-digit code it shows.</p>
             <input value={code} onChange={(e) => { setCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setErr(''); }} inputMode="numeric" placeholder="123456" className={inputCls + ' text-center tracking-[6px] text-lg'} />
             <Err text={err} />
             <GradBtn onClick={confirm} busy={busy}>Turn on</GradBtn>
-            <button onClick={cancelEnroll} className="w-full text-[#8E8C88] text-sm font-semibold py-3">Cancel</button>
+            <button onClick={cancelEnroll} className="w-full text-[#64748B] text-sm font-semibold py-3">Cancel</button>
           </>
         ) : active.length > 0 ? (
           <>
             <div className="flex items-center gap-3 bg-[#2ECC71]/10 border border-[#2ECC71]/30 rounded-2xl p-4">
               <ShieldCheck size={22} className="text-[#2ECC71]" />
-              <p className="text-white text-[14px] font-semibold">Two-step verification is on</p>
+              <p className="text-[#202938] text-[14px] font-semibold">Two-step verification is on</p>
             </div>
-            <p className="text-[#8E8C88] text-[13px] mt-3">Signing in needs your password and a code from your authenticator app.</p>
+            <p className="text-[#64748B] text-[13px] mt-3">Signing in needs your password and a code from your authenticator app.</p>
             <Err text={err} />
-            <button onClick={disable} disabled={busy} className="w-full mt-4 py-3 rounded-xl bg-red-500/15 text-red-400 font-bold border border-red-500/30 disabled:opacity-50">{busy ? 'Working…' : 'Turn off'}</button>
+            <button onClick={disable} disabled={busy} className="w-full mt-4 py-3 rounded-xl bg-red-500/15 text-red-600 font-bold border border-red-500/30 disabled:opacity-50">{busy ? 'Working…' : 'Turn off'}</button>
           </>
         ) : (
           <>
-            <p className="text-white/70 text-[14px] leading-relaxed">Add a second lock to your account. Even if someone learns your password they cannot sign in without the code from your phone.</p>
+            <p className="text-[#64748B] text-[14px] leading-relaxed">Add a second lock to your account. Even if someone learns your password they cannot sign in without the code from your phone.</p>
             <Err text={err} />
             <GradBtn onClick={start} busy={busy}>Set up</GradBtn>
           </>
@@ -331,14 +332,14 @@ function PeopleSheet({ title, ids, empty, actionLabel, onAction, onClose }) {
   }, []); // eslint-disable-line
   return (
     <Sheet title={title} onClose={onClose}>
-      {users === null ? <div className="flex justify-center py-8 text-[#FF5A1F]"><Spinner size={22} /></div>
-        : users.length === 0 ? <p className="text-[#8E8C88] text-sm text-center py-8">{empty}</p>
+      {users === null ? <div className="flex justify-center py-8 text-[#EA580C]"><Spinner size={22} /></div>
+        : users.length === 0 ? <p className="text-[#64748B] text-sm text-center py-8">{empty}</p>
         : users.map((u) => (
-          <div key={u.id} className="flex items-center gap-3 py-2.5 border-b border-white/[0.06]">
+          <div key={u.id} className="flex items-center gap-3 py-2.5 border-b border-[#E2E8F0]">
             <Avatar url={u.avatar_url} name={u.display_name} size={10} />
-            <div className="flex-1 min-w-0"><p className="text-white font-bold text-[14px] truncate">{u.display_name}</p><p className="text-[#8E8C88] text-[12px]">@{u.username}</p></div>
+            <div className="flex-1 min-w-0"><p className="text-[#202938] font-bold text-[14px] truncate">{u.display_name}</p><p className="text-[#64748B] text-[12px]">@{u.username}</p></div>
             <button onClick={async () => { await onAction(u.id); setUsers((l) => l.filter((x) => x.id !== u.id)); }}
-              className="text-xs font-bold px-3.5 py-1.5 rounded-full bg-[#FF5A1F]/15 text-[#FF5A1F] border border-[#FF5A1F]/30">{actionLabel}</button>
+              className="text-xs font-bold px-3.5 py-1.5 rounded-full bg-[#F97316]/15 text-[#EA580C] border border-[#F97316]/30">{actionLabel}</button>
           </div>
         ))}
     </Sheet>
@@ -350,13 +351,13 @@ function DangerSheet({ title, text, confirmWord, button, onConfirm, onClose }) {
   const ok = !confirmWord || word.trim().toUpperCase() === confirmWord;
   return (
     <Sheet title={title} onClose={onClose}>
-      <p className="text-white/70 text-[14px] leading-relaxed">{text}</p>
-      {confirmWord && <><p className="text-[#8E8C88] text-[12px] mt-4 mb-1.5">Type <span className="text-white font-bold">{confirmWord}</span> to confirm</p>
+      <p className="text-[#64748B] text-[14px] leading-relaxed">{text}</p>
+      {confirmWord && <><p className="text-[#64748B] text-[12px] mt-4 mb-1.5">Type <span className="text-[#202938] font-bold">{confirmWord}</span> to confirm</p>
         <input value={word} onChange={(e) => setWord(e.target.value)} className={inputCls} autoCapitalize="characters" /></>}
       <Err text={err} />
       <button disabled={!ok || busy} onClick={async () => { setBusy(true); setErr(''); try { await onConfirm(); } catch (e) { setErr(e.message || 'Something went wrong.'); setBusy(false); } }}
-        className="w-full mt-4 py-3.5 rounded-2xl bg-red-500/15 text-red-400 font-bold border border-red-500/30 disabled:opacity-40">{busy ? 'Working…' : button}</button>
-      <button onClick={onClose} className="w-full mt-2 py-3 rounded-2xl bg-white/[0.07] text-white font-bold">Cancel</button>
+        className="w-full mt-4 py-3.5 rounded-2xl bg-red-500/15 text-red-600 font-bold border border-red-500/30 disabled:opacity-40">{busy ? 'Working…' : button}</button>
+      <button onClick={onClose} className="w-full mt-2 py-3 rounded-2xl bg-[#F1F5F9] text-[#202938] font-bold">Cancel</button>
     </Sheet>
   );
 }
@@ -451,8 +452,8 @@ export default function SettingsPage() {
   const phoneShown = user?.phone ? maskIdentifier('+' + String(user.phone).replace(/^\+/, '')) : 'Not added';
 
   return (
-    <div className="min-h-screen bg-[#0D0C0B] pb-24">
-      {toast && <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[60] bg-white text-black text-[13px] font-semibold rounded-full px-5 py-2.5 shadow-xl max-w-[90vw] text-center">{toast}</div>}
+    <div className="min-h-screen bg-white pb-24">
+      {toast && <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[60] bg-[#202938] text-white text-[13px] font-semibold rounded-full px-5 py-2.5 shadow-xl max-w-[90vw] text-center">{toast}</div>}
 
       {sheet === 'password' && <ChangePasswordSheet user={user} onClose={() => setSheet(null)} onDone={done} />}
       {sheet === 'email' && <EmailSheet user={user} onClose={() => setSheet(null)} onDone={done} />}
@@ -467,15 +468,15 @@ export default function SettingsPage() {
         <SelectSheet title={sheet.title} options={sheet.options} value={sheet.current} onSelect={(v) => save(sheet.select, v)} onClose={() => setSheet(null)} />
       )}
 
-      <div className="sticky top-0 z-20 bg-[#0D0C0B]/95 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} aria-label="Back" className="text-[#8E8C88] hover:text-white"><ArrowLeft size={22} /></button>
-        <h1 className="text-white font-bold text-[16px]">Settings</h1>
+      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => goBack(navigate, '/profile')} aria-label="Back" className="text-[#64748B] hover:text-[#202938]"><ArrowLeft size={22} /></button>
+        <h1 className="text-[#202938] font-bold text-[16px]">Settings</h1>
       </div>
 
-      <button onClick={() => navigate('/edit-profile')} className="w-[calc(100%-2rem)] mx-4 mt-4 bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4 flex items-center gap-3 text-left active:bg-white/[0.07]">
+      <button onClick={() => navigate('/edit-profile')} className="w-[calc(100%-2rem)] mx-4 mt-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4 flex items-center gap-3 text-left active:bg-[#F1F5F9]">
         <Avatar url={profile?.avatar_url} name={profile?.display_name} size={13} />
-        <div className="flex-1 min-w-0"><p className="text-white font-bold text-[16px] truncate">{profile?.display_name}</p><p className="text-[#8E8C88] text-[13px]">@{profile?.username}</p></div>
-        <span className="text-[#FF5A1F] text-[13px] font-bold">Edit</span>
+        <div className="flex-1 min-w-0"><p className="text-[#202938] font-bold text-[16px] truncate">{profile?.display_name}</p><p className="text-[#64748B] text-[13px]">@{profile?.username}</p></div>
+        <span className="text-[#EA580C] text-[13px] font-bold">Edit</span>
       </button>
 
       <Section title="Account">
@@ -498,7 +499,7 @@ export default function SettingsPage() {
       </Section>
 
       <Section title="Appearance">
-        <Row icon={Moon} label="Theme" sub={LABEL[prefs.theme]} onPress={() => setSheet({ select: 'theme', title: 'Theme', options: [{ key: 'dark', label: 'Dark' }, { key: 'amoled', label: 'AMOLED black (saves battery on OLED screens)' }], current: prefs.theme })} />
+        <Row icon={Moon} label="Theme" sub="Light · dark mode coming soon" onPress={() => say('Dark mode is coming soon. B-Link is light for now.')} />
         <Row icon={Type} label="Text size" sub={LABEL[prefs.font_size] || 'Medium'} onPress={() => setSheet({ select: 'font_size', title: 'Text size', options: [{ key: 'small', label: 'Small' }, { key: 'medium', label: 'Medium (default)' }, { key: 'large', label: 'Large' }], current: prefs.font_size })} />
       </Section>
 
@@ -527,9 +528,9 @@ export default function SettingsPage() {
       </Section>
 
       <div className="mx-4 mt-5">
-        <button onClick={() => signOut()} className="w-full py-3.5 rounded-2xl font-bold text-red-400 border border-red-500/25 bg-red-500/[0.07] flex items-center justify-center gap-2"><LogOut size={16} /> Sign out</button>
+        <button onClick={() => signOut()} className="w-full py-3.5 rounded-2xl font-bold text-red-600 border border-red-500/25 bg-red-500/[0.07] flex items-center justify-center gap-2"><LogOut size={16} /> Sign out</button>
       </div>
-      <p className="text-white/20 text-[11px] text-center py-6 flex items-center justify-center gap-1.5"><Lock size={11} /> Your settings are saved to your account</p>
+      <p className="text-[#94A3B8] text-[11px] text-center py-6 flex items-center justify-center gap-1.5"><Lock size={11} /> Your settings are saved to your account</p>
     </div>
   );
 }

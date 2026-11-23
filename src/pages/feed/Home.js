@@ -48,7 +48,7 @@ function usePrefersReducedMotion() {
 
 function PostSkeleton() {
   return (
-    <div className="border-b border-white/[0.07] px-4 py-3">
+    <div className="border-b border-[#E2E8F0] px-4 py-3">
       <div className="flex gap-3">
         <div className="w-10 h-10 rounded-full skeleton flex-shrink-0" />
         <div className="flex-1 space-y-2 pt-1">
@@ -68,6 +68,10 @@ function PostSkeleton() {
   );
 }
 
+// Remembers the feed while you visit a post, profile or settings page, so Back returns to the same spot.
+let HOME_CACHE = null;                       // { uid, tab, posts, page, hasMore, y, t }
+const HOME_TTL = 10 * 60 * 1000;
+
 export default function Home() {
   const { profile, user }       = useAuth();
   const navigate                = useNavigate();
@@ -75,12 +79,14 @@ export default function Home() {
   const reducedMotion           = usePrefersReducedMotion();
 
   const [drawerOpen,     setDrawerOpen]     = useState(false);
-  const [activeTab,      setActiveTab]      = useState('foryou');
-  const [posts,          setPosts]          = useState([]);
-  const [loading,        setLoading]        = useState(true);
+  const restored = useRef(HOME_CACHE && user?.id && HOME_CACHE.uid === user.id && Date.now() - HOME_CACHE.t < HOME_TTL ? HOME_CACHE : null);
+  const skipFirstLoad = useRef(!!restored.current);
+  const [activeTab,      setActiveTab]      = useState(restored.current ? restored.current.tab : 'foryou');
+  const [posts,          setPosts]          = useState(restored.current ? restored.current.posts : []);
+  const [loading,        setLoading]        = useState(!restored.current);
   const [loadingMore,    setLoadingMore]    = useState(false);
-  const [hasMore,        setHasMore]        = useState(true);
-  const [page,           setPage]           = useState(0);
+  const [hasMore,        setHasMore]        = useState(restored.current ? restored.current.hasMore : true);
+  const [page,           setPage]           = useState(restored.current ? restored.current.page : 0);
   const [unread,         setUnread]         = useState(0);
   const [refreshing,     setRefreshing]     = useState(false);
   const [pullDist,       setPullDist]       = useState(0);
@@ -183,8 +189,28 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, fetchError, posts.length]);
 
+  // keep a snapshot of the feed for when you come back, and put the scroll position back
+  const snapRef = useRef({});
+  snapRef.current = { posts, page, hasMore, tab: activeTab, uid: user?.id };
+  useEffect(() => {
+    if (restored.current) requestAnimationFrame(() => window.scrollTo(0, restored.current.y || 0));
+    return () => {
+      const sn = snapRef.current;
+      if (sn.uid && sn.posts.length) HOME_CACHE = { uid: sn.uid, tab: sn.tab, posts: sn.posts, page: sn.page, hasMore: sn.hasMore, y: lastScrollYRef.current, t: Date.now() };
+    };
+  }, []);
+
+  // tapping the Home tab again scrolls to the top and refreshes
+  useEffect(() => {
+    const onReselect = (e) => { if (e.detail === '/') scrollToTopAndRefresh(); };
+    window.addEventListener('blink:tab-reselect', onReselect);
+    return () => window.removeEventListener('blink:tab-reselect', onReselect);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ── Reload on tab change ───────────────────────────────────────
   useEffect(() => {
+    if (skipFirstLoad.current) { skipFirstLoad.current = false; return; }
 
     setNewPostsBanner(false);
     setNewPostsCount(0);
@@ -509,32 +535,32 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0D0C0B] pb-20">
+    <div className="min-h-screen bg-white pb-20">
       <Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       {/* Toast */}
       {toast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-white/10 backdrop-blur border border-white/15 rounded-full px-4 py-2 pointer-events-none animate-[fadeIn_0.2s_ease-out]">
-          <p className="text-white text-sm font-semibold whitespace-nowrap">{toast}</p>
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-[#F1F5F9] backdrop-blur border border-[#E2E8F0] rounded-full px-4 py-2 pointer-events-none animate-[fadeIn_0.2s_ease-out]">
+          <p className="text-[#202938] text-sm font-semibold whitespace-nowrap">{toast}</p>
         </div>
       )}
 
       {/* ── Top bar ── */}
-      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07]">
+      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0]">
         <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={() => setDrawerOpen(true)}
             aria-label="Open menu"
-            className="w-9 h-9 rounded-xl hover:bg-white/10 flex items-center justify-center transition-colors"
+            className="w-9 h-9 rounded-xl hover:bg-[#F1F5F9] flex items-center justify-center transition-colors"
           >
-            <Menu size={22} className="text-white" />
+            <Menu size={22} className="text-[#202938]" />
           </button>
 
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center shadow-lg shadow-[#FF5A1F]/30">
-              <span className="text-white font-black text-base">B</span>
+            <div className="w-8 h-8 rounded-full bg-[#F97316] flex items-center justify-center  ">
+              <span className="text-[#202938] font-black text-base">B</span>
             </div>
-            <span className="text-white font-extrabold text-lg tracking-tight">B-Link</span>
+            <span className="text-[#202938] font-extrabold text-lg tracking-tight">B-Link</span>
           </div>
 
           <button
@@ -542,9 +568,9 @@ export default function Home() {
             aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
             className="relative w-9 h-9 flex items-center justify-center"
           >
-            <Bell size={22} className="text-[#8E8C88]" />
+            <Bell size={22} className="text-[#64748B]" />
             {unread > 0 && (
-              <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-[#FF5A1F] rounded-full text-[9px] text-white flex items-center justify-center font-bold px-0.5 animate-pulse">
+              <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-[#F97316] rounded-full text-[9px] text-white flex items-center justify-center font-bold px-0.5 animate-pulse">
                 {unread > 9 ? '9+' : unread}
               </span>
             )}
@@ -565,7 +591,7 @@ export default function Home() {
               {tab.label}
               {activeTab === tab.key && (
                 <div
-                  className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-[#FF5A1F] rounded-full transition-all duration-200"
+                  className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-[#F97316] rounded-full transition-all duration-200"
                   style={{ width:'60%' }}
                 />
               )}
@@ -578,8 +604,8 @@ export default function Home() {
 
       {isOffline && (
         <div className="mx-4 mt-3 flex items-center gap-3 bg-red-500/10 border border-red-500/20 rounded-2xl px-4 py-3">
-          <WifiOff size={16} className="text-red-400 flex-shrink-0" />
-          <p className="text-red-400 text-sm font-semibold flex-1">You're offline — showing cached content</p>
+          <WifiOff size={16} className="text-red-600 flex-shrink-0" />
+          <p className="text-red-600 text-sm font-semibold flex-1">You're offline — showing cached content</p>
         </div>
       )}
 
@@ -587,7 +613,7 @@ export default function Home() {
         <div className="flex justify-center py-2 sticky top-[106px] z-10">
           <button
             onClick={scrollToTopAndRefresh}
-            className="bg-[#FF5A1F] text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-[#FF5A1F]/40 flex items-center gap-2 active:scale-95 transition-transform"
+            className="bg-[#F97316] text-white text-xs font-bold px-4 py-2 rounded-full   flex items-center gap-2 active:scale-95 transition-transform"
           >
             <RefreshCw size={12} />
             {newPostsCount > 0
@@ -601,7 +627,7 @@ export default function Home() {
         className="overflow-hidden flex items-center justify-center transition-all"
         style={{ height: isPulling || refreshing ? Math.max(pullDist, refreshing ? 44 : 0) : 0 }}
       >
-        <div className={`flex items-center gap-2 text-sm ${pullDist >= PULL_THRESHOLD || refreshing ? 'text-[#FF5A1F]' : 'text-[#8E8C88]'}`}>
+        <div className={`flex items-center gap-2 text-sm ${pullDist >= PULL_THRESHOLD || refreshing ? 'text-[#F97316]' : 'text-[#64748B]'}`}>
           <RefreshCw size={14} className={refreshing && !reducedMotion ? 'animate-spin' : ''} />
           <span>{refreshing ? 'Refreshing...' : pullDist >= PULL_THRESHOLD ? 'Release to refresh' : 'Pull to refresh'}</span>
         </div>
@@ -614,19 +640,19 @@ export default function Home() {
       >
         {fetchError && !loading && (
           <div className="mx-4 mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
-            <p className="text-red-400 text-sm font-semibold mb-1">Feed couldn't load</p>
-            <p className="text-red-300/70 text-xs mb-3 leading-relaxed">{fetchError}</p>
+            <p className="text-red-600 text-sm font-semibold mb-1">Feed couldn't load</p>
+            <p className="text-red-600/70 text-xs mb-3 leading-relaxed">{fetchError}</p>
             <div className="flex gap-2">
               <button
                 onClick={() => { setFetchError(''); setPage(0); loadPosts(0, true); }}
-                className="flex items-center gap-1.5 text-xs font-bold text-[#FF5A1F]"
+                className="flex items-center gap-1.5 text-xs font-bold text-[#EA580C]"
               >
                 <RefreshCw size={12} /> Try again
               </button>
               {fetchError.includes('sign') && (
                 <button
                   onClick={() => navigate('/login')}
-                  className="text-xs font-bold text-orange-400 ml-3"
+                  className="text-xs font-bold text-orange-700 ml-3"
                 >
                   Sign in again →
                 </button>
@@ -641,20 +667,20 @@ export default function Home() {
 
         {!loading && !fetchError && posts.length === 0 && (
           <div className="flex flex-col items-center justify-center mt-20 gap-4 px-6">
-            <Users size={46} className="text-[#8E8C88] mx-auto" />
-            <h2 className="text-white font-bold text-xl text-center">
+            <Users size={46} className="text-[#64748B] mx-auto" />
+            <h2 className="text-[#202938] font-bold text-xl text-center">
               {activeTab === 'following' ? 'Nothing in your feed yet' : 'No posts yet'}
             </h2>
-            <p className="text-[#8E8C88] text-sm text-center">
+            <p className="text-[#64748B] text-sm text-center">
               {activeTab === 'following' ? 'Follow people to see their posts here.' : 'Be the first to post!'}
             </p>
             <div className="flex gap-3">
               <button onClick={() => navigate('/discover')}
-                className="bg-[#FF5A1F] text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-lg shadow-[#FF5A1F]/30 active:scale-95 transition-transform">
+                className="bg-[#F97316] text-white px-5 py-2.5 rounded-full font-bold text-sm   active:scale-95 transition-transform">
                 Find people
               </button>
               <button onClick={() => navigate('/create')}
-                className="bg-white/10 text-white px-5 py-2.5 rounded-full font-bold text-sm border border-white/20 active:scale-95 transition-transform">
+                className="bg-[#F1F5F9] text-[#202938] px-5 py-2.5 rounded-full font-bold text-sm border border-[#E2E8F0] active:scale-95 transition-transform">
                 Create post
               </button>
             </div>
@@ -668,13 +694,13 @@ export default function Home() {
             ))}
             <div ref={loadMoreRef} className="flex justify-center py-6 min-h-[60px]">
               {loadingMore && (
-                <div className="flex items-center gap-2 text-[#8E8C88]">
-                  <div className={`w-5 h-5 border-2 border-[#FF5A1F] border-t-transparent rounded-full ${reducedMotion ? '' : 'animate-spin'}`} />
+                <div className="flex items-center gap-2 text-[#64748B]">
+                  <div className={`w-5 h-5 border-2 border-[#F97316] border-t-transparent rounded-full ${reducedMotion ? '' : 'animate-spin'}`} />
                   <span className="text-sm">Loading more...</span>
                 </div>
               )}
               {!hasMore && !loadingMore && (
-                <p className="text-[#8E8C88] text-xs">You're all caught up</p>
+                <p className="text-[#64748B] text-xs">You're all caught up</p>
               )}
             </div>
           </>
@@ -686,9 +712,9 @@ export default function Home() {
         <button
           onClick={scrollToTop}
           aria-label="Scroll to top"
-          className="fixed bottom-40 right-4 w-11 h-11 rounded-full bg-white/10 backdrop-blur border border-white/15 flex items-center justify-center shadow-lg z-20 active:scale-95 transition-transform"
+          className="fixed bottom-40 right-4 w-11 h-11 rounded-full bg-[#F1F5F9] backdrop-blur border border-[#E2E8F0] flex items-center justify-center shadow-lg z-20 active:scale-95 transition-transform"
         >
-          <ChevronUp size={20} className="text-white" />
+          <ChevronUp size={20} className="text-[#202938]" />
         </button>
       )}
 
@@ -696,7 +722,7 @@ export default function Home() {
       <button
         onClick={() => navigate('/create')}
         aria-label="Create post"
-        className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-[#FF5A1F] flex items-center justify-center shadow-xl shadow-[#FF5A1F]/40 hover:bg-[#d9480f] active:scale-95 transition-all z-20"
+        className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-[#F97316] flex items-center justify-center   hover:bg-[#EA580C] active:scale-95 transition-all z-20"
         style={{
           transform: fabVisible ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.85)',
           opacity: fabVisible ? 1 : 0,

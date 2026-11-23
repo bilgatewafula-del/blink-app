@@ -6,15 +6,18 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import Avatar from './Avatar';
 import VerifiedBadge from './VerifiedBadge';
-import { tokenize, MENTION_COLOR, TAG_COLOR } from './RichText';
+import { tokenize, TONES } from './RichText';
 
 const MENTION_AT_CARET = /(^|\s)@([A-Za-z0-9_]{1,20})$/;
 const TAG_AT_CARET = /(^|\s)#([\p{L}\p{N}_]{0,40})$/u;
 
 export default function MentionTextarea({
   value, onChange, placeholder, rows = 5, maxLength, textareaRef, hashtagIdeas = [],
-  className = 'text-[17px] leading-relaxed', style, onFocus,
+  className = 'text-[17px] leading-relaxed', style, onFocus, tone = 'light',
 }) {
+  const dark = tone === 'dark';
+  const MENTION_COLOR = (TONES[tone] || TONES.light).mention;
+  const TAG_COLOR = (TONES[tone] || TONES.light).tag;
   const innerRef = useRef(null);
   const ref = textareaRef || innerRef;
   const [sug, setSug] = useState(null);     // { kind, query, start, end, items }
@@ -77,13 +80,13 @@ export default function MentionTextarea({
   return (
     <div className="relative mb-2">
       <div className="grid" style={{ minHeight: rows * 28 }}>
-        <div aria-hidden="true" className={'text-white pointer-events-none ' + className} style={{ gridArea: '1 / 1', ...common, ...style }}>
+        <div aria-hidden="true" className={(dark ? 'text-white' : 'text-[#202938]') + ' pointer-events-none ' + className} style={{ gridArea: '1 / 1', ...common, ...style }}>
           {tokenize(value).map((p) => (
             <span key={p.key} style={p.kind === 'mention' ? { color: MENTION_COLOR, fontWeight: 700 } : p.kind === 'tag' ? { color: TAG_COLOR, fontWeight: 700 } : undefined}>{p.text}</span>
           ))}
           {'\n'}
         </div>
-        {!value && <div aria-hidden="true" className={'text-[#8E8C88] pointer-events-none ' + className} style={{ gridArea: '1 / 1', ...common, ...style }}>{placeholder}</div>}
+        {!value && <div aria-hidden="true" className={(dark ? 'text-[#8E8C88]' : 'text-[#64748B]') + ' pointer-events-none ' + className} style={{ gridArea: '1 / 1', ...common, ...style }}>{placeholder}</div>}
         <textarea
           ref={ref}
           value={value}
@@ -94,25 +97,25 @@ export default function MentionTextarea({
           maxLength={maxLength}
           aria-label="Caption"
           className={'bg-transparent focus:outline-none resize-none overflow-hidden ' + className}
-          style={{ gridArea: '1 / 1', color: 'transparent', caretColor: '#fff', width: '100%', height: '100%', ...common, ...style }}
+          style={{ gridArea: '1 / 1', color: 'transparent', caretColor: dark ? '#fff' : '#202938', width: '100%', height: '100%', ...common, ...style }}
         />
       </div>
 
       {sug && (
-        <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-[#1d1c1a] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+        <div className={'absolute left-0 right-0 top-full mt-1 z-30 rounded-2xl overflow-hidden shadow-lg border ' + (dark ? 'bg-[#1d1c1a] border-white/10' : 'bg-white border-[#E2E8F0]')}>
           {sug.items.map((it) => (
             sug.kind === 'mention' ? (
               <button key={it.id} onMouseDown={(e) => e.preventDefault()} onClick={() => pick(it)}
-                className="w-full flex items-center gap-3 px-4 py-2.5 active:bg-white/[0.06] text-left">
+                className={'w-full flex items-center gap-3 px-4 py-2.5 text-left ' + (dark ? 'active:bg-white/[0.06]' : 'active:bg-[#F1F5F9]')}>
                 <Avatar url={it.avatar_url} name={it.display_name || it.username} size={8} />
                 <span className="min-w-0">
-                  <span className="flex items-center gap-1 text-white text-[14px] font-bold truncate">{it.display_name || it.username}{it.is_verified && <VerifiedBadge size={13} />}</span>
-                  <span className="block text-[#8E8C88] text-[12px] truncate">@{it.username}</span>
+                  <span className={'flex items-center gap-1 text-[14px] font-bold truncate ' + (dark ? 'text-white' : 'text-[#202938]')}>{it.display_name || it.username}{it.is_verified && <VerifiedBadge size={13} />}</span>
+                  <span className={'block text-[12px] truncate ' + (dark ? 'text-[#8E8C88]' : 'text-[#64748B]')}>@{it.username}</span>
                 </span>
               </button>
             ) : (
               <button key={it} onMouseDown={(e) => e.preventDefault()} onClick={() => pick(it)}
-                className="w-full px-4 py-2.5 active:bg-white/[0.06] text-left text-[14px] font-bold" style={{ color: TAG_COLOR }}>#{it}</button>
+                className="w-full px-4 py-2.5 active:bg-[#F1F5F9] text-left text-[14px] font-bold" style={{ color: TAG_COLOR }}>#{it}</button>
             )
           ))}
         </div>

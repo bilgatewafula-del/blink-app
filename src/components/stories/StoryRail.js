@@ -19,7 +19,7 @@ function Ring({ group, own, onOpen, onAdd }) {
         <button onClick={onOpen} aria-label={own ? (has ? 'View your status' : 'Add status') : `View ${name}'s status`}
           className="rounded-full p-[3px] active:scale-95 transition-transform"
           style={{
-            background: fresh || (own && has) ? 'linear-gradient(135deg,#FF5A1F,#FF2D78)' : has ? 'rgba(255,255,255,0.28)' : 'transparent',
+            background: fresh || (own && has) ? '#F97316' : has ? 'rgba(255,255,255,0.28)' : 'transparent',
             border: !has ? '2px dashed rgba(255,255,255,0.22)' : 'none',
             padding: !has ? 2 : 3,
           }}>
@@ -30,7 +30,7 @@ function Ring({ group, own, onOpen, onAdd }) {
         {own && (
           <button onClick={onAdd} aria-label="Add a new status"
             className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full flex items-center justify-center border-2 border-[#0D0C0B] active:scale-90 transition-transform"
-            style={{ background: 'linear-gradient(135deg,#FF5A1F,#FF2D78)' }}>
+            style={{ background: '#F97316' }}>
             <Plus size={14} className="text-white" strokeWidth={3} />
           </button>
         )}

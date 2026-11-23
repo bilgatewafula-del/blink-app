@@ -26,8 +26,8 @@ const REPORT_REASONS = ['Spam or scam', 'Harassment or bullying', 'Hate speech',
 
 function RichText({ text, onTag, onMention }) {
   return text.split(/(#\w+|@\w+)/g).map((p, i) => {
-    if (p.startsWith('#') && p.length > 1) return <button key={i} onClick={() => onTag(p.slice(1))} className="text-[#FF5A1F] font-medium">{p}</button>;
-    if (p.startsWith('@') && p.length > 1) return <button key={i} onClick={() => onMention(p.slice(1))} className="text-[#FF5A1F] font-medium">{p}</button>;
+    if (p.startsWith('#') && p.length > 1) return <button key={i} onClick={() => onTag(p.slice(1))} className="text-[#EA580C] font-medium">{p}</button>;
+    if (p.startsWith('@') && p.length > 1) return <button key={i} onClick={() => onMention(p.slice(1))} className="text-[#EA580C] font-medium">{p}</button>;
     return <span key={i}>{p}</span>;
   });
 }
@@ -49,21 +49,21 @@ function Row({ c, isReply, me, postOwnerId, replies, onLike, onReply, onMenu, on
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap text-[12px]">
-            <button onClick={() => onProfile(user.username)} className="text-[#1C1E21] font-bold">{user.username || user.display_name}</button>
+            <button onClick={() => onProfile(user.username)} className="text-[#202938] font-bold">{user.username || user.display_name}</button>
             {user.is_verified && <VerifiedBadge size={12} />}
-            {c.user_id === postOwnerId && <span className="bg-[#FF5A1F]/20 text-[#FF5A1F] text-[9px] px-1.5 py-[1px] rounded-full font-bold">Author</span>}
-            <span className="text-[#65676B]">{formatTime(c.created_at)}</span>
-            {c.is_pinned && <span className="inline-flex items-center gap-0.5 text-[#65676B]"><Pin size={10} /> Pinned</span>}
-            {c.is_hidden && <span className="inline-flex items-center gap-0.5 text-[#65676B]"><EyeOff size={10} /> Hidden</span>}
+            {c.user_id === postOwnerId && <span className="bg-[#F97316]/20 text-[#EA580C] text-[9px] px-1.5 py-[1px] rounded-full font-bold">Author</span>}
+            <span className="text-[#64748B]">{formatTime(c.created_at)}</span>
+            {c.is_pinned && <span className="inline-flex items-center gap-0.5 text-[#64748B]"><Pin size={10} /> Pinned</span>}
+            {c.is_hidden && <span className="inline-flex items-center gap-0.5 text-[#64748B]"><EyeOff size={10} /> Hidden</span>}
           </div>
-          <p className="text-[#1C1E21] text-[14px] leading-snug break-words whitespace-pre-wrap mt-0.5">
+          <p className="text-[#202938] text-[14px] leading-snug break-words whitespace-pre-wrap mt-0.5">
             <RichText text={c.body} onTag={onTag} onMention={onMention} />
-            {c.edited && <span className="text-[#65676B] text-[11px]"> (edited)</span>}
+            {c.edited && <span className="text-[#64748B] text-[11px]"> (edited)</span>}
           </p>
           <div className="flex items-center gap-4 mt-1">
-            <button onClick={() => onReply(c)} className="text-[#65676B] text-[12px] font-semibold active:text-[#1C1E21]">Reply</button>
+            <button onClick={() => onReply(c)} className="text-[#64748B] text-[12px] font-semibold active:text-[#202938]">Reply</button>
             {!isReply && c.reply_count > 0 && (
-              <button onClick={() => onToggleReplies(c)} className="text-[#65676B] text-[12px] font-semibold inline-flex items-center gap-1">
+              <button onClick={() => onToggleReplies(c)} className="text-[#64748B] text-[12px] font-semibold inline-flex items-center gap-1">
                 <span className="w-5 h-px bg-[#CED0D4]" />
                 {replies?.loading ? 'Loading…' : replies?.open ? 'Hide replies' : `View ${c.reply_count} ${c.reply_count === 1 ? 'reply' : 'replies'}`}
                 <ChevronDown size={12} className={replies?.open ? 'rotate-180' : ''} />
@@ -73,10 +73,10 @@ function Row({ c, isReply, me, postOwnerId, replies, onLike, onReply, onMenu, on
         </div>
         <div className="flex flex-col items-center gap-0.5 flex-shrink-0 pt-0.5">
           <button onClick={() => onLike(c)} aria-label={c.my_reaction ? 'Unlike comment' : 'Like comment'} className="p-1 active:scale-125 transition-transform">
-            <Heart size={16} className={c.my_reaction ? 'text-[#EF4444]' : 'text-[#65676B]'} fill={c.my_reaction ? '#EF4444' : 'none'} />
+            <Heart size={16} className={c.my_reaction ? 'text-[#EF4444]' : 'text-[#64748B]'} fill={c.my_reaction ? '#EF4444' : 'none'} />
           </button>
-          {c.reaction_count > 0 && <span className="text-[11px] text-[#65676B] tabular-nums">{formatNumber(c.reaction_count)}</span>}
-          <button onClick={() => onMenu(c)} aria-label="Comment options" className="p-1 text-[#65676B]"><MoreHorizontal size={15} /></button>
+          {c.reaction_count > 0 && <span className="text-[11px] text-[#64748B] tabular-nums">{formatNumber(c.reaction_count)}</span>}
+          <button onClick={() => onMenu(c)} aria-label="Comment options" className="p-1 text-[#64748B]"><MoreHorizontal size={15} /></button>
         </div>
       </div>
 
@@ -105,8 +105,8 @@ function Sheet({ onClose, children }) {
 
 function MenuRow({ icon: Icon, label, onClick, red }) {
   return (
-    <button onClick={onClick} className={'w-full flex items-center gap-3.5 px-5 py-3.5 text-left active:bg-[#F1F2F4] ' + (red ? 'text-red-400' : 'text-[#1C1E21]')}>
-      <Icon size={19} className={red ? 'text-red-400' : 'text-[#65676B]'} /> <span className="text-[15px] font-medium">{label}</span>
+    <button onClick={onClick} className={'w-full flex items-center gap-3.5 px-5 py-3.5 text-left active:bg-[#F1F2F4] ' + (red ? 'text-red-600' : 'text-[#202938]')}>
+      <Icon size={19} className={red ? 'text-red-600' : 'text-[#64748B]'} /> <span className="text-[15px] font-medium">{label}</span>
     </button>
   );
 }
@@ -148,32 +148,44 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, onEmojiT
   }, [text]);
   useEffect(() => { if (onEmojiToggle) onEmojiToggle(emojiOpen); }, [emojiOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const caretRef = useRef(null);
-  const addEmoji = (emoji) => {
+  // The cursor position is remembered by us (a hidden text box can forget it), so emojis and the
+  // delete key always act where you last typed.
+  const caretRef = useRef({ a: 0, b: 0 });
+  const textRef = useRef(text);
+  textRef.current = text;
+  const saveCaret = (el) => { if (el) caretRef.current = { a: el.selectionStart, b: el.selectionEnd }; };
+  const readCaret = () => {
     const el = inputRef.current;
-    const a = el ? el.selectionStart : text.length;
-    const b = el ? el.selectionEnd : text.length;
-    const pos = a + emoji.length;
-    caretRef.current = pos;
-    setText((t) => t.slice(0, a) + emoji + t.slice(b));
-    requestAnimationFrame(() => { if (el) { try { el.setSelectionRange(pos, pos); } catch { /* not focusable */ } } });
+    const len = textRef.current.length;
+    const c = el && document.activeElement === el ? { a: el.selectionStart, b: el.selectionEnd } : caretRef.current;
+    const a = Math.min(Math.max(0, c.a == null ? len : c.a), len);
+    const b = Math.min(Math.max(a, c.b == null ? a : c.b), len);
+    return { a: a === 0 && b === 0 && !textRef.current ? 0 : a, b };
+  };
+  const applyEdit = (next, pos) => {
+    textRef.current = next;
+    caretRef.current = { a: pos, b: pos };
+    setText(next);
+    requestAnimationFrame(() => { const el = inputRef.current; if (el) { try { el.setSelectionRange(pos, pos); } catch { /* not focusable */ } } });
+  };
+  const addEmoji = (emoji) => {
+    const t = textRef.current;
+    const { a, b } = readCaret();
+    applyEdit(t.slice(0, a) + emoji + t.slice(b), a + emoji.length);
   };
   const backspaceEmoji = () => {
-    const el = inputRef.current;
-    const a = el ? el.selectionStart : text.length;
-    const b = el ? el.selectionEnd : text.length;
+    const t = textRef.current;
+    const { a, b } = readCaret();
     let from = a;
     if (a === b) {
-      const before = text.slice(0, a);
+      const before = t.slice(0, a);
       const parts = (typeof Intl !== 'undefined' && Intl.Segmenter)
         ? Array.from(new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(before), (x) => x.segment)
         : Array.from(before);
       parts.pop();
       from = parts.join('').length;
     }
-    caretRef.current = from;
-    setText((t) => t.slice(0, from) + t.slice(b));
-    requestAnimationFrame(() => { if (el) { try { el.setSelectionRange(from, from); } catch { /* not focusable */ } } });
+    applyEdit(t.slice(0, from) + t.slice(b), from);
   };
   const openEmoji = () => { if (inputRef.current) inputRef.current.blur(); setEmojiOpen(true); };
   const closeEmoji = () => { setEmojiOpen(false); setTimeout(() => inputRef.current && inputRef.current.focus(), 30); };
@@ -344,26 +356,26 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, onEmojiT
   return (
     <div className={'relative flex flex-col ' + (inline ? '' : 'h-full min-h-0')}>
       <div className="flex items-center justify-between px-4 pt-1 pb-2.5 flex-shrink-0 border-b border-[#E4E6EB]">
-        <p className="text-[#1C1E21] font-bold text-[15px]">{formatNumber(Math.max(0, count ?? items.length))} comments</p>
+        <p className="text-[#202938] font-bold text-[15px]">{formatNumber(Math.max(0, count ?? items.length))} comments</p>
         <div className="flex bg-[#F1F2F4] rounded-full p-0.5">
           {[['top', 'Top'], ['new', 'Newest']].map(([k, l]) => (
-            <button key={k} onClick={() => setSort(k)} className={'px-3 py-1 rounded-full text-[12px] font-bold ' + (sort === k ? 'bg-[#1C1E21] text-white' : 'text-[#65676B]')}>{l}</button>
+            <button key={k} onClick={() => setSort(k)} className={'px-3 py-1 rounded-full text-[12px] font-bold ' + (sort === k ? 'bg-[#1C1E21] text-white' : 'text-[#64748B]')}>{l}</button>
           ))}
         </div>
       </div>
 
       <div className={inline ? '' : 'flex-1 min-h-0 overflow-y-auto'} style={{ overscrollBehavior: 'contain' }}>
         {fresh > 0 && (
-          <button onClick={() => load(true)} className="sticky top-2 z-10 mx-auto flex items-center gap-1.5 bg-[#FF5A1F] text-white text-[12px] font-bold rounded-full px-3.5 py-1.5 shadow-lg mt-2">
+          <button onClick={() => load(true)} className="sticky top-2 z-10 mx-auto flex items-center gap-1.5 bg-[#F97316] text-white text-[12px] font-bold rounded-full px-3.5 py-1.5 shadow-lg mt-2">
             <ArrowDown size={13} /> {fresh} new comment{fresh === 1 ? '' : 's'}
           </button>
         )}
         {loading ? (
-          <div className="flex justify-center py-12 text-[#FF5A1F]"><Spinner size={22} /></div>
+          <div className="flex justify-center py-12 text-[#EA580C]"><Spinner size={22} /></div>
         ) : items.length === 0 ? (
           <div className="text-center px-8 py-12">
-            <p className="text-[#1C1E21] font-bold">No comments yet</p>
-            <p className="text-[#65676B] text-sm mt-1">{disabled ? 'Comments are turned off for this post.' : 'Start the conversation.'}</p>
+            <p className="text-[#202938] font-bold">No comments yet</p>
+            <p className="text-[#64748B] text-sm mt-1">{disabled ? 'Comments are turned off for this post.' : 'Start the conversation.'}</p>
           </div>
         ) : (
           <>
@@ -373,7 +385,7 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, onEmojiT
                 onTag={tagGo} onMention={profileGo} onProfile={profileGo} />
             ))}
             {more && (
-              <button onClick={() => load(false)} disabled={moreBusy} className="w-full py-4 text-[#FF5A1F] text-[13px] font-bold">
+              <button onClick={() => load(false)} disabled={moreBusy} className="w-full py-4 text-[#EA580C] text-[13px] font-bold">
                 {moreBusy ? 'Loading…' : 'Load more comments'}
               </button>
             )}
@@ -384,16 +396,16 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, onEmojiT
       {/* composer */}
       <div className={'flex-shrink-0 border-t border-[#E4E6EB] bg-white ' + (inline ? 'sticky bottom-0 z-10' : '')} style={{ paddingBottom: 'max(10px, env(safe-area-inset-bottom))' }}>
         {disabled ? (
-          <p className="text-[#65676B] text-sm text-center py-4 flex items-center justify-center gap-2"><MessageSquareOff size={15} /> Comments are turned off</p>
+          <p className="text-[#64748B] text-sm text-center py-4 flex items-center justify-center gap-2"><MessageSquareOff size={15} /> Comments are turned off</p>
         ) : (
           <>
             {(replyTo || editing) && (
               <div className="flex items-center gap-2.5 px-4 pt-2.5">
-                <div className="w-[3px] self-stretch bg-[#FF5A1F] rounded-full" />
-                <p className="flex-1 min-w-0 text-[12px] text-[#65676B] truncate">
-                  {editing ? 'Editing your comment' : <>Replying to <span className="text-[#FF5A1F] font-bold">@{replyTo.user?.username}</span></>}
+                <div className="w-[3px] self-stretch bg-[#F97316] rounded-full" />
+                <p className="flex-1 min-w-0 text-[12px] text-[#64748B] truncate">
+                  {editing ? 'Editing your comment' : <>Replying to <span className="text-[#EA580C] font-bold">@{replyTo.user?.username}</span></>}
                 </p>
-                <button onClick={() => { setReplyTo(null); setEditing(null); setText(''); }} aria-label="Cancel" className="text-[#65676B] p-1"><X size={16} /></button>
+                <button onClick={() => { setReplyTo(null); setEditing(null); setText(''); }} aria-label="Cancel" className="text-[#64748B] p-1"><X size={16} /></button>
               </div>
             )}
             {(focused || emojiOpen) && (
@@ -406,27 +418,28 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, onEmojiT
             )}
             <div className="flex items-end gap-2.5 px-3 pt-2 pb-1">
               <Avatar url={profile?.avatar_url} name={profile?.display_name} size={9} />
-              <div className="flex-1 min-w-0 bg-[#F1F2F4] border border-[#E4E6EB] rounded-[26px] pl-4 pr-1 flex items-end focus-within:border-[#FF5A1F]/50 transition-colors" style={{ minHeight: 52 }}>
+              <div className="flex-1 min-w-0 bg-[#F1F2F4] border border-[#E4E6EB] rounded-[26px] pl-4 pr-1 flex items-end focus-within:border-[#F97316]/50 transition-colors" style={{ minHeight: 52 }}>
                 <textarea
                   ref={inputRef} value={text} rows={1} maxLength={MAX_LEN + 20} enterKeyHint="send"
-                  onChange={(e) => setText(e.target.value)}
+                  onChange={(e) => { setText(e.target.value); saveCaret(e.target); }}
+                  onSelect={(e) => saveCaret(e.target)} onKeyUp={(e) => saveCaret(e.target)} onClick={(e) => saveCaret(e.target)}
                   onFocus={() => { setFocused(true); setEmojiOpen(false); }}
-                  onBlur={() => setFocused(false)}
+                  onBlur={(e) => { saveCaret(e.target); setFocused(false); }}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && window.matchMedia('(pointer: fine)').matches) { e.preventDefault(); submit(); } }}
                   placeholder={replyTo ? 'Add a reply…' : 'Add a comment…'}
-                  className="flex-1 min-w-0 bg-transparent text-[#1C1E21] outline-none resize-none placeholder-[#65676B]"
+                  className="flex-1 min-w-0 bg-transparent text-[#202938] outline-none resize-none placeholder-[#65676B]"
                   style={{ fontSize: 16, lineHeight: '22px', maxHeight: 124, padding: '15px 0' }}
                 />
                 <button type="button" onClick={emojiOpen ? closeEmoji : openEmoji} aria-label={emojiOpen ? 'Show keyboard' : 'Show emojis'} aria-pressed={emojiOpen}
                   className="w-11 h-11 mb-1 flex-shrink-0 flex items-center justify-center active:scale-90 transition-transform"
-                  style={{ color: emojiOpen ? '#FF5A1F' : '#65676B' }}>
+                  style={{ color: emojiOpen ? '#F97316' : '#65676B' }}>
                   {emojiOpen ? <Keyboard size={24} strokeWidth={1.8} /> : <Smile size={24} strokeWidth={1.8} />}
                 </button>
               </div>
               {(text.trim() || sending) && (
                 <button onClick={submit} disabled={!text.trim() || sending} aria-label="Post comment"
                   className="w-12 h-12 mb-0.5 rounded-full flex items-center justify-center flex-shrink-0 disabled:opacity-60 active:scale-90 transition-transform text-white"
-                  style={{ background: 'linear-gradient(135deg,#FF5A1F,#FF2D78)', animation: 'bfSendIn .18s ease-out' }}>
+                  style={{ background: '#F97316', animation: 'bfSendIn .18s ease-out' }}>
                   {sending ? <Spinner size={16} /> : <Send size={20} className="-ml-0.5" />}
                 </button>
               )}
@@ -456,20 +469,20 @@ export function CommentsPanel({ post, count, onCountChange, onNavigate, onEmojiT
       {confirmDel && (
         <Sheet onClose={() => setConfirmDel(null)}>
           <div className="px-5 pt-3 text-center">
-            <p className="text-[#1C1E21] font-bold text-base">Delete this comment?</p>
-            <p className="text-[#65676B] text-sm mt-1">{confirmDel.reply_count > 0 ? 'Its replies are removed too.' : 'This cannot be undone.'}</p>
+            <p className="text-[#202938] font-bold text-base">Delete this comment?</p>
+            <p className="text-[#64748B] text-sm mt-1">{confirmDel.reply_count > 0 ? 'Its replies are removed too.' : 'This cannot be undone.'}</p>
           </div>
           <div className="px-5 pt-4 space-y-2">
-            <button onClick={() => doDelete(confirmDel)} className="w-full py-3 rounded-xl bg-red-500/15 text-red-400 font-bold border border-red-500/30">Delete</button>
-            <button onClick={() => setConfirmDel(null)} className="w-full py-3 rounded-xl bg-[#F1F2F4] text-[#1C1E21] font-bold">Cancel</button>
+            <button onClick={() => doDelete(confirmDel)} className="w-full py-3 rounded-xl bg-red-500/15 text-red-600 font-bold border border-red-500/30">Delete</button>
+            <button onClick={() => setConfirmDel(null)} className="w-full py-3 rounded-xl bg-[#F1F2F4] text-[#202938] font-bold">Cancel</button>
           </div>
         </Sheet>
       )}
 
       {reportFor && (
         <Sheet onClose={() => setReportFor(null)}>
-          <p className="text-[#1C1E21] font-bold text-[15px] px-5 pt-2 pb-1">Report this comment</p>
-          {REPORT_REASONS.map((r) => <button key={r} onClick={() => doReport(r)} className="w-full text-left px-5 py-3.5 text-[#1C1E21] text-[15px] active:bg-[#F1F2F4]">{r}</button>)}
+          <p className="text-[#202938] font-bold text-[15px] px-5 pt-2 pb-1">Report this comment</p>
+          {REPORT_REASONS.map((r) => <button key={r} onClick={() => doReport(r)} className="w-full text-left px-5 py-3.5 text-[#202938] text-[15px] active:bg-[#F1F2F4]">{r}</button>)}
         </Sheet>
       )}
     </div>
@@ -486,7 +499,7 @@ export function CommentsSheet({ post, count, onCountChange, onClose, onNavigate 
         <div className="flex items-center justify-between h-12 px-2 flex-shrink-0 border-b border-[#E4E6EB]">
           <span className="w-11" />
           <div className="w-10 h-1 rounded-full bg-[#CED0D4]" />
-          <button onClick={onClose} aria-label="Close comments" className="w-11 h-11 flex items-center justify-center text-[#65676B] active:scale-90 transition-transform"><X size={22} /></button>
+          <button onClick={onClose} aria-label="Close comments" className="w-11 h-11 flex items-center justify-center text-[#64748B] active:scale-90 transition-transform"><X size={22} /></button>
         </div>
         <div className="flex-1 min-h-0 flex flex-col">
           <CommentsPanel post={post} count={count} onCountChange={onCountChange} onEmojiToggle={setEmoji}

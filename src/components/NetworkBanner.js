@@ -55,16 +55,16 @@ export default function NetworkBanner() {
       }}
     >
       <WifiOff size={14} color="white" />
-      <span className="text-white text-xs font-semibold">
+      <span className="text-[#202938] text-xs font-semibold">
         {status === 'offline' ? "You're offline" : 'Slow connection'}
       </span>
       <button
         onClick={handleRetry}
         disabled={checking}
-        className="ml-2 flex items-center gap-1 bg-white/15 hover:bg-white/25 px-2.5 py-1 rounded-full transition-colors disabled:opacity-50"
+        className="ml-2 flex items-center gap-1 bg-[#E2E8F0] hover:bg-white/25 px-2.5 py-1 rounded-full transition-colors disabled:opacity-50"
       >
         <RefreshCw size={11} color="white" className={checking ? 'animate-spin' : ''} />
-        <span className="text-white text-[11px] font-bold">Retry</span>
+        <span className="text-[#202938] text-[11px] font-bold">Retry</span>
       </button>
     </div>
   );

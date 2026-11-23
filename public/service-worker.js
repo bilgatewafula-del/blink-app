@@ -1,7 +1,7 @@
 // public/service-worker.js
 // B-Link Service Worker — Network First strategy
 
-const CACHE_NAME = 'blink-v2.3.0';
+const CACHE_NAME = 'blink-v2.4.0';   // bumped for the light theme + B-Flash update so everyone gets the new design
 const OFFLINE_FALLBACK = '/index.html';
 
 const PRECACHE = [

@@ -8,8 +8,8 @@ class EmojiErrorBoundary extends Component {
     if (this.state.crashed)
       return (
         <div style={{
-          background: '#1d1c1a', borderRadius: 16, padding: '16px 20px',
-          color: '#8E8C88', fontSize: 13, border: '1px solid rgba(255,255,255,0.1)',
+          background: '#FFFFFF', borderRadius: 16, padding: '16px 20px',
+          color: '#8E8C88', fontSize: 13, border: '1px solid #E2E8F0',
         }}>
           Emoji picker failed to load. You can type emoji directly 😊
         </div>
@@ -34,7 +34,7 @@ function LazyPicker(props) {
   if (err)  return <div style={{ padding: '12px 16px', color: '#8E8C88', fontSize: 13 }}>Emoji picker unavailable.</div>;
   if (!Comp) return (
     <div style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: 8 }}>
-      <div style={{ width: 16, height: 16, border: '2px solid #FF5A1F', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <div style={{ width: 16, height: 16, border: '2px solid #F97316', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
       <span style={{ color: '#8E8C88', fontSize: 12 }}>Loading emojis…</span>
     </div>
   );
@@ -134,8 +134,8 @@ export default function SmartEmojiPicker({
           style={{
             position: 'fixed', bottom: 0, left: 0, right: 0,
             zIndex: 999,
-            background: '#1d1c1a',
-            borderTop: '1px solid rgba(255,255,255,0.1)',
+            background: '#FFFFFF',
+            borderTop: '1px solid #E2E8F0',
             borderRadius: '20px 20px 0 0',
             overflow: 'hidden',
             paddingBottom: 'env(safe-area-inset-bottom)',
@@ -172,7 +172,7 @@ export default function SmartEmojiPicker({
         borderRadius: 16,
         overflow: 'hidden',
         boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
-        border: '1px solid rgba(255,255,255,0.1)',
+        border: '1px solid #E2E8F0',
         animation: pos.openUp ? 'slideDownPicker 0.18s ease-out' : 'slideUpPicker 0.18s ease-out',
       }}
     >

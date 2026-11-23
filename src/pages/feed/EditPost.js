@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { ArrowLeft, Save } from 'lucide-react';
 import { POST_AUDIENCES } from '../../utils/constants';
 import { bgCss } from '../../lib/storyPalette';
+import { goBack } from '../../lib/nav';
 
 const EditPost = () => {
   const { user } = useAuth();
@@ -19,7 +20,7 @@ const EditPost = () => {
   const [error, setError] = useState('');
 
   if (!post) {
-    navigate(-1);
+    goBack(navigate, '/');
     return null;
   }
 
@@ -65,31 +66,31 @@ const EditPost = () => {
       );
     }
 
-    navigate(-1);
+    goBack(navigate, '/');
   };
 
   const renderCaption = (text) => {
     return text.split(/(\s+)/).map((word, i) => {
       if (word.startsWith('#'))
-        return <span key={i} className="text-[#FF5A1F]">{word}</span>;
+        return <span key={i} className="text-[#EA580C]">{word}</span>;
       if (word.startsWith('@'))
-        return <span key={i} className="text-[#FFB020]">{word}</span>;
+        return <span key={i} className="text-[#EA580C]">{word}</span>;
       return word;
     });
   };
 
   return (
-    <div className="min-h-screen bg-[#0D0C0B] pb-24">
+    <div className="min-h-screen bg-white pb-24">
       {/* Top bar */}
-      <div className="sticky top-0 z-20 bg-[#0D0C0B] border-b border-white/10 px-4 py-3 flex items-center justify-between">
-        <button onClick={() => navigate(-1)} className="text-[#8E8C88] hover:text-white transition-colors">
+      <div className="sticky top-0 z-20 bg-white border-b border-[#E2E8F0] px-4 py-3 flex items-center justify-between">
+        <button onClick={() => goBack(navigate, '/')} className="text-[#64748B] hover:text-[#202938] transition-colors">
           <ArrowLeft size={22} />
         </button>
-        <h1 className="text-white font-bold text-lg">Edit Post</h1>
+        <h1 className="text-[#202938] font-bold text-lg">Edit Post</h1>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 bg-gradient-to-r from-[#FF5A1F] to-[#FF2D78] text-white font-bold px-4 py-2 rounded-xl text-sm disabled:opacity-50"
+          className="flex items-center gap-2 bg-[#F97316] text-white font-bold px-4 py-2 rounded-xl text-sm disabled:opacity-50"
         >
           <Save size={14} />
           {saving ? 'Saving...' : 'Save'}
@@ -99,7 +100,7 @@ const EditPost = () => {
       <div className="px-4 py-4 space-y-4">
         {error && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3">
-            <p className="text-red-400 text-sm">{error}</p>
+            <p className="text-red-600 text-sm">{error}</p>
           </div>
         )}
 
@@ -119,7 +120,7 @@ const EditPost = () => {
 
         {/* Caption */}
         <div>
-          <label className="text-[#8E8C88] text-xs mb-2 block font-semibold uppercase tracking-wide">Caption</label>
+          <label className="text-[#64748B] text-xs mb-2 block font-semibold uppercase tracking-wide">Caption</label>
           <div
             style={{ background: !post.media_urls?.length && post.bg_color ? bgCss(post.bg_color) : 'transparent' }}
             className="relative rounded-2xl overflow-hidden"
@@ -130,14 +131,14 @@ const EditPost = () => {
               placeholder="Write something..."
               maxLength={500}
               rows={5}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 text-white placeholder-[#8E8C88] text-sm focus:outline-none focus:border-[#FF5A1F] transition-colors resize-none"
+              className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl py-3 px-4 text-[#202938] placeholder-[#94A3B8] text-sm focus:outline-none focus:border-[#F97316] transition-colors resize-none"
             />
           </div>
           <div className="flex items-center justify-between mt-1">
-            <p className="text-[#8E8C88] text-xs">{caption.length}/500</p>
+            <p className="text-[#64748B] text-xs">{caption.length}/500</p>
             <div className="flex flex-wrap gap-1">
               {extractHashtags(caption).map((tag) => (
-                <span key={tag} className="bg-[#FF5A1F]/20 text-[#FF5A1F] text-xs px-2 py-0.5 rounded-full">
+                <span key={tag} className="bg-[#F97316]/20 text-[#EA580C] text-xs px-2 py-0.5 rounded-full">
                   #{tag}
                 </span>
               ))}
@@ -147,9 +148,9 @@ const EditPost = () => {
 
         {/* Caption preview */}
         {caption && (
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-            <p className="text-[#8E8C88] text-xs mb-2 font-semibold uppercase tracking-wide">Preview</p>
-            <p className="text-white/90 text-sm leading-relaxed">
+          <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
+            <p className="text-[#64748B] text-xs mb-2 font-semibold uppercase tracking-wide">Preview</p>
+            <p className="text-[#202938] text-sm leading-relaxed">
               {renderCaption(caption)}
             </p>
           </div>
@@ -157,19 +158,19 @@ const EditPost = () => {
 
         {/* Location */}
         <div>
-          <label className="text-[#8E8C88] text-xs mb-2 block font-semibold uppercase tracking-wide">Location</label>
+          <label className="text-[#64748B] text-xs mb-2 block font-semibold uppercase tracking-wide">Location</label>
           <input
             type="text"
             value={location_}
             onChange={(e) => setLocation_(e.target.value)}
             placeholder="Add or edit location..."
-            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-[#8E8C88] text-sm focus:outline-none focus:border-[#FF5A1F] transition-colors"
+            className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl py-3 px-4 text-[#202938] placeholder-[#94A3B8] text-sm focus:outline-none focus:border-[#F97316] transition-colors"
           />
         </div>
 
         {/* Audience */}
         <div>
-          <label className="text-[#8E8C88] text-xs mb-2 block font-semibold uppercase tracking-wide">Audience</label>
+          <label className="text-[#64748B] text-xs mb-2 block font-semibold uppercase tracking-wide">Audience</label>
           <div className="space-y-2">
             {POST_AUDIENCES.map((a) => (
               <button
@@ -178,14 +179,14 @@ const EditPost = () => {
                 className={
                   'w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all ' +
                   (audience === a.value
-                    ? 'border-[#FF5A1F] bg-[#FF5A1F]/10'
-                    : 'border-white/10 bg-white/5')
+                    ? 'border-[#F97316] bg-[#F97316]/10'
+                    : 'border-[#E2E8F0] bg-[#F8FAFC]')
                 }
               >
                 <span className="text-xl">{a.icon}</span>
-                <span className="text-white text-sm font-semibold">{a.label}</span>
+                <span className="text-[#202938] text-sm font-semibold">{a.label}</span>
                 {audience === a.value && (
-                  <span className="ml-auto text-[#FF5A1F] font-bold">✓</span>
+                  <span className="ml-auto text-[#EA580C] font-bold">✓</span>
                 )}
               </button>
             ))}
@@ -195,7 +196,7 @@ const EditPost = () => {
         {/* Edited notice */}
         {post.edited && (
           <div className="bg-[#FFD700]/10 border border-[#FFD700]/20 rounded-xl p-3">
-            <p className="text-[#FFD700] text-xs">
+            <p className="text-[#B45309] text-xs">
               ✏️ This post was previously edited on{' '}
               {new Date(post.edited_at).toLocaleDateString('en-KE', {
                 day: 'numeric', month: 'short', year: 'numeric'
@@ -207,7 +208,7 @@ const EditPost = () => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full bg-gradient-to-r from-[#FF5A1F] to-[#FF2D78] text-white font-bold py-4 rounded-2xl disabled:opacity-50 shadow-lg shadow-[#FF5A1F]/30"
+          className="w-full bg-[#F97316] text-white font-bold py-4 rounded-2xl disabled:opacity-50  "
         >
           {saving ? 'Saving changes...' : '💾 Save Changes'}
         </button>

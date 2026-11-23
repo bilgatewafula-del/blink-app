@@ -23,7 +23,7 @@ const NOTICES = {
   suspended: { tone: 'error', text: 'This account is temporarily suspended.' },
 };
 
-const inputCls = 'w-full bg-white/[0.07] border border-white/10 rounded-2xl pl-11 pr-4 py-4 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 transition-all';
+const inputCls = 'w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-11 pr-4 py-4 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60 transition-all';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -168,7 +168,7 @@ export default function Login() {
 
   if (verify) {
     return (
-      <div className="min-h-screen bg-[#0D0C0B]" style={{ maxWidth: 480, margin: '0 auto' }}>
+      <div className="min-h-screen bg-white" style={{ maxWidth: 480, margin: '0 auto' }}>
         <VerifyCode
           kind={verify.kind}
           target={verify.kind === 'phone' ? verify.target : maskIdentifier(verify.target)}
@@ -190,37 +190,37 @@ export default function Login() {
     ? ' until ' + new Date(notice.extra).toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
 
   return (
-    <div className="min-h-screen bg-[#0D0C0B] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
+    <div className="min-h-screen bg-white flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
       <div className="flex flex-col items-center pt-12 pb-6 px-6">
-        <div className="w-20 h-20 rounded-[24px] bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center shadow-2xl shadow-[#FF5A1F]/40 mb-5">
-          <span className="text-white font-black text-3xl">B</span>
+        <div className="w-20 h-20 rounded-[24px] bg-[#F97316] flex items-center justify-center   mb-5">
+          <span className="text-[#202938] font-black text-3xl">B</span>
         </div>
-        <h1 className="text-white font-black text-[28px] tracking-tight mb-1">B-Link</h1>
-        <p className="text-white/40 text-sm text-center">Africa's GenZ Social Platform</p>
+        <h1 className="text-[#202938] font-black text-[28px] tracking-tight mb-1">B-Link</h1>
+        <p className="text-[#94A3B8] text-sm text-center">Africa's GenZ Social Platform</p>
       </div>
 
       {nt && (
         <div className={'mx-5 mb-4 rounded-2xl px-4 py-3 flex items-start gap-2.5 text-sm ' +
-          (nt.tone === 'error' ? 'bg-red-500/10 border border-red-500/25 text-red-300' : 'bg-[#FF5A1F]/10 border border-[#FF5A1F]/25 text-[#FFB08F]')}>
+          (nt.tone === 'error' ? 'bg-red-500/10 border border-red-500/25 text-red-600' : 'bg-[#F97316]/10 border border-[#F97316]/25 text-[#EA580C]')}>
           {nt.tone === 'error' ? <ShieldAlert size={18} className="flex-shrink-0 mt-0.5" /> : <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />}
           <span>{nt.text}{suspendedUntil}</span>
         </div>
       )}
 
       {remembered ? (
-        <div className="mx-5 mb-5 rounded-3xl bg-white/[0.05] border border-white/10 p-5 flex flex-col items-center">
+        <div className="mx-5 mb-5 rounded-3xl bg-[#F8FAFC] border border-[#E2E8F0] p-5 flex flex-col items-center">
           <Avatar url={remembered.avatar_url} name={remembered.display_name} size={20} />
-          <p className="text-white font-bold text-lg mt-3">Welcome back, {remembered.display_name?.split(' ')[0]}</p>
-          <p className="text-[#8E8C88] text-sm">{maskIdentifier(remembered.identifier)}</p>
+          <p className="text-[#202938] font-bold text-lg mt-3">Welcome back, {remembered.display_name?.split(' ')[0]}</p>
+          <p className="text-[#64748B] text-sm">{maskIdentifier(remembered.identifier)}</p>
           <button onClick={() => { forgetAccount(); setRemembered(null); setPassword(''); setError(''); }}
-            className="text-[#FF5A1F] text-sm font-semibold mt-3">Not you? Use another account</button>
+            className="text-[#EA580C] text-sm font-semibold mt-3">Not you? Use another account</button>
         </div>
       ) : SHOW_PHONE_SIGNIN ? (
-        <div className="flex mx-5 mb-5 bg-white/[0.06] rounded-2xl p-1">
+        <div className="flex mx-5 mb-5 bg-[#F1F5F9] rounded-2xl p-1">
           {[['email', 'Email', Mail], ['phone', 'Phone', Smartphone]].map(([key, label, Icon]) => (
             <button key={key} onClick={() => { setTab(key); setError(''); }}
               className={'flex-1 py-3 rounded-xl text-sm font-bold transition-all inline-flex items-center justify-center gap-2 ' +
-                (tab === key ? 'bg-[#FF5A1F] text-white shadow-lg shadow-[#FF5A1F]/40' : 'text-white/50')}>
+                (tab === key ? 'bg-[#F97316] text-white  ' : 'text-[#64748B]')}>
               <Icon size={15} /> {label}
             </button>
           ))}
@@ -230,7 +230,7 @@ export default function Login() {
       <form onSubmit={submit} className="flex flex-col gap-3 px-5">
         {!remembered && tab === 'email' && (
           <div className="relative">
-            <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8C88] pointer-events-none" />
+            <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" />
             <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(''); }}
               placeholder="Email address" autoComplete="username" inputMode="email" autoCapitalize="none" className={inputCls} />
           </div>
@@ -239,23 +239,23 @@ export default function Login() {
         {!remembered && tab === 'phone' && (
           <div className="flex gap-2">
             <select value={country} onChange={(e) => setCountry(e.target.value)} aria-label="Country code"
-              className="bg-white/[0.07] border border-white/10 rounded-2xl px-3 py-4 text-white text-[14px] focus:outline-none focus:border-[#FF5A1F]/60"
+              className="bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-3 py-4 text-[#202938] text-[14px] focus:outline-none focus:border-[#F97316]/60"
               style={{ WebkitAppearance: 'none', width: 104 }}>
-              {PHONE_COUNTRIES.map((c) => <option key={c.code} value={c.code} style={{ background: '#171614' }}>{c.code} +{c.dial}</option>)}
+              {PHONE_COUNTRIES.map((c) => <option key={c.code} value={c.code} style={{ background: '#FFFFFF' }}>{c.code} +{c.dial}</option>)}
             </select>
             <input type="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setError(''); }}
               placeholder="712 345 678" autoComplete="tel-national" inputMode="tel"
-              className="flex-1 min-w-0 bg-white/[0.07] border border-white/10 rounded-2xl px-4 py-4 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60" />
+              className="flex-1 min-w-0 bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-4 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60" />
           </div>
         )}
 
         {!isCodeFlow && (
           <div className="relative">
-            <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8C88] pointer-events-none" />
+            <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" />
             <input type={showPass ? 'text' : 'password'} value={password} onChange={(e) => { setPassword(e.target.value); setError(''); }}
               placeholder="Password" autoComplete="current-password" className={inputCls + ' pr-12'} />
             <button type="button" tabIndex={-1} onClick={() => setShowPass((v) => !v)} aria-label={showPass ? 'Hide password' : 'Show password'}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8E8C88] hover:text-white">
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#202938]">
               {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
@@ -264,49 +264,49 @@ export default function Login() {
         <div className="flex items-center justify-between -mt-1">
           {!remembered && tab === 'phone' ? (
             <button type="button" onClick={() => { setPhoneMode(phoneMode === 'password' ? 'code' : 'password'); setError(''); }}
-              className="text-[#FF5A1F] text-sm font-semibold">
+              className="text-[#EA580C] text-sm font-semibold">
               {phoneMode === 'password' ? 'Sign in with a text code' : 'Use password instead'}
             </button>
           ) : <span />}
           <button type="button" onClick={() => navigate('/forgot-password', { state: { identifier: remembered?.identifier || (tab === 'email' ? email : '') } })}
-            className="text-[#FF5A1F] text-sm font-semibold">Forgot password?</button>
+            className="text-[#EA580C] text-sm font-semibold">Forgot password?</button>
         </div>
 
         {captchaEnabled && <Captcha onToken={setCaptchaToken} resetKey={captchaReset} />}
 
         {lock.locked && (
-          <div className="rounded-xl px-4 py-3 text-sm bg-red-500/10 border border-red-500/20 text-red-300">
+          <div className="rounded-xl px-4 py-3 text-sm bg-red-500/10 border border-red-500/20 text-red-600">
             Too many attempts. Try again in {formatWait(lock.remainingMs)}.
           </div>
         )}
         {!lock.locked && error && (
-          <div className="rounded-xl px-4 py-3 text-sm bg-red-500/10 border border-red-500/20 text-red-400 flex items-start gap-2">
+          <div className="rounded-xl px-4 py-3 text-sm bg-red-500/10 border border-red-500/20 text-red-600 flex items-start gap-2">
             <AlertCircle size={16} className="flex-shrink-0 mt-0.5" /> <span>{error}</span>
           </div>
         )}
 
         <button type="submit" disabled={busy || lock.locked}
           className="w-full py-4 rounded-2xl font-bold text-white text-[15px] disabled:opacity-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-1"
-          style={{ background: 'linear-gradient(135deg, #FF5A1F, #FF2D78)', boxShadow: '0 8px 24px rgba(255,90,31,0.35)' }}>
+          style={{ background: '#F97316', boxShadow: '0 8px 24px rgba(255,90,31,0.35)' }}>
           {busy ? <><Spinner size={18} /> {isCodeFlow ? 'Sending code…' : 'Signing in…'}</> : isCodeFlow ? 'Send code' : 'Sign in'}
         </button>
       </form>
 
       <div className="flex items-center gap-3 px-5 my-5">
-        <div className="flex-1 h-px bg-white/10" />
-        <span className="text-white/25 text-xs font-semibold">NEW HERE?</span>
-        <div className="flex-1 h-px bg-white/10" />
+        <div className="flex-1 h-px bg-[#F1F5F9]" />
+        <span className="text-[#94A3B8] text-xs font-semibold">NEW HERE?</span>
+        <div className="flex-1 h-px bg-[#F1F5F9]" />
       </div>
 
       <div className="px-5">
         <button onClick={() => navigate('/signup')}
-          className="w-full py-4 rounded-2xl font-bold text-white text-[15px] border border-white/15 bg-white/[0.04] hover:bg-white/[0.08] active:scale-[0.98] transition-all">
+          className="w-full py-4 rounded-2xl font-bold text-[#202938] text-[15px] border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-[#F1F5F9] active:scale-[0.98] transition-all">
           Create free account
         </button>
       </div>
 
       <div className="mt-auto pb-10 px-5 text-center">
-        <p className="text-white/20 text-xs inline-flex items-center gap-1.5"><CheckCircle2 size={12} /> Made for Africa</p>
+        <p className="text-[#94A3B8] text-xs inline-flex items-center gap-1.5"><CheckCircle2 size={12} /> Made for Africa</p>
       </div>
     </div>
   );

@@ -97,12 +97,12 @@ export default function StoryComposer({ onClose, onCreated }) {
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-8 bg-[#0D0C0B]">
             <button onClick={() => galleryRef.current?.click()}
               className="w-full max-w-[300px] rounded-3xl border border-white/15 bg-white/[0.06] py-6 flex flex-col items-center gap-2 active:scale-[0.98]">
-              <ImageIcon size={30} className="text-[#FF5A1F]" />
+              <ImageIcon size={30} className="text-[#F97316]" />
               <span className="text-white font-bold">Choose from gallery</span>
             </button>
             <button onClick={() => cameraRef.current?.click()}
               className="w-full max-w-[300px] rounded-3xl border border-white/15 bg-white/[0.06] py-6 flex flex-col items-center gap-2 active:scale-[0.98]">
-              <Camera size={30} className="text-[#FF2D78]" />
+              <Camera size={30} className="text-[#F97316]" />
               <span className="text-white font-bold">Take a photo</span>
             </button>
             <p className="text-white/40 text-xs text-center">Photos are fitted to the screen, never stretched.</p>
@@ -149,7 +149,7 @@ export default function StoryComposer({ onClose, onCreated }) {
           </div>
           <button onClick={send} disabled={!canSend || busy} aria-label="Post status"
             className="h-12 px-5 rounded-full text-white font-bold text-[14px] inline-flex items-center gap-2 disabled:opacity-40 active:scale-95 transition-transform"
-            style={{ background: 'linear-gradient(135deg,#FF5A1F,#FF2D78)', boxShadow: '0 6px 20px rgba(255,90,31,.4)' }}>
+            style={{ background: '#F97316', boxShadow: '0 6px 20px rgba(255,90,31,.4)' }}>
             {busy ? <><Spinner size={16} /> Posting</> : <><Send size={17} /> Post</>}
           </button>
         </div>

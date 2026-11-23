@@ -11,6 +11,7 @@ import { formatNumber } from '../../utils/formatNumber';
 import { formatTime } from '../../utils/formatTime';
 import SwipeBack from '../../components/SwipeBack';
 import { ProfileSkeleton } from '../../components/Skeleton';
+import { goBack } from '../../lib/nav';
 
 const flagMap = {
   KE: '🇰🇪', NG: '🇳🇬', GH: '🇬🇭', UG: '🇺🇬',
@@ -216,31 +217,31 @@ const OtherProfile = () => {
     if (followStatus === 'accepted') {
       return {
         label: isFollowingMe ? '✓ Friends' : '✓ Following',
-        style: 'bg-white/10 border border-white/20 text-white',
+        style: 'bg-[#F1F5F9] border border-[#E2E8F0] text-[#202938]',
       };
     }
     if (followStatus === 'pending') {
-      return { label: 'Requested', style: 'bg-white/10 border border-white/20 text-[#8E8C88]' };
+      return { label: 'Requested', style: 'bg-[#F1F5F9] border border-[#E2E8F0] text-[#64748B]' };
     }
     if (isFollowingMe) {
       return {
         label: 'Follow Back',
-        style: 'bg-gradient-to-r from-[#FF5A1F] to-[#FF2D78] text-white shadow-lg shadow-[#FF5A1F]/30',
+        style: 'bg-[#F97316] text-white  ',
       };
     }
     return {
       label: '+ Follow',
-      style: 'bg-gradient-to-r from-[#FF5A1F] to-[#FF2D78] text-white shadow-lg shadow-[#FF5A1F]/30',
+      style: 'bg-[#F97316] text-white  ',
     };
   };
 
   if (loading) return <ProfileSkeleton />;
 
   if (!profile) return (
-    <div className="min-h-screen bg-[#0D0C0B] flex flex-col items-center justify-center gap-4">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
       <p className="text-5xl">👤</p>
-      <p className="text-white font-bold text-xl">User not found</p>
-      <button onClick={() => navigate(-1)} className="text-[#FF5A1F] text-sm">Go back</button>
+      <p className="text-[#202938] font-bold text-xl">User not found</p>
+      <button onClick={() => goBack(navigate, '/')} className="text-[#EA580C] text-sm">Go back</button>
     </div>
   );
 
@@ -249,45 +250,45 @@ const OtherProfile = () => {
 
   return (
     <SwipeBack>
-      <div className="min-h-screen bg-[#0D0C0B] pb-24">
+      <div className="min-h-screen bg-white pb-24">
         {/* Top bar */}
-        <div className="sticky top-0 z-30 bg-[#0D0C0B]/95 backdrop-blur-md border-b border-white/5 px-4 py-3 flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="text-[#8E8C88] hover:text-white transition-colors">
+        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-3 flex items-center justify-between">
+          <button onClick={() => goBack(navigate, '/')} className="text-[#64748B] hover:text-[#202938] transition-colors">
             <ArrowLeft size={22} />
           </button>
           <div className="flex items-center gap-2">
-            <h1 className="text-white font-bold text-base">@{profile.username}</h1>
+            <h1 className="text-[#202938] font-bold text-base">@{profile.username}</h1>
             {profile.is_verified && (
-              <span className="bg-[#FF5A1F] text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold">✓</span>
+              <span className="bg-[#F97316] text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold">✓</span>
             )}
           </div>
           <div className="relative">
             <button
               onClick={() => setShowOptions(!showOptions)}
-              className="text-[#8E8C88] hover:text-white transition-colors"
+              className="text-[#64748B] hover:text-[#202938] transition-colors"
             >
               <MoreHorizontal size={22} />
             </button>
             {showOptions && (
-              <div className="absolute right-0 top-8 bg-[#1d1c1a] border border-white/10 rounded-2xl overflow-hidden z-50 w-52 shadow-2xl">
+              <div className="absolute right-0 top-8 bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden z-50 w-52 shadow-2xl">
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(window.location.origin + '/profile/' + profile.username);
                     setShowOptions(false);
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/5 text-sm border-b border-white/5"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-[#202938] hover:bg-[#F8FAFC] text-sm border-b border-[#E2E8F0]"
                 >
                   <Link size={16} /> Copy Profile Link
                 </button>
                 <button
                   onClick={() => setShowOptions(false)}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/5 text-sm border-b border-white/5"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-[#202938] hover:bg-[#F8FAFC] text-sm border-b border-[#E2E8F0]"
                 >
                   <Flag size={16} /> Report @{profile.username}
                 </button>
                 <button
                   onClick={() => setShowOptions(false)}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 text-sm"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-500/10 text-sm"
                 >
                   <UserX size={16} /> Block @{profile.username}
                 </button>
@@ -298,17 +299,17 @@ const OtherProfile = () => {
 
         {/* Cover */}
         <div className="relative">
-          <div className="h-36 bg-gradient-to-br from-[#FF5A1F]/40 via-[#FF2D78]/30 to-[#FFB020]/20 overflow-hidden">
+          <div className="h-36 bg-gradient-to-br from-[#F97316]/40 via-[#F97316]/30 to-[#FFB020]/20 overflow-hidden">
             {profile.cover_url && (
               <img src={profile.cover_url} alt="cover" className="w-full h-full object-cover" />
             )}
           </div>
           <div className="absolute -bottom-14 left-4">
-            <div className="p-1 bg-[#0D0C0B] rounded-full">
+            <div className="p-1 bg-[#F8FAFC] rounded-full">
               {profile.avatar_url ? (
                 <img src={profile.avatar_url} alt="avatar" className="w-24 h-24 rounded-full object-cover" />
               ) : (
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold text-3xl">
+                <div className="w-24 h-24 rounded-full bg-[#F97316] flex items-center justify-center text-white font-bold text-3xl">
                   {profile.display_name?.[0]?.toUpperCase()}
                 </div>
               )}
@@ -321,17 +322,17 @@ const OtherProfile = () => {
           <div className="flex items-start justify-between mb-2">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-white font-bold text-xl">{profile.display_name}</h2>
-                {profile.is_verified && <BadgeCheck size={20} className="text-[#FF5A1F]" />}
+                <h2 className="text-[#202938] font-bold text-xl">{profile.display_name}</h2>
+                {profile.is_verified && <BadgeCheck size={20} className="text-[#EA580C]" />}
                 <span className="text-xl">{flagMap[profile.country] || '🌍'}</span>
                 {profile.is_private && (
-                  <span className="bg-white/10 text-white/60 text-[10px] px-2 py-0.5 rounded-full">🔒 Private</span>
+                  <span className="bg-[#F1F5F9] text-[#64748B] text-[10px] px-2 py-0.5 rounded-full">🔒 Private</span>
                 )}
               </div>
-              <p className="text-[#8E8C88] text-sm">@{profile.username}</p>
+              <p className="text-[#64748B] text-sm">@{profile.username}</p>
               {/* Follows you badge */}
               {isFollowingMe && (
-                <span className="inline-flex items-center gap-1 bg-white/10 text-white/60 text-[10px] px-2 py-0.5 rounded-full mt-1">
+                <span className="inline-flex items-center gap-1 bg-[#F1F5F9] text-[#64748B] text-[10px] px-2 py-0.5 rounded-full mt-1">
                   <UserCheck size={10} /> Follows you
                 </span>
               )}
@@ -339,11 +340,11 @@ const OtherProfile = () => {
           </div>
 
           {profile.bio && (
-            <p className="text-white/80 text-sm mb-2 leading-relaxed">{profile.bio}</p>
+            <p className="text-[#202938] text-sm mb-2 leading-relaxed">{profile.bio}</p>
           )}
 
          {profile.bio && (
-  <p className="text-white/80 text-sm mb-2 leading-relaxed">
+  <p className="text-[#202938] text-sm mb-2 leading-relaxed">
     {profile.bio}
   </p>
 )}
@@ -353,7 +354,7 @@ const OtherProfile = () => {
     href={profile.website}
     target="_blank"
     rel="noreferrer"
-    className="flex items-center gap-1.5 text-[#FF5A1F] text-sm mb-3 hover:underline w-fit"
+    className="flex items-center gap-1.5 text-[#EA580C] text-sm mb-3 hover:underline w-fit"
   >
     🔗 {profile.website.replace('https://', '')}
   </a>
@@ -364,13 +365,13 @@ const OtherProfile = () => {
             <div className="flex items-center gap-2 mb-3">
               <div className="flex -space-x-2">
                 {mutualFollowers.slice(0, 3).map((mf) => (
-                  <div key={mf.id} className="w-5 h-5 rounded-full border border-[#0D0C0B] overflow-hidden bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78]">
+                  <div key={mf.id} className="w-5 h-5 rounded-full border border-[#E2E8F0] overflow-hidden bg-[#F97316]">
                     {mf.avatar_url && <img src={mf.avatar_url} alt="" className="w-full h-full object-cover" />}
                   </div>
                 ))}
               </div>
-              <p className="text-[#8E8C88] text-xs">
-                Followed by <span className="text-white font-semibold">{mutualFollowers[0]?.display_name}</span>
+              <p className="text-[#64748B] text-xs">
+                Followed by <span className="text-[#202938] font-semibold">{mutualFollowers[0]?.display_name}</span>
                 {mutualFollowers.length > 1 && ' and ' + (mutualFollowers.length - 1) + ' others you follow'}
               </p>
             </div>
@@ -387,17 +388,17 @@ const OtherProfile = () => {
             </button>
             <button
               onClick={handleMessage}
-              className="flex-1 py-2.5 rounded-full font-bold text-sm bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 rounded-full font-bold text-sm bg-[#F1F5F9] border border-[#E2E8F0] text-[#202938] hover:bg-[#E2E8F0] transition-all flex items-center justify-center gap-2"
             >
               <MessageCircle size={16} /> Message
             </button>
           </div>
 
           {/* Stats */}
-          <div className="flex gap-6 pb-4 border-b border-white/5">
+          <div className="flex gap-6 pb-4 border-b border-[#E2E8F0]">
             <div className="text-center">
-              <p className="text-white font-bold text-lg">{posts.length}</p>
-              <p className="text-[#8E8C88] text-xs">Posts</p>
+              <p className="text-[#202938] font-bold text-lg">{posts.length}</p>
+              <p className="text-[#64748B] text-xs">Posts</p>
             </div>
             <button
               onClick={() => {
@@ -405,8 +406,8 @@ const OtherProfile = () => {
               }}
               className="text-center hover:opacity-80 transition-opacity"
             >
-              <p className="text-white font-bold text-lg">{formatNumber(followerCount)}</p>
-              <p className="text-[#8E8C88] text-xs">Followers</p>
+              <p className="text-[#202938] font-bold text-lg">{formatNumber(followerCount)}</p>
+              <p className="text-[#64748B] text-xs">Followers</p>
             </button>
             <button
               onClick={() => {
@@ -414,15 +415,15 @@ const OtherProfile = () => {
               }}
               className="text-center hover:opacity-80 transition-opacity"
             >
-              <p className="text-white font-bold text-lg">{formatNumber(followingCount)}</p>
-              <p className="text-[#8E8C88] text-xs">Following</p>
+              <p className="text-[#202938] font-bold text-lg">{formatNumber(followingCount)}</p>
+              <p className="text-[#64748B] text-xs">Following</p>
             </button>
           </div>
         </div>
 
         {/* Tab */}
-        <div className="flex border-b border-white/5 sticky top-14 bg-[#0D0C0B] z-20">
-          <button className="flex-1 flex items-center justify-center gap-2 py-3.5 border-b-2 border-[#FF5A1F] text-[#FF5A1F] text-sm font-semibold">
+        <div className="flex border-b border-[#E2E8F0] sticky top-14 bg-white z-20">
+          <button className="flex-1 flex items-center justify-center gap-2 py-3.5 border-b-2 border-[#F97316] text-[#EA580C] text-sm font-semibold">
             <Grid size={16} /> Posts
           </button>
         </div>
@@ -430,17 +431,17 @@ const OtherProfile = () => {
         {/* Posts grid or private lock */}
         {isPrivateAndNotFollowing ? (
           <div className="flex flex-col items-center justify-center mt-16 gap-4 px-6">
-            <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+            <div className="w-20 h-20 rounded-full bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center">
               <span className="text-4xl">🔒</span>
             </div>
-            <h3 className="text-white font-bold text-xl">This account is private</h3>
-            <p className="text-[#8E8C88] text-sm text-center">
+            <h3 className="text-[#202938] font-bold text-xl">This account is private</h3>
+            <p className="text-[#64748B] text-sm text-center">
               Follow @{profile.username} to see their photos and posts.
             </p>
             <button
               onClick={handleFollow}
               disabled={followLoading}
-              className="bg-gradient-to-r from-[#FF5A1F] to-[#FF2D78] text-white px-8 py-3 rounded-full font-bold text-sm shadow-lg shadow-[#FF5A1F]/30 disabled:opacity-50"
+              className="bg-[#F97316] text-white px-8 py-3 rounded-full font-bold text-sm   disabled:opacity-50"
             >
               {followStatus === 'pending' ? 'Request Sent' : '+ Follow'}
             </button>
@@ -448,8 +449,8 @@ const OtherProfile = () => {
         ) : posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center mt-16 gap-3 px-6">
             <div className="text-5xl">📸</div>
-            <h3 className="text-white font-bold text-lg">No posts yet</h3>
-            <p className="text-[#8E8C88] text-sm text-center">
+            <h3 className="text-[#202938] font-bold text-lg">No posts yet</h3>
+            <p className="text-[#64748B] text-sm text-center">
               {profile.display_name} hasn't posted anything yet.
             </p>
           </div>
@@ -459,7 +460,7 @@ const OtherProfile = () => {
               <div
                 key={post.id}
                 onClick={() => navigate('/post/' + post.id)}
-                className="aspect-square cursor-pointer hover:opacity-80 transition-opacity relative overflow-hidden group bg-[#1d1c1a]"
+                className="aspect-square cursor-pointer hover:opacity-80 transition-opacity relative overflow-hidden group bg-white"
               >
                 {post.media_urls?.length > 0 ? (
                   <img
@@ -469,17 +470,17 @@ const OtherProfile = () => {
                   />
                 ) : (
                   <div
-                    style={{ background: post.bg_color || '#1d1c1a' }}
+                    style={{ background: post.bg_color || '#FFFFFF' }}
                     className="w-full h-full flex items-center justify-center p-2"
                   >
-                    <p className="text-white text-xs text-center font-semibold line-clamp-4 leading-relaxed">
+                    <p className="text-[#202938] text-xs text-center font-semibold line-clamp-4 leading-relaxed">
                       {post.caption}
                     </p>
                   </div>
                 )}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                  <span className="text-white text-xs font-bold">❤️ {post.likes_count || 0}</span>
-                  <span className="text-white text-xs font-bold">💬 {post.comments_count || 0}</span>
+                  <span className="text-[#202938] text-xs font-bold">❤️ {post.likes_count || 0}</span>
+                  <span className="text-[#202938] text-xs font-bold">💬 {post.comments_count || 0}</span>
                 </div>
               </div>
             ))}
@@ -489,7 +490,7 @@ const OtherProfile = () => {
         {/* Suggested users */}
         {!isPrivateAndNotFollowing && suggestedUsers.length > 0 && (
           <div className="px-4 mt-6 pb-6">
-            <p className="text-white font-bold text-sm mb-3">👥 People you may know</p>
+            <p className="text-[#202938] font-bold text-sm mb-3">👥 People you may know</p>
             <div className="space-y-3">
               {suggestedUsers.map((su) => (
                 <div key={su.id} className="flex items-center gap-3">
@@ -497,21 +498,21 @@ const OtherProfile = () => {
                     {su.avatar_url ? (
                       <img src={su.avatar_url} alt={su.display_name} className="w-10 h-10 rounded-full object-cover" />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold">
+                      <div className="w-10 h-10 rounded-full bg-[#F97316] flex items-center justify-center text-white font-bold">
                         {su.display_name?.[0]?.toUpperCase()}
                       </div>
                     )}
                   </button>
                   <button onClick={() => navigate('/profile/' + su.username)} className="flex-1 text-left min-w-0">
                     <div className="flex items-center gap-1">
-                      <p className="text-white font-semibold text-sm truncate">{su.display_name}</p>
-                      {su.is_verified && <span className="bg-[#FF5A1F] text-white text-[8px] px-1 py-0.5 rounded-full font-bold">✓</span>}
+                      <p className="text-[#202938] font-semibold text-sm truncate">{su.display_name}</p>
+                      {su.is_verified && <span className="bg-[#F97316] text-white text-[8px] px-1 py-0.5 rounded-full font-bold">✓</span>}
                     </div>
-                    <p className="text-[#8E8C88] text-xs">@{su.username}</p>
+                    <p className="text-[#64748B] text-xs">@{su.username}</p>
                   </button>
                   <button
                     onClick={() => navigate('/profile/' + su.username)}
-                    className="text-xs text-[#FF5A1F] border border-[#FF5A1F]/40 px-3 py-1.5 rounded-full font-bold hover:bg-[#FF5A1F]/10 transition-colors flex-shrink-0"
+                    className="text-xs text-[#EA580C] border border-[#F97316]/40 px-3 py-1.5 rounded-full font-bold hover:bg-[#F97316]/10 transition-colors flex-shrink-0"
                   >
                     View
                   </button>
@@ -549,41 +550,41 @@ const OtherProfile = () => {
 
 const UserListModal = ({ title, users, currentUserId, onClose, onNavigate }) => (
   <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center">
-    <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl max-h-[70vh] overflow-hidden flex flex-col slide-up">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 flex-shrink-0">
-        <h2 className="text-white font-bold text-lg">{title}</h2>
-        <button onClick={onClose} className="text-[#8E8C88] hover:text-white text-2xl leading-none">✕</button>
+    <div className="w-full max-w-[620px] bg-white border-t border-[#E2E8F0] rounded-t-3xl max-h-[70vh] overflow-hidden flex flex-col slide-up">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-[#E2E8F0] flex-shrink-0">
+        <h2 className="text-[#202938] font-bold text-lg">{title}</h2>
+        <button onClick={onClose} className="text-[#64748B] hover:text-[#202938] text-2xl leading-none">✕</button>
       </div>
       <div className="overflow-y-auto flex-1">
         {users.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 gap-3">
             <p className="text-4xl">👥</p>
-            <p className="text-[#8E8C88] text-sm">No users yet</p>
+            <p className="text-[#64748B] text-sm">No users yet</p>
           </div>
         ) : (
           users.map((u) => (
             <button
               key={u.id}
               onClick={() => onNavigate(u.username)}
-              className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-white/5 transition-colors border-b border-white/5"
+              className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-[#F8FAFC] transition-colors border-b border-[#E2E8F0]"
             >
               <div className="flex-shrink-0">
                 {u.avatar_url ? (
                   <img src={u.avatar_url} alt={u.display_name} className="w-11 h-11 rounded-full object-cover" />
                 ) : (
-                  <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white font-bold">
+                  <div className="w-11 h-11 rounded-full bg-[#F97316] flex items-center justify-center text-white font-bold">
                     {u.display_name?.[0]?.toUpperCase()}
                   </div>
                 )}
               </div>
               <div className="flex-1 text-left min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <p className="text-white font-bold text-sm truncate">{u.display_name}</p>
+                  <p className="text-[#202938] font-bold text-sm truncate">{u.display_name}</p>
                   {u.is_verified && (
-                    <span className="bg-[#FF5A1F] text-white text-[8px] px-1 py-0.5 rounded-full font-bold flex-shrink-0">✓</span>
+                    <span className="bg-[#F97316] text-white text-[8px] px-1 py-0.5 rounded-full font-bold flex-shrink-0">✓</span>
                   )}
                 </div>
-                <p className="text-[#8E8C88] text-xs">@{u.username}</p>
+                <p className="text-[#64748B] text-xs">@{u.username}</p>
               </div>
             </button>
           ))

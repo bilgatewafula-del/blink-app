@@ -8,6 +8,7 @@ import {
   MessageCircle,
   ExternalLink,
 } from 'lucide-react';
+import { goBack } from '../../lib/nav';
 
 const FAQ_ITEMS = [
   {
@@ -122,30 +123,30 @@ const Help = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-24">
+    <div className="min-h-screen bg-[#F8FAFC] pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-[#0A1628] border-b border-white/10 px-4 py-3 flex items-center gap-4">
+      <div className="sticky top-0 z-20 bg-[#F8FAFC] border-b border-[#E2E8F0] px-4 py-3 flex items-center gap-4">
         <button
-          onClick={() => navigate(-1)}
-          className="text-[#6B7280] hover:text-white"
+          onClick={() => goBack(navigate, '/')}
+          className="text-[#64748B] hover:text-[#202938]"
         >
           <ArrowLeft size={22} />
         </button>
 
-        <h1 className="text-white font-bold text-lg">
+        <h1 className="text-[#202938] font-bold text-lg">
           Help Center
         </h1>
       </div>
 
       {/* Hero */}
-      <div className="mx-4 mt-4 bg-gradient-to-br from-[#1E6FFF]/20 to-[#7B2FFF]/20 border border-[#1E6FFF]/30 rounded-2xl p-5 text-center">
+      <div className="mx-4 mt-4 bg-gradient-to-br from-[#2563EB]/20 to-[#7B2FFF]/20 border border-[#2563EB]/30 rounded-2xl p-5 text-center">
         <p className="text-3xl mb-2">👋</p>
 
-        <h2 className="text-white font-bold text-lg">
+        <h2 className="text-[#202938] font-bold text-lg">
           How can we help?
         </h2>
 
-        <p className="text-[#6B7280] text-sm mt-1">
+        <p className="text-[#64748B] text-sm mt-1">
           Find answers to common questions below.
         </p>
       </div>
@@ -164,8 +165,8 @@ const Help = () => {
             }}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
               activeCategory === f.category
-                ? 'bg-[#1E6FFF] text-white'
-                : 'bg-white/5 border border-white/10 text-[#6B7280]'
+                ? 'bg-[#2563EB] text-white'
+                : 'bg-[#F8FAFC] border border-[#E2E8F0] text-[#64748B]'
             }`}
           >
             {f.category}
@@ -178,7 +179,7 @@ const Help = () => {
         {currentFAQ?.questions.map((item, idx) => (
           <div
             key={idx}
-            className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden"
+            className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl overflow-hidden"
           >
             <button
               onClick={() =>
@@ -186,26 +187,26 @@ const Help = () => {
               }
               className="w-full flex items-center justify-between px-4 py-4 text-left"
             >
-              <p className="text-white text-sm font-semibold pr-4">
+              <p className="text-[#202938] text-sm font-semibold pr-4">
                 {item.q}
               </p>
 
               {openItem === idx ? (
                 <ChevronUp
                   size={16}
-                  className="text-[#1E6FFF] flex-shrink-0"
+                  className="text-[#2563EB] flex-shrink-0"
                 />
               ) : (
                 <ChevronDown
                   size={16}
-                  className="text-[#6B7280] flex-shrink-0"
+                  className="text-[#64748B] flex-shrink-0"
                 />
               )}
             </button>
 
             {openItem === idx && (
-              <div className="px-4 pb-4 border-t border-white/5">
-                <p className="text-[#6B7280] text-sm leading-relaxed mt-3">
+              <div className="px-4 pb-4 border-t border-[#E2E8F0]">
+                <p className="text-[#64748B] text-sm leading-relaxed mt-3">
                   {item.a}
                 </p>
               </div>
@@ -216,18 +217,18 @@ const Help = () => {
 
       {/* Report Problem */}
       <div className="px-4 mt-6">
-        <h3 className="text-white font-bold text-base mb-3">
+        <h3 className="text-[#202938] font-bold text-base mb-3">
           Report a Problem
         </h3>
 
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
+        <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4 space-y-3">
           {reportSent ? (
             <div className="text-center py-4">
               <p className="text-3xl mb-2">✅</p>
-              <p className="text-white font-bold">
+              <p className="text-[#202938] font-bold">
                 Report sent!
               </p>
-              <p className="text-[#6B7280] text-sm mt-1">
+              <p className="text-[#64748B] text-sm mt-1">
                 Our team will review your report within 48
                 hours.
               </p>
@@ -241,7 +242,7 @@ const Help = () => {
                 }
                 placeholder="Describe the problem you're experiencing..."
                 rows={4}
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-[#6B7280] text-sm focus:outline-none focus:border-[#1E6FFF] resize-none"
+                className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl py-3 px-4 text-[#202938] placeholder-[#94A3B8] text-sm focus:outline-none focus:border-[#2563EB] resize-none"
               />
 
               <button
@@ -251,7 +252,7 @@ const Help = () => {
                   }
                 }}
                 disabled={!reportText.trim()}
-                className="w-full bg-gradient-to-r from-[#1E6FFF] to-[#7B2FFF] text-white font-bold py-3 rounded-xl disabled:opacity-50"
+                className="w-full bg-[#2563EB] text-white font-bold py-3 rounded-xl disabled:opacity-50"
               >
                 Send Report
               </button>
@@ -262,37 +263,37 @@ const Help = () => {
 
       {/* Contact */}
       <div className="px-4 mt-4 space-y-3">
-        <h3 className="text-white font-bold text-base mb-3">
+        <h3 className="text-[#202938] font-bold text-base mb-3">
           Contact Support
         </h3>
 
         <a
           href="mailto:support@blink.africa"
-          className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-colors"
+          className="flex items-center gap-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4 hover:bg-[#F1F5F9] transition-colors"
         >
-          <div className="w-10 h-10 bg-[#1E6FFF]/20 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-[#2563EB]/20 rounded-xl flex items-center justify-center">
             <Mail
               size={18}
-              className="text-[#1E6FFF]"
+              className="text-[#2563EB]"
             />
           </div>
 
           <div>
-            <p className="text-white font-semibold text-sm">
+            <p className="text-[#202938] font-semibold text-sm">
               Email Support
             </p>
-            <p className="text-[#6B7280] text-xs">
+            <p className="text-[#64748B] text-xs">
               support@blink.africa
             </p>
           </div>
 
           <ExternalLink
             size={16}
-            className="text-[#6B7280] ml-auto"
+            className="text-[#64748B] ml-auto"
           />
         </a>
 
-        <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl p-4">
+        <div className="flex items-center gap-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
           <div className="w-10 h-10 bg-[#2ECC71]/20 rounded-xl flex items-center justify-center">
             <MessageCircle
               size={18}
@@ -301,10 +302,10 @@ const Help = () => {
           </div>
 
           <div>
-            <p className="text-white font-semibold text-sm">
+            <p className="text-[#202938] font-semibold text-sm">
               Live Chat
             </p>
-            <p className="text-[#6B7280] text-xs">
+            <p className="text-[#64748B] text-xs">
               Available Mon–Fri, 8am–6pm EAT
             </p>
           </div>

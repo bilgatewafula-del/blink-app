@@ -9,6 +9,7 @@ import {
 import { Spinner, EmptyState } from '../../components/ui';
 import { compressImage, uploadImage } from '../../lib/imageUtils';
 import { SUPPORT_EMAIL, SUPPORT_WHATSAPP, APP_VERSION } from '../../config/appInfo';
+import { goBack } from '../../lib/nav';
 
 const FAQ = [
   { id: 'start', title: 'Getting started', Icon: HelpCircle, items: [
@@ -81,18 +82,18 @@ function Faq({ q, a, id }) {
   const [vote, setVote] = useState(() => { try { return localStorage.getItem('blink_faq_' + id); } catch { return null; } });
   const cast = (v) => { setVote(v); try { localStorage.setItem('blink_faq_' + id, v); } catch { /* ignore */ } };
   return (
-    <div className="border-b border-white/[0.06] last:border-0">
-      <button onClick={() => setOpen(!open)} className="w-full flex items-start justify-between gap-3 px-4 py-3.5 text-left active:bg-white/[0.04]">
-        <span className="text-white/90 text-[14px] font-medium leading-snug flex-1">{q}</span>
-        <ChevronDown size={16} className={'text-[#8E8C88] flex-shrink-0 mt-0.5 transition-transform ' + (open ? 'rotate-180' : '')} />
+    <div className="border-b border-[#E2E8F0] last:border-0">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-start justify-between gap-3 px-4 py-3.5 text-left active:bg-[#F8FAFC]">
+        <span className="text-[#202938] text-[14px] font-medium leading-snug flex-1">{q}</span>
+        <ChevronDown size={16} className={'text-[#64748B] flex-shrink-0 mt-0.5 transition-transform ' + (open ? 'rotate-180' : '')} />
       </button>
       {open && (
         <div className="px-4 pb-4">
-          <p className="text-white/60 text-[13px] leading-relaxed bg-white/[0.035] rounded-xl p-3">{a}</p>
-          <div className="flex items-center gap-3 mt-2.5 text-[12px] text-[#8E8C88]">
+          <p className="text-[#64748B] text-[13px] leading-relaxed bg-[#F8FAFC] rounded-xl p-3">{a}</p>
+          <div className="flex items-center gap-3 mt-2.5 text-[12px] text-[#64748B]">
             <span>Was this helpful?</span>
             <button onClick={() => cast('yes')} aria-label="Yes" className={'p-1.5 rounded-full ' + (vote === 'yes' ? 'bg-[#2ECC71]/20 text-[#2ECC71]' : '')}><ThumbsUp size={14} /></button>
-            <button onClick={() => cast('no')} aria-label="No" className={'p-1.5 rounded-full ' + (vote === 'no' ? 'bg-red-500/20 text-red-400' : '')}><ThumbsDown size={14} /></button>
+            <button onClick={() => cast('no')} aria-label="No" className={'p-1.5 rounded-full ' + (vote === 'no' ? 'bg-red-500/20 text-red-600' : '')}><ThumbsDown size={14} /></button>
           </div>
         </div>
       )}
@@ -190,60 +191,60 @@ export default function HelpCenter() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0D0C0B] pb-24">
-      <div className="sticky top-0 z-20 bg-[#0D0C0B]/95 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} aria-label="Back" className="text-[#8E8C88] hover:text-white"><ArrowLeft size={22} /></button>
-        <div><h1 className="text-white font-bold text-[16px] leading-none">Help Center</h1><p className="text-[#8E8C88] text-xs mt-0.5">Answers and support</p></div>
+    <div className="min-h-screen bg-white pb-24">
+      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => goBack(navigate, '/')} aria-label="Back" className="text-[#64748B] hover:text-[#202938]"><ArrowLeft size={22} /></button>
+        <div><h1 className="text-[#202938] font-bold text-[16px] leading-none">Help Center</h1><p className="text-[#64748B] text-xs mt-0.5">Answers and support</p></div>
       </div>
 
-      <div className="flex mx-4 mt-4 mb-4 bg-white/[0.06] rounded-2xl p-1">
+      <div className="flex mx-4 mt-4 mb-4 bg-[#F1F5F9] rounded-2xl p-1">
         {[['help', 'Help'], ['new', 'New request'], ['mine', 'My requests']].map(([k, l]) => (
           <button key={k} onClick={() => { setTab(k); setSentId(''); }}
-            className={'flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-all relative ' + (tab === k ? 'bg-[#FF5A1F] text-white' : 'text-[#8E8C88]')}>
+            className={'flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-all relative ' + (tab === k ? 'bg-[#F97316] text-white' : 'text-[#64748B]')}>
             {l}
-            {k === 'mine' && unresolved > 0 && <span className="absolute -top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#FF2D78] text-white text-[10px] flex items-center justify-center">{unresolved}</span>}
+            {k === 'mine' && unresolved > 0 && <span className="absolute -top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#F97316] text-white text-[10px] flex items-center justify-center">{unresolved}</span>}
           </button>
         ))}
       </div>
 
       {tab === 'help' && (
         <div className="px-4">
-          <div className="flex items-center gap-3 bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3 mb-4">
-            <Search size={16} className="text-[#8E8C88]" />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search for help" className="flex-1 bg-transparent text-white text-[15px] placeholder-[#8E8C88] outline-none" />
-            {search && <button onClick={() => setSearch('')} aria-label="Clear"><X size={16} className="text-[#8E8C88]" /></button>}
+          <div className="flex items-center gap-3 bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-3 mb-4">
+            <Search size={16} className="text-[#64748B]" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search for help" className="flex-1 bg-transparent text-[#202938] text-[15px] placeholder-[#94A3B8] outline-none" />
+            {search && <button onClick={() => setSearch('')} aria-label="Clear"><X size={16} className="text-[#64748B]" /></button>}
           </div>
 
           {filtered.length === 0 ? (
             <EmptyState icon={Search} title="No answers found" text="Try different words, or send us a request.">
-              <button onClick={() => { setTitle(search); setTab('new'); }} className="bg-[#FF5A1F] text-white px-5 py-2.5 rounded-full font-bold text-sm">Ask support</button>
+              <button onClick={() => { setTitle(search); setTab('new'); }} className="bg-[#F97316] text-white px-5 py-2.5 rounded-full font-bold text-sm">Ask support</button>
             </EmptyState>
           ) : filtered.map((c) => (
             <div key={c.id} className="mb-3">
-              <button onClick={() => setOpen(open === c.id ? null : c.id)} className="w-full flex items-center justify-between px-4 py-3.5 bg-white/[0.04] border border-white/[0.08] rounded-2xl active:bg-white/[0.07]">
+              <button onClick={() => setOpen(open === c.id ? null : c.id)} className="w-full flex items-center justify-between px-4 py-3.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl active:bg-[#F1F5F9]">
                 <span className="flex items-center gap-3">
-                  <span className="w-9 h-9 rounded-xl bg-[#FF5A1F]/10 flex items-center justify-center"><c.Icon size={17} className="text-[#FF8A5C]" /></span>
-                  <span className="text-white font-bold text-[14px]">{c.title}</span>
-                  <span className="text-[#8E8C88] text-[11px]">{c.items.length}</span>
+                  <span className="w-9 h-9 rounded-xl bg-[#F97316]/10 flex items-center justify-center"><c.Icon size={17} className="text-[#EA580C]" /></span>
+                  <span className="text-[#202938] font-bold text-[14px]">{c.title}</span>
+                  <span className="text-[#64748B] text-[11px]">{c.items.length}</span>
                 </span>
-                <ChevronDown size={16} className={'text-[#8E8C88] transition-transform ' + ((open === c.id || search) ? 'rotate-180' : '')} />
+                <ChevronDown size={16} className={'text-[#64748B] transition-transform ' + ((open === c.id || search) ? 'rotate-180' : '')} />
               </button>
               {(open === c.id || search) && (
-                <div className="mt-1.5 bg-white/[0.03] border border-white/[0.07] rounded-2xl overflow-hidden">
+                <div className="mt-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl overflow-hidden">
                   {c.items.map(([q, a], i) => <Faq key={c.id + i} id={c.id + i} q={q} a={a} />)}
                 </div>
               )}
             </div>
           ))}
 
-          <div className="mt-5 bg-gradient-to-br from-[#FF5A1F]/10 to-[#FF2D78]/10 border border-[#FF5A1F]/20 rounded-2xl p-4">
-            <p className="text-white font-bold text-[15px]">Still need help?</p>
-            <p className="text-white/55 text-[13px] mt-1">Send us a request and our team will reply here in the app.</p>
-            <button onClick={() => setTab('new')} className="mt-3 bg-[#FF5A1F] text-white font-bold text-sm px-5 py-2.5 rounded-full">Contact support</button>
+          <div className="mt-5 bg-gradient-to-br from-[#F97316]/10 to-[#F97316]/10 border border-[#F97316]/20 rounded-2xl p-4">
+            <p className="text-[#202938] font-bold text-[15px]">Still need help?</p>
+            <p className="text-[#64748B] text-[13px] mt-1">Send us a request and our team will reply here in the app.</p>
+            <button onClick={() => setTab('new')} className="mt-3 bg-[#F97316] text-white font-bold text-sm px-5 py-2.5 rounded-full">Contact support</button>
             {(SUPPORT_EMAIL || SUPPORT_WHATSAPP) && (
               <div className="flex gap-2 mt-3">
-                {SUPPORT_EMAIL && <a href={`mailto:${SUPPORT_EMAIL}`} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/[0.07] text-white text-[13px] font-semibold"><Mail size={14} /> Email</a>}
-                {SUPPORT_WHATSAPP && <a href={`https://wa.me/${SUPPORT_WHATSAPP}`} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/[0.07] text-white text-[13px] font-semibold"><MessageCircle size={14} /> WhatsApp</a>}
+                {SUPPORT_EMAIL && <a href={`mailto:${SUPPORT_EMAIL}`} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#F1F5F9] text-[#202938] text-[13px] font-semibold"><Mail size={14} /> Email</a>}
+                {SUPPORT_WHATSAPP && <a href={`https://wa.me/${SUPPORT_WHATSAPP}`} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#F1F5F9] text-[#202938] text-[13px] font-semibold"><MessageCircle size={14} /> WhatsApp</a>}
               </div>
             )}
           </div>
@@ -254,53 +255,53 @@ export default function HelpCenter() {
         <div className="px-4">
           {sentId ? (
             <EmptyState icon={CheckCircle2} color="#2ECC71" title="Request sent" text={`Reference ${sentId}. We will reply in My requests. You will get a notification when something changes.`}>
-              <button onClick={() => { setSentId(''); setTab('mine'); }} className="bg-[#FF5A1F] text-white px-5 py-2.5 rounded-full font-bold text-sm">View my requests</button>
+              <button onClick={() => { setSentId(''); setTab('mine'); }} className="bg-[#F97316] text-white px-5 py-2.5 rounded-full font-bold text-sm">View my requests</button>
             </EmptyState>
           ) : (
             <div className="space-y-4">
               <div className="grid grid-cols-4 gap-2">
                 {TYPES.map(({ key, label, Icon }) => (
                   <button key={key} onClick={() => setType(key)}
-                    className={'flex flex-col items-center gap-1.5 py-3 rounded-2xl border text-[12px] font-bold ' + (type === key ? 'bg-[#FF5A1F]/15 border-[#FF5A1F]/50 text-white' : 'bg-white/[0.03] border-white/[0.08] text-[#8E8C88]')}>
-                    <Icon size={18} className={type === key ? 'text-[#FF5A1F]' : ''} /> {label}
+                    className={'flex flex-col items-center gap-1.5 py-3 rounded-2xl border text-[12px] font-bold ' + (type === key ? 'bg-[#F97316]/15 border-[#F97316]/50 text-white' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B]')}>
+                    <Icon size={18} className={type === key ? 'text-[#EA580C]' : ''} /> {label}
                   </button>
                 ))}
               </div>
               <div>
-                <label className="text-white/60 text-[11px] font-bold uppercase tracking-wider block mb-1.5">Title</label>
+                <label className="text-[#64748B] text-[11px] font-bold uppercase tracking-wider block mb-1.5">Title</label>
                 <input value={title} maxLength={120} onChange={(e) => { setTitle(e.target.value); setErr(''); }}
                   placeholder={type === 'payment' ? 'e.g. Paid for Pro but not active' : type === 'bug' ? 'e.g. Photos will not upload' : type === 'feature' ? 'e.g. Polls on posts' : 'What do you need help with?'}
-                  className="w-full bg-white/[0.07] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[15px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60" />
+                  className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-3.5 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60" />
               </div>
               <div>
-                <label className="text-white/60 text-[11px] font-bold uppercase tracking-wider block mb-1.5">Details</label>
+                <label className="text-[#64748B] text-[11px] font-bold uppercase tracking-wider block mb-1.5">Details</label>
                 <textarea value={desc} rows={5} maxLength={2000} onChange={(e) => { setDesc(e.target.value); setErr(''); }}
                   placeholder={type === 'payment' ? 'Include the M-Pesa transaction code and the amount.' : type === 'bug' ? 'What happened, and what did you expect? Steps help a lot.' : 'Tell us more.'}
-                  className="w-full bg-white/[0.07] border border-white/10 rounded-2xl px-4 py-3.5 text-white text-[14px] placeholder-[#8E8C88] focus:outline-none focus:border-[#FF5A1F]/60 resize-none" />
-                <p className="text-right text-[#8E8C88] text-xs mt-0.5">{desc.length}/2000</p>
+                  className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-3.5 text-[#202938] text-[14px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60 resize-none" />
+                <p className="text-right text-[#64748B] text-xs mt-0.5">{desc.length}/2000</p>
               </div>
 
               {shotUrl ? (
-                <div className="relative rounded-2xl overflow-hidden border border-white/10">
+                <div className="relative rounded-2xl overflow-hidden border border-[#E2E8F0]">
                   <img src={shotUrl} alt="" className="w-full max-h-44 object-cover" />
                   <button onClick={() => { setShot(null); setShotUrl(''); }} aria-label="Remove screenshot" className="absolute top-2 right-2 w-8 h-8 bg-black/70 rounded-full flex items-center justify-center"><X size={14} color="white" /></button>
                 </div>
               ) : (
-                <button onClick={() => fileRef.current?.click()} className="w-full flex items-center justify-center gap-2.5 border border-dashed border-white/20 rounded-2xl py-4 text-[#8E8C88] text-sm"><Paperclip size={17} /> Attach a screenshot (optional)</button>
+                <button onClick={() => fileRef.current?.click()} className="w-full flex items-center justify-center gap-2.5 border border-dashed border-[#E2E8F0] rounded-2xl py-4 text-[#64748B] text-sm"><Paperclip size={17} /> Attach a screenshot (optional)</button>
               )}
               <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={pickShot} />
 
-              <button onClick={() => setDiag((v) => !v)} className="w-full flex items-center gap-3 bg-white/[0.04] border border-white/[0.07] rounded-2xl px-4 py-3 text-left">
-                <span className={'w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 ' + (diag ? 'bg-[#FF5A1F] border-[#FF5A1F]' : 'border-white/30')}>{diag && <Check size={13} className="text-white" />}</span>
-                <span className="flex-1"><span className="block text-white/85 text-[13px] font-semibold">Include technical details</span><span className="block text-[#8E8C88] text-[11px]">App version, device and connection speed. Helps us fix problems faster.</span></span>
+              <button onClick={() => setDiag((v) => !v)} className="w-full flex items-center gap-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl px-4 py-3 text-left">
+                <span className={'w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 ' + (diag ? 'bg-[#F97316] border-[#F97316]' : 'border-[#E2E8F0]')}>{diag && <Check size={13} className="text-[#202938]" />}</span>
+                <span className="flex-1"><span className="block text-[#202938] text-[13px] font-semibold">Include technical details</span><span className="block text-[#64748B] text-[11px]">App version, device and connection speed. Helps us fix problems faster.</span></span>
               </button>
 
-              {err && <p className="text-red-400 text-sm">{err}</p>}
+              {err && <p className="text-red-600 text-sm">{err}</p>}
               <button onClick={submit} disabled={busy} className="w-full py-4 rounded-2xl font-bold text-white disabled:opacity-50 flex items-center justify-center gap-2"
-                style={{ background: 'linear-gradient(135deg,#FF5A1F,#FF2D78)', boxShadow: '0 8px 24px rgba(255,90,31,0.3)' }}>
+                style={{ background: '#F97316', boxShadow: '0 8px 24px rgba(255,90,31,0.3)' }}>
                 {busy ? <><Spinner size={18} /> Sending…</> : <><Send size={17} /> Send request</>}
               </button>
-              <p className="text-[#8E8C88] text-[11px] text-center">Signed in as @{profile?.username}. Replies appear in My requests.</p>
+              <p className="text-[#64748B] text-[11px] text-center">Signed in as @{profile?.username}. Replies appear in My requests.</p>
             </div>
           )}
         </div>
@@ -308,36 +309,36 @@ export default function HelpCenter() {
 
       {tab === 'mine' && (
         <div className="px-4">
-          {tickets === null ? <div className="flex justify-center py-12 text-[#FF5A1F]"><Spinner size={22} /></div>
+          {tickets === null ? <div className="flex justify-center py-12 text-[#EA580C]"><Spinner size={22} /></div>
             : tickets.length === 0 ? (
               <EmptyState icon={Inbox} title="No requests yet" text="Questions, problems and ideas you send appear here, with our replies.">
-                <button onClick={() => setTab('new')} className="bg-[#FF5A1F] text-white px-5 py-2.5 rounded-full font-bold text-sm">New request</button>
+                <button onClick={() => setTab('new')} className="bg-[#F97316] text-white px-5 py-2.5 rounded-full font-bold text-sm">New request</button>
               </EmptyState>
             ) : tickets.map((t) => {
               const st = STATUS[t.status] || { color: '#8E8C88', label: t.status };
               const T = TYPES.find((x) => x.key === t.type) || TYPES[0];
               const isOpen = expanded === t.id;
               return (
-                <button key={t.id} onClick={() => setExpanded(isOpen ? null : t.id)} className="w-full text-left bg-white/[0.035] border border-white/[0.07] rounded-2xl p-4 mb-2.5 active:bg-white/[0.06]">
+                <button key={t.id} onClick={() => setExpanded(isOpen ? null : t.id)} className="w-full text-left bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4 mb-2.5 active:bg-[#F1F5F9]">
                   <div className="flex items-start gap-3">
-                    <span className="w-9 h-9 rounded-xl bg-[#FF5A1F]/10 flex items-center justify-center flex-shrink-0"><T.Icon size={16} className="text-[#FF8A5C]" /></span>
+                    <span className="w-9 h-9 rounded-xl bg-[#F97316]/10 flex items-center justify-center flex-shrink-0"><T.Icon size={16} className="text-[#EA580C]" /></span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white font-bold text-[14px] truncate">{t.title}</p>
+                      <p className="text-[#202938] font-bold text-[14px] truncate">{t.title}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ color: st.color, background: st.color + '22', border: '1px solid ' + st.color + '44' }}>{st.label}</span>
-                        <span className="text-[#8E8C88] text-[11px] flex items-center gap-1"><Clock size={11} /> {new Date(t.created_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}</span>
+                        <span className="text-[#64748B] text-[11px] flex items-center gap-1"><Clock size={11} /> {new Date(t.created_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}</span>
                       </div>
                     </div>
-                    <ChevronDown size={16} className={'text-[#8E8C88] mt-1 transition-transform ' + (isOpen ? 'rotate-180' : '')} />
+                    <ChevronDown size={16} className={'text-[#64748B] mt-1 transition-transform ' + (isOpen ? 'rotate-180' : '')} />
                   </div>
                   {isOpen && (
                     <div className="mt-3 space-y-2.5">
-                      <p className="text-white/60 text-[13px] leading-relaxed whitespace-pre-wrap">{t.description}</p>
+                      <p className="text-[#64748B] text-[13px] leading-relaxed whitespace-pre-wrap">{t.description}</p>
                       {t.screenshot_url && <img src={t.screenshot_url} alt="Screenshot" className="rounded-xl max-h-40 object-cover" loading="lazy" />}
                       {t.admin_notes && (
-                        <div className="bg-[#FF5A1F]/10 border border-[#FF5A1F]/25 rounded-xl px-3 py-2.5">
-                          <p className="text-[#FF8A5C] text-[11px] font-bold">Reply from support</p>
-                          <p className="text-white/80 text-[13px] mt-0.5 whitespace-pre-wrap">{t.admin_notes}</p>
+                        <div className="bg-[#F97316]/10 border border-[#F97316]/25 rounded-xl px-3 py-2.5">
+                          <p className="text-[#EA580C] text-[11px] font-bold">Reply from support</p>
+                          <p className="text-[#202938] text-[13px] mt-0.5 whitespace-pre-wrap">{t.admin_notes}</p>
                         </div>
                       )}
                     </div>

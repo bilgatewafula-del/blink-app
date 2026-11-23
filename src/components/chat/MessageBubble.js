@@ -26,7 +26,7 @@ function renderBody(text, term, mine) {
       return (
         <a key={i} href={href} target="_blank" rel="noopener noreferrer nofollow"
           onClick={(e) => e.stopPropagation()}
-          className={'underline break-all ' + (mine ? 'text-white' : 'text-[#FF8A5C]')}>
+          className={'underline break-all ' + (mine ? 'text-[#202938]' : 'text-[#EA580C]')}>
           {highlight(part, term)}
         </a>
       );
@@ -38,11 +38,11 @@ function renderBody(text, term, mine) {
 const timeOf = (iso) => new Date(iso).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit', hour12: false });
 
 function Ticks({ m }) {
-  if (m._failed) return <AlertCircle size={13} className="text-white" />;
-  if (m._pending) return <Clock size={11} className="text-white/60" />;
-  if (m.seen_at) return <CheckCheck size={14} className="text-white" strokeWidth={2.6} />;
-  if (m.delivered_at) return <CheckCheck size={14} className="text-white/60" />;
-  return <Check size={13} className="text-white/60" />;
+  if (m._failed) return <AlertCircle size={13} className="text-[#202938]" />;
+  if (m._pending) return <Clock size={11} className="text-[#64748B]" />;
+  if (m.seen_at) return <CheckCheck size={14} className="text-[#202938]" strokeWidth={2.6} />;
+  if (m.delivered_at) return <CheckCheck size={14} className="text-[#64748B]" />;
+  return <Check size={13} className="text-[#64748B]" />;
 }
 
 function MessageBubble({
@@ -123,25 +123,25 @@ function MessageBubble({
         <div
           className={'relative px-3 py-2 ' + (flash ? 'msg-flash ' : '') +
             (m._failed ? 'border border-red-400 ' : '') +
-            (isMine ? 'bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78]' : 'bg-[#272522]')}
+            (isMine ? 'bubble-mine bg-[#F97316]' : 'bg-[#F1F5F9]')}
           style={{ borderRadius: radius, opacity: deleted ? 0.7 : 1 }}
           onClick={m._failed ? () => onRetry(m) : undefined}
         >
           {m.forwarded && !deleted && (
-            <div className="flex items-center gap-1 mb-1 text-[10px] text-white/60"><Forward size={10} /> Forwarded</div>
+            <div className="flex items-center gap-1 mb-1 text-[10px] text-[#64748B]"><Forward size={10} /> Forwarded</div>
           )}
 
           {m.story_preview && !deleted && (
-            <div className={'flex items-stretch gap-2.5 mb-1.5 rounded-xl overflow-hidden ' + (isMine ? 'bg-black/20' : 'bg-white/[0.07]')}>
+            <div className={'flex items-stretch gap-2.5 mb-1.5 rounded-xl overflow-hidden ' + (isMine ? 'bg-black/20' : 'bg-[#F1F5F9]')}>
               <div className="w-11 h-14 flex-shrink-0 flex items-center justify-center overflow-hidden"
                 style={m.story_preview.type === 'text' ? { background: bgCss(m.story_preview.bg) } : { background: '#222' }}>
                 {m.story_preview.type === 'text'
-                  ? <span className="text-white text-[8px] font-bold leading-tight px-1 line-clamp-4 text-center">{m.story_preview.text}</span>
+                  ? <span className="text-[#202938] text-[8px] font-bold leading-tight px-1 line-clamp-4 text-center">{m.story_preview.text}</span>
                   : m.story_preview.url && <img src={thumbUrl(m.story_preview.url, 120)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />}
               </div>
               <div className="py-1.5 pr-3 min-w-0 flex flex-col justify-center">
-                <p className="text-[11px] font-bold flex items-center gap-1 text-white/85"><CircleDot size={11} /> Status</p>
-                <p className="text-[11px] text-white/60 truncate">{m.story_preview.type === 'text' ? m.story_preview.text : 'Photo'}</p>
+                <p className="text-[11px] font-bold flex items-center gap-1 text-[#202938]"><CircleDot size={11} /> Status</p>
+                <p className="text-[11px] text-[#64748B] truncate">{m.story_preview.type === 'text' ? m.story_preview.text : 'Photo'}</p>
               </div>
             </div>
           )}
@@ -150,10 +150,10 @@ function MessageBubble({
             <button
               onClick={(e) => { e.stopPropagation(); onJump(m.parent_message_id); }}
               className={'block w-full text-left mb-1.5 pl-2.5 pr-2 py-1.5 rounded-lg border-l-[3px] ' +
-                (isMine ? 'bg-black/20 border-white/80' : 'bg-white/[0.06] border-[#FF5A1F]')}
+                (isMine ? 'bg-black/20 border-[#E2E8F0]' : 'bg-[#F1F5F9] border-[#F97316]')}
             >
-              <p className={'text-[11px] font-bold ' + (isMine ? 'text-white' : 'text-[#FF5A1F]')}>{parentName || 'Message'}</p>
-              <p className="text-[12px] text-white/65 truncate flex items-center gap-1">
+              <p className={'text-[11px] font-bold ' + (isMine ? 'text-[#202938]' : 'text-[#EA580C]')}>{parentName || 'Message'}</p>
+              <p className="text-[12px] text-[#64748B] truncate flex items-center gap-1">
                 {parent?.message_type === 'image' && <ImageIcon size={11} />}
                 {parent ? (parent.is_deleted ? 'Deleted message' : parent.message_type === 'image' ? 'Photo' : parent.body) : 'Original message'}
               </p>
@@ -161,7 +161,7 @@ function MessageBubble({
           )}
 
           {deleted ? (
-            <p className="text-[13px] italic text-white/55 flex items-center gap-1.5"><Ban size={13} /> This message was deleted</p>
+            <p className="text-[13px] italic text-[#64748B] flex items-center gap-1.5"><Ban size={13} /> This message was deleted</p>
           ) : m.message_type === 'image' && m.media_url ? (
             <div className="relative -mx-1 -mt-0.5">
               <img
@@ -173,19 +173,19 @@ function MessageBubble({
               />
             </div>
           ) : (
-            <p className="text-white text-[15px] leading-[1.38] whitespace-pre-wrap break-words">{renderBody(m.body, term, isMine)}</p>
+            <p className="text-[#202938] text-[15px] leading-[1.38] whitespace-pre-wrap break-words">{renderBody(m.body, term, isMine)}</p>
           )}
 
           <div className="flex items-center gap-1 justify-end mt-0.5 -mb-0.5 select-none">
-            {isStarred && <Star size={10} className="text-yellow-300" fill="#FDE047" />}
-            {m.is_pinned && <Pin size={10} className="text-white/70" />}
-            {m.edited && !deleted && <span className="text-[10px] text-white/55">edited</span>}
-            <span className="text-[10px] text-white/60">{timeOf(m.created_at)}</span>
+            {isStarred && <Star size={10} className="text-yellow-700" fill="#FDE047" />}
+            {m.is_pinned && <Pin size={10} className="text-[#64748B]" />}
+            {m.edited && !deleted && <span className="text-[10px] text-[#64748B]">edited</span>}
+            <span className="text-[10px] text-[#64748B]">{timeOf(m.created_at)}</span>
             {isMine && !deleted && <Ticks m={m} />}
           </div>
 
           {reactionEntries.length > 0 && (
-            <div className={'absolute -bottom-3.5 bg-[#1d1c1a] border border-white/15 rounded-full px-1.5 py-[1px] flex gap-0.5 text-[12px] ' + (isMine ? 'left-2' : 'right-2')}>
+            <div className={'absolute -bottom-3.5 bg-white border border-[#E2E8F0] rounded-full px-1.5 py-[1px] flex gap-0.5 text-[12px] ' + (isMine ? 'left-2' : 'right-2')}>
               {Object.entries(reactionEntries.reduce((a, [, e]) => { a[e] = (a[e] || 0) + 1; return a; }, {}))
                 .map(([e, c]) => <span key={e}>{e}{c > 1 ? c : ''}</span>)}
             </div>
@@ -196,7 +196,7 @@ function MessageBubble({
           )}
         </div>
 
-        {m._failed && <p className="text-[10px] text-red-400 text-right mt-0.5 flex items-center justify-end gap-1"><CornerUpLeft size={10} /> Not sent. Tap to retry</p>}
+        {m._failed && <p className="text-[10px] text-red-600 text-right mt-0.5 flex items-center justify-end gap-1"><CornerUpLeft size={10} /> Not sent. Tap to retry</p>}
       </div>
     </div>
   );

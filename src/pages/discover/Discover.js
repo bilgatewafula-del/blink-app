@@ -39,13 +39,13 @@ const TABS = [
 
 function PostSkeleton() {
   return (
-    <div className="border-b border-white/[0.07] px-4 py-3 animate-pulse">
+    <div className="border-b border-[#E2E8F0] px-4 py-3 animate-pulse">
       <div className="flex gap-3">
-        <div className="w-10 h-10 rounded-full bg-white/10 flex-shrink-0" />
+        <div className="w-10 h-10 rounded-full bg-[#F1F5F9] flex-shrink-0" />
         <div className="flex-1 space-y-2 pt-1">
-          <div className="h-3 bg-white/10 rounded-full w-32" />
-          <div className="h-3 bg-white/10 rounded-full w-full" />
-          <div className="h-3 bg-white/10 rounded-full w-3/4" />
+          <div className="h-3 bg-[#F1F5F9] rounded-full w-32" />
+          <div className="h-3 bg-[#F1F5F9] rounded-full w-full" />
+          <div className="h-3 bg-[#F1F5F9] rounded-full w-3/4" />
         </div>
       </div>
     </div>
@@ -54,13 +54,13 @@ function PostSkeleton() {
 
 function UserSkeleton() {
   return (
-    <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.05] animate-pulse">
-      <div className="w-12 h-12 rounded-full bg-white/10 flex-shrink-0" />
+    <div className="flex items-center gap-3 px-4 py-3 border-b border-[#E2E8F0] animate-pulse">
+      <div className="w-12 h-12 rounded-full bg-[#F1F5F9] flex-shrink-0" />
       <div className="flex-1 space-y-2">
-        <div className="h-3 bg-white/10 rounded-full w-28" />
-        <div className="h-2.5 bg-white/10 rounded-full w-20" />
+        <div className="h-3 bg-[#F1F5F9] rounded-full w-28" />
+        <div className="h-2.5 bg-[#F1F5F9] rounded-full w-20" />
       </div>
-      <div className="w-20 h-8 bg-white/10 rounded-full flex-shrink-0" />
+      <div className="w-20 h-8 bg-[#F1F5F9] rounded-full flex-shrink-0" />
     </div>
   );
 }
@@ -70,22 +70,22 @@ function PersonRow({ u, currentUserId, relationship, compact = false }) {
   const navigate = useNavigate();
   const go = () => navigate('/profile/' + u.username);
   return (
-    <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.05] hover:bg-white/[0.025] cursor-pointer transition-colors" onClick={go}>
+    <div className="flex items-center gap-3 px-4 py-3 border-b border-[#E2E8F0] hover:bg-[#F8FAFC] cursor-pointer transition-colors" onClick={go}>
       <Avatar url={u.avatar_url} name={u.display_name} size={compact ? 10 : 12} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <p className="text-white font-bold text-[14px] truncate max-w-[150px]">{u.display_name}</p>
+          <p className="text-[#202938] font-bold text-[14px] truncate max-w-[150px]">{u.display_name}</p>
           {u.is_verified && <VerifiedBadge size={15} />}
           <RoleIcon role={u.role} size={13} />
         </div>
-        <p className="text-[#8E8C88] text-[12px] truncate">
+        <p className="text-[#64748B] text-[12px] truncate">
           @{u.username}
-          {relationship === REL.FOLLOW_BACK && <span className="ml-1.5 text-[10px] font-bold bg-white/[0.08] px-1.5 py-0.5 rounded-full">Follows you</span>}
+          {relationship === REL.FOLLOW_BACK && <span className="ml-1.5 text-[10px] font-bold bg-[#F1F5F9] px-1.5 py-0.5 rounded-full">Follows you</span>}
         </p>
-        {!compact && u.bio && <p className="text-white/40 text-[11px] mt-0.5 truncate">{u.bio}</p>}
-        <p className="text-[#8E8C88] text-[11px] mt-0.5">
-          <span className="text-white/60 font-semibold">{formatNumber(u.followers_count || 0)}</span> followers
-          {!compact && <> · <span className="text-white/60 font-semibold">{formatNumber(u.posts_count || 0)}</span> posts</>}
+        {!compact && u.bio && <p className="text-[#94A3B8] text-[11px] mt-0.5 truncate">{u.bio}</p>}
+        <p className="text-[#64748B] text-[11px] mt-0.5">
+          <span className="text-[#64748B] font-semibold">{formatNumber(u.followers_count || 0)}</span> followers
+          {!compact && <> · <span className="text-[#64748B] font-semibold">{formatNumber(u.posts_count || 0)}</span> posts</>}
         </p>
       </div>
       {u.id !== currentUserId && (
@@ -103,20 +103,20 @@ function HashtagRow({ tag, count, rank }) {
   const navigate = useNavigate();
   return (
     <button onClick={() => navigate('/hashtag/' + tag)}
-      className="flex items-center justify-between px-4 py-3 border-b border-white/[0.05] hover:bg-white/[0.025] transition-colors w-full text-left group">
+      className="flex items-center justify-between px-4 py-3 border-b border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors w-full text-left group">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ background: rank <= 3 ? 'rgba(255,107,53,0.15)' : 'rgba(255,90,31,0.10)' }}>
           {rank <= 3
-            ? <span className="font-black text-sm" style={{ color: '#FF6B35' }}>#{rank}</span>
-            : <Hash size={16} className="text-[#FF5A1F]" />}
+            ? <span className="font-black text-sm" style={{ color: '#F97316' }}>#{rank}</span>
+            : <Hash size={16} className="text-[#EA580C]" />}
         </div>
         <div>
-          <p className="text-white font-bold text-[14px]">#{tag}</p>
-          <p className="text-[#8E8C88] text-[12px]">{formatNumber(count)} posts</p>
+          <p className="text-[#202938] font-bold text-[14px]">#{tag}</p>
+          <p className="text-[#64748B] text-[12px]">{formatNumber(count)} posts</p>
         </div>
       </div>
-      <ChevronRight size={16} className="text-[#8E8C88] group-hover:text-white transition-colors" />
+      <ChevronRight size={16} className="text-[#64748B] group-hover:text-[#202938] transition-colors" />
     </button>
   );
 }
@@ -151,7 +151,9 @@ export default function Discover() {
     const from = pageNum * POSTS_PER_PAGE;
     const to = from + POSTS_PER_PAGE - 1;
 
+    // videos live only in B-Flash, so Discover never shows them
     const base = () => supabase.from('posts').select(POST_SELECT)
+      .is('video_url', null)
       .eq('is_draft', false).eq('audience', 'public').neq('status', 'deleted').neq('status', 'hidden');
 
     let q;
@@ -204,7 +206,7 @@ export default function Discover() {
   const fetchHashtags = useCallback(async () => {
     if (fresh(hashtagCache)) { setHashtags(hashtagCache.rows); setLoading(false); return; }
     const { data } = await supabase.from('posts')
-      .select('hashtags').eq('is_draft', false).neq('status', 'deleted')
+      .select('hashtags').is('video_url', null).eq('is_draft', false).neq('status', 'deleted')
       .not('hashtags', 'is', null).limit(500);
     const countMap = {};
     (data || []).forEach((p) => (p.hashtags || []).forEach((tag) => { if (tag) countMap[tag] = (countMap[tag] || 0) + 1; }));
@@ -249,6 +251,7 @@ export default function Discover() {
       supabase.from('users').select('id,username,display_name,avatar_url,is_verified,followers_count,posts_count,bio,role')
         .neq('is_banned', true).or(`username.ilike.%${safe}%,display_name.ilike.%${safe}%`).limit(10),
       supabase.from('posts').select(POST_SELECT)
+        .is('video_url', null)
         .eq('is_draft', false).neq('status', 'deleted').eq('audience', 'public')
         .ilike('caption', '%' + safe + '%').order('likes_count', { ascending: false }).limit(10),
     ]);
@@ -273,15 +276,15 @@ export default function Discover() {
   const TabIcon = TABS.find((t) => t.key === mainTab)?.Icon || FileText;
 
   return (
-    <div className="min-h-screen bg-[#0D0C0B] pb-20">
-      <div className="sticky top-0 z-20 bg-[#0D0C0B]/95 backdrop-blur-md border-b border-white/[0.07]">
+    <div className="min-h-screen bg-white pb-20">
+      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0]">
         <div className="px-4 py-3">
-          <div className="flex items-center gap-3 bg-white/[0.07] border border-white/10 rounded-2xl px-4 py-2.5">
-            <Search size={16} className="text-[#8E8C88] flex-shrink-0" />
+          <div className="flex items-center gap-3 bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-2.5">
+            <Search size={16} className="text-[#64748B] flex-shrink-0" />
             <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
               placeholder="Search posts, people, hashtags"
-              className="flex-1 bg-transparent text-white text-[15px] placeholder-[#8E8C88] focus:outline-none" />
-            {search && <button onClick={() => setSearch('')} aria-label="Clear" className="text-[#8E8C88] hover:text-white flex-shrink-0"><X size={16} /></button>}
+              className="flex-1 bg-transparent text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none" />
+            {search && <button onClick={() => setSearch('')} aria-label="Clear" className="text-[#64748B] hover:text-[#202938] flex-shrink-0"><X size={16} /></button>}
           </div>
         </div>
 
@@ -290,9 +293,9 @@ export default function Discover() {
             {TABS.map(({ key, label, Icon }) => (
               <button key={key} onClick={() => setMainTab(key)}
                 className={'flex-shrink-0 px-3.5 py-2.5 text-[13px] font-semibold relative transition-all inline-flex items-center gap-1.5 ' +
-                  (mainTab === key ? 'text-white' : 'text-[#8E8C88] hover:text-white/70')}>
-                <Icon size={15} className={mainTab === key ? 'text-[#FF5A1F]' : ''} /> {label}
-                {mainTab === key && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-[#FF5A1F] rounded-full" style={{ width: '70%' }} />}
+                  (mainTab === key ? 'text-[#202938]' : 'text-[#64748B] hover:text-[#64748B]')}>
+                <Icon size={15} className={mainTab === key ? 'text-[#EA580C]' : ''} /> {label}
+                {mainTab === key && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-[#F97316] rounded-full" style={{ width: '70%' }} />}
               </button>
             ))}
           </div>
@@ -302,24 +305,24 @@ export default function Discover() {
       {/* search results */}
       {isSearching && (
         searching ? (
-          <div className="flex justify-center py-12 text-[#FF5A1F]"><Spinner size={24} /></div>
+          <div className="flex justify-center py-12 text-[#EA580C]"><Spinner size={24} /></div>
         ) : (
           <>
             {results.users.length > 0 && (
               <div>
-                <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-wider px-4 pt-4 pb-2">People</p>
+                <p className="text-[#64748B] text-[11px] font-bold uppercase tracking-wider px-4 pt-4 pb-2">People</p>
                 {results.users.map((u) => <PersonRow key={u.id} u={u} currentUserId={user?.id} relationship={searchRels[u.id]} compact />)}
               </div>
             )}
             {results.hashtags.length > 0 && (
               <div>
-                <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-wider px-4 pt-4 pb-2">Hashtags</p>
+                <p className="text-[#64748B] text-[11px] font-bold uppercase tracking-wider px-4 pt-4 pb-2">Hashtags</p>
                 {results.hashtags.map((h, i) => <HashtagRow key={h.tag} tag={h.tag} count={h.count} rank={i + 1} />)}
               </div>
             )}
             {results.posts.length > 0 && (
               <div>
-                <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-wider px-4 pt-4 pb-2">Posts</p>
+                <p className="text-[#64748B] text-[11px] font-bold uppercase tracking-wider px-4 pt-4 pb-2">Posts</p>
                 {results.posts.map((post) => <PostCard key={post.id} post={post} currentUser={user} />)}
               </div>
             )}
@@ -345,12 +348,12 @@ export default function Discover() {
 
           {mainTab === 'hashtags' && (
             <div>
-              <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-wider px-4 pt-4 pb-2">Trending hashtags</p>
+              <p className="text-[#64748B] text-[11px] font-bold uppercase tracking-wider px-4 pt-4 pb-2">Trending hashtags</p>
               {loading
                 ? Array(8).fill(0).map((_, i) => (
-                    <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.05] animate-pulse">
-                      <div className="w-10 h-10 rounded-xl bg-white/10 flex-shrink-0" />
-                      <div className="flex-1 space-y-1.5"><div className="h-3 bg-white/10 rounded-full w-28" /><div className="h-2.5 bg-white/10 rounded-full w-16" /></div>
+                    <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-[#E2E8F0] animate-pulse">
+                      <div className="w-10 h-10 rounded-xl bg-[#F1F5F9] flex-shrink-0" />
+                      <div className="flex-1 space-y-1.5"><div className="h-3 bg-[#F1F5F9] rounded-full w-28" /><div className="h-2.5 bg-[#F1F5F9] rounded-full w-16" /></div>
                     </div>
                   ))
                 : hashtags.length === 0
@@ -363,9 +366,9 @@ export default function Discover() {
             <div>
               {fetchError && !loading && (
                 <div className="mx-4 mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
-                  <p className="text-red-400 text-sm font-semibold">Could not load posts</p>
-                  <p className="text-red-300/70 text-xs mt-1">{fetchError}</p>
-                  <button onClick={() => { setLoading(true); fetchPosts(mainTab, 0, true); }} className="mt-2 text-xs font-bold text-[#FF5A1F]">Try again</button>
+                  <p className="text-red-600 text-sm font-semibold">Could not load posts</p>
+                  <p className="text-red-600/70 text-xs mt-1">{fetchError}</p>
+                  <button onClick={() => { setLoading(true); fetchPosts(mainTab, 0, true); }} className="mt-2 text-xs font-bold text-[#EA580C]">Try again</button>
                 </div>
               )}
               {loading
@@ -374,15 +377,15 @@ export default function Discover() {
                   ? (
                     <EmptyState icon={TabIcon} title="No posts yet"
                       text={mainTab === 'foryou' ? 'Follow people to fill your For You feed.' : 'Be the first to share something.'}>
-                      <button onClick={() => navigate('/create')} className="bg-[#FF5A1F] text-white px-5 py-2.5 rounded-full font-bold text-sm">Create post</button>
+                      <button onClick={() => navigate('/create')} className="bg-[#F97316] text-white px-5 py-2.5 rounded-full font-bold text-sm">Create post</button>
                     </EmptyState>
                   )
                   : (
                     <>
                       {posts.map((post) => <PostCard key={post.id} post={post} currentUser={user} />)}
                       <div ref={loadMoreRef} className="flex justify-center py-6 min-h-[60px]">
-                        {loadingMore && <div className="flex items-center gap-2 text-[#8E8C88]"><Spinner size={18} className="text-[#FF5A1F]" /><span className="text-sm">Loading more</span></div>}
-                        {!hasMore && !loadingMore && posts.length > 0 && <p className="text-[#8E8C88] text-xs">You're all caught up</p>}
+                        {loadingMore && <div className="flex items-center gap-2 text-[#64748B]"><Spinner size={18} className="text-[#EA580C]" /><span className="text-sm">Loading more</span></div>}
+                        {!hasMore && !loadingMore && posts.length > 0 && <p className="text-[#64748B] text-xs">You're all caught up</p>}
                       </div>
                     </>
                   )}

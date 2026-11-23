@@ -9,7 +9,7 @@ import {
   Heart, MessageCircle, Bookmark, Share2, EllipsisVertical, Play, Pause, Volume2, VolumeX,
   Plus, X, Zap, Flag, Settings, Clapperboard, EyeOff, BellOff, Ban, RefreshCw, Link2,
   Maximize, Pin, PinOff, Pencil, Trash2, Eye, Globe, Users, Lock, MessageSquareOff, User, Check,
-  HeartCrack, RotateCcw, Columns2, Combine, Search, BarChart3, Captions,
+  HeartCrack, RotateCcw, Columns2, Combine, Search, BarChart3, Captions, Film,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
@@ -34,7 +34,7 @@ import {
 } from '../../lib/posts';
 
 /* ── design tokens (change the brand colour in ONE place) ── */
-const ACCENT = '#FF5A1F';
+const ACCENT = '#F97316';
 const ICON = 24;
 const STROKE = 1.9;
 const PAGE = 8;
@@ -170,7 +170,7 @@ function PlusButton({ onClick }) {
   return (
     <button onClick={onClick} aria-label="Create a video" className="w-11 h-11 flex items-center justify-center active:scale-90 transition-transform">
       <span className="bfa w-8 h-8 rounded-full flex items-center justify-center"
-        style={{ background: 'linear-gradient(135deg,#FF5A1F,#FF2D78)', animation: 'bfPlus 2.2s ease-out 3', boxShadow: '0 2px 10px rgba(255,90,31,.45)' }}>
+        style={{ background: '#F97316', animation: 'bfPlus 2.2s ease-out 3', boxShadow: '0 2px 10px rgba(255,90,31,.45)' }}>
         <Plus size={19} strokeWidth={2.6} color="#fff" />
       </span>
     </button>
@@ -618,21 +618,21 @@ function Slide({
             )}
             {post.caption && (
               <p className="text-white text-[14px] leading-snug line-clamp-2" style={{ textShadow: '0 1px 3px rgba(0,0,0,.7)' }}>
-                <RichText text={post.caption} onMention={onMention} onHashtag={onHashtag} />
+                <RichText text={post.caption} onMention={onMention} onHashtag={onHashtag} tone="dark" />
               </p>
             )}
           </div>
           <div className={'absolute bottom-[18px] flex flex-col items-center gap-3.5 ' + side}>
             <div className="relative mb-2">
               <button onClick={onCreator} aria-label={'Open ' + (u.username || 'creator') + ' details'} className="active:scale-90 transition-transform">
-                <span className="block rounded-full p-[2px]" style={{ background: 'linear-gradient(135deg,#FF5A1F,#FF2D78)' }}>
+                <span className="block rounded-full p-[2px]" style={{ background: '#F97316' }}>
                   <Avatar url={u.avatar_url} name={u.display_name || u.username} size={10} />
                 </span>
               </button>
               {!isMine && u.id && rel !== undefined && !iFollowThem(rel) && (
                 <button onClick={(e) => { e.stopPropagation(); onFollow(); }} aria-label={'Follow @' + (u.username || 'creator')}
                   className="absolute left-1/2 -translate-x-1/2 -bottom-4 w-10 h-10 flex items-center justify-center active:scale-90 transition-transform">
-                  <span className="w-[22px] h-[22px] rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#FF5A1F,#FF2D78)', border: '2px solid #0D0C0B' }}>
+                  <span className="w-[22px] h-[22px] rounded-full flex items-center justify-center" style={{ background: '#F97316', border: '2px solid #0D0C0B' }}>
                     <Plus size={13} strokeWidth={3} color="#fff" />
                   </span>
                 </button>
@@ -658,7 +658,7 @@ export default function BFlash() {
 
   const [fp, setFp] = useState(readFlashPrefs);
   const [tab, setTab] = useState(() => (readSession() || {}).tab || readFlashPrefs().defaultTab || 'foryou');
-  const [tagFilter, setTagFilter] = useState(() => (readSession() || {}).tag || null);
+  const [tagFilter, setTagFilter] = useState(() => (new URLSearchParams(window.location.search).get('tag') || '').replace(/[^\w]/g, '') || (readSession() || {}).tag || null);
   const [cEmoji, setCEmoji] = useState(false);
   const [rels, setRels] = useState({});
   const [searchOpen, setSearchOpen] = useState(false);
@@ -695,7 +695,8 @@ export default function BFlash() {
   const pollOn = useRef(true);
   const capOn = useRef(true);
   const searchRef = useRef(null);
-  const restoreId = useRef((readSession() || {}).id || null);
+  const deepId = useRef(new URLSearchParams(window.location.search).get('v'));
+  const restoreId = useRef(deepId.current || (readSession() || {}).id || null);
   const synced = useRef(false);
   const entryPushed = useRef(false);
   const stateRef = useRef({});
@@ -866,6 +867,7 @@ export default function BFlash() {
     const id = restoreId.current;
     if (loading || !id || items.length === 0) return;
     restoreId.current = null;
+    if (deepId.current) { deepId.current = null; try { window.history.replaceState(window.history.state, '', '/flash'); } catch { /* ignore */ } }
     const idx = items.findIndex((p) => p.id === id);
     if (idx > 0) {
       const el = scRef.current && scRef.current.querySelector('[data-index="' + idx + '"]');
@@ -1121,7 +1123,7 @@ export default function BFlash() {
   const creatorPost = items.find((p) => p.id === creatorId) || null;
   const menuPost = items.find((p) => p.id === menuId) || null;
   const panelPost = panel ? items.find((p) => p.id === panel.id) || null : null;
-  const canPlay = !!prefs.autoplay_videos && !saver && !(commentsId && fp.pauseOnComments);
+  const canPlay = !!prefs.autoplay_videos && !saver && !(commentsId && fp.pauseOnComments) && !creatorId && !searchOpen;
   const boxStyle = { top: vp.top, height: Math.max(0, vp.h - (kb ? 0 : navH)) };
   const frozen = !!(commentsId || creatorId);
 
@@ -1216,14 +1218,14 @@ export default function BFlash() {
         {loading && <div className="absolute inset-0 flex items-center justify-center text-white"><Spinner size={30} /></div>}
         {!loading && error && items.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <EmptyState icon={RefreshCw} title="Couldn’t load videos" text={error}>
+            <EmptyState dark icon={RefreshCw} title="Couldn’t load videos" text={error}>
               <button onClick={() => loadFirst(tab)} className="px-6 py-2.5 rounded-xl text-white font-bold" style={{ background: ACCENT }}>Try again</button>
             </EmptyState>
           </div>
         )}
         {!loading && !error && items.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <EmptyState icon={Clapperboard}
+            <EmptyState dark icon={Clapperboard}
               title={tab === 'following' ? 'No videos from people you follow' : tab === 'trending' ? 'Nothing trending yet' : 'No videos yet'}
               text={tab === 'following' ? 'Follow creators to see their videos here, or explore For You.' : 'Be the first to share a video on B-Flash.'}>
               {tab === 'following' && (
@@ -1352,6 +1354,7 @@ export default function BFlash() {
               </>
             )}
             <div className="h-px bg-white/10 my-1" />
+            <SheetRow icon={Film} label="My videos & saved" onClick={() => go('/flash/me')} />
             <SheetRow icon={Settings} label="B-Flash settings" onClick={() => { setMenuId(null); setSettingsOpen(true); }} />
           </Sheet>
         );
@@ -1442,6 +1445,9 @@ export default function BFlash() {
           <SheetRow icon={BellOff} label="Unmute all creators" value={String(getMutedUserIds().length)}
             onClick={() => { getMutedUserIds().forEach(unmuteUser); supabase.from('user_mutes').delete().eq('user_id', user.id).then(() => {}, () => {}); say('Creators unmuted'); loadFirst(tab); }} />
 
+          <SectionLabel>Your content</SectionLabel>
+          <SheetRow icon={Film} label="My videos & saved" value="Stats, manage" onClick={() => go('/flash/me')} />
+
           <SectionLabel>Safety</SectionLabel>
           <SheetRow icon={Ban} label="Blocked accounts" value="Manage" onClick={() => go('/settings', { open: 'blocked' })} />
         </Sheet>
@@ -1467,13 +1473,13 @@ function EditSheet({ post, onClose, onSave }) {
     <Sheet onClose={onClose} title="Edit video details">
       <div className="px-5 flex flex-col gap-3">
         <label className="text-[#8E8C88] text-[12px] font-bold">Caption</label>
-        <div className="bg-white/[0.07] border border-white/10 rounded-2xl px-4 py-3 focus-within:border-[#FF5A1F]/60">
-          <MentionTextarea value={caption} onChange={setCaption} rows={4} maxLength={500} placeholder="Write a caption…" className="text-[16px] leading-snug" />
+        <div className="bg-white/[0.07] border border-white/10 rounded-2xl px-4 py-3 focus-within:border-[#F97316]/60">
+          <MentionTextarea tone="dark" value={caption} onChange={setCaption} rows={4} maxLength={500} placeholder="Write a caption…" className="text-[16px] leading-snug" />
         </div>
         <p className="text-right text-[11px] text-[#8E8C88]">{caption.length}/500</p>
         <label className="text-[#8E8C88] text-[12px] font-bold">Hashtags</label>
         <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="#comedy #nairobi"
-          className="w-full bg-white/[0.07] border border-white/10 rounded-2xl px-4 h-12 text-white outline-none focus:border-[#FF5A1F]/60" style={{ fontSize: 16 }} />
+          className="w-full bg-white/[0.07] border border-white/10 rounded-2xl px-4 h-12 text-white outline-none focus:border-[#F97316]/60" style={{ fontSize: 16 }} />
         <button onClick={submit} disabled={saving} className="h-12 rounded-xl text-white font-bold flex items-center justify-center gap-2 disabled:opacity-60" style={{ background: ACCENT }}>
           {saving ? <Spinner size={16} /> : <Check size={18} />} Save changes
         </button>

@@ -3,7 +3,7 @@
 import { Crown, ShieldCheck, Shield, Star, Sparkles, Gem } from 'lucide-react';
 
 /* Rounded square icon tile — replaces cartoon emoji in menus/cards */
-export function IconTile({ icon: Icon, color = '#FF5A1F', size = 40, iconSize = 20, round = 12, className = '' }) {
+export function IconTile({ icon: Icon, color = '#F97316', size = 40, iconSize = 20, round = 12, className = '' }) {
   return (
     <div
       className={'flex items-center justify-center flex-shrink-0 ' + className}
@@ -15,12 +15,12 @@ export function IconTile({ icon: Icon, color = '#FF5A1F', size = 40, iconSize = 
 }
 
 /* Empty / error state with a proper icon instead of a giant emoji */
-export function EmptyState({ icon: Icon, title, text, color = '#FF5A1F', children, className = '' }) {
+export function EmptyState({ icon: Icon, title, text, color = '#F97316', children, className = '', dark = false }) {
   return (
     <div className={'flex flex-col items-center text-center px-8 py-14 ' + className}>
       <IconTile icon={Icon} color={color} size={64} iconSize={30} round={20} />
-      <p className="text-white font-bold text-[17px] mt-4">{title}</p>
-      {text && <p className="text-[#8E8C88] text-sm mt-1.5 max-w-[280px] leading-snug">{text}</p>}
+      <p className={'font-bold text-[17px] mt-4 ' + (dark ? 'text-white' : 'text-[#202938]')}>{title}</p>
+      {text && <p className={'text-sm mt-1.5 max-w-[280px] leading-snug ' + (dark ? 'text-[#8E8C88]' : 'text-[#64748B]')}>{text}</p>}
       {children && <div className="mt-5 flex gap-3">{children}</div>}
     </div>
   );
@@ -29,7 +29,7 @@ export function EmptyState({ icon: Icon, title, text, color = '#FF5A1F', childre
 /* Role marker next to a name */
 export function RoleIcon({ role, size = 15 }) {
   if (role === 'blink')     return <Crown size={size} color="#FFD700" fill="#FFD700" fillOpacity={0.25} aria-label="B-Link team" />;
-  if (role === 'admin')     return <ShieldCheck size={size} color="#FF5A1F" aria-label="Admin" />;
+  if (role === 'admin')     return <ShieldCheck size={size} color="#F97316" aria-label="Admin" />;
   if (role === 'moderator') return <Shield size={size} color="#FF9B6A" aria-label="Moderator" />;
   return null;
 }
@@ -39,7 +39,7 @@ const PLAN_ICON = { pro: Star, creator: Sparkles, business: Gem };
 export function PlanIcon({ plan, size = 16, color }) {
   const Icon = PLAN_ICON[plan];
   if (!Icon) return null;
-  const c = color || { pro: '#FF5A1F', creator: '#FF6B35', business: '#FFD700' }[plan];
+  const c = color || { pro: '#F97316', creator: '#F97316', business: '#FFD700' }[plan];
   return <Icon size={size} color={c} fill={c} fillOpacity={0.2} />;
 }
 

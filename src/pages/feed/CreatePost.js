@@ -3,14 +3,15 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import {
-  ArrowLeft, ImagePlus, Clapperboard, MapPin, Hash, Camera, SwitchCamera,
+  ArrowLeft, ImagePlus, Clapperboard, MapPin, Hash, Camera,
   X, Globe, Users, Lock, ChevronDown,
   Loader, CheckCircle, Ban, Type } from 'lucide-react';
-import { CLOUDINARY_CLOUD_NAME } from '../../lib/cloudinary';
 import { STORY_BACKGROUNDS, bgCss, textSizeFor } from '../../lib/storyPalette';
 import Avatar from '../../components/Avatar';
 import MentionTextarea from '../../components/MentionTextarea';
+import { uploadToCloudinary } from '../../lib/upload';
 import { DAILY_POST_LIMIT } from '../../utils/usernameValidation';
+import { goBack } from '../../lib/nav';
 
 /* ── Image compression — unchanged, already solid ── */
 async function compressImage(file, maxW = 1920, maxH = 1920, quality = 0.82) {
@@ -46,39 +47,6 @@ async function compressImage(file, maxW = 1920, maxH = 1920, quality = 0.82) {
     };
     img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
     img.src = url;
-  });
-}
-
-/* ── Upload a single file to Cloudinary — unchanged ── */
-async function uploadToCloudinary(file, resourceType = 'image', onProgress) {
-  const cloud  = CLOUDINARY_CLOUD_NAME;
-  const preset = 'blink_uploads';
-  const formData = new FormData();
-  formData.append('file',           file);
-  formData.append('upload_preset',  preset);
-  formData.append('cloud_name',     cloud);
-
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloud}/${resourceType}/upload`);
-
-    xhr.upload.onprogress = (e) => {
-      if (onProgress && e.lengthComputable) {
-        onProgress(Math.round((e.loaded / e.total) * 100));
-      }
-    };
-
-    xhr.onload = () => {
-      let data = null;
-      try { data = JSON.parse(xhr.responseText); } catch { /* not JSON (e.g. a size error page) */ }
-      if (data?.secure_url) resolve(data);
-      else if (xhr.status === 413) reject(new Error('That file is too large to upload.'));
-      else reject(new Error(data?.error?.message || 'Upload failed. Please try again.'));
-    };
-    xhr.ontimeout = () => reject(new Error('Upload timed out. Check your connection.'));
-    xhr.timeout = 10 * 60 * 1000;
-    xhr.onerror = () => reject(new Error('Network error during upload'));
-    xhr.send(formData);
   });
 }
 
@@ -137,7 +105,7 @@ export default function CreatePost() {
   const camPhotoRef = useRef();
   const camVideoRef = useRef();
   const [camSheet, setCamSheet] = useState(false);
-  const [camFacing, setCamFacing] = useState('user');
+  
   const textareaRef   = useRef();
   const locationInputRef = useRef();
   const audienceMenuRef  = useRef();
@@ -435,21 +403,21 @@ export default function CreatePost() {
   const totalMediaCount = mediaFiles.length + existingMedia.images.length + (existingMedia.video ? 1 : 0);
 
   return (
-    <div className="min-h-screen bg-[#0D0C0B] flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
 
-      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between">
-        <button onClick={() => navigate(-1)} aria-label="Back" className="text-[#8E8C88] hover:text-white transition-colors">
+      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-3 flex items-center justify-between">
+        <button onClick={() => goBack(navigate, '/')} aria-label="Back" className="text-[#64748B] hover:text-[#202938] transition-colors">
           <ArrowLeft size={22} />
         </button>
         <div className="flex flex-col items-center">
-          <h1 className="text-white font-bold text-[15px]">
+          <h1 className="text-[#202938] font-bold text-[15px]">
             {editPostId ? 'Edit Post' : 'Create Post'}
           </h1>
           {!editPostId && (
             <p className={`text-[11px] font-semibold ${
-              atDailyLimit ? 'text-red-400' :
-              postsToday >= DAILY_POST_LIMIT - 2 ? 'text-orange-400' :
-              'text-[#8E8C88]'
+              atDailyLimit ? 'text-red-600' :
+              postsToday >= DAILY_POST_LIMIT - 2 ? 'text-orange-700' :
+              'text-[#64748B]'
             }`}>
               {postsToday}/{DAILY_POST_LIMIT} posts today
             </p>
@@ -458,7 +426,7 @@ export default function CreatePost() {
         <button
           onClick={handleSubmit}
           disabled={submitting || (!caption.trim() && !hasMedia) || (atDailyLimit && !editPostId)}
-          className="flex items-center gap-1.5 bg-[#FF5A1F] text-white text-sm font-bold px-4 py-2 rounded-full disabled:opacity-50 active:scale-95 transition-all"
+          className="flex items-center gap-1.5 bg-[#F97316] text-white text-sm font-bold px-4 py-2 rounded-full disabled:opacity-50 active:scale-95 transition-all"
           style={{ boxShadow: '0 4px 16px rgba(255,90,31,0.35)' }}
         >
           {submitting
@@ -472,10 +440,10 @@ export default function CreatePost() {
 
       {atDailyLimit && !editPostId && (
         <div className="mx-4 mt-3 bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex items-start gap-3">
-          <Ban size={24} className="text-red-400 flex-shrink-0" />
+          <Ban size={24} className="text-red-600 flex-shrink-0" />
           <div>
-            <p className="text-red-400 font-bold text-sm">Daily post limit reached</p>
-            <p className="text-red-400/70 text-xs mt-0.5">
+            <p className="text-red-600 font-bold text-sm">Daily post limit reached</p>
+            <p className="text-red-600/70 text-xs mt-0.5">
               You've used all {DAILY_POST_LIMIT} posts for today. Come back tomorrow to post again. This keeps B-Link spam-free and professional.
             </p>
           </div>
@@ -487,29 +455,29 @@ export default function CreatePost() {
         <div className="flex items-center gap-3 mb-4">
           <Avatar url={profile?.avatar_url} name={profile?.display_name} size={10} />
           <div>
-            <p className="text-white font-bold text-[14px]">{profile?.display_name}</p>
+            <p className="text-[#202938] font-bold text-[14px]">{profile?.display_name}</p>
             <div className="relative" ref={audienceMenuRef}>
               <button
                 onClick={() => setShowAudience(!showAudience)}
-                className="flex items-center gap-1 bg-white/10 hover:bg-white/15 px-2.5 py-1 rounded-full mt-0.5 transition-colors"
+                className="flex items-center gap-1 bg-[#F1F5F9] hover:bg-[#E2E8F0] px-2.5 py-1 rounded-full mt-0.5 transition-colors"
               >
-                <aud.icon size={11} className="text-white/60" />
-                <span className="text-white/70 text-[11px] font-semibold">{aud.label}</span>
-                <ChevronDown size={11} className="text-white/40" />
+                <aud.icon size={11} className="text-[#64748B]" />
+                <span className="text-[#64748B] text-[11px] font-semibold">{aud.label}</span>
+                <ChevronDown size={11} className="text-[#94A3B8]" />
               </button>
 
               {showAudience && (
-                <div className="absolute left-0 top-full mt-1 bg-[#1d1c1a] border border-white/10 rounded-2xl overflow-hidden shadow-xl z-30" style={{ minWidth: 200 }}>
+                <div className="absolute left-0 top-full mt-1 bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden shadow-xl z-30" style={{ minWidth: 200 }}>
                   {AUDIENCES.map(a => (
                     <button
                       key={a.key}
                       onClick={() => { setAudience(a.key); setShowAudience(false); }}
-                      className={'w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-left transition-colors ' +
-                        (audience === a.key ? 'bg-[#FF5A1F]/10' : '')}
+                      className={'w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F8FAFC] text-left transition-colors ' +
+                        (audience === a.key ? 'bg-[#F97316]/10' : '')}
                     >
-                      <a.icon size={16} className={audience === a.key ? 'text-[#FF5A1F]' : 'text-[#8E8C88]'} />
-                      <span className={`text-[14px] font-medium ${audience === a.key ? 'text-[#FF5A1F]' : 'text-white/80'}`}>{a.label}</span>
-                      {audience === a.key && <CheckCircle size={14} className="text-[#FF5A1F] ml-auto" />}
+                      <a.icon size={16} className={audience === a.key ? 'text-[#EA580C]' : 'text-[#64748B]'} />
+                      <span className={`text-[14px] font-medium ${audience === a.key ? 'text-[#F97316]' : 'text-[#202938]'}`}>{a.label}</span>
+                      {audience === a.key && <CheckCircle size={14} className="text-[#EA580C] ml-auto" />}
                     </button>
                   ))}
                 </div>
@@ -523,7 +491,7 @@ export default function CreatePost() {
             <textarea
               ref={textareaRef} value={caption} onChange={e => setCaption(e.target.value)} rows={4} maxLength={charLimit + 50}
               placeholder="Type something"
-              className="w-full bg-transparent text-white text-center font-extrabold focus:outline-none resize-none placeholder-white/55"
+              className="w-full bg-transparent text-[#202938] text-center font-extrabold focus:outline-none resize-none placeholder-[#94A3B8]"
               style={{ fontSize: textSizeFor(caption.length), lineHeight: 1.25, textShadow: '0 2px 12px rgba(0,0,0,.18)' }}
             />
           </div>
@@ -541,21 +509,21 @@ export default function CreatePost() {
         )}
         {textOnly && (
           <div className="mb-3">
-            <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5"><Type size={12} /> Background</p>
+            <p className="text-[#64748B] text-[11px] font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5"><Type size={12} /> Background</p>
             <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
               <button onClick={() => setBgStyle('')} aria-label="No background"
-                className="w-8 h-8 rounded-full flex-shrink-0 border-2 flex items-center justify-center text-white/60"
-                style={{ borderColor: !bgStyle ? '#fff' : 'rgba(255,255,255,.2)' }}><X size={14} /></button>
+                className="w-8 h-8 rounded-full flex-shrink-0 border-2 flex items-center justify-center text-[#64748B]"
+                style={{ borderColor: !bgStyle ? '#fff' : '#E2E8F0' }}><X size={14} /></button>
               {STORY_BACKGROUNDS.map((b) => (
                 <button key={b.key} onClick={() => setBgStyle(b.key)} aria-label={`Background ${b.key}`}
                   className="w-8 h-8 rounded-full flex-shrink-0 transition-transform"
-                  style={{ background: b.css, border: bgStyle === b.key ? '2.5px solid #fff' : '2px solid rgba(255,255,255,.2)', transform: bgStyle === b.key ? 'scale(1.12)' : 'none' }} />
+                  style={{ background: b.css, border: bgStyle === b.key ? '2.5px solid #fff' : '2px solid #E2E8F0', transform: bgStyle === b.key ? 'scale(1.12)' : 'none' }} />
               ))}
             </div>
           </div>
         )}
         <div className="flex justify-end mb-3">
-          <span className={`text-xs font-semibold ${caption.length > charLimit ? 'text-red-400' : caption.length > charLimit * 0.85 ? 'text-orange-400' : 'text-[#8E8C88]'}`}>
+          <span className={`text-xs font-semibold ${caption.length > charLimit ? 'text-red-600' : caption.length > charLimit * 0.85 ? 'text-orange-700' : 'text-[#64748B]'}`}>
             {caption.length}/{charLimit}
           </span>
         </div>
@@ -566,10 +534,10 @@ export default function CreatePost() {
             files since one's already uploaded and one isn't. */}
         {(existingMedia.images.length > 0 || existingMedia.video) && (
           <div className="mb-3">
-            <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-wider mb-2">Current media</p>
+            <p className="text-[#64748B] text-[11px] font-bold uppercase tracking-wider mb-2">Current media</p>
             <div className="grid grid-cols-2 gap-2">
               {existingMedia.video && (
-                <div className="relative rounded-2xl overflow-hidden bg-black/40 border border-white/10 col-span-2">
+                <div className="relative rounded-2xl overflow-hidden bg-black/40 border border-[#E2E8F0] col-span-2">
                   <video src={existingMedia.video} poster={existingMedia.videoThumb} className="w-full object-cover" style={{ maxHeight:200 }} muted playsInline />
                   <button onClick={removeExistingVideo} aria-label="Remove video"
                     className="absolute top-1.5 right-1.5 w-7 h-7 bg-black/70 rounded-full flex items-center justify-center hover:bg-red-500/70 transition-colors">
@@ -578,7 +546,7 @@ export default function CreatePost() {
                 </div>
               )}
               {existingMedia.images.map((url, i) => (
-                <div key={url} className="relative rounded-2xl overflow-hidden bg-black/40 border border-white/10">
+                <div key={url} className="relative rounded-2xl overflow-hidden bg-black/40 border border-[#E2E8F0]">
                   <img src={url} alt="" className="w-full object-cover" style={{ maxHeight:180, aspectRatio:'1/1' }} />
                   <button onClick={() => removeExistingImage(i)} aria-label="Remove image"
                     className="absolute top-1.5 right-1.5 w-7 h-7 bg-black/70 rounded-full flex items-center justify-center hover:bg-red-500/70 transition-colors">
@@ -593,25 +561,25 @@ export default function CreatePost() {
         {mediaFiles.length > 0 && (
           <div className="mb-4">
             {existingMedia.images.length > 0 && (
-              <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-wider mb-2">New media</p>
+              <p className="text-[#64748B] text-[11px] font-bold uppercase tracking-wider mb-2">New media</p>
             )}
             <div className={`grid gap-2 ${mediaFiles.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
               {mediaFiles.map((m, i) => (
-                <div key={i} className="relative rounded-2xl overflow-hidden bg-black/40 border border-white/10">
+                <div key={i} className="relative rounded-2xl overflow-hidden bg-black/40 border border-[#E2E8F0]">
                   {m.type === 'video'
                     ? <video src={m.preview} className="w-full object-cover" style={{ maxHeight:200, aspectRatio:'16/9' }} muted playsInline />
                     : <img src={m.preview} alt="" className="w-full object-cover" style={{ maxHeight: mediaFiles.length === 1 ? 300 : 180, aspectRatio:'1/1' }} />
                   }
                   {uploadProgress[i] !== undefined && uploadProgress[i] < 100 && (
                     <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2">
-                      <div className="w-3/4 h-1.5 bg-white/20 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#FF5A1F] rounded-full transition-all duration-300" style={{ width: uploadProgress[i] + '%' }} />
+                      <div className="w-3/4 h-1.5 bg-[#E2E8F0] rounded-full overflow-hidden">
+                        <div className="h-full bg-[#F97316] rounded-full transition-all duration-300" style={{ width: uploadProgress[i] + '%' }} />
                       </div>
-                      <p className="text-white text-xs font-bold">{uploadProgress[i]}%</p>
+                      <p className="text-[#202938] text-xs font-bold">{uploadProgress[i]}%</p>
                     </div>
                   )}
                   <div className="absolute bottom-1.5 left-1.5 bg-black/60 rounded-full px-2 py-0.5">
-                    <p className="text-white/70 text-[10px]">{(m.size / 1024 / 1024).toFixed(1)} MB</p>
+                    <p className="text-[#64748B] text-[10px]">{(m.size / 1024 / 1024).toFixed(1)} MB</p>
                   </div>
                   <button onClick={() => removeMedia(i)} aria-label="Remove"
                     className="absolute top-1.5 right-1.5 w-7 h-7 bg-black/70 rounded-full flex items-center justify-center hover:bg-red-500/70 transition-colors">
@@ -624,11 +592,11 @@ export default function CreatePost() {
         )}
 
         {submitting && submitPhase === 'compressing' && (
-          <div className="mb-4 flex items-center gap-3 bg-[#FF5A1F]/10 border border-[#FF5A1F]/20 rounded-xl px-4 py-3">
-            <Loader size={16} className="text-[#FF5A1F] animate-spin flex-shrink-0" />
+          <div className="mb-4 flex items-center gap-3 bg-[#F97316]/10 border border-[#F97316]/20 rounded-xl px-4 py-3">
+            <Loader size={16} className="text-[#EA580C] animate-spin flex-shrink-0" />
             <div>
-              <p className="text-white text-sm font-bold">Optimising media...</p>
-              <p className="text-[#8E8C88] text-xs">Compressing images for best quality & speed</p>
+              <p className="text-[#202938] text-sm font-bold">Optimising media...</p>
+              <p className="text-[#64748B] text-xs">Compressing images for best quality & speed</p>
             </div>
           </div>
         )}
@@ -638,17 +606,17 @@ export default function CreatePost() {
             of doing anything location-related). Now toggled by that
             button, matching the hashtag panel's pattern. */}
         {showLocation && (
-          <div className="flex items-center gap-2 bg-white/[0.05] border border-white/10 rounded-xl px-3 py-2.5 mb-3">
-            <MapPin size={14} className="text-[#8E8C88] flex-shrink-0" />
+          <div className="flex items-center gap-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3 py-2.5 mb-3">
+            <MapPin size={14} className="text-[#64748B] flex-shrink-0" />
             <input
               ref={locationInputRef}
               type="text"
               value={location}
               onChange={e => setLocation(e.target.value)}
               placeholder="Add location..."
-              className="flex-1 bg-transparent text-white text-sm placeholder-[#8E8C88] focus:outline-none"
+              className="flex-1 bg-transparent text-[#202938] text-sm placeholder-[#94A3B8] focus:outline-none"
             />
-            <button onClick={handleLocationToggle} aria-label="Remove location" className="text-[#8E8C88] hover:text-white">
+            <button onClick={handleLocationToggle} aria-label="Remove location" className="text-[#64748B] hover:text-[#202938]">
               <X size={14} />
             </button>
           </div>
@@ -656,7 +624,7 @@ export default function CreatePost() {
 
         {showHashtags && (
           <div className="mb-3" ref={hashtagMenuRef}>
-            <p className="text-[#8E8C88] text-[11px] font-bold uppercase tracking-wider mb-2">Popular Hashtags</p>
+            <p className="text-[#64748B] text-[11px] font-bold uppercase tracking-wider mb-2">Popular Hashtags</p>
             <div className="flex flex-wrap gap-2">
               {HASHTAG_SUGGESTIONS.map(tag => {
                 const clean = tag.replace('#','');
@@ -666,7 +634,7 @@ export default function CreatePost() {
                     key={tag}
                     onClick={() => toggleHashtag(tag)}
                     className={'px-3 py-1.5 rounded-full text-xs font-bold border transition-all ' +
-                      (active ? 'bg-[#FF5A1F] text-white border-[#FF5A1F]' : 'bg-white/5 text-white/60 border-white/15 hover:bg-white/10')}
+                      (active ? 'bg-[#F97316] text-white border-[#F97316]' : 'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0] hover:bg-[#F1F5F9]')}
                   >
                     {tag}
                   </button>
@@ -678,12 +646,12 @@ export default function CreatePost() {
 
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 mb-3">
-            <p className="text-red-400 text-sm">{error}</p>
+            <p className="text-red-600 text-sm">{error}</p>
           </div>
         )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 max-w-[620px] mx-auto bg-[#171614] border-t border-white/[0.08]"
+      <div className="fixed bottom-0 left-0 right-0 max-w-[620px] mx-auto bg-white border-t border-[#E2E8F0]"
         style={{ paddingBottom:'max(12px, env(safe-area-inset-bottom))' }}>
         <div className="flex items-start gap-1 px-3 pt-2 pb-1">
 
@@ -696,45 +664,37 @@ export default function CreatePost() {
           ].map(({ key, icon: Icon, label, onClick, off, active }) => (
             <button key={key} onClick={onClick} disabled={off} aria-label={label}
               className="flex-1 flex flex-col items-center gap-1.5 py-1 disabled:opacity-40 active:scale-95 transition-transform">
-              <span className={`w-11 h-11 rounded-2xl flex items-center justify-center border transition-colors ${active ? 'bg-[#FF5A1F]/15 border-[#FF5A1F]/50 text-[#FF5A1F]' : 'bg-white/[0.06] border-white/10 text-white/80'}`}>
+              <span className={`w-11 h-11 rounded-2xl flex items-center justify-center border transition-colors ${active ? 'bg-[#F97316]/15 border-[#F97316]/50 text-[#F97316]' : 'bg-[#F1F5F9] border-[#E2E8F0] text-[#202938]'}`}>
                 <Icon size={22} strokeWidth={1.8} />
               </span>
-              <span className={`text-[11px] font-semibold ${active ? 'text-[#FF5A1F]' : 'text-[#8E8C88]'}`}>{label}</span>
+              <span className={`text-[11px] font-semibold ${active ? 'text-[#F97316]' : 'text-[#64748B]'}`}>{label}</span>
             </button>
           ))}
           <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
           <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={handleVideoSelect} />
-          <input ref={camPhotoRef} type="file" accept="image/*" capture={camFacing} className="hidden" onChange={handleImageSelect} />
-          <input ref={camVideoRef} type="file" accept="video/*" capture={camFacing} className="hidden" onChange={handleVideoSelect} />
+          <input ref={camPhotoRef} type="file" accept="image/*" capture className="hidden" onChange={handleImageSelect} />
+          <input ref={camVideoRef} type="file" accept="video/*" capture className="hidden" onChange={handleVideoSelect} />
 
           {totalMediaCount > 0 && (
-            <div className="ml-auto bg-[#FF5A1F]/20 px-2.5 py-1 rounded-full">
-              <p className="text-[#FF5A1F] text-[12px] font-bold">{totalMediaCount}/10</p>
+            <div className="ml-auto bg-[#F97316]/20 px-2.5 py-1 rounded-full">
+              <p className="text-[#EA580C] text-[12px] font-bold">{totalMediaCount}/10</p>
             </div>
           )}
         </div>
       </div>
       {camSheet && (
         <div className="fixed inset-0 z-[80] bg-black/65 flex items-end justify-center" onClick={() => setCamSheet(false)}>
-          <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl pb-[max(16px,env(safe-area-inset-bottom))]" onClick={(e) => e.stopPropagation()}>
-            <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mt-2.5 mb-2" />
-            <p className="text-white font-bold text-[15px] px-5 pb-2">Use your camera</p>
-            <div className="flex gap-2 px-5 pb-3">
-              {[['user', 'Front'], ['environment', 'Back']].map(([k, l]) => (
-                <button key={k} onClick={() => setCamFacing(k)} aria-pressed={camFacing === k}
-                  className={`flex-1 h-11 rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 ${camFacing === k ? 'bg-[#FF5A1F] text-white' : 'bg-white/[0.07] text-white/80'}`}>
-                  <SwitchCamera size={17} /> {l}
-                </button>
-              ))}
-            </div>
+          <div className="w-full max-w-[620px] bg-white border-t border-[#E2E8F0] rounded-t-3xl pb-[max(16px,env(safe-area-inset-bottom))]" onClick={(e) => e.stopPropagation()}>
+            <div className="w-10 h-1 rounded-full bg-[#E2E8F0] mx-auto mt-2.5 mb-2" />
+            <p className="text-[#202938] font-bold text-[15px] px-5 pb-1">Camera</p>
             <button onClick={() => { setCamSheet(false); setTimeout(() => camPhotoRef.current?.click(), 50); }}
-              className="w-full flex items-center gap-3.5 px-5 py-3.5 active:bg-white/[0.05] text-left">
-              <Camera size={22} strokeWidth={1.8} className="text-white" /><span className="text-white text-[15px] font-semibold">Take a photo</span>
+              className="w-full flex items-center gap-3.5 px-5 py-3.5 active:bg-[#F8FAFC] text-left">
+              <Camera size={22} strokeWidth={1.8} className="text-[#202938]" /><span className="text-[#202938] text-[15px] font-semibold">Take a photo</span>
             </button>
             <button onClick={() => { setCamSheet(false); setTimeout(() => camVideoRef.current?.click(), 50); }}
               disabled={mediaFiles.some(m => m.type === 'video') || !!existingMedia.video}
-              className="w-full flex items-center gap-3.5 px-5 py-3.5 active:bg-white/[0.05] text-left disabled:opacity-40">
-              <Clapperboard size={22} strokeWidth={1.8} className="text-white" /><span className="text-white text-[15px] font-semibold">Record a video</span>
+              className="w-full flex items-center gap-3.5 px-5 py-3.5 active:bg-[#F8FAFC] text-left disabled:opacity-40">
+              <Clapperboard size={22} strokeWidth={1.8} className="text-[#202938]" /><span className="text-[#202938] text-[15px] font-semibold">Record a video</span>
             </button>
           </div>
         </div>

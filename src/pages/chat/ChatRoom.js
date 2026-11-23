@@ -62,9 +62,9 @@ const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } ca
 function Sheet({ onClose, children, z = 60 }) {
   return (
     <div className="fixed inset-0 bg-black/70 flex items-end justify-center" style={{ zIndex: z }} onClick={onClose}>
-      <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl pb-[max(16px,env(safe-area-inset-bottom))] max-h-[85vh] overflow-y-auto"
+      <div className="w-full max-w-[620px] bg-white border-t border-[#E2E8F0] rounded-t-3xl pb-[max(16px,env(safe-area-inset-bottom))] max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}>
-        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mt-2.5 mb-1" />
+        <div className="w-10 h-1 rounded-full bg-[#E2E8F0] mx-auto mt-2.5 mb-1" />
         {children}
       </div>
     </div>
@@ -74,11 +74,11 @@ function Sheet({ onClose, children, z = 60 }) {
 function SheetRow({ icon: Icon, label, onClick, red, sub, disabled }) {
   return (
     <button onClick={onClick} disabled={disabled}
-      className={'w-full flex items-center gap-3.5 px-5 py-3.5 text-left hover:bg-white/[0.05] active:bg-white/[0.08] disabled:opacity-40 ' + (red ? 'text-red-400' : 'text-white')}>
-      <Icon size={19} className={red ? 'text-red-400' : 'text-white/70'} />
+      className={'w-full flex items-center gap-3.5 px-5 py-3.5 text-left hover:bg-[#F8FAFC] active:bg-[#F1F5F9] disabled:opacity-40 ' + (red ? 'text-red-600' : 'text-[#202938]')}>
+      <Icon size={19} className={red ? 'text-red-600' : 'text-[#64748B]'} />
       <span className="flex-1 min-w-0">
         <span className="block text-[15px] font-medium">{label}</span>
-        {sub && <span className="block text-[12px] text-[#8E8C88] mt-0.5">{sub}</span>}
+        {sub && <span className="block text-[12px] text-[#64748B] mt-0.5">{sub}</span>}
       </span>
     </button>
   );
@@ -775,15 +775,15 @@ export default function ChatRoom() {
   const canSend = msg.trim().length > 0;
 
   if (initLoading) return (
-    <div className="flex items-center justify-center bg-[#0D0C0B]" style={{ height: vp.h }}><Spinner size={28} className="text-[#FF5A1F]" /></div>
+    <div className="flex items-center justify-center bg-white" style={{ height: vp.h }}><Spinner size={28} className="text-[#EA580C]" /></div>
   );
 
   if (initError) return (
-    <div className="flex flex-col items-center justify-center gap-3 bg-[#0D0C0B] px-6 text-center" style={{ height: vp.h }}>
-      <p className="text-white font-bold text-[17px]">Could not load conversation</p>
-      <p className="text-[#8E8C88] text-[13px]">{initError}</p>
-      <button onClick={() => window.location.reload()} className="bg-[#FF5A1F] text-white font-bold text-sm rounded-full px-6 py-2.5">Try again</button>
-      <button onClick={() => navigate('/chats')} className="text-[#8E8C88] font-semibold text-sm">Back to chats</button>
+    <div className="flex flex-col items-center justify-center gap-3 bg-white px-6 text-center" style={{ height: vp.h }}>
+      <p className="text-[#202938] font-bold text-[17px]">Could not load conversation</p>
+      <p className="text-[#64748B] text-[13px]">{initError}</p>
+      <button onClick={() => window.location.reload()} className="bg-[#F97316] text-white font-bold text-sm rounded-full px-6 py-2.5">Try again</button>
+      <button onClick={() => navigate('/chats')} className="text-[#64748B] font-semibold text-sm">Back to chats</button>
     </div>
   );
 
@@ -791,66 +791,66 @@ export default function ChatRoom() {
     ? <span className="text-[#2ECC71] text-[12px] font-medium">typing…</span>
     : online
       ? <span className="text-[#2ECC71] text-[12px] flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#2ECC71]" />Online</span>
-      : <span className="text-[#8E8C88] text-[12px] truncate">{formatLastSeen(otherUser?.last_seen)}</span>;
+      : <span className="text-[#64748B] text-[12px] truncate">{formatLastSeen(otherUser?.last_seen)}</span>;
 
   return (
-    <div className="fixed left-0 right-0 flex flex-col bg-[#0D0C0B]" style={{ top: vp.top, height: vp.h }}>
+    <div className="fixed left-0 right-0 flex flex-col bg-white" style={{ top: vp.top, height: vp.h }}>
       {toast && (
         <div className={'fixed top-3 left-1/2 -translate-x-1/2 z-[90] px-4 py-2.5 rounded-full text-[13px] font-semibold shadow-xl max-w-[90vw] text-center ' +
-          (toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-white text-black')}>{toast.text}</div>
+          (toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-[#202938] text-white')}>{toast.text}</div>
       )}
       {viewerImage && <ImageViewer images={[viewerImage]} index={0} onClose={() => setViewerImage(null)} />}
 
       {/* ── top bar ── */}
-      <div className="flex-shrink-0 bg-[#171614] border-b border-white/10 px-2 py-2 flex items-center gap-1">
+      <div className="flex-shrink-0 bg-white border-b border-[#E2E8F0] px-2 py-2 flex items-center gap-1">
         {searchMode ? (
           <>
-            <button onClick={closeSearch} aria-label="Close search" className="p-2 text-[#8E8C88]"><ArrowLeft size={22} /></button>
+            <button onClick={closeSearch} aria-label="Close search" className="p-2 text-[#64748B]"><ArrowLeft size={22} /></button>
             <input autoFocus value={searchQ} onChange={(e) => { setSearchQ(e.target.value); setShowResults(true); }} placeholder="Search in this chat"
-              className="flex-1 bg-transparent text-white text-[16px] outline-none placeholder-[#8E8C88]" />
-            {searchBusy && <Spinner size={16} className="text-[#8E8C88] mr-1" />}
+              className="flex-1 bg-transparent text-[#202938] text-[16px] outline-none placeholder-[#94A3B8]" />
+            {searchBusy && <Spinner size={16} className="text-[#64748B] mr-1" />}
             {searchResults.length > 0 && searchIdx >= 0 && (
               <>
-                <button onClick={() => setShowResults((v) => !v)} className="text-[12px] text-[#8E8C88] px-1">{searchIdx + 1}/{searchResults.length}</button>
-                <button onClick={() => gotoResult(Math.min(searchResults.length - 1, searchIdx + 1))} aria-label="Older match" className="p-2 text-white/80"><ChevronUp size={20} /></button>
-                <button onClick={() => gotoResult(Math.max(0, searchIdx - 1))} aria-label="Newer match" className="p-2 text-white/80"><ChevronDown size={20} /></button>
+                <button onClick={() => setShowResults((v) => !v)} className="text-[12px] text-[#64748B] px-1">{searchIdx + 1}/{searchResults.length}</button>
+                <button onClick={() => gotoResult(Math.min(searchResults.length - 1, searchIdx + 1))} aria-label="Older match" className="p-2 text-[#202938]"><ChevronUp size={20} /></button>
+                <button onClick={() => gotoResult(Math.max(0, searchIdx - 1))} aria-label="Newer match" className="p-2 text-[#202938]"><ChevronDown size={20} /></button>
               </>
             )}
-            {searchQ && <button onClick={() => setSearchQ('')} aria-label="Clear" className="p-2 text-[#8E8C88]"><X size={18} /></button>}
+            {searchQ && <button onClick={() => setSearchQ('')} aria-label="Clear" className="p-2 text-[#64748B]"><X size={18} /></button>}
           </>
         ) : (
           <>
-            <button onClick={() => navigate('/chats')} aria-label="Back" className="p-2 text-[#8E8C88]"><ArrowLeft size={22} /></button>
+            <button onClick={() => navigate('/chats')} aria-label="Back" className="p-2 text-[#64748B]"><ArrowLeft size={22} /></button>
             <button onClick={() => navigate('/profile/' + otherUser?.username)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
               <div className="relative flex-shrink-0">
                 <Avatar url={otherUser?.avatar_url} name={otherUser?.display_name} size={10} />
-                {online && <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#2ECC71] border-2 border-[#171614]" />}
+                {online && <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#2ECC71] border-2 border-[#E2E8F0]" />}
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <p className="text-white font-bold text-[15px] truncate">{otherUser?.display_name}</p>
+                  <p className="text-[#202938] font-bold text-[15px] truncate">{otherUser?.display_name}</p>
                   {otherUser?.is_verified && <VerifiedBadge size={14} />}
                 </div>
                 {statusLine}
               </div>
             </button>
-            <button onClick={() => setSearchMode(true)} aria-label="Search messages" className="p-2.5 text-[#8E8C88]"><Search size={20} /></button>
-            <button onClick={() => setMenuOpen(true)} aria-label="Chat options" className="p-2.5 text-[#8E8C88]"><MoreVertical size={20} /></button>
+            <button onClick={() => setSearchMode(true)} aria-label="Search messages" className="p-2.5 text-[#64748B]"><Search size={20} /></button>
+            <button onClick={() => setMenuOpen(true)} aria-label="Chat options" className="p-2.5 text-[#64748B]"><MoreVertical size={20} /></button>
           </>
         )}
       </div>
 
       {/* search results list */}
       {searchMode && showResults && searchQ.trim().length >= 2 && (
-        <div className="absolute left-0 right-0 z-30 bg-[#171614] border-b border-white/10 max-h-[55%] overflow-y-auto" style={{ top: 56 }}>
-          {searchResults.length === 0 && !searchBusy && <p className="text-[#8E8C88] text-sm text-center py-8">No messages found</p>}
+        <div className="absolute left-0 right-0 z-30 bg-white border-b border-[#E2E8F0] max-h-[55%] overflow-y-auto" style={{ top: 56 }}>
+          {searchResults.length === 0 && !searchBusy && <p className="text-[#64748B] text-sm text-center py-8">No messages found</p>}
           {searchResults.map((r, i) => (
-            <button key={r.id} onClick={() => gotoResult(i)} className="w-full text-left px-4 py-3 border-b border-white/[0.05] hover:bg-white/[0.04]">
+            <button key={r.id} onClick={() => gotoResult(i)} className="w-full text-left px-4 py-3 border-b border-[#E2E8F0] hover:bg-[#F8FAFC]">
               <div className="flex justify-between">
-                <span className="text-[12px] font-bold text-[#FF5A1F]">{nameOf(r.sender_id)}</span>
-                <span className="text-[11px] text-[#8E8C88]">{fmtFull(r.created_at)}</span>
+                <span className="text-[12px] font-bold text-[#EA580C]">{nameOf(r.sender_id)}</span>
+                <span className="text-[11px] text-[#64748B]">{fmtFull(r.created_at)}</span>
               </div>
-              <p className="text-[14px] text-white/80 truncate mt-0.5">{r.body}</p>
+              <p className="text-[14px] text-[#202938] truncate mt-0.5">{r.body}</p>
             </button>
           ))}
         </div>
@@ -859,11 +859,11 @@ export default function ChatRoom() {
       {/* pinned */}
       {pinned && !searchMode && (
         <button onClick={() => jumpTo(pinned.id, pinned.created_at)}
-          className="flex-shrink-0 flex items-center gap-2.5 px-4 py-2 bg-[#FF5A1F]/10 border-b border-[#FF5A1F]/20 text-left">
-          <Pin size={14} className="text-[#FF5A1F] flex-shrink-0" />
+          className="flex-shrink-0 flex items-center gap-2.5 px-4 py-2 bg-[#F97316]/10 border-b border-[#F97316]/20 text-left">
+          <Pin size={14} className="text-[#EA580C] flex-shrink-0" />
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold text-[#FF5A1F]">Pinned message</p>
-            <p className="text-[12px] text-white/70 truncate">{pinned.message_type === 'image' ? 'Photo' : pinned.body}</p>
+            <p className="text-[10px] font-bold text-[#EA580C]">Pinned message</p>
+            <p className="text-[12px] text-[#64748B] truncate">{pinned.message_type === 'image' ? 'Photo' : pinned.body}</p>
           </div>
         </button>
       )}
@@ -871,13 +871,13 @@ export default function ChatRoom() {
       {/* ── messages ── */}
       <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto px-3 py-3" style={{ overscrollBehavior: 'contain' }}
         onClick={() => { if (panel) setPanel(null); }}>
-        {loadingOlder && <div className="flex justify-center py-2 text-[#FF5A1F]"><Spinner size={16} /></div>}
-        {!hasOlder && messages.length > 0 && <p className="text-center text-[11px] text-[#8E8C88] py-2">Start of conversation</p>}
+        {loadingOlder && <div className="flex justify-center py-2 text-[#EA580C]"><Spinner size={16} /></div>}
+        {!hasOlder && messages.length > 0 && <p className="text-center text-[11px] text-[#64748B] py-2">Start of conversation</p>}
 
         {groups.map((g) => (
           <div key={g.key}>
             <div className="flex justify-center my-3">
-              <span className="text-[11px] text-[#8E8C88] bg-[#1d1c1a]/90 px-3 py-1 rounded-full">{g.label}</span>
+              <span className="text-[11px] text-[#64748B] bg-white/90 px-3 py-1 rounded-full">{g.label}</span>
             </div>
             {g.items.map((m, idx) => (
               <MessageBubble
@@ -908,12 +908,12 @@ export default function ChatRoom() {
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center text-center gap-3 min-h-[50vh]">
             <Avatar url={otherUser?.avatar_url} name={otherUser?.display_name} size={20} />
-            <h3 className="text-white font-bold text-lg">{otherUser?.display_name}</h3>
-            <p className="text-[#8E8C88] text-sm">No messages yet. Say hello.</p>
+            <h3 className="text-[#202938] font-bold text-lg">{otherUser?.display_name}</h3>
+            <p className="text-[#64748B] text-sm">No messages yet. Say hello.</p>
             <div className="flex flex-wrap gap-2 justify-center max-w-[300px]">
               {['Hey!', 'Mambo!', 'Sawa!', 'How are you?'].map((g) => (
                 <button key={g} onClick={() => { setMsg(g); inputRef.current?.focus(); }}
-                  className="bg-white/[0.06] border border-white/10 rounded-full px-4 py-2 text-white/80 text-[13px]">{g}</button>
+                  className="bg-[#F1F5F9] border border-[#E2E8F0] rounded-full px-4 py-2 text-[#202938] text-[13px]">{g}</button>
               ))}
             </div>
           </div>
@@ -922,7 +922,7 @@ export default function ChatRoom() {
         {isTyping && (
           <div className="flex items-end gap-2 mt-2">
             <Avatar url={otherUser?.avatar_url} name={otherUser?.display_name} size={7} />
-            <div className="bg-[#272522] rounded-2xl rounded-bl-md px-3.5 py-3 flex gap-1">
+            <div className="bg-[#F1F5F9] rounded-2xl rounded-bl-md px-3.5 py-3 flex gap-1">
               {[0, 1, 2].map((i) => <span key={i} className="w-1.5 h-1.5 rounded-full bg-[#8E8C88]" style={{ animation: 'bounce 1.2s infinite', animationDelay: i * 0.2 + 's' }} />)}
             </div>
           </div>
@@ -933,44 +933,44 @@ export default function ChatRoom() {
       {(unseenBelow > 0 || detached) && (
         <button
           onClick={async () => { if (detached) await loadLatest(); nearBottom.current = true; scrollBottom(true); setUnseenBelow(0); }}
-          className="absolute right-4 bg-[#FF5A1F] text-white text-[12px] font-bold rounded-full px-3.5 py-2 shadow-lg flex items-center gap-1.5 z-20"
+          className="absolute right-4 bg-[#F97316] text-white text-[12px] font-bold rounded-full px-3.5 py-2 shadow-lg flex items-center gap-1.5 z-20"
           style={{ bottom: 92 }}>
           <ChevronDown size={14} /> {unseenBelow > 0 ? `${unseenBelow} new` : 'Latest'}
         </button>
       )}
 
       {/* ── composer ── */}
-      <div className="flex-shrink-0 bg-[#171614] border-t border-white/10">
+      <div className="flex-shrink-0 bg-white border-t border-[#E2E8F0]">
         {replyTo && (
           <div className="flex items-center gap-3 px-4 pt-2.5">
-            <div className="w-[3px] self-stretch bg-[#FF5A1F] rounded-full" />
+            <div className="w-[3px] self-stretch bg-[#F97316] rounded-full" />
             <div className="flex-1 min-w-0">
-              <p className="text-[#FF5A1F] text-[12px] font-bold">{replyTo.sender_id === user.id ? 'You' : otherUser?.display_name}</p>
-              <p className="text-[#8E8C88] text-[13px] truncate">{replyTo.message_type === 'image' ? 'Photo' : replyTo.body}</p>
+              <p className="text-[#EA580C] text-[12px] font-bold">{replyTo.sender_id === user.id ? 'You' : otherUser?.display_name}</p>
+              <p className="text-[#64748B] text-[13px] truncate">{replyTo.message_type === 'image' ? 'Photo' : replyTo.body}</p>
             </div>
-            <button onClick={() => setReplyTo(null)} aria-label="Cancel reply" className="p-1.5 text-[#8E8C88]"><X size={18} /></button>
+            <button onClick={() => setReplyTo(null)} aria-label="Cancel reply" className="p-1.5 text-[#64748B]"><X size={18} /></button>
           </div>
         )}
         {editing && (
           <div className="flex items-center gap-3 px-4 pt-2.5">
-            <Edit3 size={15} className="text-[#FF5A1F]" />
+            <Edit3 size={15} className="text-[#EA580C]" />
             <div className="flex-1 min-w-0">
-              <p className="text-[#FF5A1F] text-[12px] font-bold">Editing message</p>
-              <p className="text-[#8E8C88] text-[13px] truncate">{editing.body}</p>
+              <p className="text-[#EA580C] text-[12px] font-bold">Editing message</p>
+              <p className="text-[#64748B] text-[13px] truncate">{editing.body}</p>
             </div>
-            <button onClick={() => { setEditing(null); setMsg(''); }} aria-label="Cancel edit" className="p-1.5 text-[#8E8C88]"><X size={18} /></button>
+            <button onClick={() => { setEditing(null); setMsg(''); }} aria-label="Cancel edit" className="p-1.5 text-[#64748B]"><X size={18} /></button>
           </div>
         )}
         {schedSupported && scheduled.length > 0 && (
-          <button onClick={() => setSchedListOpen(true)} className="mx-4 mt-2 flex items-center gap-2 text-[12px] text-[#FF9B6A] font-semibold">
+          <button onClick={() => setSchedListOpen(true)} className="mx-4 mt-2 flex items-center gap-2 text-[12px] text-[#EA580C] font-semibold">
             <Clock size={13} /> {scheduled.length} scheduled message{scheduled.length === 1 ? '' : 's'}
           </button>
         )}
 
         <div className="flex items-end gap-2 px-2.5 pt-2.5" style={{ paddingBottom: panel ? 10 : 'max(12px, env(safe-area-inset-bottom))' }}>
-          <div className="flex-1 min-w-0 flex items-end bg-white/[0.08] border border-white/10 rounded-[28px] pl-1 pr-1 focus-within:border-[#FF5A1F]/50 transition-colors">
+          <div className="flex-1 min-w-0 flex items-end bg-[#F1F5F9] border border-[#E2E8F0] rounded-[28px] pl-1 pr-1 focus-within:border-[#F97316]/50 transition-colors">
             <button type="button" onClick={toggleEmoji} aria-label="Emoji"
-              className={'w-11 h-12 flex items-center justify-center flex-shrink-0 ' + (panel === 'emoji' ? 'text-[#FF5A1F]' : 'text-[#8E8C88]')}>
+              className={'w-11 h-12 flex items-center justify-center flex-shrink-0 ' + (panel === 'emoji' ? 'text-[#EA580C]' : 'text-[#64748B]')}>
               <Smile size={24} />
             </button>
             <textarea
@@ -978,46 +978,46 @@ export default function ChatRoom() {
               onFocus={() => { setPanel(null); setAttachOpen(false); setTimeout(() => scrollBottom(false), 250); }}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && window.matchMedia('(pointer: fine)').matches) { e.preventDefault(); handleSend(); } }}
               placeholder={editing ? 'Edit message' : 'Message'}
-              className="flex-1 min-w-0 bg-transparent text-white outline-none resize-none placeholder-[#8E8C88] py-3.5 px-1"
+              className="flex-1 min-w-0 bg-transparent text-[#202938] outline-none resize-none placeholder-[#94A3B8] py-3.5 px-1"
               style={{ fontSize: 16, lineHeight: '20px', minHeight: 48, maxHeight: 140, fontFamily: 'inherit' }}
             />
             {!editing && (
               <button type="button" onClick={() => { setAttachOpen(true); inputRef.current?.blur(); }} aria-label="Attach"
-                className="w-11 h-12 flex items-center justify-center flex-shrink-0 text-[#8E8C88]">
-                {uploading ? <Spinner size={18} className="text-[#FF5A1F]" /> : <Paperclip size={22} />}
+                className="w-11 h-12 flex items-center justify-center flex-shrink-0 text-[#64748B]">
+                {uploading ? <Spinner size={18} className="text-[#EA580C]" /> : <Paperclip size={22} />}
               </button>
             )}
             {!canSend && !editing && (
               <button type="button" onClick={() => cameraRef.current?.click()} aria-label="Camera"
-                className="w-11 h-12 flex items-center justify-center flex-shrink-0 text-[#8E8C88]">
+                className="w-11 h-12 flex items-center justify-center flex-shrink-0 text-[#64748B]">
                 <Camera size={22} />
               </button>
             )}
           </div>
           <button type="button" onClick={handleSend} disabled={!canSend} aria-label="Send"
             className={'w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 transition-all active:scale-90 ' +
-              (canSend ? 'bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] text-white shadow-lg shadow-[#FF5A1F]/30' : 'bg-white/[0.08] text-white/30')}>
+              (canSend ? 'bg-[#F97316] text-white  ' : 'bg-[#F1F5F9] text-[#94A3B8]')}>
             {editing ? <Check size={22} /> : <Send size={21} className="-ml-0.5" />}
           </button>
         </div>
-        {msg.length > MAX_LEN - 300 && <p className={'text-right text-[11px] px-5 -mt-1 pb-1 ' + (msg.length > MAX_LEN ? 'text-red-400' : 'text-[#8E8C88]')}>{msg.length}/{MAX_LEN}</p>}
+        {msg.length > MAX_LEN - 300 && <p className={'text-right text-[11px] px-5 -mt-1 pb-1 ' + (msg.length > MAX_LEN ? 'text-red-600' : 'text-[#64748B]')}>{msg.length}/{MAX_LEN}</p>}
 
         {panel === 'emoji' && (
-          <div className="border-t border-white/10 bg-[#1d1c1a]" style={{ height: 290 }}>
-            <div className="flex overflow-x-auto px-2 border-b border-white/[0.06]" style={{ scrollbarWidth: 'none' }}>
+          <div className="border-t border-[#E2E8F0] bg-white" style={{ height: 290 }}>
+            <div className="flex overflow-x-auto px-2 border-b border-[#E2E8F0]" style={{ scrollbarWidth: 'none' }}>
               {recents.length > 0 && (
-                <button onClick={() => setEmojiCat(-1)} className={'flex-shrink-0 px-3 py-2.5 ' + (emojiCat === -1 ? 'border-b-2 border-[#FF5A1F] text-white' : 'text-[#8E8C88] opacity-70')}><Clock size={20} /></button>
+                <button onClick={() => setEmojiCat(-1)} className={'flex-shrink-0 px-3 py-2.5 ' + (emojiCat === -1 ? 'border-b-2 border-[#F97316] text-[#202938]' : 'text-[#64748B] opacity-70')}><Clock size={20} /></button>
               )}
               {EMOJI_CATS.map((c, i) => (
                 <button key={c.label} onClick={() => setEmojiCat(i)}
-                  className={'flex-shrink-0 px-3 py-2 text-[20px] ' + (emojiCat === i ? 'border-b-2 border-[#FF5A1F]' : 'opacity-60')}>{c.label}</button>
+                  className={'flex-shrink-0 px-3 py-2 text-[20px] ' + (emojiCat === i ? 'border-b-2 border-[#F97316]' : 'opacity-60')}>{c.label}</button>
               ))}
             </div>
             <div className="grid grid-cols-8 gap-0.5 p-2 overflow-y-auto" style={{ height: 238 }}>
               {emojiList.map((e) => (
-                <button key={e} onMouseDown={(ev) => ev.preventDefault()} onClick={() => insertAtCaret(e)} className="text-[24px] py-1.5 rounded-lg active:bg-white/10">{e}</button>
+                <button key={e} onMouseDown={(ev) => ev.preventDefault()} onClick={() => insertAtCaret(e)} className="text-[24px] py-1.5 rounded-lg active:bg-[#F1F5F9]">{e}</button>
               ))}
-              {emojiCat === -1 && recents.length === 0 && <p className="col-span-8 text-center text-[#8E8C88] text-sm py-8">Emojis you use appear here</p>}
+              {emojiCat === -1 && recents.length === 0 && <p className="col-span-8 text-center text-[#64748B] text-sm py-8">Emojis you use appear here</p>}
             </div>
           </div>
         )}
@@ -1031,15 +1031,15 @@ export default function ChatRoom() {
         <Sheet onClose={() => setAttachOpen(false)}>
           <div className="grid grid-cols-4 gap-2 px-4 py-4">
             {[
-              { icon: ImageIcon, label: 'Photo', color: '#FF5A1F', fn: () => fileRef.current?.click() },
-              { icon: Camera, label: 'Camera', color: '#FF2D78', fn: () => cameraRef.current?.click() },
+              { icon: ImageIcon, label: 'Photo', color: '#F97316', fn: () => fileRef.current?.click() },
+              { icon: Camera, label: 'Camera', color: '#F97316', fn: () => cameraRef.current?.click() },
               { icon: MapPin, label: 'Location', color: '#2ECC71', fn: shareLocation },
               { icon: Zap, label: 'Quick reply', color: '#FFB020', fn: () => { setAttachOpen(false); setQuickOpen(true); } },
               ...(schedSupported ? [{ icon: CalendarClock, label: 'Schedule', color: '#FF9B6A', fn: () => { setAttachOpen(false); if (!msg.trim()) { showToast('Type your message first, then tap Schedule', 'error'); setTimeout(() => inputRef.current?.focus(), 50); } else setSchedOpen(true); } }] : []),
             ].map(({ icon: Icon, label, color, fn }) => (
-              <button key={label} onClick={fn} className="flex flex-col items-center gap-2 py-3 rounded-2xl active:bg-white/[0.06]">
+              <button key={label} onClick={fn} className="flex flex-col items-center gap-2 py-3 rounded-2xl active:bg-[#F1F5F9]">
                 <span className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: color + '22', border: '1px solid ' + color + '44' }}><Icon size={24} color={color} /></span>
-                <span className="text-[12px] text-white/80 font-medium">{label}</span>
+                <span className="text-[12px] text-[#202938] font-medium">{label}</span>
               </button>
             ))}
           </div>
@@ -1049,54 +1049,54 @@ export default function ChatRoom() {
       {/* quick replies */}
       {quickOpen && (
         <Sheet onClose={() => setQuickOpen(false)}>
-          <p className="text-white font-bold text-[15px] px-5 pt-2 pb-1">Quick replies</p>
+          <p className="text-[#202938] font-bold text-[15px] px-5 pt-2 pb-1">Quick replies</p>
           {quickReplies.map((q, i) => (
             <div key={i} className="flex items-center">
               <button onClick={() => { setMsg((cur) => (cur ? cur + ' ' : '') + q); setQuickOpen(false); setTimeout(() => inputRef.current?.focus(), 50); }}
-                className="flex-1 text-left px-5 py-3 text-white text-[15px]">{q}</button>
-              <button onClick={() => { const n = quickReplies.filter((_, k) => k !== i); setQuickReplies(n); lsSet('blink_quick_replies', n); }} aria-label="Remove" className="p-3 text-[#8E8C88]"><X size={16} /></button>
+                className="flex-1 text-left px-5 py-3 text-[#202938] text-[15px]">{q}</button>
+              <button onClick={() => { const n = quickReplies.filter((_, k) => k !== i); setQuickReplies(n); lsSet('blink_quick_replies', n); }} aria-label="Remove" className="p-3 text-[#64748B]"><X size={16} /></button>
             </div>
           ))}
           <button
             onClick={() => { const t = msg.trim(); if (!t) { showToast('Type a message, then save it as a quick reply', 'error'); return; } const n = [t, ...quickReplies.filter((x) => x !== t)].slice(0, 12); setQuickReplies(n); lsSet('blink_quick_replies', n); showToast('Saved as quick reply'); }}
-            className="w-full text-left px-5 py-3.5 text-[#FF5A1F] font-semibold text-[14px]">Save what I typed as a quick reply</button>
+            className="w-full text-left px-5 py-3.5 text-[#EA580C] font-semibold text-[14px]">Save what I typed as a quick reply</button>
         </Sheet>
       )}
 
       {/* schedule */}
       {schedOpen && (
         <Sheet onClose={() => setSchedOpen(false)}>
-          <p className="text-white font-bold text-[15px] px-5 pt-2">Schedule message</p>
-          <p className="text-[#8E8C88] text-[13px] px-5 mt-1 truncate">“{msg.trim()}”</p>
+          <p className="text-[#202938] font-bold text-[15px] px-5 pt-2">Schedule message</p>
+          <p className="text-[#64748B] text-[13px] px-5 mt-1 truncate">“{msg.trim()}”</p>
           <div className="grid grid-cols-3 gap-2 px-5 mt-4">
             {[
               ['In 1 hour', () => new Date(Date.now() + 3600000)],
               ['Tonight 8 PM', () => { const d = new Date(); d.setHours(20, 0, 0, 0); if (d < new Date()) d.setDate(d.getDate() + 1); return d; }],
               ['Tomorrow 8 AM', () => { const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(8, 0, 0, 0); return d; }],
             ].map(([label, fn]) => (
-              <button key={label} onClick={() => doSchedule(fn().toISOString())} className="bg-white/[0.07] border border-white/10 rounded-xl py-3 text-[12px] text-white font-semibold">{label}</button>
+              <button key={label} onClick={() => doSchedule(fn().toISOString())} className="bg-[#F1F5F9] border border-[#E2E8F0] rounded-xl py-3 text-[12px] text-[#202938] font-semibold">{label}</button>
             ))}
           </div>
           <div className="px-5 mt-4">
             <input type="datetime-local" value={schedTime} min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
-              onChange={(e) => setSchedTime(e.target.value)} className="w-full bg-white/[0.07] border border-white/10 rounded-xl px-4 py-3 text-white text-[15px] outline-none" />
+              onChange={(e) => setSchedTime(e.target.value)} className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-xl px-4 py-3 text-[#202938] text-[15px] outline-none" />
             <button onClick={() => schedTime && doSchedule(new Date(schedTime).toISOString())} disabled={!schedTime}
-              className="w-full mt-3 py-3.5 rounded-xl bg-gradient-to-r from-[#FF5A1F] to-[#FF2D78] text-white font-bold text-[15px] disabled:opacity-40">Schedule</button>
+              className="w-full mt-3 py-3.5 rounded-xl bg-[#F97316] text-white font-bold text-[15px] disabled:opacity-40">Schedule</button>
           </div>
         </Sheet>
       )}
 
       {schedListOpen && (
         <Sheet onClose={() => setSchedListOpen(false)}>
-          <p className="text-white font-bold text-[15px] px-5 pt-2 pb-1">Scheduled messages</p>
-          {scheduled.length === 0 && <p className="text-[#8E8C88] text-sm px-5 py-6">Nothing scheduled.</p>}
+          <p className="text-[#202938] font-bold text-[15px] px-5 pt-2 pb-1">Scheduled messages</p>
+          {scheduled.length === 0 && <p className="text-[#64748B] text-sm px-5 py-6">Nothing scheduled.</p>}
           {scheduled.map((s) => (
             <div key={s.id} className="flex items-center gap-3 px-5 py-3">
               <div className="flex-1 min-w-0">
-                <p className="text-white text-[14px] truncate">{s.body}</p>
-                <p className="text-[#FF9B6A] text-[12px] mt-0.5">{fmtFull(s.send_at)}</p>
+                <p className="text-[#202938] text-[14px] truncate">{s.body}</p>
+                <p className="text-[#EA580C] text-[12px] mt-0.5">{fmtFull(s.send_at)}</p>
               </div>
-              <button onClick={() => cancelScheduled(s.id)} className="text-red-400 text-[13px] font-semibold">Cancel</button>
+              <button onClick={() => cancelScheduled(s.id)} className="text-red-600 text-[13px] font-semibold">Cancel</button>
             </div>
           ))}
         </Sheet>
@@ -1119,12 +1119,12 @@ export default function ChatRoom() {
       {clearOpen && (
         <Sheet onClose={() => setClearOpen(false)}>
           <div className="px-5 pt-3 pb-2 text-center">
-            <p className="text-white font-bold text-base">Clear this chat?</p>
-            <p className="text-[#8E8C88] text-sm mt-1">Messages are removed for you only. {otherUser?.display_name} keeps their copy.</p>
+            <p className="text-[#202938] font-bold text-base">Clear this chat?</p>
+            <p className="text-[#64748B] text-sm mt-1">Messages are removed for you only. {otherUser?.display_name} keeps their copy.</p>
           </div>
           <div className="px-5 pt-3 space-y-2">
-            <button onClick={doClear} className="w-full py-3 rounded-xl bg-red-500/15 text-red-400 font-bold border border-red-500/30">Clear chat</button>
-            <button onClick={() => setClearOpen(false)} className="w-full py-3 rounded-xl bg-white/[0.07] text-white font-bold">Cancel</button>
+            <button onClick={doClear} className="w-full py-3 rounded-xl bg-red-500/15 text-red-600 font-bold border border-red-500/30">Clear chat</button>
+            <button onClick={() => setClearOpen(false)} className="w-full py-3 rounded-xl bg-[#F1F5F9] text-[#202938] font-bold">Cancel</button>
           </div>
         </Sheet>
       )}
@@ -1132,32 +1132,32 @@ export default function ChatRoom() {
       {blockOpen && (
         <Sheet onClose={() => setBlockOpen(false)}>
           <div className="px-5 pt-3 pb-2 text-center">
-            <p className="text-white font-bold text-base">Block {otherUser?.display_name}?</p>
-            <p className="text-[#8E8C88] text-sm mt-1">They won't be able to message you and you'll stop following each other.</p>
+            <p className="text-[#202938] font-bold text-base">Block {otherUser?.display_name}?</p>
+            <p className="text-[#64748B] text-sm mt-1">They won't be able to message you and you'll stop following each other.</p>
           </div>
           <div className="px-5 pt-3 space-y-2">
-            <button onClick={doBlock} className="w-full py-3 rounded-xl bg-red-500/15 text-red-400 font-bold border border-red-500/30">Block</button>
-            <button onClick={() => setBlockOpen(false)} className="w-full py-3 rounded-xl bg-white/[0.07] text-white font-bold">Cancel</button>
+            <button onClick={doBlock} className="w-full py-3 rounded-xl bg-red-500/15 text-red-600 font-bold border border-red-500/30">Block</button>
+            <button onClick={() => setBlockOpen(false)} className="w-full py-3 rounded-xl bg-[#F1F5F9] text-[#202938] font-bold">Cancel</button>
           </div>
         </Sheet>
       )}
 
       {reportOpen && (
         <Sheet onClose={() => setReportOpen(false)}>
-          <p className="text-white font-bold text-[15px] px-5 pt-2 pb-1">Why are you reporting {otherUser?.display_name}?</p>
-          {REPORT_REASONS.map((r) => <button key={r} onClick={() => doReport(r)} className="w-full text-left px-5 py-3.5 text-white text-[15px] hover:bg-white/[0.05]">{r}</button>)}
+          <p className="text-[#202938] font-bold text-[15px] px-5 pt-2 pb-1">Why are you reporting {otherUser?.display_name}?</p>
+          {REPORT_REASONS.map((r) => <button key={r} onClick={() => doReport(r)} className="w-full text-left px-5 py-3.5 text-[#202938] text-[15px] hover:bg-[#F8FAFC]">{r}</button>)}
         </Sheet>
       )}
 
       {/* starred view */}
       {starredView && (
         <Sheet onClose={() => setStarredView(null)}>
-          <p className="text-white font-bold text-[15px] px-5 pt-2 pb-1 flex items-center gap-2"><Star size={16} className="text-yellow-300" fill="#FDE047" /> Starred messages</p>
-          {starredView.length === 0 && <p className="text-[#8E8C88] text-sm px-5 py-8 text-center">Long-press a message and tap Star to keep it here.</p>}
+          <p className="text-[#202938] font-bold text-[15px] px-5 pt-2 pb-1 flex items-center gap-2"><Star size={16} className="text-yellow-700" fill="#FDE047" /> Starred messages</p>
+          {starredView.length === 0 && <p className="text-[#64748B] text-sm px-5 py-8 text-center">Long-press a message and tap Star to keep it here.</p>}
           {starredView.map((r) => (
-            <button key={r.id} onClick={() => { setStarredView(null); jumpTo(r.id, r.created_at); }} className="w-full text-left px-5 py-3 border-b border-white/[0.05]">
-              <div className="flex justify-between"><span className="text-[12px] font-bold text-[#FF5A1F]">{nameOf(r.sender_id)}</span><span className="text-[11px] text-[#8E8C88]">{fmtFull(r.created_at)}</span></div>
-              <p className="text-[14px] text-white/80 truncate mt-0.5">{r.message_type === 'image' ? 'Photo' : r.body}</p>
+            <button key={r.id} onClick={() => { setStarredView(null); jumpTo(r.id, r.created_at); }} className="w-full text-left px-5 py-3 border-b border-[#E2E8F0]">
+              <div className="flex justify-between"><span className="text-[12px] font-bold text-[#EA580C]">{nameOf(r.sender_id)}</span><span className="text-[11px] text-[#64748B]">{fmtFull(r.created_at)}</span></div>
+              <p className="text-[14px] text-[#202938] truncate mt-0.5">{r.message_type === 'image' ? 'Photo' : r.body}</p>
             </button>
           ))}
         </Sheet>
@@ -1173,20 +1173,20 @@ export default function ChatRoom() {
         return (
           <Sheet onClose={() => { setActionMsg(null); setConfirmAll(false); }}>
             {!deleted && !confirmAll && (
-              <div className="flex justify-around px-3 py-3 border-b border-white/[0.07]">
+              <div className="flex justify-around px-3 py-3 border-b border-[#E2E8F0]">
                 {QUICK_REACTIONS.map((e) => (
                   <button key={e} onClick={() => { setActionMsg(null); react(m.id, e); }}
-                    className={'text-[26px] w-10 h-10 rounded-full flex items-center justify-center active:scale-125 transition-transform ' + (m.reactions?.[user.id] === e ? 'bg-[#FF5A1F]/30' : '')}>{e}</button>
+                    className={'text-[26px] w-10 h-10 rounded-full flex items-center justify-center active:scale-125 transition-transform ' + (m.reactions?.[user.id] === e ? 'bg-[#F97316]/30' : '')}>{e}</button>
                 ))}
               </div>
             )}
             {confirmAll ? (
               <div className="px-5 pt-3 pb-1 text-center">
-                <p className="text-white font-bold text-base">Delete for everyone?</p>
-                <p className="text-[#8E8C88] text-sm mt-1">This message will be removed for both of you.</p>
+                <p className="text-[#202938] font-bold text-base">Delete for everyone?</p>
+                <p className="text-[#64748B] text-sm mt-1">This message will be removed for both of you.</p>
                 <div className="space-y-2 mt-4">
-                  <button onClick={() => delForAll(m)} className="w-full py-3 rounded-xl bg-red-500/15 text-red-400 font-bold border border-red-500/30">Delete for everyone</button>
-                  <button onClick={() => setConfirmAll(false)} className="w-full py-3 rounded-xl bg-white/[0.07] text-white font-bold">Cancel</button>
+                  <button onClick={() => delForAll(m)} className="w-full py-3 rounded-xl bg-red-500/15 text-red-600 font-bold border border-red-500/30">Delete for everyone</button>
+                  <button onClick={() => setConfirmAll(false)} className="w-full py-3 rounded-xl bg-[#F1F5F9] text-[#202938] font-bold">Cancel</button>
                 </div>
               </div>
             ) : (
@@ -1210,11 +1210,11 @@ export default function ChatRoom() {
       {/* message info */}
       {infoMsg && (
         <Sheet onClose={() => setInfoMsg(null)}>
-          <p className="text-white font-bold text-[15px] px-5 pt-2 pb-2">Message info</p>
+          <p className="text-[#202938] font-bold text-[15px] px-5 pt-2 pb-2">Message info</p>
           {[['Sent', infoMsg.created_at], ['Delivered', infoMsg.delivered_at], ['Read', infoMsg.seen_at]].map(([label, t]) => (
-            <div key={label} className="flex justify-between px-5 py-3 border-b border-white/[0.05]">
-              <span className="text-[#8E8C88] text-[14px]">{label}</span>
-              <span className="text-white text-[14px]">{fmtFull(t)}</span>
+            <div key={label} className="flex justify-between px-5 py-3 border-b border-[#E2E8F0]">
+              <span className="text-[#64748B] text-[14px]">{label}</span>
+              <span className="text-[#202938] text-[14px]">{fmtFull(t)}</span>
             </div>
           ))}
         </Sheet>
@@ -1254,29 +1254,29 @@ function ForwardSheet({ message, onClose, currentChatId, userId, onDone, onError
 
   return (
     <Sheet onClose={onClose} z={70}>
-      <p className="text-white font-bold text-[15px] px-5 pt-2 pb-2">Forward to</p>
+      <p className="text-[#202938] font-bold text-[15px] px-5 pt-2 pb-2">Forward to</p>
       <div className="px-4 pb-2">
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search" className="w-full bg-white/[0.07] rounded-xl px-4 py-2.5 text-white text-[15px] outline-none placeholder-[#8E8C88]" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search" className="w-full bg-[#F1F5F9] rounded-xl px-4 py-2.5 text-[#202938] text-[15px] outline-none placeholder-[#94A3B8]" />
       </div>
-      {chats === null && <div className="flex justify-center py-8 text-[#FF5A1F]"><Spinner size={22} /></div>}
-      {chats && list.length === 0 && <p className="text-[#8E8C88] text-sm text-center py-8">No other chats yet</p>}
+      {chats === null && <div className="flex justify-center py-8 text-[#EA580C]"><Spinner size={22} /></div>}
+      {chats && list.length === 0 && <p className="text-[#64748B] text-sm text-center py-8">No other chats yet</p>}
       {list.map((c) => {
         const on = picked.includes(c.chat_id);
         return (
           <button key={c.chat_id} onClick={() => setPicked((p) => (on ? p.filter((x) => x !== c.chat_id) : [...p, c.chat_id]))}
-            className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-white/[0.05]">
+            className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-[#F8FAFC]">
             <Avatar url={c.other_avatar_url} name={c.other_display_name} size={10} />
             <span className="flex-1 text-left min-w-0">
-              <span className="block text-white text-[15px] font-semibold truncate">{c.other_display_name}</span>
-              <span className="block text-[#8E8C88] text-[12px]">@{c.other_username}</span>
+              <span className="block text-[#202938] text-[15px] font-semibold truncate">{c.other_display_name}</span>
+              <span className="block text-[#64748B] text-[12px]">@{c.other_username}</span>
             </span>
-            <span className={'w-6 h-6 rounded-full border-2 flex items-center justify-center ' + (on ? 'bg-[#FF5A1F] border-[#FF5A1F]' : 'border-white/30')}>{on && <Check size={14} className="text-white" />}</span>
+            <span className={'w-6 h-6 rounded-full border-2 flex items-center justify-center ' + (on ? 'bg-[#F97316] border-[#F97316]' : 'border-[#E2E8F0]')}>{on && <Check size={14} className="text-[#202938]" />}</span>
           </button>
         );
       })}
       <div className="px-5 pt-3">
         <button onClick={send} disabled={picked.length === 0 || busy}
-          className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#FF5A1F] to-[#FF2D78] text-white font-bold disabled:opacity-40 flex items-center justify-center gap-2">
+          className="w-full py-3.5 rounded-xl bg-[#F97316] text-white font-bold disabled:opacity-40 flex items-center justify-center gap-2">
           {busy ? <Spinner size={16} /> : <Send size={16} />} Send{picked.length ? ` (${picked.length})` : ''}
         </button>
       </div>

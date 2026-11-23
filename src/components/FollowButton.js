@@ -12,9 +12,9 @@ import Avatar from './Avatar';
 import { Spinner } from './ui';
 
 const LOOK = {
-  none:        { label: 'Follow',      Icon: UserPlus,  cls: 'bg-[#FF5A1F] text-white shadow-md shadow-[#FF5A1F]/30 hover:bg-[#d9480f]' },
-  following:   { label: 'Following',   Icon: UserCheck, cls: 'bg-white/[0.07] text-white border border-white/20 hover:bg-white/10' },
-  follow_back: { label: 'Follow Back', Icon: UserPlus,  cls: 'bg-gradient-to-r from-[#FF5A1F] to-[#FF2D78] text-white shadow-md shadow-[#FF5A1F]/30' },
+  none:        { label: 'Follow',      Icon: UserPlus,  cls: 'bg-[#F97316] text-white   hover:bg-[#EA580C]' },
+  following:   { label: 'Following',   Icon: UserCheck, cls: 'bg-[#F1F5F9] text-[#202938] border border-[#E2E8F0] hover:bg-[#F1F5F9]' },
+  follow_back: { label: 'Follow Back', Icon: UserPlus,  cls: 'bg-[#F97316] text-white  ' },
   friends:     { label: 'Friends',     Icon: Users2,    cls: 'bg-[#2ECC71]/10 text-[#2ECC71] border border-[#2ECC71]/40 hover:bg-[#2ECC71]/15' },
 };
 
@@ -98,13 +98,13 @@ export default function FollowButton({
 
       {confirm && (
         <div className="fixed inset-0 z-[70] bg-black/70 flex items-end justify-center" onClick={(e) => { e.stopPropagation(); setConfirm(false); }}>
-          <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5 pb-8" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-[620px] bg-white border-t border-[#E2E8F0] rounded-t-3xl p-5 pb-8" onClick={(e) => e.stopPropagation()}>
             <div className="flex flex-col items-center text-center">
               <Avatar url={avatarUrl} name={displayName || username} size={16} />
-              <p className="text-white font-bold text-base mt-3">
+              <p className="text-[#202938] font-bold text-base mt-3">
                 {rel === REL.FRIENDS ? 'Stop being friends' : 'Unfollow'}{username ? ` @${username}` : ''}?
               </p>
-              <p className="text-[#8E8C88] text-sm mt-1 max-w-[300px]">
+              <p className="text-[#64748B] text-sm mt-1 max-w-[300px]">
                 {rel === REL.FRIENDS
                   ? "You'll stop following them. They'll still follow you, so you won't be friends anymore."
                   : "Their posts will no longer appear in your Following feed."}
@@ -113,11 +113,11 @@ export default function FollowButton({
             <div className="flex flex-col gap-2 mt-5">
               <button
                 onClick={() => { setConfirm(false); run(); }}
-                className="w-full py-3 rounded-xl bg-red-500/15 text-red-400 font-bold text-sm border border-red-500/30 active:scale-[0.98]"
+                className="w-full py-3 rounded-xl bg-red-500/15 text-red-600 font-bold text-sm border border-red-500/30 active:scale-[0.98]"
               >
                 {rel === REL.FRIENDS ? 'Unfollow' : 'Unfollow'}
               </button>
-              <button onClick={() => setConfirm(false)} className="w-full py-3 rounded-xl bg-white/[0.07] text-white font-bold text-sm active:scale-[0.98]">
+              <button onClick={() => setConfirm(false)} className="w-full py-3 rounded-xl bg-[#F1F5F9] text-[#202938] font-bold text-sm active:scale-[0.98]">
                 Cancel
               </button>
             </div>

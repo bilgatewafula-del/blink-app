@@ -22,6 +22,7 @@ import {
   Copy, Crown, BadgeCheck, Briefcase, Search, FileText, Repeat2, Image as ImageIcon,
   AlertTriangle, UserX, Play, Users2,
 } from 'lucide-react';
+import { goBack } from '../../lib/nav';
 
 const POST_SELECT = `
   id, caption, media_urls, video_url, post_type, likes_count,
@@ -55,7 +56,7 @@ const profileCache = new Map();
 
 function ProfileSkeleton() {
   return (
-    <div className="min-h-screen bg-[#0D0C0B] pb-24 animate-pulse">
+    <div className="min-h-screen bg-white pb-24 animate-pulse">
       <div className="px-4 pt-5 pb-4">
         <div className="w-20 h-20 rounded-full skeleton" />
         <div className="h-4 w-32 rounded-full skeleton mt-4" />
@@ -101,38 +102,38 @@ function UserListModal({ title, kind, userId, currentUserId, canRemove, onRemove
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end justify-center" onClick={onClose}>
-      <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl h-[78vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-[620px] bg-white border-t border-[#E2E8F0] rounded-t-3xl h-[78vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 pt-4 pb-3 flex-shrink-0">
-          <p className="text-white font-bold text-base">{title}</p>
-          <button onClick={onClose} aria-label="Close" className="text-[#8E8C88] hover:text-white"><X size={20} /></button>
+          <p className="text-[#202938] font-bold text-base">{title}</p>
+          <button onClick={onClose} aria-label="Close" className="text-[#64748B] hover:text-[#202938]"><X size={20} /></button>
         </div>
         {users && users.length > 6 && (
           <div className="px-4 pb-3 flex-shrink-0">
-            <div className="flex items-center gap-2 bg-white/[0.07] rounded-xl px-3 py-2">
-              <Search size={15} className="text-[#8E8C88]" />
+            <div className="flex items-center gap-2 bg-[#F1F5F9] rounded-xl px-3 py-2">
+              <Search size={15} className="text-[#64748B]" />
               <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search"
-                className="flex-1 bg-transparent text-white text-sm placeholder-[#8E8C88] focus:outline-none" />
+                className="flex-1 bg-transparent text-[#202938] text-sm placeholder-[#94A3B8] focus:outline-none" />
             </div>
           </div>
         )}
-        <div className="overflow-y-auto flex-1 border-t border-white/[0.06]">
+        <div className="overflow-y-auto flex-1 border-t border-[#E2E8F0]">
           {error ? (
-            <p className="text-red-400 text-sm text-center py-10 px-6">{error}</p>
+            <p className="text-red-600 text-sm text-center py-10 px-6">{error}</p>
           ) : users === null ? (
-            <div className="flex justify-center py-10 text-[#FF5A1F]"><Spinner size={24} /></div>
+            <div className="flex justify-center py-10 text-[#EA580C]"><Spinner size={24} /></div>
           ) : shown.length === 0 ? (
             <EmptyState icon={Users2} title={q ? 'No matches' : 'Nobody here yet'}
               text={q ? 'Try a different name.' : kind === 'friends' ? 'Friends appear when you follow each other.' : undefined} />
           ) : shown.map((u) => (
-            <div key={u.id} className="flex items-center gap-3 px-5 py-3 border-b border-white/[0.05]">
+            <div key={u.id} className="flex items-center gap-3 px-5 py-3 border-b border-[#E2E8F0]">
               <button onClick={() => { onClose(); navigate('/profile/' + u.username); }} className="flex items-center gap-3 flex-1 min-w-0 text-left">
                 <Avatar url={u.avatar_url} name={u.display_name} size={11} />
                 <div className="min-w-0">
                   <div className="flex items-center gap-1">
-                    <p className="text-white font-bold text-[14px] truncate">{u.display_name}</p>
+                    <p className="text-[#202938] font-bold text-[14px] truncate">{u.display_name}</p>
                     {u.is_verified && <VerifiedBadge size={13} />}
                   </div>
-                  <p className="text-[#8E8C88] text-[12px] truncate">@{u.username}</p>
+                  <p className="text-[#64748B] text-[12px] truncate">@{u.username}</p>
                 </div>
               </button>
               {u.id !== currentUserId && (
@@ -143,7 +144,7 @@ function UserListModal({ title, kind, userId, currentUserId, canRemove, onRemove
                 <button
                   onClick={async () => { await onRemove(u.id); setUsers((l) => (l || []).filter((x) => x.id !== u.id)); }}
                   aria-label={`Remove ${u.username}`}
-                  className="text-[#8E8C88] hover:text-red-400 p-2 rounded-full hover:bg-red-500/10 flex-shrink-0"
+                  className="text-[#64748B] hover:text-red-600 p-2 rounded-full hover:bg-red-500/10 flex-shrink-0"
                 >
                   <UserMinus size={16} />
                 </button>
@@ -159,7 +160,7 @@ function UserListModal({ title, kind, userId, currentUserId, canRemove, onRemove
 function Sheet({ onClose, children }) {
   return (
     <div className="fixed inset-0 z-[60] bg-black/70 flex items-end justify-center" onClick={onClose}>
-      <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-4 pb-8" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-[620px] bg-white border-t border-[#E2E8F0] rounded-t-3xl p-4 pb-8" onClick={(e) => e.stopPropagation()}>
         {children}
       </div>
     </div>
@@ -169,12 +170,12 @@ function Sheet({ onClose, children }) {
 function StatBox({ value, label, onClick }) {
   const inner = (
     <>
-      <p className="text-white font-black text-[19px] leading-none tabular-nums">{formatNumber(value || 0)}</p>
-      <p className="text-[#8E8C88] text-[11px] mt-1.5">{label}</p>
+      <p className="text-[#202938] font-black text-[19px] leading-none tabular-nums">{formatNumber(value || 0)}</p>
+      <p className="text-[#64748B] text-[11px] mt-1.5">{label}</p>
     </>
   );
   return onClick
-    ? <button onClick={onClick} className="text-center py-2 rounded-xl active:bg-white/[0.06] transition-colors">{inner}</button>
+    ? <button onClick={onClick} className="text-center py-2 rounded-xl active:bg-[#F1F5F9] transition-colors">{inner}</button>
     : <div className="text-center py-2">{inner}</div>;
 }
 
@@ -487,7 +488,7 @@ export default function Profile() {
       if (error) throw error;
       profileCache.delete(cacheKey);
       showToast(`Blocked @${profile.username}`);
-      setTimeout(() => navigate(-1), 600);
+      setTimeout(() => goBack(navigate, '/'), 600);
     } catch (err) { showToast(err.message || 'Could not block user', 'error'); }
   };
 
@@ -515,18 +516,18 @@ export default function Profile() {
   if (loading) return <ProfileSkeleton />;
 
   if (fetchError && !profile) return (
-    <div className="min-h-screen bg-[#0D0C0B]">
+    <div className="min-h-screen bg-white">
       <EmptyState icon={AlertTriangle} color="#EF4444" title="Could not load profile" text={fetchError}>
-        <button onClick={() => setReloadKey((k) => k + 1)} className="bg-[#FF5A1F] text-white px-5 py-2.5 rounded-full font-bold text-sm">Try again</button>
-        <button onClick={() => navigate(-1)} className="text-[#8E8C88] font-semibold text-sm px-3">Go back</button>
+        <button onClick={() => setReloadKey((k) => k + 1)} className="bg-[#F97316] text-white px-5 py-2.5 rounded-full font-bold text-sm">Try again</button>
+        <button onClick={() => goBack(navigate, '/')} className="text-[#64748B] font-semibold text-sm px-3">Go back</button>
       </EmptyState>
     </div>
   );
 
   if (!profile) return (
-    <div className="min-h-screen bg-[#0D0C0B]">
+    <div className="min-h-screen bg-white">
       <EmptyState icon={UserX} title="User not found" text="This account may have been renamed or removed.">
-        <button onClick={() => navigate(-1)} className="bg-white/10 text-white px-5 py-2.5 rounded-full font-bold text-sm">Go back</button>
+        <button onClick={() => goBack(navigate, '/')} className="bg-[#F1F5F9] text-[#202938] px-5 py-2.5 rounded-full font-bold text-sm">Go back</button>
       </EmptyState>
     </div>
   );
@@ -551,12 +552,12 @@ export default function Profile() {
   }[tab];
 
   return (
-    <div className="min-h-screen bg-[#0D0C0B] pb-24">
+    <div className="min-h-screen bg-white pb-24">
       {imgViewer && profile.avatar_url && <ImageViewer images={[profile.avatar_url]} index={0} onClose={() => setImgViewer(false)} />}
 
       {toast && (
         <div className={'fixed top-4 left-1/2 -translate-x-1/2 z-[80] px-4 py-2.5 rounded-full text-sm font-semibold shadow-xl ' +
-          (toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-white text-black')}>
+          (toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-[#202938] text-white')}>
           {toast.msg}
         </div>
       )}
@@ -582,7 +583,7 @@ export default function Profile() {
             { Icon: Ban, label: `Block @${profile.username}`, fn: () => { setMenuOpen(false); setBlockOpen(true); }, red: true },
           ].map(({ Icon, label, fn, red }) => (
             <button key={label} onClick={fn}
-              className={'w-full flex items-center gap-3 px-3 py-3.5 rounded-xl hover:bg-white/[0.05] text-left font-semibold text-[15px] ' + (red ? 'text-red-400' : 'text-white')}>
+              className={'w-full flex items-center gap-3 px-3 py-3.5 rounded-xl hover:bg-[#F8FAFC] text-left font-semibold text-[15px] ' + (red ? 'text-red-600' : 'text-[#202938]')}>
               <Icon size={19} /> {label}
             </button>
           ))}
@@ -591,9 +592,9 @@ export default function Profile() {
 
       {reportOpen && (
         <Sheet onClose={() => setReportOpen(false)}>
-          <p className="text-white font-bold text-base px-3 pb-2">Why are you reporting @{profile.username}?</p>
+          <p className="text-[#202938] font-bold text-base px-3 pb-2">Why are you reporting @{profile.username}?</p>
           {REPORT_REASONS.map((r) => (
-            <button key={r} onClick={() => doReport(r)} className="w-full text-left px-3 py-3.5 rounded-xl hover:bg-white/[0.05] text-white text-[15px]">{r}</button>
+            <button key={r} onClick={() => doReport(r)} className="w-full text-left px-3 py-3.5 rounded-xl hover:bg-[#F8FAFC] text-[#202938] text-[15px]">{r}</button>
           ))}
         </Sheet>
       )}
@@ -601,34 +602,34 @@ export default function Profile() {
       {blockOpen && (
         <Sheet onClose={() => setBlockOpen(false)}>
           <div className="text-center px-2 pb-4">
-            <p className="text-white font-bold text-base">Block @{profile.username}?</p>
-            <p className="text-[#8E8C88] text-sm mt-1.5">They won't be able to message you, and you'll stop following each other.</p>
+            <p className="text-[#202938] font-bold text-base">Block @{profile.username}?</p>
+            <p className="text-[#64748B] text-sm mt-1.5">They won't be able to message you, and you'll stop following each other.</p>
           </div>
-          <button onClick={doBlock} className="w-full py-3 rounded-xl bg-red-500/15 text-red-400 font-bold text-sm border border-red-500/30 mb-2">Block</button>
-          <button onClick={() => setBlockOpen(false)} className="w-full py-3 rounded-xl bg-white/[0.07] text-white font-bold text-sm">Cancel</button>
+          <button onClick={doBlock} className="w-full py-3 rounded-xl bg-red-500/15 text-red-600 font-bold text-sm border border-red-500/30 mb-2">Block</button>
+          <button onClick={() => setBlockOpen(false)} className="w-full py-3 rounded-xl bg-[#F1F5F9] text-[#202938] font-bold text-sm">Cancel</button>
         </Sheet>
       )}
 
       {/* top bar */}
-      <div className="sticky top-0 z-20 bg-[#0D0C0B]/95 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between gap-3">
-        <button onClick={() => navigate(-1)} aria-label="Back" className="text-[#8E8C88] hover:text-white flex-shrink-0"><ArrowLeft size={22} /></button>
+      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-3 flex items-center justify-between gap-3">
+        <button onClick={() => goBack(navigate, '/')} aria-label="Back" className="text-[#64748B] hover:text-[#202938] flex-shrink-0"><ArrowLeft size={22} /></button>
         <div className="flex-1 min-w-0 text-center">
-          <p className="text-white font-bold text-[15px] leading-none truncate">{profile.display_name}</p>
-          <p className="text-[#8E8C88] text-xs mt-0.5">{formatNumber(s.posts)} posts</p>
+          <p className="text-[#202938] font-bold text-[15px] leading-none truncate">{profile.display_name}</p>
+          <p className="text-[#64748B] text-xs mt-0.5">{formatNumber(s.posts)} posts</p>
         </div>
         {isOwnProfile ? (
           <div className="flex items-center gap-3 flex-shrink-0">
-            <button onClick={shareProfile} aria-label="Share profile" className="text-[#8E8C88] hover:text-white"><Share2 size={19} /></button>
-            <button onClick={() => navigate('/settings')} aria-label="Settings" className="text-[#8E8C88] hover:text-white"><Settings size={20} /></button>
+            <button onClick={shareProfile} aria-label="Share profile" className="text-[#64748B] hover:text-[#202938]"><Share2 size={19} /></button>
+            <button onClick={() => navigate('/settings')} aria-label="Settings" className="text-[#64748B] hover:text-[#202938]"><Settings size={20} /></button>
           </div>
         ) : (
-          <button onClick={() => setMenuOpen(true)} aria-label="More options" className="text-[#8E8C88] hover:text-white flex-shrink-0"><MoreHorizontal size={22} /></button>
+          <button onClick={() => setMenuOpen(true)} aria-label="More options" className="text-[#64748B] hover:text-[#202938] flex-shrink-0"><MoreHorizontal size={22} /></button>
         )}
       </div>
 
       {/* cover */}
       {extras.cover_url && (
-        <div className="h-28 w-full bg-white/5 overflow-hidden">
+        <div className="h-28 w-full bg-[#F8FAFC] overflow-hidden">
           <img src={feedImageUrl(extras.cover_url, 1000)} alt="" className="w-full h-full object-cover" decoding="async" />
         </div>
       )}
@@ -637,16 +638,16 @@ export default function Profile() {
         <div className={'flex items-end justify-between ' + (extras.cover_url ? '-mt-12' : '')}>
           <div className="relative flex-shrink-0">
             <button onClick={() => profile.avatar_url && setImgViewer(true)} aria-label="View profile photo"
-              className="block rounded-full border-[3px] border-[#0D0C0B] bg-[#0D0C0B]">
+              className="block rounded-full border-[3px] border-[#E2E8F0] bg-white">
               <Avatar url={profile.avatar_url} name={profile.display_name} size={22} />
             </button>
             {profile.is_verified && (
-              <div className="absolute -bottom-0.5 -right-0.5 bg-[#0D0C0B] rounded-full p-0.5"><VerifiedBadge size={20} /></div>
+              <div className="absolute -bottom-0.5 -right-0.5 bg-white rounded-full p-0.5"><VerifiedBadge size={20} /></div>
             )}
             {isOwnProfile && (
               <>
                 <button onClick={() => avatarInput.current?.click()} disabled={avatarBusy} aria-label="Change profile photo"
-                  className="absolute -bottom-1 -left-1 w-8 h-8 rounded-full bg-[#FF5A1F] border-2 border-[#0D0C0B] flex items-center justify-center text-white active:scale-90 transition-transform disabled:opacity-70">
+                  className="absolute -bottom-1 -left-1 w-8 h-8 rounded-full bg-[#F97316] border-2 border-[#E2E8F0] flex items-center justify-center text-white active:scale-90 transition-transform disabled:opacity-70">
                   {avatarBusy ? <Spinner size={14} /> : <Camera size={14} />}
                 </button>
                 <input ref={avatarInput} type="file" accept="image/*" className="hidden" onChange={onPickAvatar} />
@@ -663,19 +664,19 @@ export default function Profile() {
 
         <div className="mt-3">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <p className="text-white font-black text-[18px] leading-tight">{profile.display_name}</p>
+            <p className="text-[#202938] font-black text-[18px] leading-tight">{profile.display_name}</p>
             {profile.is_verified && <VerifiedBadge size={16} />}
             <RoleIcon role={profile.role} />
             {profile.is_business && (
-              <span className="inline-flex items-center gap-1 bg-yellow-500/15 text-yellow-400 text-[10px] px-2 py-0.5 rounded-full font-bold border border-yellow-500/30">
+              <span className="inline-flex items-center gap-1 bg-yellow-500/15 text-yellow-700 text-[10px] px-2 py-0.5 rounded-full font-bold border border-yellow-500/30">
                 <Briefcase size={10} /> Business
               </span>
             )}
           </div>
           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-            <p className="text-[#8E8C88] text-sm">@{profile.username}</p>
+            <p className="text-[#64748B] text-sm">@{profile.username}</p>
             {!isOwnProfile && relationship === REL.FOLLOW_BACK && (
-              <span className="text-[10px] font-bold text-[#8E8C88] bg-white/[0.07] px-2 py-0.5 rounded-full">Follows you</span>
+              <span className="text-[10px] font-bold text-[#64748B] bg-[#F1F5F9] px-2 py-0.5 rounded-full">Follows you</span>
             )}
             {!isOwnProfile && relationship === REL.FRIENDS && (
               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#2ECC71] bg-[#2ECC71]/10 border border-[#2ECC71]/30 px-2 py-0.5 rounded-full">
@@ -684,13 +685,13 @@ export default function Profile() {
             )}
           </div>
 
-          {profile.bio && <p className="text-white/85 text-[14px] mt-2.5 leading-snug whitespace-pre-line">{profile.bio}</p>}
+          {profile.bio && <p className="text-[#202938] text-[14px] mt-2.5 leading-snug whitespace-pre-line">{profile.bio}</p>}
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2.5 text-[#8E8C88] text-xs">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2.5 text-[#64748B] text-xs">
             {profile.country && <span className="inline-flex items-center gap-1"><MapPin size={13} /> {profile.country}</span>}
             {websiteHost && (
               <a href={websiteHref} target="_blank" rel="noopener noreferrer nofollow"
-                className="inline-flex items-center gap-1 text-[#FF5A1F] font-semibold max-w-[200px]">
+                className="inline-flex items-center gap-1 text-[#EA580C] font-semibold max-w-[200px]">
                 <Link2 size={13} className="flex-shrink-0" /> <span className="truncate">{websiteHost}</span>
               </a>
             )}
@@ -704,12 +705,12 @@ export default function Profile() {
           {isOwnProfile ? (
             <>
               <button onClick={() => navigate('/edit-profile')}
-                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-white/20 bg-white/[0.06] hover:bg-white/10 active:scale-95 transition-all">
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-[#202938] border border-[#E2E8F0] bg-[#F1F5F9] hover:bg-[#F1F5F9] active:scale-95 transition-all">
                 Edit Profile
               </button>
               <button onClick={() => navigate('/premium')}
-                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-[#FF5A1F]/40 bg-[#FF5A1F]/10 hover:bg-[#FF5A1F]/20 active:scale-95 transition-all inline-flex items-center justify-center gap-1.5">
-                <Crown size={15} className="text-[#FF5A1F]" /> Premium
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-[#F97316]/40 bg-[#F97316]/10 hover:bg-[#F97316]/20 active:scale-95 transition-all inline-flex items-center justify-center gap-1.5">
+                <Crown size={15} className="text-[#EA580C]" /> Premium
               </button>
             </>
           ) : (
@@ -720,7 +721,7 @@ export default function Profile() {
                 onChange={(r) => setRelationship(r)}
               />
               <button onClick={handleMessage} disabled={messageBusy}
-                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white border border-white/20 bg-white/[0.06] hover:bg-white/10 active:scale-95 transition-all inline-flex items-center justify-center gap-1.5 disabled:opacity-60">
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-[#202938] border border-[#E2E8F0] bg-[#F1F5F9] hover:bg-[#F1F5F9] active:scale-95 transition-all inline-flex items-center justify-center gap-1.5 disabled:opacity-60">
                 {messageBusy ? <Spinner size={15} /> : <><MessageCircle size={15} /> Message</>}
               </button>
             </>
@@ -738,12 +739,12 @@ export default function Profile() {
           ];
           return (
             <div className="mt-4 rounded-2xl border overflow-hidden" style={{ borderColor: (planInfo?.color || '#8E8C88') + '30', background: (planInfo?.color || '#8E8C88') + '08' }}>
-              <button onClick={() => navigate('/premium')} className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-white/[0.04] transition-colors">
+              <button onClick={() => navigate('/premium')} className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-[#F8FAFC] transition-colors">
                 <div className="flex items-center gap-3">
                   <IconTile icon={Crown} color={planInfo?.color || '#8E8C88'} size={40} iconSize={20} />
                   <div className="text-left">
-                    <p className="text-white font-bold text-[14px] flex items-center gap-1.5">{planInfo?.label || 'Free'} Plan <PlanIcon plan={activePlan} size={13} /></p>
-                    <p className="text-[#8E8C88] text-[11px]">
+                    <p className="text-[#202938] font-bold text-[14px] flex items-center gap-1.5">{planInfo?.label || 'Free'} Plan <PlanIcon plan={activePlan} size={13} /></p>
+                    <p className="text-[#64748B] text-[11px]">
                       {activePlan !== 'free' && profile.subscription_expires_at
                         ? 'Renews ' + new Date(profile.subscription_expires_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })
                         : 'Tap to upgrade'}
@@ -752,18 +753,18 @@ export default function Profile() {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1 bg-yellow-500/15 border border-yellow-500/25 rounded-full px-2.5 py-1">
-                    <Coins size={12} className="text-yellow-400" />
-                    <span className="text-yellow-400 font-bold text-[12px]">{formatNumber(profile.coins_balance || 0)}</span>
+                    <Coins size={12} className="text-yellow-700" />
+                    <span className="text-yellow-700 font-bold text-[12px]">{formatNumber(profile.coins_balance || 0)}</span>
                   </div>
-                  <ChevronRight size={16} className="text-[#8E8C88]" />
+                  <ChevronRight size={16} className="text-[#64748B]" />
                 </div>
               </button>
-              <div className="grid grid-cols-4 border-t border-white/[0.06]">
+              <div className="grid grid-cols-4 border-t border-[#E2E8F0]">
                 {actions.map(({ Icon, label, path, active }) => (
                   <button key={path} onClick={() => navigate(path)}
-                    className="relative flex flex-col items-center gap-1.5 py-3 hover:bg-white/[0.04] transition-colors border-r border-white/[0.06] last:border-r-0">
-                    <Icon size={19} className={active ? 'text-[#FF5A1F]' : 'text-white/70'} />
-                    <span className="text-[10px] font-semibold text-white/60">{label}</span>
+                    className="relative flex flex-col items-center gap-1.5 py-3 hover:bg-[#F8FAFC] transition-colors border-r border-[#E2E8F0] last:border-r-0">
+                    <Icon size={19} className={active ? 'text-[#EA580C]' : 'text-[#64748B]'} />
+                    <span className="text-[10px] font-semibold text-[#64748B]">{label}</span>
                     {active && <span className="absolute top-2 right-3 w-1.5 h-1.5 rounded-full bg-[#2ECC71]" />}
                   </button>
                 ))}
@@ -774,43 +775,43 @@ export default function Profile() {
       </div>
 
       {/* tabs */}
-      <div className="border-t border-white/[0.07] flex items-center justify-between px-2">
+      <div className="border-t border-[#E2E8F0] flex items-center justify-between px-2">
         <div className="flex">
           {TABS.map(({ key, label, Icon }) => (
             <button key={key} onClick={() => setTab(key)}
-              className={'py-3 px-3.5 text-[13px] font-semibold transition-all relative inline-flex items-center gap-1.5 ' + (tab === key ? 'text-white' : 'text-[#8E8C88]')}>
+              className={'py-3 px-3.5 text-[13px] font-semibold transition-all relative inline-flex items-center gap-1.5 ' + (tab === key ? 'text-[#202938]' : 'text-[#64748B]')}>
               <Icon size={15} /> {label}
-              {tab === key && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-[#FF5A1F] rounded-full" style={{ width: '70%' }} />}
+              {tab === key && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-[#F97316] rounded-full" style={{ width: '70%' }} />}
             </button>
           ))}
         </div>
         <div className="flex gap-1 pr-2">
-          <button onClick={() => setViewLayout('list')} aria-label="List view" className={`p-2 rounded-lg ${viewLayout === 'list' ? 'text-[#FF5A1F] bg-[#FF5A1F]/10' : 'text-[#8E8C88]'}`}><List size={17} /></button>
-          <button onClick={() => setViewLayout('grid')} aria-label="Grid view" className={`p-2 rounded-lg ${viewLayout === 'grid' ? 'text-[#FF5A1F] bg-[#FF5A1F]/10' : 'text-[#8E8C88]'}`}><Grid size={17} /></button>
+          <button onClick={() => setViewLayout('list')} aria-label="List view" className={`p-2 rounded-lg ${viewLayout === 'list' ? 'text-[#F97316] bg-[#F97316]/10' : 'text-[#64748B]'}`}><List size={17} /></button>
+          <button onClick={() => setViewLayout('grid')} aria-label="Grid view" className={`p-2 rounded-lg ${viewLayout === 'grid' ? 'text-[#F97316] bg-[#F97316]/10' : 'text-[#64748B]'}`}><Grid size={17} /></button>
         </div>
       </div>
 
       {cur.loading && items.length === 0 ? (
-        <div className="flex justify-center py-10 text-[#FF5A1F]"><Spinner size={24} /></div>
+        <div className="flex justify-center py-10 text-[#EA580C]"><Spinner size={24} /></div>
       ) : items.length === 0 ? (
         <EmptyState icon={TABS.find((t) => t.key === tab).Icon} title={emptyCopy.title} text={emptyCopy.text}>
           {isOwnProfile && tab === 'posts' && (
-            <button onClick={() => navigate('/create')} className="bg-[#FF5A1F] text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-lg shadow-[#FF5A1F]/30">
+            <button onClick={() => navigate('/create')} className="bg-[#F97316] text-white px-5 py-2.5 rounded-full font-bold text-sm  ">
               Create your first post
             </button>
           )}
         </EmptyState>
       ) : viewLayout === 'grid' || tab === 'media' ? (
-        <div className="grid grid-cols-3 gap-0.5 border-t border-white/[0.06]">
+        <div className="grid grid-cols-3 gap-0.5 border-t border-[#E2E8F0]">
           {items.map((post) => (
             <button key={post.id} onClick={() => navigate('/post/' + post.id)}
-              className="relative bg-white/5 hover:bg-white/10 transition-colors" style={{ aspectRatio: '1/1' }}>
+              className="relative bg-[#F8FAFC] hover:bg-[#F1F5F9] transition-colors" style={{ aspectRatio: '1/1' }}>
               {(post.media_urls || [])[0]
                 ? <img src={thumbUrl(post.media_urls[0], 360)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                 : post.video_url
-                  ? <div className="w-full h-full flex items-center justify-center bg-black/40"><Play size={22} className="text-white/80" /></div>
-                  : <div className="w-full h-full flex items-center justify-center p-2"><p className="text-white/50 text-[10px] text-center line-clamp-3">{post.caption}</p></div>}
-              {post.video_url && (post.media_urls || [])[0] && <Play size={14} className="absolute top-1.5 right-1.5 text-white drop-shadow" fill="white" />}
+                  ? <div className="w-full h-full flex items-center justify-center bg-black/40"><Play size={22} className="text-[#202938]" /></div>
+                  : <div className="w-full h-full flex items-center justify-center p-2"><p className="text-[#64748B] text-[10px] text-center line-clamp-3">{post.caption}</p></div>}
+              {post.video_url && (post.media_urls || [])[0] && <Play size={14} className="absolute top-1.5 right-1.5 text-[#202938] drop-shadow" fill="white" />}
             </button>
           ))}
         </div>
@@ -818,7 +819,7 @@ export default function Profile() {
         items.map((post) => <PostCard key={post.id} post={post} currentUser={user} onRefresh={refreshPosts} />)
       )}
 
-      <div ref={sentinel} className="h-10 flex items-center justify-center text-[#FF5A1F]">
+      <div ref={sentinel} className="h-10 flex items-center justify-center text-[#EA580C]">
         {cur.loading && items.length > 0 && <Spinner size={18} />}
       </div>
     </div>

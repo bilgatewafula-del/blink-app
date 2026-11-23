@@ -47,10 +47,10 @@ const flagMap = {
 const REACTIONS = [
   { emoji:'❤️', type:'like',  color:'#EF4444' },
   { emoji:'😂', type:'haha',  color:'#FFD700' },
-  { emoji:'😮', type:'wow',   color:'#FF6B35' },
+  { emoji:'😮', type:'wow',   color:'#F97316' },
   { emoji:'😢', type:'sad',   color:'#8E8C88' },
   { emoji:'😡', type:'angry', color:'#EF4444' },
-  { emoji:'🔥', type:'fire',  color:'#FF6B35' },
+  { emoji:'🔥', type:'fire',  color:'#F97316' },
 ];
 
 /* ═══════════════════════════════════════════════
@@ -59,12 +59,12 @@ const REACTIONS = [
 function RichCaption({ text, onHashtag, onMention }) {
   if (!text) return null;
   return (
-    <p className="text-white/90 text-[15px] leading-relaxed break-words whitespace-pre-wrap">
+    <p className="text-[#202938] text-[15px] leading-relaxed break-words whitespace-pre-wrap">
       {text.split(/(#\w+|@\w+)/g).map((p, i) => {
         if (p.startsWith('#'))
-          return <button key={i} onClick={e => { e.stopPropagation(); onHashtag(p.slice(1)); }} className="text-[#FF5A1F] hover:underline font-medium">{p}</button>;
+          return <button key={i} onClick={e => { e.stopPropagation(); onHashtag(p.slice(1)); }} className="text-[#EA580C] hover:underline font-medium">{p}</button>;
         if (p.startsWith('@'))
-          return <button key={i} onClick={e => { e.stopPropagation(); onMention(p.slice(1)); }} className="text-[#FF5A1F] hover:underline font-medium">{p}</button>;
+          return <button key={i} onClick={e => { e.stopPropagation(); onMention(p.slice(1)); }} className="text-[#EA580C] hover:underline font-medium">{p}</button>;
         return <span key={i}>{p}</span>;
       })}
     </p>
@@ -101,12 +101,12 @@ function MediaGrid({ images, onImageClick, onDoubleTapLike }) {
 
   const HeartBurst = () => burst ? (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-      <Heart size={72} className="text-white drop-shadow-lg animate-heartBurst" fill="currentColor" />
+      <Heart size={72} className="text-[#202938] drop-shadow-lg animate-heartBurst" fill="currentColor" />
     </div>
   ) : null;
 
   return (
-    <div className="mb-2 overflow-hidden rounded-2xl border border-white/10 relative">
+    <div className="mb-2 overflow-hidden rounded-2xl border border-[#E2E8F0] relative">
       {n === 1 && (
         <div className="relative">
           <img src={feedImageUrl(images[0], 800)} alt="" className="w-full object-cover cursor-pointer"
@@ -149,7 +149,7 @@ function MediaGrid({ images, onImageClick, onDoubleTapLike }) {
               {i === 3 && n > 4 && (
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer"
                   onClick={e => { e.stopPropagation(); onImageClick?.(3); }}>
-                  <span className="text-white font-bold text-2xl">+{n-4}</span>
+                  <span className="text-[#202938] font-bold text-2xl">+{n-4}</span>
                 </div>
               )}
             </div>
@@ -266,14 +266,14 @@ function VideoPlayer({ src, poster, duration }) {
   const fmtDur = (s) => s ? `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}` : '';
 
   if (error) return (
-    <div className="w-full bg-black/40 rounded-2xl flex items-center justify-center gap-2 py-10 border border-white/10">
-      <AlertTriangle size={18} className="text-red-400" />
-      <span className="text-white/60 text-sm">Video unavailable</span>
+    <div className="w-full bg-black/40 rounded-2xl flex items-center justify-center gap-2 py-10 border border-[#E2E8F0]">
+      <AlertTriangle size={18} className="text-red-600" />
+      <span className="text-[#64748B] text-sm">Video unavailable</span>
     </div>
   );
 
   return (
-    <div ref={containerRef} className="relative rounded-2xl overflow-hidden bg-black mb-2 border border-white/10"
+    <div ref={containerRef} className="relative rounded-2xl overflow-hidden bg-black mb-2 border border-[#E2E8F0]"
       style={{ aspectRatio: aspect, maxHeight: '600px' }}>
       <video
         ref={videoRef}
@@ -295,7 +295,7 @@ function VideoPlayer({ src, poster, duration }) {
       <div className="absolute inset-0 flex items-center justify-center cursor-pointer" onClick={toggle}>
         {buffering && (
           <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
-            <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-[#E2E8F0] border-t-white rounded-full animate-spin" />
           </div>
         )}
         {!playing && !buffering && (
@@ -307,7 +307,7 @@ function VideoPlayer({ src, poster, duration }) {
 
       <div className="absolute bottom-0 left-0 right-0 px-3 pb-2 pt-4"
         style={{ background:'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)' }}>
-        <div className="w-full h-[3px] bg-white/20 rounded-full mb-2 cursor-pointer"
+        <div className="w-full h-[3px] bg-[#E2E8F0] rounded-full mb-2 cursor-pointer"
           onClick={e => {
             e.stopPropagation();
             const v = videoRef.current;
@@ -316,11 +316,11 @@ function VideoPlayer({ src, poster, duration }) {
             const pct  = (e.clientX - rect.left) / rect.width;
             v.currentTime = pct * v.duration;
           }}>
-          <div className="h-full bg-white rounded-full transition-all" style={{ width: progress + '%' }} />
+          <div className="h-full bg-[#F8FAFC] rounded-full transition-all" style={{ width: progress + '%' }} />
         </div>
         <div className="flex items-center justify-between">
           {duration && (
-            <span className="text-white text-[11px] font-medium">{fmtDur(duration)}</span>
+            <span className="text-[#202938] text-[11px] font-medium">{fmtDur(duration)}</span>
           )}
           <button
             onClick={e => { e.stopPropagation(); setMuted(m => !m); }}
@@ -342,23 +342,23 @@ function QuotedPost({ quotedPost, navigate }) {
   const a    = quotedPost.users;
   const imgs = quotedPost.media_urls || [];
   return (
-    <div className="border border-white/15 rounded-2xl p-3 mb-2 bg-white/[0.03] cursor-pointer hover:bg-white/[0.06] transition-colors"
+    <div className="border border-[#E2E8F0] rounded-2xl p-3 mb-2 bg-[#F8FAFC] cursor-pointer hover:bg-[#F1F5F9] transition-colors"
       onClick={e => { e.stopPropagation(); navigate('/post/' + quotedPost.id); }}>
       <div className="flex items-center gap-1.5 mb-1 flex-wrap">
         {a?.avatar_url
           ? <img loading="lazy" decoding="async" src={a.avatar_url} alt="" className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
-          : <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#FF2D78] flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">{a?.display_name?.[0]?.toUpperCase()}</div>
+          : <div className="w-5 h-5 rounded-full bg-[#F97316] flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">{a?.display_name?.[0]?.toUpperCase()}</div>
         }
-        <span className="text-white font-bold text-[13px] truncate max-w-[100px]">{a?.display_name}</span>
+        <span className="text-[#202938] font-bold text-[13px] truncate max-w-[100px]">{a?.display_name}</span>
         {a?.is_verified && <VerifiedBadge size={14} />}
-        <span className="text-[#8E8C88] text-[12px]">@{a?.username}</span>
-        <span className="text-[#8E8C88] text-[12px]">· {formatTime(quotedPost.created_at)}</span>
+        <span className="text-[#64748B] text-[12px]">@{a?.username}</span>
+        <span className="text-[#64748B] text-[12px]">· {formatTime(quotedPost.created_at)}</span>
       </div>
-      {quotedPost.caption && <p className="text-white/75 text-[13px] leading-snug line-clamp-3 mb-1">{quotedPost.caption}</p>}
+      {quotedPost.caption && <p className="text-[#64748B] text-[13px] leading-snug line-clamp-3 mb-1">{quotedPost.caption}</p>}
       {imgs.length > 0 && <img src={imgs[0]} alt="" className="w-full object-cover rounded-xl" style={{ maxHeight:160 }} loading="lazy" />}
       {quotedPost.video_url && !imgs.length && (
         <div className="w-full bg-black/40 rounded-xl flex items-center justify-center gap-2 py-4">
-          <Play size={18} color="white" fill="white" /><span className="text-white text-xs">Video</span>
+          <Play size={18} color="white" fill="white" /><span className="text-[#202938] text-xs">Video</span>
         </div>
       )}
     </div>
@@ -401,17 +401,17 @@ function ReportModal({ postId, postUserId, currentUserId, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center" onClick={onClose}>
-      <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5 pb-8" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-[620px] bg-white border-t border-[#E2E8F0] rounded-t-3xl p-5 pb-8" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-white font-bold text-base">Report Post</h3>
-          <button onClick={onClose} className="text-[#8E8C88] hover:text-white"><X size={20} /></button>
+          <h3 className="text-[#202938] font-bold text-base">Report Post</h3>
+          <button onClick={onClose} className="text-[#64748B] hover:text-[#202938]"><X size={20} /></button>
         </div>
         {done ? (
           <div className="text-center py-8">
             <p className="text-4xl mb-3">✅</p>
-            <p className="text-white font-bold">Report submitted</p>
-            <p className="text-[#8E8C88] text-sm mt-1">Thank you. Our team will review this.</p>
-            <button onClick={onClose} className="mt-4 bg-[#FF5A1F] text-white px-6 py-2.5 rounded-full font-bold text-sm">Done</button>
+            <p className="text-[#202938] font-bold">Report submitted</p>
+            <p className="text-[#64748B] text-sm mt-1">Thank you. Our team will review this.</p>
+            <button onClick={onClose} className="mt-4 bg-[#F97316] text-white px-6 py-2.5 rounded-full font-bold text-sm">Done</button>
           </div>
         ) : (
           <>
@@ -419,7 +419,7 @@ function ReportModal({ postId, postUserId, currentUserId, onClose }) {
               {REASONS.map(r => (
                 <button key={r} onClick={() => setSelected(r)}
                   className={'w-full text-left px-4 py-3 rounded-xl text-sm border transition-all ' +
-                    (selected === r ? 'bg-[#FF5A1F]/20 border-[#FF5A1F]/50 text-white font-semibold' : 'bg-white/[0.03] border-white/[0.06] text-white/70 hover:bg-white/[0.07]')}>
+                    (selected === r ? 'bg-[#F97316]/20 border-[#F97316]/50 text-white font-semibold' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:bg-[#F1F5F9]')}>
                   {r}
                 </button>
               ))}
@@ -427,7 +427,7 @@ function ReportModal({ postId, postUserId, currentUserId, onClose }) {
             {selected && (
               <textarea value={details} onChange={e => setDetails(e.target.value)}
                 placeholder="Additional details (optional)..." rows={3}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-[#8E8C88] focus:outline-none resize-none mb-4" />
+                className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-3 text-[#202938] text-sm placeholder-[#94A3B8] focus:outline-none resize-none mb-4" />
             )}
             <button onClick={handleSubmit} disabled={!selected || sending}
               className="w-full py-3.5 rounded-2xl font-bold text-white text-sm disabled:opacity-40 bg-red-500 hover:bg-red-600 transition-colors">
@@ -587,31 +587,31 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center" onClick={onClose}>
-      <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl pb-safe overflow-hidden"
+      <div className="w-full max-w-[620px] bg-white border-t border-[#E2E8F0] rounded-t-3xl pb-safe overflow-hidden"
         style={{ paddingBottom:'max(16px, env(safe-area-inset-bottom))' }}
         onClick={e => e.stopPropagation()}>
 
         {toast && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-white/15 backdrop-blur border border-white/20 rounded-full px-4 py-2 z-10">
-            <p className="text-white text-sm font-semibold">{toast}</p>
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-[#E2E8F0] backdrop-blur border border-[#E2E8F0] rounded-full px-4 py-2 z-10">
+            <p className="text-[#202938] text-sm font-semibold">{toast}</p>
           </div>
         )}
 
         {confirm && (
           <div className="p-5">
-            <p className="text-white font-bold text-base mb-1">Are you sure?</p>
-            <p className="text-white/60 text-sm mb-5">{confirm.label}</p>
+            <p className="text-[#202938] font-bold text-base mb-1">Are you sure?</p>
+            <p className="text-[#64748B] text-sm mb-5">{confirm.label}</p>
             <div className="flex gap-3">
               <button onClick={() => setConfirm(null)}
-                className="flex-1 py-3 rounded-2xl font-bold text-sm text-white/70 bg-white/10 hover:bg-white/15 transition-colors">
+                className="flex-1 py-3 rounded-2xl font-bold text-sm text-[#64748B] bg-[#F1F5F9] hover:bg-[#E2E8F0] transition-colors">
                 Cancel
               </button>
               <button onClick={confirm.fn} disabled={!!busy}
                 className="flex-1 py-3 rounded-2xl font-bold text-sm text-white bg-red-500 hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5">
                 {busy === 'delete'
-                  ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Deleting...</>
+                  ? <><div className="w-4 h-4 border-2 border-[#E2E8F0] border-t-white rounded-full animate-spin" />Deleting...</>
                   : busy === 'block'
-                    ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Blocking...</>
+                    ? <><div className="w-4 h-4 border-2 border-[#E2E8F0] border-t-white rounded-full animate-spin" />Blocking...</>
                     : confirm.fn === handleDelete ? '🗑️ Delete' : '🚫 Block'
                 }
               </button>
@@ -621,12 +621,12 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
 
         {!confirm && (
           <>
-            <div className="px-5 pt-4 pb-3 border-b border-white/[0.07]">
+            <div className="px-5 pt-4 pb-3 border-b border-[#E2E8F0]">
               <div className="flex items-center gap-2">
                 <Avatar url={post.users?.avatar_url} name={post.users?.display_name} size={8} />
                 <div className="min-w-0">
-                  <p className="text-white font-bold text-[13px] truncate">{post.users?.display_name}</p>
-                  {post.caption && <p className="text-white/40 text-[12px] truncate">{post.caption.slice(0,60)}</p>}
+                  <p className="text-[#202938] font-bold text-[13px] truncate">{post.users?.display_name}</p>
+                  {post.caption && <p className="text-[#94A3B8] text-[12px] truncate">{post.caption.slice(0,60)}</p>}
                 </div>
               </div>
             </div>
@@ -640,15 +640,15 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
                     onClick={item.action}
                     disabled={!!busy && busy !== item.key}
                     className={'w-full flex items-center gap-4 px-5 py-3.5 transition-all active:scale-[0.98] disabled:opacity-40 ' +
-                      (item.danger ? 'hover:bg-red-500/10' : 'hover:bg-white/[0.05]')}
+                      (item.danger ? 'hover:bg-red-500/10' : 'hover:bg-[#F8FAFC]')}
                   >
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${item.danger ? 'bg-red-500/15' : 'bg-white/[0.07]'}`}>
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${item.danger ? 'bg-red-500/15' : 'bg-[#F1F5F9]'}`}>
                       {busy === item.key
-                        ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        : Icon ? <Icon size={16} className={item.danger ? 'text-red-400' : 'text-[#8E8C88]'} /> : null
+                        ? <div className="w-4 h-4 border-2 border-[#E2E8F0] border-t-white rounded-full animate-spin" />
+                        : Icon ? <Icon size={16} className={item.danger ? 'text-red-600' : 'text-[#64748B]'} /> : null
                       }
                     </div>
-                    <span className={`font-semibold text-[14px] ${item.danger ? 'text-red-400' : 'text-white/85'}`}>
+                    <span className={`font-semibold text-[14px] ${item.danger ? 'text-red-600' : 'text-[#202938]'}`}>
                       {item.label}
                     </span>
                   </button>
@@ -658,7 +658,7 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
 
             <div className="px-4 pt-1 pb-2">
               <button onClick={onClose}
-                className="w-full py-3.5 rounded-2xl font-bold text-sm text-white/60 bg-white/[0.06] hover:bg-white/10 transition-colors active:scale-[0.98]">
+                className="w-full py-3.5 rounded-2xl font-bold text-sm text-[#64748B] bg-[#F1F5F9] hover:bg-[#F1F5F9] transition-colors active:scale-[0.98]">
                 Cancel
               </button>
             </div>
@@ -851,22 +851,22 @@ function PostCard({
       )}
       {showQuoteModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center" onClick={() => setShowQuoteModal(false)}>
-          <div className="w-full max-w-[620px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-4 pb-8" onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-[620px] bg-white border-t border-[#E2E8F0] rounded-t-3xl p-4 pb-8" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <button onClick={() => setShowQuoteModal(false)} className="text-[#8E8C88] hover:text-white"><X size={20} /></button>
-              <h3 className="text-white font-bold">Quote Post</h3>
+              <button onClick={() => setShowQuoteModal(false)} className="text-[#64748B] hover:text-[#202938]"><X size={20} /></button>
+              <h3 className="text-[#202938] font-bold">Quote Post</h3>
               <button onClick={handleQuotePost} disabled={!quoteText.trim()}
-                className="bg-[#FF5A1F] text-white text-sm font-bold px-4 py-1.5 rounded-full disabled:opacity-40">Post</button>
+                className="bg-[#F97316] text-white text-sm font-bold px-4 py-1.5 rounded-full disabled:opacity-40">Post</button>
             </div>
             <textarea autoFocus value={quoteText} onChange={e => setQuoteText(e.target.value)}
               placeholder="Add a comment..." maxLength={500} rows={3}
-              className="w-full bg-transparent text-white text-[16px] placeholder-[#8E8C88] focus:outline-none resize-none leading-relaxed mb-3" />
-            <div className="border border-white/15 rounded-2xl p-3 bg-white/[0.03]">
+              className="w-full bg-transparent text-[#202938] text-[16px] placeholder-[#94A3B8] focus:outline-none resize-none leading-relaxed mb-3" />
+            <div className="border border-[#E2E8F0] rounded-2xl p-3 bg-[#F8FAFC]">
               <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-white font-bold text-[13px]">{author?.display_name}</span>
-                <span className="text-[#8E8C88] text-[12px]">@{author?.username}</span>
+                <span className="text-[#202938] font-bold text-[13px]">{author?.display_name}</span>
+                <span className="text-[#64748B] text-[12px]">@{author?.username}</span>
               </div>
-              {post.caption && <p className="text-white/70 text-[13px] line-clamp-2">{post.caption}</p>}
+              {post.caption && <p className="text-[#64748B] text-[13px] line-clamp-2">{post.caption}</p>}
               {images[0] && <img loading="lazy" decoding="async" src={images[0]} alt="" className="w-full object-cover rounded-xl mt-2" style={{ maxHeight:80 }} />}
             </div>
           </div>
@@ -898,32 +898,32 @@ function PostCard({
       )}
 
       {actionToast && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 bg-white/15 backdrop-blur border border-white/20 rounded-full px-5 py-2.5 pointer-events-none">
-          <p className="text-white text-sm font-semibold whitespace-nowrap">{actionToast}</p>
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 bg-[#E2E8F0] backdrop-blur border border-[#E2E8F0] rounded-full px-5 py-2.5 pointer-events-none">
+          <p className="text-[#202938] text-sm font-semibold whitespace-nowrap">{actionToast}</p>
         </div>
       )}
 
       <div
-        className="border-b border-white/[0.07] hover:bg-white/[0.015] transition-colors cursor-pointer relative"
+        className="border-b border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors cursor-pointer relative"
         onClick={() => navigate('/post/' + post.id)}
       >
         {post.is_pinned && (
           <div className="flex items-center gap-1.5 px-4 pt-2">
-            <Pin size={12} className="text-[#8E8C88]" />
-            <span className="text-[#8E8C88] text-xs font-medium">Pinned post</span>
+            <Pin size={12} className="text-[#64748B]" />
+            <span className="text-[#64748B] text-xs font-medium">Pinned post</span>
           </div>
         )}
 
         {post.is_boosted && (
           <div className="flex items-center gap-1.5 px-4 pt-2">
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FF6B35]/15 text-[#FF6B35] border border-[#FF6B35]/25"><Zap size={10} className="inline -mt-0.5 mr-0.5" />Promoted</span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F97316]/15 text-[#EA580C] border border-[#F97316]/25"><Zap size={10} className="inline -mt-0.5 mr-0.5" />Promoted</span>
           </div>
         )}
 
         {isRepost && !post.is_pinned && !post.is_boosted && (
           <div className="flex items-center gap-1.5 px-4 pt-2.5 pb-0">
-            <Repeat2 size={13} className="text-[#8E8C88]" />
-            <span className="text-[#8E8C88] text-xs font-medium">{author?.display_name} reposted</span>
+            <Repeat2 size={13} className="text-[#64748B]" />
+            <span className="text-[#64748B] text-xs font-medium">{author?.display_name} reposted</span>
           </div>
         )}
 
@@ -938,22 +938,22 @@ function PostCard({
             <div className="flex items-start justify-between gap-1 mb-0.5">
               <div className="flex items-center gap-1 flex-wrap min-w-0">
                 <button onClick={e => { e.stopPropagation(); navigate('/profile/' + author?.username); }}
-                  className="text-white font-bold text-[14px] hover:underline truncate max-w-[120px]">
+                  className="text-[#202938] font-bold text-[14px] hover:underline truncate max-w-[120px]">
                   {author?.display_name}
                 </button>
                 {author?.is_verified && <VerifiedBadge size={15} />}
-                {author?.role === 'blink'  && <Crown size={12} className="flex-shrink-0 text-[#FFD700]" fill="#FFD700" fillOpacity={0.25} />}
-                {author?.role === 'admin'  && <ShieldCheck size={12} className="flex-shrink-0 text-[#FF5A1F]" />}
-                <span className="text-[#8E8C88] text-[13px] truncate max-w-[80px]">@{author?.username}</span>
-                <span className="text-[#8E8C88] text-[13px]">·</span>
-                <span className="text-[#8E8C88] text-[13px] whitespace-nowrap">{formatTime(post.created_at)}</span>
+                {author?.role === 'blink'  && <Crown size={12} className="flex-shrink-0 text-[#B45309]" fill="#FFD700" fillOpacity={0.25} />}
+                {author?.role === 'admin'  && <ShieldCheck size={12} className="flex-shrink-0 text-[#EA580C]" />}
+                <span className="text-[#64748B] text-[13px] truncate max-w-[80px]">@{author?.username}</span>
+                <span className="text-[#64748B] text-[13px]">·</span>
+                <span className="text-[#64748B] text-[13px] whitespace-nowrap">{formatTime(post.created_at)}</span>
                 {flagMap[author?.country] && <span className="text-[13px]">{flagMap[author?.country]}</span>}
               </div>
 
               <button
                 onClick={e => { e.stopPropagation(); setShowOptionsMenu(true); }}
                 aria-label="Post options"
-                className="text-[#8E8C88] hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors flex-shrink-0"
+                className="text-[#64748B] hover:text-[#202938] p-1 rounded-full hover:bg-[#F1F5F9] transition-colors flex-shrink-0"
               >
                 <MoreHorizontal size={16} />
               </button>
@@ -999,10 +999,10 @@ function PostCard({
               />
             </div>
 
-            {post.location && <p className="text-[#8E8C88] text-xs mb-1.5 flex items-center gap-1"><MapPin size={12} /> {post.location}</p>}
+            {post.location && <p className="text-[#64748B] text-xs mb-1.5 flex items-center gap-1"><MapPin size={12} /> {post.location}</p>}
 
             {post.comments_disabled && (
-              <p className="text-[#8E8C88] text-xs mb-1.5 flex items-center gap-1">
+              <p className="text-[#64748B] text-xs mb-1.5 flex items-center gap-1">
                 <MessageSquareOff size={11} /> Comments are turned off
               </p>
             )}
@@ -1011,7 +1011,7 @@ function PostCard({
 
               <button onClick={() => setCommentsOpen(true)}
                 aria-label="Comment"
-                className="flex items-center gap-1.5 text-[#8E8C88] hover:text-[#FF5A1F] group px-2 py-1.5 rounded-full hover:bg-[#FF5A1F]/10 transition-all"
+                className="flex items-center gap-1.5 text-[#64748B] hover:text-[#EA580C] group px-2 py-1.5 rounded-full hover:bg-[#F97316]/10 transition-all"
                 disabled={post.comments_disabled}>
                 <MessageCircle size={17} />
                 {(post.comments_count||0) > 0 && <span className="text-[13px]">{formatNumber(post.comments_count)}</span>}
@@ -1019,23 +1019,23 @@ function PostCard({
 
               <div className="relative">
                 {showRepostMenu && (
-                  <div className="absolute bottom-10 left-0 bg-[#1d1c1a] border border-white/10 rounded-2xl overflow-hidden z-30 shadow-2xl" style={{ minWidth:180 }}>
+                  <div className="absolute bottom-10 left-0 bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden z-30 shadow-2xl" style={{ minWidth:180 }}>
                     <button onClick={handleDirectRepost}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-sm border-b border-white/5"
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F8FAFC] text-sm border-b border-[#E2E8F0]"
                       style={{ color: reposted ? '#2ECC71':'white' }}>
                       <Repeat2 size={16} style={{ color: reposted?'#2ECC71':'#8E8C88' }} />
                       {reposted ? 'Undo Repost' : 'Repost'}
                     </button>
                     <button onClick={() => { setShowRepostMenu(false); setShowQuoteModal(true); }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white text-sm">
-                      <Quote size={16} className="text-[#8E8C88]" /> Quote
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F8FAFC] text-[#202938] text-sm">
+                      <Quote size={16} className="text-[#64748B]" /> Quote
                     </button>
                   </div>
                 )}
                 <button onClick={e => { e.stopPropagation(); setShowRepostMenu(!showRepostMenu); setShowReactionPicker(false); }}
                   aria-label="Repost"
                   className={'flex items-center gap-1.5 px-2 py-1.5 rounded-full transition-all ' +
-                    (reposted ? 'text-[#2ECC71] hover:bg-[#2ECC71]/10' : 'text-[#8E8C88] hover:text-[#2ECC71] hover:bg-[#2ECC71]/10')}>
+                    (reposted ? 'text-[#2ECC71] hover:bg-[#2ECC71]/10' : 'text-[#64748B] hover:text-[#2ECC71] hover:bg-[#2ECC71]/10')}>
                   <Repeat2 size={17} />
                   {repostCount > 0 && <span className="text-[13px]">{formatNumber(repostCount)}</span>}
                 </button>
@@ -1043,10 +1043,10 @@ function PostCard({
 
               <div className="relative">
                 {showReactionPicker && (
-                  <div className="absolute bottom-10 left-0 bg-[#1d1c1a] border border-white/10 rounded-full px-2 py-2 flex gap-1 z-30 shadow-2xl" style={{ minWidth:'max-content' }}>
+                  <div className="absolute bottom-10 left-0 bg-white border border-[#E2E8F0] rounded-full px-2 py-2 flex gap-1 z-30 shadow-2xl" style={{ minWidth:'max-content' }}>
                     {REACTIONS.map(r => (
                       <button key={r.type} onClick={() => handleLike(r.type)}
-                        className="text-lg hover:scale-125 transition-transform w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10">
+                        className="text-lg hover:scale-125 transition-transform w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#F1F5F9]">
                         {r.emoji}
                       </button>
                     ))}
@@ -1084,7 +1084,7 @@ function PostCard({
                 onClick={isOwner ? handleViewInsights : undefined}
                 aria-label="View count"
                 className={'flex items-center gap-1.5 px-2 py-1.5 rounded-full transition-all ' +
-                  (isOwner ? 'text-[#8E8C88] hover:text-[#FF5A1F] hover:bg-[#FF5A1F]/10 cursor-pointer' : 'text-[#8E8C88] cursor-default')}>
+                  (isOwner ? 'text-[#64748B] hover:text-[#EA580C] hover:bg-[#F97316]/10 cursor-pointer' : 'text-[#64748B] cursor-default')}>
                 <BarChart2 size={17} />
                 {(post.views_count||0) > 0 && <span className="text-[13px]">{formatNumber(post.views_count)}</span>}
               </button>
@@ -1092,11 +1092,11 @@ function PostCard({
               <div className="flex items-center">
                 <button onClick={handleSave} aria-label={saved ? 'Remove from saved' : 'Save post'}
                   className={'px-2 py-1.5 rounded-full transition-all ' +
-                    (saved ? 'text-[#FF5A1F] hover:bg-[#FF5A1F]/10' : 'text-[#8E8C88] hover:text-[#FF5A1F] hover:bg-[#FF5A1F]/10')}>
+                    (saved ? 'text-[#EA580C] hover:bg-[#F97316]/10' : 'text-[#64748B] hover:text-[#EA580C] hover:bg-[#F97316]/10')}>
                   <Bookmark size={17} fill={saved ? 'currentColor' : 'none'} />
                 </button>
                 <button onClick={handleShare} aria-label="Share post"
-                  className="text-[#8E8C88] hover:text-[#FF5A1F] px-2 py-1.5 rounded-full hover:bg-[#FF5A1F]/10 transition-all">
+                  className="text-[#64748B] hover:text-[#EA580C] px-2 py-1.5 rounded-full hover:bg-[#F97316]/10 transition-all">
                   <Share2 size={17} />
                 </button>
               </div>

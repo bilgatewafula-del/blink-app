@@ -19,7 +19,7 @@ export const PLANS = {
     ],
   },
   pro: {
-    key: 'pro', label: 'Pro', price: 299, color: '#FF5A1F', badge: null,
+    key: 'pro', label: 'Pro', price: 299, color: '#F97316', badge: null,
     features: [
       '20 posts per day',
       '30s story duration',
@@ -30,7 +30,7 @@ export const PLANS = {
     ],
   },
   creator: {
-    key: 'creator', label: 'Creator', price: 599, color: '#FF6B35', badge: null,
+    key: 'creator', label: 'Creator', price: 599, color: '#F97316', badge: null,
     features: [
       '50 posts per day',
       '60s story duration',

@@ -56,14 +56,17 @@ export default function BottomNav() {
           return (
             <button
               key={tab.path}
-              onClick={() => navigate(tab.path)}
+              onClick={() => {
+                if (on) { window.scrollTo({ top: 0, behavior: 'smooth' }); window.dispatchEvent(new CustomEvent('blink:tab-reselect', { detail: tab.path })); }
+                else navigate(tab.path);
+              }}
               className="flex flex-col items-center gap-0.5 relative px-3 py-1.5 rounded-2xl transition-all active:scale-90"
               style={{ minWidth: 48 }}
             >
               {/* Badge */}
               {tab.badge > 0 && (
                 <span
-                  className="absolute top-0.5 right-1 min-w-[16px] h-4 bg-[#FF5A1F] rounded-full text-[9px] text-white flex items-center justify-center font-bold px-0.5"
+                  className="absolute top-0.5 right-1 min-w-[16px] h-4 bg-[#F97316] rounded-full text-[9px] text-white flex items-center justify-center font-bold px-0.5"
                   style={{ lineHeight: 1 }}
                 >
                   {tab.badge > 9 ? '9+' : tab.badge}
@@ -77,8 +80,8 @@ export default function BottomNav() {
               >
                 <Icon
                   size={22}
-                  style={{ color: on ? '#FF5A1F' : '#8E8C88' }}
-                  fill={on && tab.path === '/' ? '#FF5A1F' : 'none'}
+                  style={{ color: on ? '#F97316' : '#8E8C88' }}
+                  fill={on && tab.path === '/' ? '#F97316' : 'none'}
                   strokeWidth={on ? 2.2 : 1.8}
                 />
               </div>
@@ -86,14 +89,14 @@ export default function BottomNav() {
               {/* Label */}
               <span
                 className="text-[9px] font-semibold transition-colors"
-                style={{ color: on ? '#FF5A1F' : '#8E8C88' }}
+                style={{ color: on ? '#F97316' : '#8E8C88' }}
               >
                 {tab.label}
               </span>
 
               {/* Active dot */}
               {on && (
-                <div className="w-1 h-1 rounded-full bg-[#FF5A1F] absolute -bottom-0.5" />
+                <div className="w-1 h-1 rounded-full bg-[#F97316] absolute -bottom-0.5" />
               )}
             </button>
           );

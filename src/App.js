@@ -20,6 +20,7 @@ const Home               = lazy(() => import('./pages/feed/Home'));
 const Discover           = lazy(() => import('./pages/discover/Discover'));
 const BFlash             = lazy(() => import('./pages/flash/BFlash'));
 const FlashStudio        = lazy(() => import('./pages/flash/FlashStudio'));
+const MyVideos           = lazy(() => import('./pages/flash/MyVideos'));
 const Notifications      = lazy(() => import('./pages/notifications/Notifications'));
 const Profile            = lazy(() => import('./pages/profile/Profile'));
 const EditProfile        = lazy(() => import('./pages/profile/EditProfile'));
@@ -49,11 +50,11 @@ const AboutPage    = lazy(() => import('./pages/about/AboutPage'));
 function ComingSoon({ title }) {
   const nav = typeof window !== 'undefined' ? null : null;
   return (
-    <div className="min-h-screen bg-[#0D0C0B] flex flex-col items-center justify-center gap-4 px-6">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4 px-6">
       <p className="text-5xl">🚧</p>
-      <p className="text-white font-bold text-xl">{title}</p>
-      <p className="text-[#8E8C88] text-sm text-center">Coming soon!</p>
-      <button onClick={() => window.history.back()} className="mt-2 bg-[#FF5A1F] text-white px-6 py-2.5 rounded-full font-bold text-sm">← Go Back</button>
+      <p className="text-[#202938] font-bold text-xl">{title}</p>
+      <p className="text-[#64748B] text-sm text-center">Coming soon!</p>
+      <button onClick={() => window.history.back()} className="mt-2 bg-[#F97316] text-white px-6 py-2.5 rounded-full font-bold text-sm">← Go Back</button>
     </div>
   );
 }
@@ -65,24 +66,24 @@ const VibesPage  = () => <ComingSoon title="Vibes"        />;
 /* ── Loaders ── */
 function PageLoader() {
   return (
-    <div className="min-h-screen bg-[#0D0C0B] flex items-center justify-center">
-      <div className="w-6 h-6 border-2 border-[#FF5A1F] border-t-transparent rounded-full animate-spin" />
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="w-6 h-6 border-2 border-[#F97316] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 }
 
 function Splash() {
   return (
-    <div className="fixed inset-0 bg-[#0D0C0B] flex flex-col items-center justify-center z-50">
+    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
       <div
-        className="w-20 h-20 rounded-[24px] flex items-center justify-center shadow-2xl shadow-[#FF5A1F]/40 mb-4"
-        style={{ background:'linear-gradient(135deg,#FF5A1F,#FF2D78)', animation:'splashIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both' }}
+        className="w-20 h-20 rounded-[24px] flex items-center justify-center   mb-4"
+        style={{ background:'#F97316', animation:'splashIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both' }}
       >
-        <span className="text-white font-black text-3xl">B</span>
+        <span className="text-[#202938] font-black text-3xl">B</span>
       </div>
-      <p className="text-white font-black text-2xl" style={{ animation:'fadeInUp 0.3s ease 0.15s both' }}>B-Link</p>
-      <p className="text-white/40 text-xs mt-1" style={{ animation:'fadeInUp 0.3s ease 0.25s both' }}>Africa's GenZ Platform</p>
-      <div className="w-5 h-5 border-2 border-[#FF5A1F] border-t-transparent rounded-full animate-spin mt-8" />
+      <p className="text-[#202938] font-black text-2xl" style={{ animation:'fadeInUp 0.3s ease 0.15s both' }}>B-Link</p>
+      <p className="text-[#94A3B8] text-xs mt-1" style={{ animation:'fadeInUp 0.3s ease 0.25s both' }}>Africa's GenZ Platform</p>
+      <div className="w-5 h-5 border-2 border-[#F97316] border-t-transparent rounded-full animate-spin mt-8" />
       <style>{`
         @keyframes splashIn  { from{opacity:0;transform:scale(0.5)} to{opacity:1;transform:scale(1)} }
         @keyframes fadeInUp  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
@@ -182,6 +183,7 @@ function AppShell() {
           <Route path="/discover"      element={<ProtectedRoute><Discover /></ProtectedRoute>} />
           <Route path="/flash"         element={<ProtectedRoute><BFlash /></ProtectedRoute>} />
           <Route path="/flash/create"  element={<ProtectedRoute><FlashStudio /></ProtectedRoute>} />
+          <Route path="/flash/me"      element={<ProtectedRoute><MyVideos /></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
           <Route path="/chats"         element={<ProtectedRoute><Chats /></ProtectedRoute>} />
           <Route path="/chats/:id"     element={<ProtectedRoute><ChatDetail /></ProtectedRoute>} />

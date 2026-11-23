@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, RefreshCw, ExternalLink } from 'lucide-react';
 import { formatTime } from '../../utils/formatTime';
+import { goBack } from '../../lib/nav';
 
 const CATEGORIES = [
   'all',
@@ -181,7 +182,7 @@ const News = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0D0C0B] pb-24">
+    <div className="min-h-screen bg-white pb-24">
 
       {/* BREAKING */}
       {breaking && (
@@ -191,17 +192,17 @@ const News = () => {
       )}
 
       {/* TOP BAR */}
-      <div className="sticky top-0 z-20 bg-[#0D0C0B] border-b border-white/10 px-4 py-3">
+      <div className="sticky top-0 z-20 bg-white border-b border-[#E2E8F0] px-4 py-3">
 
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate(-1)}>
-              <ArrowLeft size={22} className="text-[#8E8C88]" />
+            <button onClick={() => goBack(navigate, '/')}>
+              <ArrowLeft size={22} className="text-[#64748B]" />
             </button>
 
             <div>
-              <h1 className="text-white font-bold">News</h1>
-              <p className="text-xs text-[#8E8C88]">
+              <h1 className="text-[#202938] font-bold">News</h1>
+              <p className="text-xs text-[#64748B]">
                 BBC + CNN Hybrid Feed
               </p>
             </div>
@@ -209,7 +210,7 @@ const News = () => {
 
           <button
             onClick={() => fetchNews(activeCategory)}
-            className={loading ? 'animate-spin text-white' : 'text-[#8E8C88]'}
+            className={loading ? 'animate-spin text-[#202938]' : 'text-[#64748B]'}
           >
             <RefreshCw size={18} />
           </button>
@@ -224,8 +225,8 @@ const News = () => {
               className={
                 'px-3 py-1 rounded-full text-xs capitalize ' +
                 (activeCategory === cat
-                  ? 'bg-[#FF5A1F] text-white'
-                  : 'bg-white/5 text-[#8E8C88]')
+                  ? 'bg-[#F97316] text-white'
+                  : 'bg-[#F8FAFC] text-[#64748B]')
               }
             >
               {cat}
@@ -237,7 +238,7 @@ const News = () => {
       {/* TOP STORY */}
       {news.length > 0 && (
         <div className="px-4 mt-4">
-          <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+          <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl overflow-hidden">
 
             <img
               src={getImage(news[0])}
@@ -246,15 +247,15 @@ const News = () => {
             />
 
             <div className="p-4">
-              <p className="text-[#FF5A1F] text-xs font-bold">TOP STORY</p>
-              <h2 className="text-white font-bold text-lg">{news[0].title}</h2>
-              <p className="text-[#8E8C88] text-xs mt-2">
+              <p className="text-[#EA580C] text-xs font-bold">TOP STORY</p>
+              <h2 className="text-[#202938] font-bold text-lg">{news[0].title}</h2>
+              <p className="text-[#64748B] text-xs mt-2">
                 {news[0].source?.name} · {formatTime(news[0].publishedAt)}
               </p>
 
               <button
-                onClick={() => window.open(news[0].url, '_blank')}
-                className="mt-3 text-[#FF5A1F] text-xs font-bold"
+                onClick={() => window.open(news[0].url, '_blank', 'noopener,noreferrer')}
+                className="mt-3 text-[#EA580C] text-xs font-bold"
               >
                 Read full story <ExternalLink size={12} />
               </button>
@@ -267,30 +268,30 @@ const News = () => {
       <div className="px-4 mt-4 space-y-3">
 
         {news.slice(1).map((article, i) => (
-          <div key={i} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+          <div key={i} className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl overflow-hidden">
 
             <img src={getImage(article)} className="w-full h-48 object-cover" />
 
             <div className="p-3">
 
-              <p className="text-[#FF5A1F] text-xs font-bold">
+              <p className="text-[#EA580C] text-xs font-bold">
                 {article.source?.name}
                 {lastRefreshIds.current.has(article.url) && (
-                  <span className="ml-2 text-green-400">NEW</span>
+                  <span className="ml-2 text-green-700">NEW</span>
                 )}
               </p>
 
-              <h3 className="text-white font-bold text-sm mt-1">
+              <h3 className="text-[#202938] font-bold text-sm mt-1">
                 {article.title}
               </h3>
 
-              <p className="text-[#8E8C88] text-xs mt-1">
+              <p className="text-[#64748B] text-xs mt-1">
                 {formatTime(article.publishedAt)}
               </p>
 
               <button
-                onClick={() => window.open(article.url, '_blank')}
-                className="mt-2 text-[#FF5A1F] text-xs font-bold"
+                onClick={() => window.open(article.url, '_blank', 'noopener,noreferrer')}
+                className="mt-2 text-[#EA580C] text-xs font-bold"
               >
                 Read full story <ExternalLink size={12} />
               </button>

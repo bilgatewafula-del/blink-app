@@ -15,14 +15,15 @@ import {
   Search, DollarSign, Clock, TrendingUp,
   Users, Zap, AlertTriangle, Eye,
 } from 'lucide-react';
+import { goBack } from '../../lib/nav';
 
 /* ── Small stat card ── */
 function Stat({ label, value, color, sub }) {
   return (
-    <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4">
-      <p className="text-white font-black text-xl leading-none">{value}</p>
-      <p className="text-[#8E8C88] text-xs mt-1">{label}</p>
-      {sub && <p className="text-white/30 text-[10px] mt-0.5">{sub}</p>}
+    <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
+      <p className="text-[#202938] font-black text-xl leading-none">{value}</p>
+      <p className="text-[#64748B] text-xs mt-1">{label}</p>
+      {sub && <p className="text-[#94A3B8] text-[10px] mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -39,24 +40,24 @@ function PaymentDetailModal({ payment, onClose, onConfirm, onReject, busy }) {
 
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" onClick={onClose}>
-      <div className="w-full max-w-[540px] bg-[#171614] border-t border-white/10 rounded-t-3xl p-5 pb-8 max-h-[85vh] overflow-y-auto"
+      <div className="w-full max-w-[540px] bg-white border-t border-[#E2E8F0] rounded-t-3xl p-5 pb-8 max-h-[85vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}>
 
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-white font-black text-base">Verify Payment</h3>
-          <button onClick={onClose} className="text-[#8E8C88] hover:text-white"><XCircle size={20} /></button>
+          <h3 className="text-[#202938] font-black text-base">Verify Payment</h3>
+          <button onClick={onClose} className="text-[#64748B] hover:text-[#202938]"><XCircle size={20} /></button>
         </div>
 
         {/* Admin instruction */}
-        <div className="bg-[#FF5A1F]/10 border border-[#FF5A1F]/20 rounded-2xl p-4 mb-4">
-          <p className="text-[#FF5A1F] font-bold text-sm mb-1">📱 Before confirming</p>
-          <p className="text-white/60 text-xs leading-relaxed">
-            Open M-Pesa on your phone → Go to <strong className="text-white">My Account → Statement</strong> or <strong className="text-white">Transaction History</strong> → Search for reference <strong className="text-yellow-400 font-mono">{payment.reference_code}</strong> and verify the amount is <strong className="text-white">{formatKES(payment.amount_kes)}</strong> from <strong className="text-white">{payment.mpesa_phone}</strong>.
+        <div className="bg-[#F97316]/10 border border-[#F97316]/20 rounded-2xl p-4 mb-4">
+          <p className="text-[#EA580C] font-bold text-sm mb-1">📱 Before confirming</p>
+          <p className="text-[#64748B] text-xs leading-relaxed">
+            Open M-Pesa on your phone → Go to <strong className="text-[#202938]">My Account → Statement</strong> or <strong className="text-[#202938]">Transaction History</strong> → Search for reference <strong className="text-yellow-700 font-mono">{payment.reference_code}</strong> and verify the amount is <strong className="text-[#202938]">{formatKES(payment.amount_kes)}</strong> from <strong className="text-[#202938]">{payment.mpesa_phone}</strong>.
           </p>
         </div>
 
         {/* Payment info */}
-        <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 mb-4 space-y-3">
+        <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4 mb-4 space-y-3">
           {[
             { label: 'Service',         value: typeLabel },
             { label: 'Amount',          value: formatKES(payment.amount_kes), highlight: true },
@@ -67,9 +68,9 @@ function PaymentDetailModal({ payment, onClose, onConfirm, onReject, busy }) {
             { label: 'Submitted at',    value: new Date(payment.created_at).toLocaleString('en-KE', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) },
           ].map(row => (
             <div key={row.label} className="flex items-center justify-between gap-3">
-              <p className="text-[#8E8C88] text-[12px] flex-shrink-0">{row.label}</p>
+              <p className="text-[#64748B] text-[12px] flex-shrink-0">{row.label}</p>
               <p className={`text-right text-[13px] font-bold truncate max-w-[200px] ${
-                row.highlight ? 'text-yellow-400' : 'text-white/80'
+                row.highlight ? 'text-yellow-700' : 'text-[#202938]'
               } ${row.mono ? 'font-mono' : ''}`}>
                 {row.value}
               </p>
@@ -82,18 +83,18 @@ function PaymentDetailModal({ payment, onClose, onConfirm, onReject, busy }) {
           <button
             onClick={() => onReject(payment)}
             disabled={busy}
-            className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white/70 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 disabled:opacity-40 active:scale-95 transition-all"
+            className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-[#64748B] border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 disabled:opacity-40 active:scale-95 transition-all"
           >
             ✗ Reject Payment
           </button>
           <button
             onClick={() => onConfirm(payment)}
             disabled={busy}
-            className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white disabled:opacity-40 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+            className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-[#202938] disabled:opacity-40 active:scale-95 transition-all flex items-center justify-center gap-1.5"
             style={{ background: 'linear-gradient(135deg, #2ECC71, #16A34A)', boxShadow: '0 4px 16px rgba(46,204,113,0.3)' }}
           >
             {busy
-              ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ? <div className="w-4 h-4 border-2 border-[#E2E8F0] border-t-white rounded-full animate-spin" />
               : <><CheckCircle size={14} /> Confirm & Activate</>
             }
           </button>
@@ -437,20 +438,20 @@ export default function PaymentsAdminPanel() {
     t === 'business_page' ? '💼' : '💳';
 
   return (
-    <div className="min-h-screen bg-[#0D0C0B] pb-24">
+    <div className="min-h-screen bg-white pb-24">
 
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center justify-between">
+      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="text-[#8E8C88] hover:text-white">
+          <button onClick={() => goBack(navigate, '/')} className="text-[#64748B] hover:text-[#202938]">
             <ArrowLeft size={22} />
           </button>
           <div>
-            <p className="text-white font-bold text-[15px] leading-none">Payments Dashboard</p>
-            <p className="text-[#8E8C88] text-[11px] mt-0.5">Till: 4766037 · BILGATE WAFULA MUKHAYO</p>
+            <p className="text-[#202938] font-bold text-[15px] leading-none">Payments Dashboard</p>
+            <p className="text-[#64748B] text-[11px] mt-0.5">Till: 4766037 · BILGATE WAFULA MUKHAYO</p>
           </div>
         </div>
-        <button onClick={() => { fetchPayments(); fetchStats(); }} className="text-[#8E8C88] hover:text-white p-1">
+        <button onClick={() => { fetchPayments(); fetchStats(); }} className="text-[#64748B] hover:text-[#202938] p-1">
           <RefreshCw size={18} />
         </button>
       </div>
@@ -470,9 +471,9 @@ export default function PaymentsAdminPanel() {
         {/* Feedback */}
         {feedback && (
           <div className={`rounded-xl px-4 py-3 text-sm font-semibold flex items-center justify-between gap-2 ${
-            feedback.type === 'success' ? 'bg-green-500/10 border border-green-500/20 text-green-400' :
-            feedback.type === 'error'   ? 'bg-red-500/10 border border-red-500/20 text-red-400' :
-            'bg-[#FF5A1F]/10 border border-[#FF5A1F]/20 text-[#FF5A1F]'
+            feedback.type === 'success' ? 'bg-green-500/10 border border-green-500/20 text-green-700' :
+            feedback.type === 'error'   ? 'bg-red-500/10 border border-red-500/20 text-red-600' :
+            'bg-[#F97316]/10 border border-[#F97316]/20 text-[#F97316]'
           }`}>
             <span>{feedback.msg}</span>
             <button onClick={() => setFeedback(null)} className="flex-shrink-0 opacity-60 hover:opacity-100">
@@ -484,15 +485,15 @@ export default function PaymentsAdminPanel() {
         {/* Pending alert */}
         {stats.pending > 0 && (
           <div className="bg-yellow-500/10 border border-yellow-500/25 rounded-2xl p-3 flex items-center gap-3">
-            <AlertTriangle size={16} className="text-yellow-400 flex-shrink-0" />
-            <p className="text-yellow-400 text-sm">
+            <AlertTriangle size={16} className="text-yellow-700 flex-shrink-0" />
+            <p className="text-yellow-700 text-sm">
               <strong>{stats.pending}</strong> payment{stats.pending !== 1 ? 's' : ''} waiting. Verify on M-Pesa before confirming.
             </p>
           </div>
         )}
 
         {/* Tab bar */}
-        <div className="flex bg-white/[0.05] rounded-2xl p-1 gap-1">
+        <div className="flex bg-[#F8FAFC] rounded-2xl p-1 gap-1">
           {[
             { key:'pending',   label:`Pending (${stats.pending||0})` },
             { key:'confirmed', label:'Confirmed' },
@@ -501,30 +502,30 @@ export default function PaymentsAdminPanel() {
           ].map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
               className={'flex-1 py-2 rounded-xl text-[11px] font-bold transition-all ' +
-                (tab === t.key ? 'bg-[#FF5A1F] text-white shadow-lg shadow-[#FF5A1F]/30' : 'text-[#8E8C88] hover:text-white')}>
+                (tab === t.key ? 'bg-[#F97316] text-white  ' : 'text-[#64748B] hover:text-white')}>
               {t.label}
             </button>
           ))}
         </div>
 
         {/* Search */}
-        <div className="flex items-center gap-3 bg-white/[0.05] border border-white/10 rounded-2xl px-4 py-2.5">
-          <Search size={15} className="text-[#8E8C88] flex-shrink-0" />
+        <div className="flex items-center gap-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl px-4 py-2.5">
+          <Search size={15} className="text-[#64748B] flex-shrink-0" />
           <input type="text" value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search by ref, username, phone, name..."
-            className="flex-1 bg-transparent text-white text-sm placeholder-[#8E8C88] focus:outline-none" />
-          {search && <button onClick={() => setSearch('')} className="text-[#8E8C88] hover:text-white flex-shrink-0"><XCircle size={15} /></button>}
+            className="flex-1 bg-transparent text-[#202938] text-sm placeholder-[#94A3B8] focus:outline-none" />
+          {search && <button onClick={() => setSearch('')} className="text-[#64748B] hover:text-[#202938] flex-shrink-0"><XCircle size={15} /></button>}
         </div>
 
         {/* Payment list */}
         {loading ? (
           <div className="flex justify-center py-10">
-            <div className="w-6 h-6 border-2 border-[#FF5A1F] border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-[#F97316] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-3xl mb-2">{tab === 'pending' ? '✅' : '💳'}</p>
-            <p className="text-white font-bold">{tab === 'pending' ? 'No pending payments' : 'No payments found'}</p>
+            <p className="text-[#202938] font-bold">{tab === 'pending' ? 'No pending payments' : 'No payments found'}</p>
           </div>
         ) : (
           <div className="space-y-2 pb-4">
@@ -544,36 +545,36 @@ export default function PaymentsAdminPanel() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                          <span className="text-white font-bold text-[13px] capitalize">
+                          <span className="text-[#202938] font-bold text-[13px] capitalize">
                             {pay.payment_type === 'subscription' ? `${PLANS[pay.plan]?.label} Plan` :
                              pay.payment_type === 'boost' ? `${pay.boost_days}d Boost` :
                              pay.payment_type === 'coins' ? `${formatNumber(pay.coins_amount||0)} Coins` :
                              pay.payment_type}
                           </span>
                           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${
-                            pay.status === 'pending'   ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
-                            pay.status === 'confirmed' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
-                            'bg-red-500/20 text-red-400 border-red-500/30'
+                            pay.status === 'pending'   ? 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30' :
+                            pay.status === 'confirmed' ? 'bg-green-500/20 text-green-700 border-green-500/30' :
+                            'bg-red-500/20 text-red-600 border-red-500/30'
                           }`}>
                             {pay.status === 'pending' ? '⏳ Pending' : pay.status === 'confirmed' ? '✓ Confirmed' : '✗ Rejected'}
                           </span>
                         </div>
 
-                        <p className="text-white/70 text-[12px]">
+                        <p className="text-[#64748B] text-[12px]">
                           <strong>{pay.user?.display_name}</strong> · @{pay.user?.username}
                         </p>
-                        <p className="text-[#8E8C88] text-[11px] font-mono mt-0.5">
+                        <p className="text-[#64748B] text-[11px] font-mono mt-0.5">
                           {pay.reference_code} · {pay.mpesa_phone}
                           {pay.mpesa_name ? ` · ${pay.mpesa_name}` : ''}
                         </p>
-                        <p className="text-[#8E8C88] text-[11px] mt-0.5">{formatTime(pay.created_at)}</p>
+                        <p className="text-[#64748B] text-[11px] mt-0.5">{formatTime(pay.created_at)}</p>
                         {pay.rejection_reason && (
-                          <p className="text-red-400/70 text-[11px] mt-1">Reason: {pay.rejection_reason}</p>
+                          <p className="text-red-600/70 text-[11px] mt-1">Reason: {pay.rejection_reason}</p>
                         )}
                       </div>
 
                       <div className="text-right flex-shrink-0">
-                        <p className="text-white font-black text-[16px]">{formatKES(pay.amount_kes)}</p>
+                        <p className="text-[#202938] font-black text-[16px]">{formatKES(pay.amount_kes)}</p>
                       </div>
                     </div>
 
@@ -581,14 +582,14 @@ export default function PaymentsAdminPanel() {
                       <div className="flex gap-2 mt-3">
                         <button
                           onClick={() => setSelected(pay)}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white active:scale-95 transition-all"
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-[#202938] active:scale-95 transition-all"
                           style={{ background: 'linear-gradient(135deg, #2ECC71, #16A34A)' }}
                         >
                           <Eye size={13} /> Review & Confirm
                         </button>
                         <button
                           onClick={() => handleReject(pay)}
-                          className="px-4 py-2.5 rounded-xl text-xs font-bold text-red-400 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 active:scale-95 transition-all"
+                          className="px-4 py-2.5 rounded-xl text-xs font-bold text-red-600 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 active:scale-95 transition-all"
                         >
                           Reject
                         </button>

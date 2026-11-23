@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { BUSINESS_PAGE_PRICE, formatKES } from '../../utils/paymentUtils';
 import PaymentModal from '../../components/PaymentModal';
 import { ArrowLeft, Check, Clock, Phone, MessageCircle, BarChart2, Shield, Briefcase } from 'lucide-react';
+import { goBack } from '../../lib/nav';
 
 export default function BusinessPage() {
   const navigate = useNavigate();
@@ -40,12 +41,12 @@ export default function BusinessPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0D0C0B] pb-24">
-      <div className="sticky top-0 z-20 bg-[#0D0C0B]/97 backdrop-blur-md border-b border-white/[0.07] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="text-[#8E8C88] hover:text-white"><ArrowLeft size={22} /></button>
+    <div className="min-h-screen bg-white pb-24">
+      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => goBack(navigate, '/')} className="text-[#64748B] hover:text-[#202938]"><ArrowLeft size={22} /></button>
         <div>
-          <h1 className="text-white font-bold text-[15px] leading-none">Business Page</h1>
-          <p className="text-[#8E8C88] text-xs mt-0.5">{formatKES(BUSINESS_PAGE_PRICE)} / month</p>
+          <h1 className="text-[#202938] font-bold text-[15px] leading-none">Business Page</h1>
+          <p className="text-[#64748B] text-xs mt-0.5">{formatKES(BUSINESS_PAGE_PRICE)} / month</p>
         </div>
       </div>
 
@@ -53,59 +54,59 @@ export default function BusinessPage() {
 
         {isBusiness && (
           <div className="bg-yellow-500/10 border border-yellow-500/25 rounded-2xl p-4 flex items-center gap-3">
-            <Briefcase size={24} className="text-[#FFD700]" />
+            <Briefcase size={24} className="text-[#B45309]" />
             <div>
-              <p className="text-white font-bold">Business Page Active</p>
-              <p className="text-[#8E8C88] text-xs mt-0.5">Your business features are live.</p>
+              <p className="text-[#202938] font-bold">Business Page Active</p>
+              <p className="text-[#64748B] text-xs mt-0.5">Your business features are live.</p>
             </div>
           </div>
         )}
 
         {hasPending && !isBusiness && (
           <div className="bg-yellow-500/10 border border-yellow-500/25 rounded-2xl p-4 flex items-start gap-3">
-            <Clock size={16} className="text-yellow-400 flex-shrink-0 mt-0.5" />
+            <Clock size={16} className="text-yellow-700 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-yellow-400 font-bold text-sm">Setup pending verification</p>
-              <p className="text-yellow-400/60 text-xs mt-0.5">Your payment is being verified. Business features activate after confirmation.</p>
+              <p className="text-yellow-700 font-bold text-sm">Setup pending verification</p>
+              <p className="text-yellow-700/60 text-xs mt-0.5">Your payment is being verified. Business features activate after confirmation.</p>
             </div>
           </div>
         )}
 
         {/* Hero */}
         <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-2xl p-5 text-center">
-          <Briefcase size={44} className="text-[#FFD700] mb-3" />
-          <p className="text-white font-black text-xl mb-1">B-Link Business</p>
-          <p className="text-white/50 text-sm mb-3">Grow your brand on Africa's GenZ platform</p>
-          <div className="bg-white/[0.06] rounded-xl px-4 py-3 inline-block">
-            <p className="text-[#8E8C88] text-xs">Monthly subscription</p>
-            <p className="text-white font-black text-3xl">{formatKES(BUSINESS_PAGE_PRICE)}</p>
-            <p className="text-white/30 text-[11px]">per month</p>
+          <Briefcase size={44} className="text-[#B45309] mb-3" />
+          <p className="text-[#202938] font-black text-xl mb-1">B-Link Business</p>
+          <p className="text-[#64748B] text-sm mb-3">Grow your brand on Africa's GenZ platform</p>
+          <div className="bg-[#F1F5F9] rounded-xl px-4 py-3 inline-block">
+            <p className="text-[#64748B] text-xs">Monthly subscription</p>
+            <p className="text-[#202938] font-black text-3xl">{formatKES(BUSINESS_PAGE_PRICE)}</p>
+            <p className="text-[#94A3B8] text-[11px]">per month</p>
           </div>
         </div>
 
         {/* Features */}
-        <div className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-4">
-          <p className="text-white font-bold text-sm mb-3">Everything included</p>
+        <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
+          <p className="text-[#202938] font-bold text-sm mb-3">Everything included</p>
           <div className="space-y-2.5">
             {FEATURES.map((f, i) => (
               <div key={i} className="flex items-center gap-3">
                 <div className="w-7 h-7 rounded-lg bg-yellow-500/15 flex items-center justify-center flex-shrink-0">
-                  <f.icon size={13} className="text-yellow-400" />
+                  <f.icon size={13} className="text-yellow-700" />
                 </div>
-                <p className="text-white/70 text-[13px]">{f.text}</p>
+                <p className="text-[#64748B] text-[13px]">{f.text}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Who it's for */}
-        <div className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-4">
-          <p className="text-white font-bold text-sm mb-2">Who should use this?</p>
+        <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
+          <p className="text-[#202938] font-bold text-sm mb-2">Who should use this?</p>
           <div className="space-y-1.5">
             {['Businesses & brands selling products/services','Content creators monetising their audience','Public figures building their personal brand','NGOs and community organisations'].map((item,i) => (
               <div key={i} className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 flex-shrink-0" />
-                <p className="text-white/60 text-[12px]">{item}</p>
+                <p className="text-[#64748B] text-[12px]">{item}</p>
               </div>
             ))}
           </div>
@@ -114,14 +115,14 @@ export default function BusinessPage() {
         {!isBusiness && !hasPending && (
           <button
             onClick={() => setShowPayment(true)}
-            className="w-full py-4 rounded-2xl font-bold text-white text-[15px] active:scale-[0.98] transition-all"
-            style={{ background:'linear-gradient(135deg, #FFD700, #FF6B35)', boxShadow:'0 8px 24px rgba(255,215,0,0.25)' }}
+            className="w-full py-4 rounded-2xl font-bold text-[#202938] text-[15px] active:scale-[0.98] transition-all"
+            style={{ background:'linear-gradient(135deg, #FFD700, #F97316)', boxShadow:'0 8px 24px rgba(255,215,0,0.25)' }}
           >
             Set up Business Page — {formatKES(BUSINESS_PAGE_PRICE)}/mo
           </button>
         )}
 
-        <p className="text-white/25 text-[11px] text-center px-4 leading-relaxed">
+        <p className="text-[#94A3B8] text-[11px] text-center px-4 leading-relaxed">
           Billed monthly. Cancel anytime. Service continues until end of paid period.
         </p>
       </div>

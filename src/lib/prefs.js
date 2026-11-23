@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 
 const KEY = 'blink_prefs_v1';
 export const DEFAULTS = {
-  theme: 'dark',            // dark | amoled
+  theme: 'light',           // light (default). Dark / AMOLED may return later
   font_size: 'medium',      // small | medium | large
   data_saver: false,
   autoplay_videos: true,
@@ -19,18 +19,18 @@ let current = { ...DEFAULTS };
 const listeners = new Set();
 
 try { current = { ...DEFAULTS, ...(JSON.parse(localStorage.getItem(KEY)) || {}) }; } catch { /* first run */ }
-if (current.theme !== 'dark' && current.theme !== 'amoled') current.theme = 'dark';   // "light"/"system" never existed in practice
+current.theme = 'light';   // the app is light-first; older saved 'dark' / 'amoled' values are ignored for now
 
 export const getPrefs = () => current;
 export const getPref = (k) => current[k];
 
 export function applyPrefs() {
   const root = document.documentElement;
-  root.classList.toggle('theme-amoled', current.theme === 'amoled');
+  root.classList.toggle('theme-amoled', false);
   const z = ZOOM[current.font_size] || 1;
   root.style.zoom = z === 1 ? '' : String(z);
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', current.theme === 'amoled' ? '#000000' : '#0D0C0B');
+  if (meta) meta.setAttribute('content', '#FFFFFF');
 }
 
 export function setPrefs(patch, { silent = false } = {}) {
@@ -46,7 +46,7 @@ export function adoptServerSettings(row) {
   const patch = {};
   ['theme', 'font_size', 'video_quality', 'image_quality'].forEach((k) => { if (row[k] && row[k] !== current[k]) patch[k] = row[k]; });
   ['data_saver', 'autoplay_videos'].forEach((k) => { if (typeof row[k] === 'boolean' && row[k] !== current[k]) patch[k] = row[k]; });
-  if (patch.theme && !['dark', 'amoled'].includes(patch.theme)) delete patch.theme;
+  delete patch.theme;                         // theme is light for everyone for now
   if (Object.keys(patch).length) setPrefs(patch);
 }
 

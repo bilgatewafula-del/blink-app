@@ -8,16 +8,16 @@ module.exports = {
     extend: {
       colors: {
         // Original palette — unchanged, every existing className keeps working
-        primary: '#FF5A1F',
+        primary: '#F97316',
         secondary: '#FFB020',
-        accent: '#FF2D78',
+        accent: '#F97316',
         amber:     '#FF9F1C',
-        blinkorange: '#FF6B35',
+        blinkorange: '#F97316',
         gold: '#FFD700',
         success: '#2ECC71',
-        ink:       '#0D0C0B',
-        darktext: '#1A1917',
-        midgray: '#8E8C88',
+        ink:       '#202938',
+        darktext: '#202938',
+        midgray: '#64748B',
 
         // Extended — most components hardcode these exact hex values
         // inline (bg-[#0D0C0B], text-[#8E8C88], etc.) instead of using
@@ -27,13 +27,15 @@ module.exports = {
         // future file I touch will prefer these over raw hex so the
         // palette stays centralized in one place.
         surface: {
-          DEFAULT: '#0D0C0B',   // page background (page background)
-          raised:  '#171614',   // modals, drawer, sheets
-          card:    '#1d1c1a',   // dropdown menus, popovers
+          DEFAULT: '#FFFFFF',   // page background
+          raised:  '#FFFFFF',   // sheets, drawer, modals
+          card:    '#F8FAFC',   // secondary background
+          input:   '#F1F5F9',   // inputs
         },
+        blink: { orange: '#F97316', blue: '#2563EB', ink: '#202938', slate: '#64748B', line: '#E2E8F0' },
         border: {
-          subtle: 'rgba(255,255,255,0.07)',
-          DEFAULT: 'rgba(255,255,255,0.10)',
+          subtle: '#E2E8F0',
+          DEFAULT: '#E2E8F0',
         },
         danger: {
           DEFAULT: '#EF4444',

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { goBack } from '../lib/nav';
 
 const SwipeBack = ({ children, enabled = true }) => {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ const SwipeBack = ({ children, enabled = true }) => {
       if (startX.current === null) return;
       const diffX = e.changedTouches[0].clientX - startX.current;
       if (diffX > 80) {
-        navigate(-1);
+        goBack(navigate, '/');
       } else {
         el.style.transform = '';
         el.style.opacity = '';
