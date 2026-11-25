@@ -1,3 +1,4 @@
+import AuthBanner from '../../components/auth/AuthBanner';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
@@ -40,47 +41,45 @@ export default function ResetPassword() {
   };
 
   if (loading || (!user && !done)) {
-    return <div className="min-h-screen bg-white flex items-center justify-center text-[#EA580C]"><Spinner size={28} /></div>;
+    return <div className="min-h-screen bg-[#F1F3F9] flex items-center justify-center text-[#6D28D9]"><Spinner size={28} /></div>;
   }
 
   if (done) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center">
-        <CheckCircle2 size={56} className="text-[#2ECC71] mb-4" />
-        <h1 className="text-[#202938] font-black text-2xl">Password updated</h1>
+      <div className="min-h-screen bg-[#F1F3F9] flex flex-col items-center justify-center px-6 text-center">
+        <CheckCircle2 size={56} className="text-[#10B981] mb-4" />
+        <h1 className="text-[#111827] font-black text-2xl">Password updated</h1>
         <p className="text-[#64748B] text-sm mt-2">Other devices have been signed out. Taking you in…</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
-      <div className="px-6 pt-14 pb-6">
-        <h1 className="text-[#202938] font-black text-2xl">Choose a new password</h1>
-        <p className="text-[#64748B] text-sm mt-2">Use at least 8 characters with letters and numbers.</p>
-      </div>
+    <div className="min-h-screen bg-[#F1F3F9] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
+      <AuthBanner title="Choose a new password" subtitle="Use at least 8 characters with letters and numbers." />
+      <div className="h-5" />
       <form onSubmit={submit} className="flex flex-col gap-3 px-5">
         <div className="relative">
           <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" />
           <input type={show ? 'text' : 'password'} value={password} onChange={(e) => { setPassword(e.target.value); setError(''); }}
             placeholder="New password" autoComplete="new-password"
-            className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-11 pr-12 py-4 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60" />
+            className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-11 pr-12 py-4 text-[#111827] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#7C3AED]/60" />
           <button type="button" tabIndex={-1} onClick={() => setShow((v) => !v)} aria-label={show ? 'Hide password' : 'Show password'}
             className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748B]">{show ? <EyeOff size={18} /> : <Eye size={18} />}</button>
         </div>
         {password && (
           <div className="-mt-1 px-1">
             <div className="flex gap-1">
-              {[1, 2, 3, 4].map((i) => <div key={i} className="h-1 flex-1 rounded-full" style={{ background: i <= check.score ? (check.score >= 3 ? '#2ECC71' : '#FFB020') : '#F1F5F9' }} />)}
+              {[1, 2, 3, 4].map((i) => <div key={i} className="h-1 flex-1 rounded-full" style={{ background: i <= check.score ? (check.score >= 3 ? '#10B981' : '#FFB020') : '#F1F5F9' }} />)}
             </div>
-            <p className="text-[11px] mt-1" style={{ color: check.ok ? '#8E8C88' : '#FF8A5C' }}>{check.ok ? (check.score >= 3 ? 'Strong password' : 'Good. Longer is stronger.') : check.error}</p>
+            <p className="text-[11px] mt-1" style={{ color: check.ok ? '#64748B' : '#FF8A5C' }}>{check.ok ? (check.score >= 3 ? 'Strong password' : 'Good. Longer is stronger.') : check.error}</p>
           </div>
         )}
         <div className="relative">
           <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" />
           <input type={show ? 'text' : 'password'} value={confirm} onChange={(e) => { setConfirm(e.target.value); setError(''); }}
             placeholder="Confirm new password" autoComplete="new-password"
-            className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-11 pr-4 py-4 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60" />
+            className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-11 pr-4 py-4 text-[#111827] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#7C3AED]/60" />
         </div>
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-600 text-sm flex items-start gap-2">
@@ -89,7 +88,7 @@ export default function ResetPassword() {
         )}
         <button type="submit" disabled={busy}
           className="w-full py-4 rounded-2xl font-bold text-white text-[15px] disabled:opacity-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-          style={{ background: '#F97316', boxShadow: '0 8px 24px rgba(255,90,31,0.35)' }}>
+          style={{ background: '#7C3AED', boxShadow: '0 8px 24px rgba(124,58,237,0.35)' }}>
           {busy ? <><Spinner size={18} /> Saving…</> : 'Update password'}
         </button>
       </form>

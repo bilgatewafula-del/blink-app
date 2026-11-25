@@ -34,7 +34,7 @@ import { goBack } from '../../lib/nav';
 const ROLE_COLORS = {
   blink:     { bg:'#FFD700', label:'B-Link' },
   admin:     { bg:'#EF4444', label:'Admin'  },
-  moderator: { bg:'#F97316', label:'Mod'    },
+  moderator: { bg:'#7C3AED', label:'Mod'    },
   user:      { bg:'#3d3b38', label:'User'   },
 };
 
@@ -61,7 +61,7 @@ function StatCard({ icon: Icon, label, value, color }) {
         <Icon size={20} style={{ color }} />
       </div>
       <div>
-        <p className="text-[#202938] font-bold text-xl leading-none">{formatNumber(value)}</p>
+        <p className="text-[#111827] font-bold text-xl leading-none">{formatNumber(value)}</p>
         <p className="text-[#64748B] text-xs mt-0.5">{label}</p>
       </div>
     </div>
@@ -100,7 +100,7 @@ function PrivateDetails({ target }) {
       {err ? <p className="text-red-600 text-xs">{err}</p> : !d ? <p className="text-[#64748B] text-xs">Loading…</p> : (
         <div className="grid grid-cols-2 gap-x-3 gap-y-2">
           {rows.map(([k, v]) => (
-            <div key={k} className="min-w-0"><p className="text-[#64748B] text-[10px]">{k}</p><p className="text-[#202938] text-[12px] font-medium break-all">{String(v)}</p></div>
+            <div key={k} className="min-w-0"><p className="text-[#64748B] text-[10px]">{k}</p><p className="text-[#111827] text-[12px] font-medium break-all">{String(v)}</p></div>
           ))}
         </div>
       )}
@@ -267,10 +267,10 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
           <div className="flex items-center gap-3">
             {target.avatar_url
               ? <img src={target.avatar_url} alt=""className="w-11 h-11 rounded-full object-cover" />
-              : <div className="w-11 h-11 rounded-full bg-[#F97316] flex items-center justify-center text-white font-bold text-lg">{target.display_name?.[0]?.toUpperCase()}</div>
+              : <div className="w-11 h-11 rounded-full bg-[#7C3AED] flex items-center justify-center text-white font-bold text-lg">{target.display_name?.[0]?.toUpperCase()}</div>
             }
             <div>
-              <p className="text-[#202938] font-bold text-[15px]">{target.display_name}</p>
+              <p className="text-[#111827] font-bold text-[15px]">{target.display_name}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <RoleBadge role={target.role} />
                 <StatusBadge u={target} />
@@ -278,7 +278,7 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
               <p className="text-[#64748B] text-xs mt-0.5">@{target.username}</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-[#64748B] hover:text-[#202938] p-1">
+          <button onClick={onClose} className="text-[#64748B] hover:text-[#111827] p-1">
             <XCircle size={22} />
           </button>
         </div>
@@ -286,8 +286,8 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
 
         {done ? (
           <div className="text-center py-8">
-            <CheckCircle size={52} className="text-[#2ECC71] mx-auto mb-3" />
-            <p className="text-[#202938] font-bold text-lg">{done}</p>
+            <CheckCircle size={52} className="text-[#10B981] mx-auto mb-3" />
+            <p className="text-[#111827] font-bold text-lg">{done}</p>
             <p className="text-[#64748B] text-sm mt-1">Action completed successfully</p>
           </div>
         ) : (
@@ -301,16 +301,16 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
                   onClick={() => { if (a.allowed) { setAction(a.key); setError(''); setConfirmText(''); } }}
                   className={'w-full flex items-start gap-3 px-4 py-3 rounded-xl text-left transition-all border disabled:opacity-45 ' +
                     (action === a.key
-                      ? (a.danger ? 'bg-red-500/15 border-red-500/50' : 'bg-[#F97316]/15 border-[#F97316]/50')
+                      ? (a.danger ? 'bg-red-500/15 border-red-500/50' : 'bg-[#7C3AED]/15 border-[#7C3AED]/50')
                       : 'bg-[#F8FAFC] border-[#E2E8F0] hover:bg-[#F1F5F9]')}
                 >
-                  <a.Icon size={18} className={(a.danger ? 'text-red-600' : 'text-[#EA580C]') + 'mt-0.5 flex-shrink-0'} />
+                  <a.Icon size={18} className={(a.danger ? 'text-red-600' : 'text-[#6D28D9]') + 'mt-0.5 flex-shrink-0'} />
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-semibold ${action === a.key ? 'text-[#202938]' : 'text-[#202938]'}`}>{a.label}</p>
+                    <p className={`text-sm font-semibold ${action === a.key ? 'text-[#111827]' : 'text-[#111827]'}`}>{a.label}</p>
                     <p className="text-[#64748B] text-[11px] mt-0.5">{a.allowed ? a.desc : `Requires ${a.need} role`}</p>
                   </div>
                   {!a.allowed && <Lock size={14} className="text-[#64748B] flex-shrink-0 mt-1" />}
-                  {action === a.key && <CheckCircle size={16} className="text-[#EA580C] flex-shrink-0 mt-0.5" />}
+                  {action === a.key && <CheckCircle size={16} className="text-[#6D28D9] flex-shrink-0 mt-0.5" />}
                 </button>
               ))}
             </div>
@@ -324,7 +324,7 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
                       key={d}
                       onClick={() => setDays(d)}
                       className={'px-4 py-2 rounded-xl text-sm font-bold border transition-all ' +
-                        (days === d ? 'bg-[#F97316]/20 border-[#F97316]/50 text-[#EA580C]' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:bg-[#F1F5F9]')}
+                        (days === d ? 'bg-[#7C3AED]/20 border-[#7C3AED]/50 text-[#6D28D9]' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:bg-[#F1F5F9]')}
                     >
                       {d} day{d > 1 ? 's' : ''}
                     </button>
@@ -342,13 +342,13 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
                       key={r}
                       onClick={() => setNewRole(r)}
                       className={'px-4 py-2 rounded-xl text-sm font-bold border transition-all capitalize ' +
-                        (newRole === r ? 'bg-[#F97316]/20 border-[#F97316]/50 text-[#EA580C]' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:bg-[#F1F5F9]')}
+                        (newRole === r ? 'bg-[#7C3AED]/20 border-[#7C3AED]/50 text-[#6D28D9]' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:bg-[#F1F5F9]')}
                     >
                       {r}
                     </button>
                   ))}
                 </div>
-                <p className="text-[#64748B] text-xs mt-2">Current role: <span className="text-[#202938] font-semibold">{target.role}</span></p>
+                <p className="text-[#64748B] text-xs mt-2">Current role: <span className="text-[#111827] font-semibold">{target.role}</span></p>
                 <p className="text-[#64748B] text-[10px] mt-1">The blink role can never be assigned from this panel — server-enforced, not just hidden.</p>
               </div>
             )}
@@ -369,7 +369,7 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
                   }
                   rows={3}
                   maxLength={300}
-                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-3 text-[#202938] text-sm placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/50 resize-none"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-3 text-[#111827] text-sm placeholder-[#94A3B8] focus:outline-none focus:border-[#7C3AED]/50 resize-none"
                 />
                 <div className="flex justify-between mt-1">
                   <span className="text-[#64748B] text-[10px]">{reason.length}/300</span>
@@ -399,11 +399,11 @@ function UserActionModal({ target, myRole, onClose, onSuccess }) {
             <button
               onClick={handleSubmit}
               disabled={loading || !action || (action === 'delete' && confirmText.trim().replace(/^@/, '').toLowerCase() !== (target.username || '').toLowerCase())}
-              className="w-full py-4 rounded-2xl font-bold text-[#202938] text-sm transition-all disabled:opacity-40 flex items-center justify-center gap-2"style={{
+              className="w-full py-4 rounded-2xl font-bold text-[#111827] text-sm transition-all disabled:opacity-40 flex items-center justify-center gap-2"style={{
                 background:
                   ['ban','delete'].includes(action)                         ? 'linear-gradient(135deg, #EF4444, #DC2626)' :
-                  ['unban','unsuspend','unrestrict'].includes(action)       ? 'linear-gradient(135deg, #2ECC71, #16A34A)' :
-                  '#F97316',
+                  ['unban','unsuspend','unrestrict'].includes(action)       ? 'linear-gradient(135deg, #10B981, #16A34A)' :
+                  '#7C3AED',
               }}
             >
               {loading
@@ -470,14 +470,14 @@ function ContentModal({ item, type, onClose, onSuccess }) {
     <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-end justify-center"onClick={onClose}>
       <div className="w-full max-w-[620px] bg-white border-t border-[#E2E8F0] rounded-t-3xl p-5 pb-8"onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[#202938] font-bold text-base">Moderate {type === 'post' ? 'Post' : 'Comment'}</h3>
-          <button onClick={onClose} className="text-[#64748B] hover:text-[#202938]"><XCircle size={20} /></button>
+          <h3 className="text-[#111827] font-bold text-base">Moderate {type === 'post' ? 'Post' : 'Comment'}</h3>
+          <button onClick={onClose} className="text-[#64748B] hover:text-[#111827]"><XCircle size={20} /></button>
         </div>
 
         {done ? (
           <div className="text-center py-8">
             <p className="text-5xl mb-3">✅</p>
-            <p className="text-[#202938] font-bold">{done}</p>
+            <p className="text-[#111827] font-bold">{done}</p>
           </div>
         ) : (
           <>
@@ -488,9 +488,9 @@ function ContentModal({ item, type, onClose, onSuccess }) {
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 {item.users?.avatar_url
                   ? <img src={item.users.avatar_url} alt=""className="w-7 h-7 rounded-full object-cover" />
-                  : <div className="w-7 h-7 rounded-full bg-[#F97316] flex items-center justify-center text-white font-bold text-xs">{item.users?.display_name?.[0]?.toUpperCase()}</div>
+                  : <div className="w-7 h-7 rounded-full bg-[#7C3AED] flex items-center justify-center text-white font-bold text-xs">{item.users?.display_name?.[0]?.toUpperCase()}</div>
                 }
-                <p className="text-[#202938] font-bold text-[13px]">{item.users?.display_name}</p>
+                <p className="text-[#111827] font-bold text-[13px]">{item.users?.display_name}</p>
                 <p className="text-[#64748B] text-[12px]">@{item.users?.username}</p>
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                   item.status === 'hidden'  ? 'bg-yellow-500/20 text-yellow-700' :
@@ -517,14 +517,14 @@ function ContentModal({ item, type, onClose, onSuccess }) {
                   onClick={() => { setAction(a.key); setError(''); }}
                   className={'w-full flex items-start gap-3 px-4 py-3 rounded-xl text-left transition-all border ' +
                     (action === a.key
-                      ? 'bg-[#F97316]/15 border-[#F97316]/50'
+                      ? 'bg-[#7C3AED]/15 border-[#7C3AED]/50'
                       : 'bg-[#F8FAFC] border-[#E2E8F0] hover:bg-[#F1F5F9]')}
                 >
                   <div className="flex-1">
-                    <p className={`text-sm font-semibold ${action === a.key ? 'text-[#202938]' : 'text-[#202938]'}`}>{a.label}</p>
+                    <p className={`text-sm font-semibold ${action === a.key ? 'text-[#111827]' : 'text-[#111827]'}`}>{a.label}</p>
                     <p className="text-[#64748B] text-[11px] mt-0.5">{a.desc}</p>
                   </div>
-                  {action === a.key && <CheckCircle size={16} className="text-[#EA580C] flex-shrink-0 mt-0.5" />}
+                  {action === a.key && <CheckCircle size={16} className="text-[#6D28D9] flex-shrink-0 mt-0.5" />}
                 </button>
               ))}
             </div>
@@ -535,7 +535,7 @@ function ContentModal({ item, type, onClose, onSuccess }) {
                 onChange={e => setReason(e.target.value)}
                 placeholder="Reason (optional)..."rows={2}
                 maxLength={200}
-                className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-3 text-[#202938] text-sm placeholder-[#94A3B8] focus:outline-none resize-none mb-4"
+                className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-3 text-[#111827] text-sm placeholder-[#94A3B8] focus:outline-none resize-none mb-4"
               />
             )}
 
@@ -548,11 +548,11 @@ function ContentModal({ item, type, onClose, onSuccess }) {
             <button
               onClick={handleSubmit}
               disabled={loading || !action}
-              className="w-full py-3.5 rounded-2xl font-bold text-[#202938] text-sm disabled:opacity-40 flex items-center justify-center gap-2 transition-all"style={{
+              className="w-full py-3.5 rounded-2xl font-bold text-[#111827] text-sm disabled:opacity-40 flex items-center justify-center gap-2 transition-all"style={{
                 background:
                   action === 'delete'  ? 'linear-gradient(135deg, #EF4444, #DC2626)' :
-                  action === 'restore' ? 'linear-gradient(135deg, #2ECC71, #16A34A)' :
-                  '#F97316',
+                  action === 'restore' ? 'linear-gradient(135deg, #10B981, #16A34A)' :
+                  '#7C3AED',
               }}
             >
               {loading
@@ -793,28 +793,28 @@ export default function AdminPanel() {
   if (!canAccess) return null;
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-[#F1F3F9] pb-20">
 
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-3 flex items-center justify-between">
+      <div className="sticky top-0 z-30 bg-[#11152E] px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={() => goBack(navigate, '/')} className="text-[#64748B] hover:text-[#202938] transition-colors">
+          <button onClick={() => goBack(navigate, '/')} className="text-[#CBD5E1] hover:text-white transition-colors">
             <ArrowLeft size={22} />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-red-500 to-[#F97316] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-red-500 to-[#7C3AED] flex items-center justify-center">
               <Shield size={16} color="white" />
             </div>
             <div>
-              <p className="text-[#202938] font-bold text-[15px] leading-none">Admin Panel</p>
-              <p className="text-[#64748B] text-[11px]">{ROLE_COLORS[myRole]?.label || 'Staff'}</p>
+              <p className="text-white font-bold text-[15px] leading-none">Admin Panel</p>
+              <p className="text-[#CBD5E1] text-[11px]">{ROLE_COLORS[myRole]?.label || 'Staff'}</p>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={runSystemCheck} aria-label="System check"className="text-[#64748B] hover:text-[#202938] p-1 transition-colors">
+          <button onClick={runSystemCheck} aria-label="System check"className="text-[#CBD5E1] hover:text-white p-1 transition-colors">
             <ShieldAlert size={18} />
           </button>
-          <button onClick={fetchAll} aria-label="Refresh"className="text-[#64748B] hover:text-[#202938] p-1 transition-colors">
+          <button onClick={fetchAll} aria-label="Refresh"className="text-[#CBD5E1] hover:text-white p-1 transition-colors">
             <RefreshCw size={18} />
           </button>
         </div>
@@ -830,8 +830,8 @@ export default function AdminPanel() {
             }}
             className={'flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all relative ' +
               (section === s.key
-                ? 'bg-[#F97316] text-white border-[#F97316]  '
-                : 'text-[#64748B] border-[#E2E8F0] hover:border-[#E2E8F0] hover:text-white')}
+                ? 'bg-[#7C3AED] text-white border-[#7C3AED]  '
+                : 'text-[#64748B] border-[#E2E8F0] hover:border-[#E2E8F0] hover:text-[#111827]')}
           >
             <s.icon size={13} /> {s.label}
             {s.badge > 0 && (
@@ -848,26 +848,26 @@ export default function AdminPanel() {
         {section === 'overview' && (
           <>
             <div className="grid grid-cols-2 gap-3">
-              <StatCard icon={Users}         label="Total Users"value={stats.total          || 0} color="#F97316" />
-              <StatCard icon={UserCheck}     label="Staff"value={stats.staff          || 0} color="#F97316" />
+              <StatCard icon={Users}         label="Total Users"value={stats.total          || 0} color="#7C3AED" />
+              <StatCard icon={UserCheck}     label="Staff"value={stats.staff          || 0} color="#7C3AED" />
               <StatCard icon={AlertTriangle} label="Restricted"value={stats.restricted     || 0} color="#FFD700" />
-              <StatCard icon={Clock}         label="Suspended"value={stats.suspended      || 0} color="#F97316" />
+              <StatCard icon={Clock}         label="Suspended"value={stats.suspended      || 0} color="#7C3AED" />
               <StatCard icon={Ban}           label="Banned"value={stats.banned         || 0} color="#EF4444" />
               <StatCard icon={Flag}          label="Open Reports"value={stats.pendingReports || 0} color="#EF4444" />
               <StatCard icon={EyeOff}        label="Hidden Posts"value={stats.hiddenPosts    || 0} color="#64748B" />
-              <StatCard icon={Film}          label="B-Flash Videos" value={stats.totalVideos || 0} color="#F97316" />
+              <StatCard icon={Film}          label="B-Flash Videos" value={stats.totalVideos || 0} color="#7C3AED" />
               <StatCard icon={EyeOff}        label="Hidden Videos" value={stats.hiddenVideos || 0} color="#64748B" />
-              <StatCard icon={Activity}      label="Total Posts"value={stats.totalPosts     || 0} color="#2ECC71" />
+              <StatCard icon={Activity}      label="Total Posts"value={stats.totalPosts     || 0} color="#10B981" />
             </div>
 
             <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
-              <p className="text-[#202938] font-bold mb-3">Quick Actions</p>
+              <p className="text-[#111827] font-bold mb-3">Quick Actions</p>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { label:'Manage Users',   key:'users',   color:'#F97316' },
+                  { label:'Manage Users',   key:'users',   color:'#7C3AED' },
                   { label:'Open Reports',   key:'reports', color:'#EF4444', count: stats.pendingReports },
-                  { label:'Moderate Posts', key:'content', color:'#F97316' },
-                  { label:'View Logs',      key:'logs',    color:'#2ECC71' },
+                  { label:'Moderate Posts', key:'content', color:'#7C3AED' },
+                  { label:'View Logs',      key:'logs',    color:'#10B981' },
                 ].map(a => (
                   <button
                     key={a.key}
@@ -891,9 +891,9 @@ export default function AdminPanel() {
               <Search size={16} className="text-[#64748B]" />
               <input
                 type="text"value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Search by name or username..."className="flex-1 bg-transparent text-[#202938] text-sm placeholder-[#94A3B8] focus:outline-none"
+                placeholder="Search by name or username..."className="flex-1 bg-transparent text-[#111827] text-sm placeholder-[#94A3B8] focus:outline-none"
               />
-              {search && <button onClick={() => setSearch('')} className="text-[#64748B] hover:text-[#202938]"><XCircle size={16} /></button>}
+              {search && <button onClick={() => setSearch('')} className="text-[#64748B] hover:text-[#111827]"><XCircle size={16} /></button>}
             </div>
 
             <div className="flex gap-1.5 overflow-x-auto pb-1 mb-3 scrollbar-none">
@@ -902,7 +902,7 @@ export default function AdminPanel() {
                   key={tab}
                   onClick={() => setStatusFilter(tab)}
                   className={'flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ' +
-                    (statusFilter === tab ? 'bg-[#F97316] text-white border-[#F97316]' : 'text-[#64748B] border-[#E2E8F0] hover:border-[#E2E8F0]')}
+                    (statusFilter === tab ? 'bg-[#7C3AED] text-white border-[#7C3AED]' : 'text-[#64748B] border-[#E2E8F0] hover:border-[#E2E8F0]')}
                 >
                   {tab}
                   {tab === 'Banned' && stats.banned > 0 && <span className="ml-1 text-red-600">({stats.banned})</span>}
@@ -913,7 +913,7 @@ export default function AdminPanel() {
             <p className="text-[#64748B] text-xs mb-2">{filteredUsers.length} user{filteredUsers.length !== 1 ? 's' : ''} shown</p>
 
             {loading ? (
-              <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-[#F97316] border-t-transparent rounded-full animate-spin" /></div>
+              <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" /></div>
             ) : filteredUsers.length === 0 ? (
               <div className="text-center py-10"><p className="text-[#64748B]">No users found.</p></div>
             ) : (
@@ -923,12 +923,12 @@ export default function AdminPanel() {
                     <div className="flex-shrink-0">
                       {u.avatar_url
                         ? <img src={u.avatar_url} alt=""className="w-10 h-10 rounded-full object-cover" />
-                        : <div className="w-10 h-10 rounded-full bg-[#F97316] flex items-center justify-center text-white font-bold text-sm">{u.display_name?.[0]?.toUpperCase()}</div>
+                        : <div className="w-10 h-10 rounded-full bg-[#7C3AED] flex items-center justify-center text-white font-bold text-sm">{u.display_name?.[0]?.toUpperCase()}</div>
                       }
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="text-[#202938] font-bold text-[13px] truncate">{u.display_name}</p>
+                        <p className="text-[#111827] font-bold text-[13px] truncate">{u.display_name}</p>
                         {u.is_verified && <VerifiedBadge size={13} />}
                         <RoleBadge role={u.role} />
                       </div>
@@ -944,7 +944,7 @@ export default function AdminPanel() {
                     {u.role !== 'blink' ? (
                       <button
                         onClick={() => setSelectedUser(u)}
-                        className="flex-shrink-0 px-3 py-2 bg-[#F1F5F9] hover:bg-[#F97316]/20 border border-[#E2E8F0] hover:border-[#F97316]/40 rounded-xl text-white text-xs font-bold transition-all"
+                        className="flex-shrink-0 px-3 py-2 bg-[#F1F5F9] hover:bg-[#7C3AED]/20 border border-[#E2E8F0] hover:border-[#7C3AED]/40 rounded-xl text-[#111827] text-xs font-bold transition-all"
                       >
                         Manage
                       </button>
@@ -970,7 +970,7 @@ export default function AdminPanel() {
                   key={t.key}
                   onClick={() => setContentTab(t.key)}
                   className={'flex-1 py-2.5 rounded-xl text-sm font-bold border transition-all ' +
-                    (contentTab === t.key ? 'bg-[#F97316]/20 border-[#F97316]/50 text-[#EA580C]' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:bg-[#F1F5F9]')}
+                    (contentTab === t.key ? 'bg-[#7C3AED]/20 border-[#7C3AED]/50 text-[#6D28D9]' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:bg-[#F1F5F9]')}
                 >
                   {t.label} ({t.count})
                 </button>
@@ -992,9 +992,9 @@ export default function AdminPanel() {
                         <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                           {item.users?.avatar_url
                             ? <img src={item.users.avatar_url} alt=""className="w-6 h-6 rounded-full object-cover" />
-                            : <div className="w-6 h-6 rounded-full bg-[#F97316] flex items-center justify-center text-white font-bold text-[9px]">{item.users?.display_name?.[0]?.toUpperCase()}</div>
+                            : <div className="w-6 h-6 rounded-full bg-[#7C3AED] flex items-center justify-center text-white font-bold text-[9px]">{item.users?.display_name?.[0]?.toUpperCase()}</div>
                           }
-                          <p className="text-[#202938] font-bold text-[13px]">{item.users?.display_name}</p>
+                          <p className="text-[#111827] font-bold text-[13px]">{item.users?.display_name}</p>
                           <p className="text-[#64748B] text-[12px]">@{item.users?.username}</p>
                           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${item.status === 'hidden' ? 'bg-yellow-500/20 text-yellow-700' : 'bg-green-500/20 text-green-700'}`}>
                             {item.status || 'active'}
@@ -1022,7 +1022,7 @@ export default function AdminPanel() {
                           setSelectedItem(item);
                           setSelectedType(contentTab !== 'comments' ? 'post' : 'comment');
                         }}
-                        className="flex-shrink-0 px-3 py-2 bg-[#F1F5F9] hover:bg-[#F97316]/20 border border-[#E2E8F0] hover:border-[#F97316]/40 rounded-xl text-white text-xs font-bold transition-all"
+                        className="flex-shrink-0 px-3 py-2 bg-[#F1F5F9] hover:bg-[#7C3AED]/20 border border-[#E2E8F0] hover:border-[#7C3AED]/40 rounded-xl text-[#111827] text-xs font-bold transition-all"
                       >
                         Moderate
                       </button>
@@ -1052,13 +1052,13 @@ export default function AdminPanel() {
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                         r.status === 'pending'  ? 'bg-red-500/20 text-red-600' :
                         r.status === 'resolved' ? 'bg-green-500/20 text-green-700' :
-                        'bg-[#8E8C88]/20 text-[#64748B]'}`}>
+                        'bg-[#64748B]/20 text-[#64748B]'}`}>
                         {r.status}
                       </span>
                       <span className="text-[#64748B] text-[10px] bg-[#F8FAFC] px-1.5 py-0.5 rounded-full">{r.target_type}</span>
                     </div>
-                    <p className="text-[#202938] text-[13px]">
-                      <span className="font-bold text-[#202938]">{r.reporter?.display_name || 'User'}</span>
+                    <p className="text-[#111827] text-[13px]">
+                      <span className="font-bold text-[#111827]">{r.reporter?.display_name || 'User'}</span>
                       {'reported: '}
                       <span className="text-yellow-700 font-semibold">{r.reason}</span>
                     </p>
@@ -1096,9 +1096,9 @@ export default function AdminPanel() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[#202938] font-bold text-[13px]">{log.admin?.display_name || 'System'}</span>
+                      <span className="text-[#111827] font-bold text-[13px]">{log.admin?.display_name || 'System'}</span>
                       <span className="text-[#64748B] text-[12px]">→</span>
-                      <span className="text-[#EA580C] font-semibold text-[13px]">{log.target?.display_name || 'Content'}</span>
+                      <span className="text-[#6D28D9] font-semibold text-[13px]">{log.target?.display_name || 'Content'}</span>
                     </div>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
@@ -1109,7 +1109,7 @@ export default function AdminPanel() {
                         log.action.includes('hide')     ? 'bg-yellow-500/20 text-yellow-700' :
                         log.action.startsWith('un') || log.action.includes('restore') || log.action.includes('unrestrict')
                                                         ? 'bg-green-500/20 text-green-700' :
-                        'bg-[#F97316]/20 text-[#F97316]'
+                        'bg-[#7C3AED]/20 text-[#7C3AED]'
                       }`}>{log.action}</span>
                       {log.details && <span className="text-[#64748B] text-[11px] truncate max-w-[180px]">"{log.details}"</span>}
                     </div>
@@ -1135,7 +1135,7 @@ export default function AdminPanel() {
                     : <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center text-sm flex-shrink-0">⚠️</div>
                   }
                   <div className="flex-1 min-w-0">
-                    <p className="text-[#202938] font-bold text-[13px]">{w.user?.display_name}</p>
+                    <p className="text-[#111827] font-bold text-[13px]">{w.user?.display_name}</p>
                     <p className="text-[#64748B] text-[11px]">by {w.issuer?.display_name} · {formatTime(w.created_at)}</p>
                   </div>
                   {isMod && (
@@ -1170,8 +1170,8 @@ export default function AdminPanel() {
             <div className="flex items-center justify-between mt-3 gap-3">
               <p className="text-white text-[13px] truncate">@{previewVideo.users?.username} · {previewVideo.views_count || 0} views</p>
               <div className="flex gap-2 flex-shrink-0">
-                <button onClick={() => { setSelectedItem(previewVideo); setSelectedType('post'); setPreviewVideo(null); }} className="h-9 px-4 rounded-full bg-[#F97316] text-white text-[13px] font-bold">Moderate</button>
-                <button onClick={() => setPreviewVideo(null)} className="h-9 px-4 rounded-full bg-[#F8FAFC] text-[#202938] text-[13px] font-bold">Close</button>
+                <button onClick={() => { setSelectedItem(previewVideo); setSelectedType('post'); setPreviewVideo(null); }} className="h-9 px-4 rounded-full bg-[#7C3AED] text-white text-[13px] font-bold">Moderate</button>
+                <button onClick={() => setPreviewVideo(null)} className="h-9 px-4 rounded-full bg-[#F8FAFC] text-[#111827] text-[13px] font-bold">Close</button>
               </div>
             </div>
           </div>
@@ -1194,13 +1194,13 @@ export default function AdminPanel() {
       {checkOpen && (
         <div className="fixed inset-0 bg-black/75 z-[60] flex items-end justify-center"onClick={() => setCheckOpen(false)}>
           <div className="w-full max-w-[620px] bg-white border-t border-[#E2E8F0] rounded-t-3xl p-5 pb-8 max-h-[85vh] overflow-y-auto"onClick={(e) => e.stopPropagation()}>
-            <p className="text-[#202938] font-bold text-base mb-1">System check</p>
+            <p className="text-[#111827] font-bold text-base mb-1">System check</p>
             <p className="text-[#64748B] text-xs mb-4">Confirms every admin and chat function the app calls exists in the database.</p>
             {checkResult?.loading && <p className="text-[#64748B] text-sm py-6 text-center">Checking…</p>}
             {checkResult?.error && <p className="text-red-600 text-sm">{checkResult.error}</p>}
             {checkResult && !checkResult.loading && !checkResult.error && (
               <>
-                <p className={'text-sm font-bold mb-2 ' + ((checkResult.missing || []).length === 0 ? 'text-[#2ECC71]' : 'text-red-600')}>
+                <p className={'text-sm font-bold mb-2 ' + ((checkResult.missing || []).length === 0 ? 'text-[#10B981]' : 'text-red-600')}>
                   {(checkResult.missing || []).length === 0 ? 'Everything is installed' : `${checkResult.missing.length} missing`}
                 </p>
                 {(checkResult.missing || []).map((n) => <p key={n} className="text-red-600 text-[13px] py-1">Missing: {n}</p>)}

@@ -3,9 +3,9 @@
 const TOKEN = /(@[A-Za-z0-9_]{3,20}|#[\p{L}\p{N}_]{1,40})/gu;
 
 // colours for white backgrounds (default) and for dark surfaces such as the B-Flash video
-export const MENTION_COLOR = '#EA580C';
-export const TAG_COLOR = '#2563EB';
-export const TONES = { light: { mention: '#EA580C', tag: '#2563EB' }, dark: { mention: '#FF9B6A', tag: '#60A5FA' } };
+export const MENTION_COLOR = '#6D28D9';
+export const TAG_COLOR = '#0284C7';
+export const TONES = { light: { mention: '#6D28D9', tag: '#0284C7' }, dark: { mention: '#A78BFA', tag: '#60A5FA' } };
 
 export function tokenize(text) {
   return String(text || '').split(TOKEN).map((t, i) => ({

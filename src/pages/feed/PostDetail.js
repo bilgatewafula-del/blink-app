@@ -52,10 +52,10 @@ const flagMap = {
 const REACTIONS = [
   { emoji:'❤️', type:'like',  color:'#EF4444' },
   { emoji:'😂', type:'haha',  color:'#FFD700' },
-  { emoji:'😮', type:'wow',   color:'#F97316' },
-  { emoji:'😢', type:'sad',   color:'#8E8C88' },
+  { emoji:'😮', type:'wow',   color:'#7C3AED' },
+  { emoji:'😢', type:'sad',   color:'#64748B' },
   { emoji:'😡', type:'angry', color:'#EF4444' },
-  { emoji:'🔥', type:'fire',  color:'#F97316' },
+  { emoji:'🔥', type:'fire',  color:'#7C3AED' },
 ];
 
 const COMMENT_REACTIONS = ['❤️','😂','😮','😢','🔥','👍'];
@@ -65,8 +65,8 @@ function RichText({ text, onHashtag, onMention }) {
   return (
     <>
       {text.split(/(#\w+|@\w+)/g).map((p, i) => {
-        if (p.startsWith('#')) return <button key={i} onClick={() => onHashtag(p.slice(1))} className="text-[#EA580C] hover:underline font-medium">{p}</button>;
-        if (p.startsWith('@')) return <button key={i} onClick={() => onMention(p.slice(1))} className="text-[#EA580C] hover:underline font-medium">{p}</button>;
+        if (p.startsWith('#')) return <button key={i} onClick={() => onHashtag(p.slice(1))} className="text-[#6D28D9] hover:underline font-medium">{p}</button>;
+        if (p.startsWith('@')) return <button key={i} onClick={() => onMention(p.slice(1))} className="text-[#6D28D9] hover:underline font-medium">{p}</button>;
         return <span key={i}>{p}</span>;
       })}
     </>
@@ -92,7 +92,7 @@ function MediaGrid({ images }) {
           {images.slice(0,4).map((img,i) => (
             <div key={i} className="relative">
               <img src={img} alt="" className="w-full object-cover" style={{ aspectRatio:'1/1' }} loading="lazy" />
-              {i === 3 && n > 4 && <div className="absolute inset-0 bg-black/60 flex items-center justify-center"><span className="text-[#202938] font-bold text-2xl">+{n-4}</span></div>}
+              {i === 3 && n > 4 && <div className="absolute inset-0 bg-black/60 flex items-center justify-center"><span className="text-[#111827] font-bold text-2xl">+{n-4}</span></div>}
             </div>
           ))}
         </div>
@@ -164,24 +164,24 @@ function CommentRow({ c, postAuthorId, currentUserId, onReply, onDelete, navigat
         <button onClick={() => navigate('/profile/' + cUser.username)} className="flex-shrink-0 mt-0.5">
           {cUser.avatar_url
             ? <img src={cUser.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
-            : <div className="w-8 h-8 rounded-full bg-[#F97316] flex items-center justify-center text-white font-bold text-xs">{cUser.display_name?.[0]?.toUpperCase()}</div>
+            : <div className="w-8 h-8 rounded-full bg-[#7C3AED] flex items-center justify-center text-white font-bold text-xs">{cUser.display_name?.[0]?.toUpperCase()}</div>
           }
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-1 flex-wrap">
-            <button onClick={() => navigate('/profile/' + cUser.username)} className="text-[#202938] font-bold text-[13px] hover:underline">{cUser.display_name}</button>
+            <button onClick={() => navigate('/profile/' + cUser.username)} className="text-[#111827] font-bold text-[13px] hover:underline">{cUser.display_name}</button>
             {cUser.is_verified && <VerifiedBadge size={14} />}
-            {isAuthor && <span className="bg-[#F97316]/20 text-[#EA580C] text-[9px] px-1.5 py-0.5 rounded-full font-bold">Author</span>}
+            {isAuthor && <span className="bg-[#7C3AED]/20 text-[#6D28D9] text-[9px] px-1.5 py-0.5 rounded-full font-bold">Author</span>}
             <span className="text-[#64748B] text-[12px]">@{cUser.username}</span>
             <span className="text-[#64748B] text-[12px]">·</span>
             <span className="text-[#64748B] text-[12px] whitespace-nowrap">{formatTime(c.created_at)}</span>
           </div>
-          <p className="text-[#202938] text-[14px] leading-snug break-words mt-0.5">
+          <p className="text-[#111827] text-[14px] leading-snug break-words mt-0.5">
             <RichText text={c.body} onHashtag={t => navigate('/hashtag/'+t)} onMention={u => navigate('/profile/'+u)} />
           </p>
           {reactionCount > 0 && <span className="text-[11px] text-[#64748B] mt-0.5 block">{myReaction || '❤️'} {reactionCount}</span>}
           <div className="flex items-center gap-1 mt-1 -ml-1.5">
-            <button onClick={() => onReply(c)} className="flex items-center gap-1 text-[#64748B] text-[12px] hover:text-[#EA580C] px-1.5 py-1 rounded-full hover:bg-[#F97316]/10 transition-all">
+            <button onClick={() => onReply(c)} className="flex items-center gap-1 text-[#64748B] text-[12px] hover:text-[#6D28D9] px-1.5 py-1 rounded-full hover:bg-[#7C3AED]/10 transition-all">
               <MessageCircle size={12} /> Reply
             </button>
             <div className="relative" ref={pickerRef}>
@@ -202,7 +202,7 @@ function CommentRow({ c, postAuthorId, currentUserId, onReply, onDelete, navigat
                 onTouchStart={() => { longPressTimer.current = setTimeout(() => setShowReactions(true), 500); }}
                 onTouchEnd={() => clearTimeout(longPressTimer.current)}
                 className="flex items-center gap-0.5 px-1.5 py-1 rounded-full hover:bg-red-500/10 transition-all"
-                style={{ color: myReaction ? '#EF4444' : '#8E8C88' }}>
+                style={{ color: myReaction ? '#EF4444' : '#64748B' }}>
                 {myReaction ? <span className="text-[13px]">{myReaction}</span> : <Heart size={12} fill="none" />}
               </button>
             </div>
@@ -214,7 +214,7 @@ function CommentRow({ c, postAuthorId, currentUserId, onReply, onDelete, navigat
           </div>
 
           {depth === 0 && c.reply_count > 0 && (
-            <button onClick={loadReplies} className="flex items-center gap-1 text-[#EA580C] text-[12px] font-semibold mt-1.5">
+            <button onClick={loadReplies} className="flex items-center gap-1 text-[#6D28D9] text-[12px] font-semibold mt-1.5">
               <div className="w-6 h-px bg-[#E2E8F0]" />
               {loadingReplies ? 'Loading...' : replies === null
                 ? `View ${c.reply_count} repl${c.reply_count === 1 ? 'y' : 'ies'}`
@@ -564,29 +564,29 @@ export default function PostDetail() {
   };
 
   const getReactionEmoji = () => REACTIONS.find(r => r.type === reaction)?.emoji || null;
-  const getReactionColor = () => REACTIONS.find(r => r.type === reaction)?.color || '#8E8C88';
+  const getReactionColor = () => REACTIONS.find(r => r.type === reaction)?.color || '#64748B';
 
   if (loading) return (
-    <div className="min-h-screen bg-white flex items-center justify-center">
-      <div className="w-7 h-7 border-2 border-[#F97316] border-t-transparent rounded-full animate-spin" />
+    <div className="min-h-screen bg-[#F1F3F9] flex items-center justify-center">
+      <div className="w-7 h-7 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
   if (fetchError === 'not_found' || !post) return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-3 px-6">
+    <div className="min-h-screen bg-[#F1F3F9] flex flex-col items-center justify-center gap-3 px-6">
       <p className="text-5xl">🔍</p>
-      <p className="text-[#202938] font-bold text-lg">Post not found</p>
+      <p className="text-[#111827] font-bold text-lg">Post not found</p>
       <p className="text-[#64748B] text-sm text-center">This post may have been deleted or is unavailable.</p>
-      <button onClick={() => goBack(navigate, '/')} className="mt-2 text-[#EA580C] font-semibold text-sm">← Go back</button>
+      <button onClick={() => goBack(navigate, '/')} className="mt-2 text-[#6D28D9] font-semibold text-sm">← Go back</button>
     </div>
   );
 
   if (fetchError) return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-3 px-6">
+    <div className="min-h-screen bg-[#F1F3F9] flex flex-col items-center justify-center gap-3 px-6">
       <p className="text-5xl">⚠️</p>
-      <p className="text-[#202938] font-bold text-lg">Could not load post</p>
+      <p className="text-[#111827] font-bold text-lg">Could not load post</p>
       <p className="text-[#64748B] text-sm text-center">{fetchError}</p>
-      <button onClick={fetchPost} className="mt-2 bg-[#F97316] text-white px-5 py-2 rounded-full font-bold text-sm">Try again</button>
+      <button onClick={fetchPost} className="mt-2 bg-[#7C3AED] text-white px-5 py-2 rounded-full font-bold text-sm">Try again</button>
       <button onClick={() => goBack(navigate, '/')} className="text-[#64748B] text-sm">← Go back</button>
     </div>
   );
@@ -595,10 +595,10 @@ export default function PostDetail() {
   const isOwner  = (post.users?.id || post.user_id) === user?.id;
 
   return (
-    <div className="min-h-screen bg-white pb-32">
+    <div className="min-h-screen bg-[#F1F3F9] pb-32">
       {actionToast && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 bg-[#E2E8F0] backdrop-blur border border-[#E2E8F0] rounded-full px-5 py-2.5 pointer-events-none">
-          <p className="text-[#202938] text-sm font-semibold whitespace-nowrap">{actionToast}</p>
+          <p className="text-[#111827] text-sm font-semibold whitespace-nowrap">{actionToast}</p>
         </div>
       )}
 
@@ -606,30 +606,30 @@ export default function PostDetail() {
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center" onClick={() => setShowQuoteModal(false)}>
           <div className="w-full max-w-[620px] bg-white border-t border-[#E2E8F0] rounded-t-3xl p-4 pb-8" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <button onClick={() => setShowQuoteModal(false)} aria-label="Close" className="text-[#64748B] hover:text-[#202938]"><X size={20} /></button>
-              <h3 className="text-[#202938] font-bold">Quote Post</h3>
+              <button onClick={() => setShowQuoteModal(false)} aria-label="Close" className="text-[#64748B] hover:text-[#111827]"><X size={20} /></button>
+              <h3 className="text-[#111827] font-bold">Quote Post</h3>
               <button onClick={handleQuotePost} disabled={!quoteText.trim()}
-                className="bg-[#F97316] text-white text-sm font-bold px-4 py-1.5 rounded-full disabled:opacity-40">Post</button>
+                className="bg-[#7C3AED] text-white text-sm font-bold px-4 py-1.5 rounded-full disabled:opacity-40">Post</button>
             </div>
             <textarea autoFocus value={quoteText} onChange={e => setQuoteText(e.target.value)}
               placeholder="Add a comment..." maxLength={500} rows={3}
-              className="w-full bg-transparent text-[#202938] text-[16px] placeholder-[#94A3B8] focus:outline-none resize-none leading-relaxed mb-3" />
+              className="w-full bg-transparent text-[#111827] text-[16px] placeholder-[#94A3B8] focus:outline-none resize-none leading-relaxed mb-3" />
           </div>
         </div>
       )}
 
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-3 flex items-center justify-between">
-        <button onClick={() => goBack(navigate, '/')} aria-label="Back" className="text-[#64748B] hover:text-[#202938] transition-colors"><ArrowLeft size={22} /></button>
-        <h1 className="text-[#202938] font-bold text-[15px]">Post</h1>
+      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center justify-between">
+        <button onClick={() => goBack(navigate, '/')} aria-label="Back" className="text-[#CBD5E1] hover:text-white transition-colors"><ArrowLeft size={22} /></button>
+        <h1 className="text-white font-bold text-[15px]">Post</h1>
         <div className="relative">
-          <button onClick={() => setShowMenu(!showMenu)} aria-label="Post options" className="text-[#64748B] hover:text-[#202938] p-1"><MoreHorizontal size={20} /></button>
+          <button onClick={() => setShowMenu(!showMenu)} aria-label="Post options" className="text-[#CBD5E1] hover:text-white p-1"><MoreHorizontal size={20} /></button>
           {showMenu && (
-            <div className="absolute right-0 top-full mt-1 bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden shadow-xl z-30" style={{ minWidth:180 }} onClick={e => e.stopPropagation()}>
+            <div className="absolute right-0 top-full mt-1 bg-white border border-white/15 rounded-2xl overflow-hidden shadow-xl z-30" style={{ minWidth:180 }} onClick={e => e.stopPropagation()}>
               {isOwner ? (
                 <button onClick={handleDeletePost} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-500/10 text-red-600 text-sm"><Trash2 size={15} /> Delete Post</button>
               ) : (
                 <>
-                  <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F8FAFC] text-[#202938] text-sm"><Flag size={15} className="text-[#64748B]" /> Report Post</button>
+                  <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/10 text-white text-sm"><Flag size={15} className="text-[#CBD5E1]" /> Report Post</button>
                   <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-500/10 text-red-600 text-sm"><UserX size={15} /> Block User</button>
                 </>
               )}
@@ -643,7 +643,7 @@ export default function PostDetail() {
           <button onClick={() => navigate('/profile/' + post.users?.username)}><Avatar url={post.users?.avatar_url} name={post.users?.display_name} size={11} /></button>
           <div className="flex-1 min-w-0">
             <button onClick={() => navigate('/profile/' + post.users?.username)} className="flex items-center gap-1 flex-wrap text-left">
-              <span className="text-[#202938] font-bold text-[15px]">{post.users?.display_name}</span>
+              <span className="text-[#111827] font-bold text-[15px]">{post.users?.display_name}</span>
               {post.users?.is_verified && <VerifiedBadge size={15} />}
               {post.users?.role === 'blink' && <span className="text-xs">👑</span>}
               {flagMap[post.users?.country] && <span className="text-xs">{flagMap[post.users.country]}</span>}
@@ -657,7 +657,7 @@ export default function PostDetail() {
         )}
         {post.caption && !isColoredTextPost(post) && (
           <div className="mb-3">
-            <p className="text-[#202938] text-[17px] leading-relaxed whitespace-pre-wrap break-words">
+            <p className="text-[#111827] text-[17px] leading-relaxed whitespace-pre-wrap break-words">
               <RichText text={post.caption} onHashtag={t => navigate('/hashtag/'+t)} onMention={u => navigate('/profile/'+u)} />
             </p>
           </div>
@@ -674,7 +674,7 @@ export default function PostDetail() {
             </button>
             {post.video_duration && (
               <div className="absolute bottom-3 left-3 bg-black/60 rounded-full px-2.5 py-0.5">
-                <span className="text-[#202938] text-xs font-medium">{Math.floor(post.video_duration/60)}:{String(post.video_duration%60).padStart(2,'0')}</span>
+                <span className="text-[#111827] text-xs font-medium">{Math.floor(post.video_duration/60)}:{String(post.video_duration%60).padStart(2,'0')}</span>
               </div>
             )}
           </div>
@@ -690,29 +690,29 @@ export default function PostDetail() {
 
         {(repostCount > 0 || likesCount > 0 || commentCount > 0 || (post.shares_count||0) > 0) && (
           <div className="flex items-center gap-5 py-3 border-y border-[#E2E8F0] mb-1">
-            {repostCount  > 0 && <div><span className="text-[#202938] font-bold">{formatNumber(repostCount)}</span><span className="text-[#64748B] text-sm ml-1">Reposts</span></div>}
-            {likesCount   > 0 && <div><span className="text-[#202938] font-bold">{formatNumber(likesCount)}</span><span className="text-[#64748B] text-sm ml-1">Likes</span></div>}
-            {commentCount > 0 && <div><span className="text-[#202938] font-bold">{formatNumber(commentCount)}</span><span className="text-[#64748B] text-sm ml-1">Replies</span></div>}
-            {(post.shares_count||0) > 0 && <div><span className="text-[#202938] font-bold">{formatNumber(post.shares_count)}</span><span className="text-[#64748B] text-sm ml-1">Shares</span></div>}
+            {repostCount  > 0 && <div><span className="text-[#111827] font-bold">{formatNumber(repostCount)}</span><span className="text-[#64748B] text-sm ml-1">Reposts</span></div>}
+            {likesCount   > 0 && <div><span className="text-[#111827] font-bold">{formatNumber(likesCount)}</span><span className="text-[#64748B] text-sm ml-1">Likes</span></div>}
+            {commentCount > 0 && <div><span className="text-[#111827] font-bold">{formatNumber(commentCount)}</span><span className="text-[#64748B] text-sm ml-1">Replies</span></div>}
+            {(post.shares_count||0) > 0 && <div><span className="text-[#111827] font-bold">{formatNumber(post.shares_count)}</span><span className="text-[#64748B] text-sm ml-1">Shares</span></div>}
           </div>
         )}
 
         <div className="flex items-center justify-between py-1 -mx-1" onClick={e => e.stopPropagation()}>
-          <button onClick={() => document.getElementById('comments-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} aria-label="Comment" className="text-[#64748B] hover:text-[#EA580C] px-2 py-2 rounded-full hover:bg-[#F97316]/10 transition-all"><MessageCircle size={20} /></button>
+          <button onClick={() => document.getElementById('comments-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} aria-label="Comment" className="text-[#64748B] hover:text-[#6D28D9] px-2 py-2 rounded-full hover:bg-[#7C3AED]/10 transition-all"><MessageCircle size={20} /></button>
 
           <div className="relative" onClick={e => e.stopPropagation()}>
             {showRepostMenu && (
               <div className="absolute bottom-12 left-0 bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden z-30 shadow-2xl" style={{ minWidth:180 }}>
-                <button onClick={handleDirectRepost} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F8FAFC] text-sm border-b border-[#E2E8F0]" style={{ color: reposted ? '#2ECC71':'white' }}>
-                  <Repeat2 size={16} style={{ color: reposted?'#2ECC71':'#8E8C88' }} />{reposted?'Undo Repost':'Repost'}
+                <button onClick={handleDirectRepost} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F8FAFC] text-sm border-b border-[#E2E8F0]" style={{ color: reposted ? '#10B981':'#111827' }}>
+                  <Repeat2 size={16} style={{ color: reposted?'#10B981':'#64748B' }} />{reposted?'Undo Repost':'Repost'}
                 </button>
-                <button onClick={() => { setShowRepostMenu(false); setShowQuoteModal(true); }} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F8FAFC] text-[#202938] text-sm">
+                <button onClick={() => { setShowRepostMenu(false); setShowQuoteModal(true); }} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F8FAFC] text-[#111827] text-sm">
                   <Quote size={16} className="text-[#64748B]" /> Quote
                 </button>
               </div>
             )}
             <button onClick={() => { setShowRepostMenu(!showRepostMenu); setShowMenu(false); setShowReactionPicker(false); }} aria-label="Repost"
-              className={'px-2 py-2 rounded-full transition-all '+(reposted?'text-[#2ECC71] hover:bg-[#2ECC71]/10':'text-[#64748B] hover:text-[#2ECC71] hover:bg-[#2ECC71]/10')}>
+              className={'px-2 py-2 rounded-full transition-all '+(reposted?'text-[#10B981] hover:bg-[#10B981]/10':'text-[#64748B] hover:text-[#10B981] hover:bg-[#10B981]/10')}>
               <Repeat2 size={20} />
             </button>
           </div>
@@ -731,17 +731,17 @@ export default function PostDetail() {
               onTouchEnd={() => clearTimeout(longPressTimer.current)}
               aria-label="Like"
               className="px-2 py-2 rounded-full transition-all hover:bg-red-500/10"
-              style={{ color: liked?getReactionColor():'#8E8C88' }}>
+              style={{ color: liked?getReactionColor():'#64748B' }}>
               {liked && reaction ? <span className="text-xl leading-none">{getReactionEmoji()}</span> : <Heart size={20} fill={liked?'currentColor':'none'} />}
             </button>
           </div>
 
           <button onClick={() => isOwner && setInsightsOpen(true)} aria-label="Views"
-            className={'px-2 py-2 flex items-center gap-1 rounded-full ' + (isOwner ? 'text-[#64748B] hover:text-[#EA580C] hover:bg-[#F97316]/10' : 'text-[#64748B] cursor-default')}>
+            className={'px-2 py-2 flex items-center gap-1 rounded-full ' + (isOwner ? 'text-[#64748B] hover:text-[#6D28D9] hover:bg-[#7C3AED]/10' : 'text-[#64748B] cursor-default')}>
             <BarChart2 size={20} />{viewsCount > 0 && <span className="text-[13px]">{viewsCount}</span>}
           </button>
-          <button onClick={handleSave} aria-label={saved ? 'Remove from saved' : 'Save'} className={'px-2 py-2 rounded-full transition-all '+(saved?'text-[#EA580C] hover:bg-[#F97316]/10':'text-[#64748B] hover:text-[#EA580C] hover:bg-[#F97316]/10')}><Bookmark size={20} fill={saved?'currentColor':'none'} /></button>
-          <button onClick={handleShare} aria-label="Share" className="text-[#64748B] hover:text-[#EA580C] px-2 py-2 rounded-full hover:bg-[#F97316]/10 transition-all"><Share2 size={20} /></button>
+          <button onClick={handleSave} aria-label={saved ? 'Remove from saved' : 'Save'} className={'px-2 py-2 rounded-full transition-all '+(saved?'text-[#6D28D9] hover:bg-[#7C3AED]/10':'text-[#64748B] hover:text-[#6D28D9] hover:bg-[#7C3AED]/10')}><Bookmark size={20} fill={saved?'currentColor':'none'} /></button>
+          <button onClick={handleShare} aria-label="Share" className="text-[#64748B] hover:text-[#6D28D9] px-2 py-2 rounded-full hover:bg-[#7C3AED]/10 transition-all"><Share2 size={20} /></button>
         </div>
       </div>
 

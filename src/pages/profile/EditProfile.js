@@ -190,16 +190,16 @@ export default function EditProfile() {
     setSaving(false);
   };
 
-  const inputCls = 'w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-3.5 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60 transition-all disabled:opacity-50';
+  const inputCls = 'w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-3.5 text-[#111827] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#7C3AED]/60 transition-all disabled:opacity-50';
   const labelCls = 'text-[#64748B] text-[11px] font-bold uppercase tracking-wider block mb-1.5';
 
   return (
-    <div className="min-h-screen bg-white pb-24">
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-3 flex items-center justify-between">
-        <button onClick={goBack} aria-label="Back" className="text-[#64748B] hover:text-[#202938]"><ArrowLeft size={22} /></button>
-        <h1 className="text-[#202938] font-bold text-[15px]">Edit Profile</h1>
+    <div className="min-h-screen bg-[#F1F3F9] pb-24">
+      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center justify-between">
+        <button onClick={goBack} aria-label="Back" className="text-[#CBD5E1] hover:text-white"><ArrowLeft size={22} /></button>
+        <h1 className="text-white font-bold text-[15px]">Edit Profile</h1>
         <button onClick={handleSave} disabled={saving || !dirty}
-          className="flex items-center gap-1.5 bg-[#F97316] text-white text-sm font-bold px-4 py-2 rounded-full disabled:opacity-40 active:scale-95 transition-all min-w-[70px] justify-center">
+          className="flex items-center gap-1.5 bg-[#7C3AED] text-white text-sm font-bold px-4 py-2 rounded-full disabled:opacity-40 active:scale-95 transition-all min-w-[70px] justify-center">
           {saving ? <Spinner size={16} /> : success ? <><Check size={14} /> Saved</> : 'Save'}
         </button>
       </div>
@@ -209,7 +209,7 @@ export default function EditProfile() {
         <div className="relative h-32 bg-[#F8FAFC] border-b border-[#E2E8F0]">
           {coverPreview && <img src={coverPreview} alt="" className="w-full h-full object-cover" />}
           <button onClick={() => coverInput.current?.click()}
-            className="absolute inset-0 flex items-center justify-center gap-2 text-[#202938] text-sm font-semibold bg-black/25 hover:bg-black/35 transition-colors">
+            className="absolute inset-0 flex items-center justify-center gap-2 text-[#111827] text-sm font-semibold bg-black/25 hover:bg-black/35 transition-colors">
             <ImagePlus size={18} /> {coverPreview ? 'Change cover photo' : 'Add cover photo'}
           </button>
           <input ref={coverInput} type="file" accept="image/*" className="hidden" onChange={(e) => pickImage(e, 'cover')} />
@@ -225,12 +225,12 @@ export default function EditProfile() {
           <div className="relative">
             <Avatar url={avatarPreview} name={displayName || 'B'} size={24} />
             <button onClick={() => avatarInput.current?.click()} aria-label="Change profile photo"
-              className="absolute -bottom-1 -right-1 w-9 h-9 bg-[#F97316] rounded-full flex items-center justify-center border-2 border-[#E2E8F0] shadow-lg hover:bg-[#EA580C] transition-colors">
+              className="absolute -bottom-1 -right-1 w-9 h-9 bg-[#7C3AED] rounded-full flex items-center justify-center border-2 border-[#E2E8F0] shadow-lg hover:bg-[#6D28D9] transition-colors">
               <Camera size={15} color="white" />
             </button>
           </div>
           <div className="flex items-center gap-4 mt-3">
-            <button onClick={() => avatarInput.current?.click()} className="text-[#EA580C] text-sm font-bold">Change photo</button>
+            <button onClick={() => avatarInput.current?.click()} className="text-[#6D28D9] text-sm font-bold">Change photo</button>
             {avatarPreview && (
               <button onClick={removeAvatar} className="text-[#64748B] hover:text-red-600 text-sm font-semibold inline-flex items-center gap-1">
                 <Trash2 size={13} /> Remove
@@ -259,7 +259,7 @@ export default function EditProfile() {
                 placeholder="username" maxLength={20} disabled={usernameCooldownDays > 0} className={inputCls + ' pl-9 pr-11'} />
               <span className="absolute right-4 top-1/2 -translate-y-1/2">
                 {usernameState === 'checking' && <Spinner size={15} className="text-[#64748B]" />}
-                {usernameState === 'free' && <CheckCircle2 size={18} className="text-[#2ECC71]" />}
+                {usernameState === 'free' && <CheckCircle2 size={18} className="text-[#10B981]" />}
                 {usernameState === 'taken' && <XCircle size={18} className="text-red-600" />}
               </span>
             </div>
@@ -268,7 +268,7 @@ export default function EditProfile() {
             ) : usernameState === 'taken' ? (
               <p className="text-red-600 text-[11px] mt-1.5">That username is taken.</p>
             ) : usernameState === 'free' ? (
-              <p className="text-[#2ECC71] text-[11px] mt-1.5">Username is available.</p>
+              <p className="text-[#10B981] text-[11px] mt-1.5">Username is available.</p>
             ) : (
               <p className="text-[#64748B] text-[11px] mt-1.5">Use a real, recognisable name. Reserved or fake-looking names are blocked.</p>
             )}
@@ -308,7 +308,7 @@ export default function EditProfile() {
 
         <button onClick={handleSave} disabled={saving || !dirty}
           className="w-full py-4 rounded-2xl font-bold text-white text-[15px] disabled:opacity-40 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-          style={{ background: '#F97316', boxShadow: '0 8px 24px rgba(255,90,31,0.3)' }}>
+          style={{ background: '#7C3AED', boxShadow: '0 8px 24px rgba(124,58,237,0.3)' }}>
           {saving ? <><Spinner size={18} /> {stage || 'Saving…'}</> : success ? <><Check size={18} /> Saved</> : 'Save Changes'}
         </button>
       </div>

@@ -48,8 +48,8 @@ const AccountSettings = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0A1628] pb-24">
-      <div className="sticky top-0 z-20 bg-[#0A1628] border-b border-white/10 px-4 py-3 flex items-center justify-between">
+    <div className="min-h-screen bg-[#11152E] pb-24">
+      <div className="sticky top-0 z-20 bg-[#11152E] border-b border-white/10 px-4 py-3 flex items-center justify-between">
         <button onClick={() => navigate('/settings')} className="text-[#6B7280] hover:text-white">
           <ArrowLeft size={22} />
         </button>
@@ -94,7 +94,7 @@ const AccountSettings = () => {
               className="w-full bg-transparent text-white text-sm focus:outline-none"
             >
               {COUNTRIES.map((c) => (
-                <option key={c.code} value={c.code} className="bg-[#0A1628]">
+                <option key={c.code} value={c.code} className="bg-[#11152E]">
                   {c.flag} {c.name}
                 </option>
               ))}
@@ -107,10 +107,10 @@ const AccountSettings = () => {
               onChange={(e) => setForm({ ...form, gender: e.target.value })}
               className="w-full bg-transparent text-white text-sm focus:outline-none"
             >
-              <option value="" className="bg-[#0A1628]">Prefer not to say</option>
-              <option value="male" className="bg-[#0A1628]">Male</option>
-              <option value="female" className="bg-[#0A1628]">Female</option>
-              <option value="other" className="bg-[#0A1628]">Other</option>
+              <option value="" className="bg-[#11152E]">Prefer not to say</option>
+              <option value="male" className="bg-[#11152E]">Male</option>
+              <option value="female" className="bg-[#11152E]">Female</option>
+              <option value="other" className="bg-[#11152E]">Other</option>
             </select>
           </div>
         </div>

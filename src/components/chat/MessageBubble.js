@@ -26,7 +26,7 @@ function renderBody(text, term, mine) {
       return (
         <a key={i} href={href} target="_blank" rel="noopener noreferrer nofollow"
           onClick={(e) => e.stopPropagation()}
-          className={'underline break-all ' + (mine ? 'text-[#202938]' : 'text-[#EA580C]')}>
+          className={'underline break-all ' + (mine ? 'text-[#243B53]' : 'text-[#6D28D9]')}>
           {highlight(part, term)}
         </a>
       );
@@ -38,9 +38,9 @@ function renderBody(text, term, mine) {
 const timeOf = (iso) => new Date(iso).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit', hour12: false });
 
 function Ticks({ m }) {
-  if (m._failed) return <AlertCircle size={13} className="text-[#202938]" />;
+  if (m._failed) return <AlertCircle size={13} className="text-[#243B53]" />;
   if (m._pending) return <Clock size={11} className="text-[#64748B]" />;
-  if (m.seen_at) return <CheckCheck size={14} className="text-[#202938]" strokeWidth={2.6} />;
+  if (m.seen_at) return <CheckCheck size={14} className="text-[#243B53]" strokeWidth={2.6} />;
   if (m.delivered_at) return <CheckCheck size={14} className="text-[#64748B]" />;
   return <Check size={13} className="text-[#64748B]" />;
 }
@@ -123,7 +123,7 @@ function MessageBubble({
         <div
           className={'relative px-3 py-2 ' + (flash ? 'msg-flash ' : '') +
             (m._failed ? 'border border-red-400 ' : '') +
-            (isMine ? 'bubble-mine bg-[#F97316]' : 'bg-[#F1F5F9]')}
+            (isMine ? 'bubble-mine bg-[#7C3AED]' : 'bg-white border border-[#D9E2EC]')}
           style={{ borderRadius: radius, opacity: deleted ? 0.7 : 1 }}
           onClick={m._failed ? () => onRetry(m) : undefined}
         >
@@ -136,11 +136,11 @@ function MessageBubble({
               <div className="w-11 h-14 flex-shrink-0 flex items-center justify-center overflow-hidden"
                 style={m.story_preview.type === 'text' ? { background: bgCss(m.story_preview.bg) } : { background: '#222' }}>
                 {m.story_preview.type === 'text'
-                  ? <span className="text-[#202938] text-[8px] font-bold leading-tight px-1 line-clamp-4 text-center">{m.story_preview.text}</span>
+                  ? <span className="text-[#243B53] text-[8px] font-bold leading-tight px-1 line-clamp-4 text-center">{m.story_preview.text}</span>
                   : m.story_preview.url && <img src={thumbUrl(m.story_preview.url, 120)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />}
               </div>
               <div className="py-1.5 pr-3 min-w-0 flex flex-col justify-center">
-                <p className="text-[11px] font-bold flex items-center gap-1 text-[#202938]"><CircleDot size={11} /> Status</p>
+                <p className="text-[11px] font-bold flex items-center gap-1 text-[#243B53]"><CircleDot size={11} /> Status</p>
                 <p className="text-[11px] text-[#64748B] truncate">{m.story_preview.type === 'text' ? m.story_preview.text : 'Photo'}</p>
               </div>
             </div>
@@ -150,9 +150,9 @@ function MessageBubble({
             <button
               onClick={(e) => { e.stopPropagation(); onJump(m.parent_message_id); }}
               className={'block w-full text-left mb-1.5 pl-2.5 pr-2 py-1.5 rounded-lg border-l-[3px] ' +
-                (isMine ? 'bg-black/20 border-[#E2E8F0]' : 'bg-[#F1F5F9] border-[#F97316]')}
+                (isMine ? 'bg-black/20 border-[#E2E8F0]' : 'bg-[#F1F5F9] border-[#7C3AED]')}
             >
-              <p className={'text-[11px] font-bold ' + (isMine ? 'text-[#202938]' : 'text-[#EA580C]')}>{parentName || 'Message'}</p>
+              <p className={'text-[11px] font-bold ' + (isMine ? 'text-[#243B53]' : 'text-[#6D28D9]')}>{parentName || 'Message'}</p>
               <p className="text-[12px] text-[#64748B] truncate flex items-center gap-1">
                 {parent?.message_type === 'image' && <ImageIcon size={11} />}
                 {parent ? (parent.is_deleted ? 'Deleted message' : parent.message_type === 'image' ? 'Photo' : parent.body) : 'Original message'}
@@ -173,7 +173,7 @@ function MessageBubble({
               />
             </div>
           ) : (
-            <p className="text-[#202938] text-[15px] leading-[1.38] whitespace-pre-wrap break-words">{renderBody(m.body, term, isMine)}</p>
+            <p className="text-[#243B53] text-[15px] leading-[1.38] whitespace-pre-wrap break-words">{renderBody(m.body, term, isMine)}</p>
           )}
 
           <div className="flex items-center gap-1 justify-end mt-0.5 -mb-0.5 select-none">

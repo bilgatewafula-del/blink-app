@@ -21,7 +21,7 @@ import { goBack } from '../../lib/nav';
 function Stat({ label, value, color, sub }) {
   return (
     <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
-      <p className="text-[#202938] font-black text-xl leading-none">{value}</p>
+      <p className="text-[#111827] font-black text-xl leading-none">{value}</p>
       <p className="text-[#64748B] text-xs mt-1">{label}</p>
       {sub && <p className="text-[#94A3B8] text-[10px] mt-0.5">{sub}</p>}
     </div>
@@ -44,15 +44,15 @@ function PaymentDetailModal({ payment, onClose, onConfirm, onReject, busy }) {
         onClick={e => e.stopPropagation()}>
 
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[#202938] font-black text-base">Verify Payment</h3>
-          <button onClick={onClose} className="text-[#64748B] hover:text-[#202938]"><XCircle size={20} /></button>
+          <h3 className="text-[#111827] font-black text-base">Verify Payment</h3>
+          <button onClick={onClose} className="text-[#64748B] hover:text-[#111827]"><XCircle size={20} /></button>
         </div>
 
         {/* Admin instruction */}
-        <div className="bg-[#F97316]/10 border border-[#F97316]/20 rounded-2xl p-4 mb-4">
-          <p className="text-[#EA580C] font-bold text-sm mb-1">📱 Before confirming</p>
+        <div className="bg-[#7C3AED]/10 border border-[#7C3AED]/20 rounded-2xl p-4 mb-4">
+          <p className="text-[#6D28D9] font-bold text-sm mb-1">📱 Before confirming</p>
           <p className="text-[#64748B] text-xs leading-relaxed">
-            Open M-Pesa on your phone → Go to <strong className="text-[#202938]">My Account → Statement</strong> or <strong className="text-[#202938]">Transaction History</strong> → Search for reference <strong className="text-yellow-700 font-mono">{payment.reference_code}</strong> and verify the amount is <strong className="text-[#202938]">{formatKES(payment.amount_kes)}</strong> from <strong className="text-[#202938]">{payment.mpesa_phone}</strong>.
+            Open M-Pesa on your phone → Go to <strong className="text-[#111827]">My Account → Statement</strong> or <strong className="text-[#111827]">Transaction History</strong> → Search for reference <strong className="text-yellow-700 font-mono">{payment.reference_code}</strong> and verify the amount is <strong className="text-[#111827]">{formatKES(payment.amount_kes)}</strong> from <strong className="text-[#111827]">{payment.mpesa_phone}</strong>.
           </p>
         </div>
 
@@ -70,7 +70,7 @@ function PaymentDetailModal({ payment, onClose, onConfirm, onReject, busy }) {
             <div key={row.label} className="flex items-center justify-between gap-3">
               <p className="text-[#64748B] text-[12px] flex-shrink-0">{row.label}</p>
               <p className={`text-right text-[13px] font-bold truncate max-w-[200px] ${
-                row.highlight ? 'text-yellow-700' : 'text-[#202938]'
+                row.highlight ? 'text-yellow-700' : 'text-[#111827]'
               } ${row.mono ? 'font-mono' : ''}`}>
                 {row.value}
               </p>
@@ -90,8 +90,8 @@ function PaymentDetailModal({ payment, onClose, onConfirm, onReject, busy }) {
           <button
             onClick={() => onConfirm(payment)}
             disabled={busy}
-            className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-[#202938] disabled:opacity-40 active:scale-95 transition-all flex items-center justify-center gap-1.5"
-            style={{ background: 'linear-gradient(135deg, #2ECC71, #16A34A)', boxShadow: '0 4px 16px rgba(46,204,113,0.3)' }}
+            className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-[#111827] disabled:opacity-40 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+            style={{ background: 'linear-gradient(135deg, #10B981, #16A34A)', boxShadow: '0 4px 16px rgba(16,185,129,0.3)' }}
           >
             {busy
               ? <div className="w-4 h-4 border-2 border-[#E2E8F0] border-t-white rounded-full animate-spin" />
@@ -438,20 +438,20 @@ export default function PaymentsAdminPanel() {
     t === 'business_page' ? '💼' : '💳';
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-screen bg-[#F1F3F9] pb-24">
 
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-3 flex items-center justify-between">
+      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={() => goBack(navigate, '/')} className="text-[#64748B] hover:text-[#202938]">
+          <button onClick={() => goBack(navigate, '/')} className="text-[#CBD5E1] hover:text-white">
             <ArrowLeft size={22} />
           </button>
           <div>
-            <p className="text-[#202938] font-bold text-[15px] leading-none">Payments Dashboard</p>
-            <p className="text-[#64748B] text-[11px] mt-0.5">Till: 4766037 · BILGATE WAFULA MUKHAYO</p>
+            <p className="text-white font-bold text-[15px] leading-none">Payments Dashboard</p>
+            <p className="text-[#CBD5E1] text-[11px] mt-0.5">Till: 4766037 · BILGATE WAFULA MUKHAYO</p>
           </div>
         </div>
-        <button onClick={() => { fetchPayments(); fetchStats(); }} className="text-[#64748B] hover:text-[#202938] p-1">
+        <button onClick={() => { fetchPayments(); fetchStats(); }} className="text-[#CBD5E1] hover:text-white p-1">
           <RefreshCw size={18} />
         </button>
       </div>
@@ -461,7 +461,7 @@ export default function PaymentsAdminPanel() {
         {/* Stats grid */}
         <div className="grid grid-cols-3 gap-2">
           <Stat label="Pending"     value={stats.pending     || 0} color="#FFD700" />
-          <Stat label="Confirmed"   value={stats.confirmed   || 0} color="#2ECC71" />
+          <Stat label="Confirmed"   value={stats.confirmed   || 0} color="#10B981" />
           <Stat label="Rejected"    value={stats.rejected    || 0} color="#EF4444" />
           <Stat label="Revenue (KES)" value={formatKES(stats.revenue||0).replace('KES ','')} sub="Confirmed only" />
           <Stat label="Subscribers" value={stats.subscribers || 0} />
@@ -473,7 +473,7 @@ export default function PaymentsAdminPanel() {
           <div className={`rounded-xl px-4 py-3 text-sm font-semibold flex items-center justify-between gap-2 ${
             feedback.type === 'success' ? 'bg-green-500/10 border border-green-500/20 text-green-700' :
             feedback.type === 'error'   ? 'bg-red-500/10 border border-red-500/20 text-red-600' :
-            'bg-[#F97316]/10 border border-[#F97316]/20 text-[#F97316]'
+            'bg-[#7C3AED]/10 border border-[#7C3AED]/20 text-[#7C3AED]'
           }`}>
             <span>{feedback.msg}</span>
             <button onClick={() => setFeedback(null)} className="flex-shrink-0 opacity-60 hover:opacity-100">
@@ -502,7 +502,7 @@ export default function PaymentsAdminPanel() {
           ].map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
               className={'flex-1 py-2 rounded-xl text-[11px] font-bold transition-all ' +
-                (tab === t.key ? 'bg-[#F97316] text-white  ' : 'text-[#64748B] hover:text-white')}>
+                (tab === t.key ? 'bg-[#7C3AED] text-white  ' : 'text-[#64748B] hover:text-white')}>
               {t.label}
             </button>
           ))}
@@ -513,19 +513,19 @@ export default function PaymentsAdminPanel() {
           <Search size={15} className="text-[#64748B] flex-shrink-0" />
           <input type="text" value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search by ref, username, phone, name..."
-            className="flex-1 bg-transparent text-[#202938] text-sm placeholder-[#94A3B8] focus:outline-none" />
-          {search && <button onClick={() => setSearch('')} className="text-[#64748B] hover:text-[#202938] flex-shrink-0"><XCircle size={15} /></button>}
+            className="flex-1 bg-transparent text-[#111827] text-sm placeholder-[#94A3B8] focus:outline-none" />
+          {search && <button onClick={() => setSearch('')} className="text-[#64748B] hover:text-[#111827] flex-shrink-0"><XCircle size={15} /></button>}
         </div>
 
         {/* Payment list */}
         {loading ? (
           <div className="flex justify-center py-10">
-            <div className="w-6 h-6 border-2 border-[#F97316] border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-3xl mb-2">{tab === 'pending' ? '✅' : '💳'}</p>
-            <p className="text-[#202938] font-bold">{tab === 'pending' ? 'No pending payments' : 'No payments found'}</p>
+            <p className="text-[#111827] font-bold">{tab === 'pending' ? 'No pending payments' : 'No payments found'}</p>
           </div>
         ) : (
           <div className="space-y-2 pb-4">
@@ -545,7 +545,7 @@ export default function PaymentsAdminPanel() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                          <span className="text-[#202938] font-bold text-[13px] capitalize">
+                          <span className="text-[#111827] font-bold text-[13px] capitalize">
                             {pay.payment_type === 'subscription' ? `${PLANS[pay.plan]?.label} Plan` :
                              pay.payment_type === 'boost' ? `${pay.boost_days}d Boost` :
                              pay.payment_type === 'coins' ? `${formatNumber(pay.coins_amount||0)} Coins` :
@@ -574,7 +574,7 @@ export default function PaymentsAdminPanel() {
                       </div>
 
                       <div className="text-right flex-shrink-0">
-                        <p className="text-[#202938] font-black text-[16px]">{formatKES(pay.amount_kes)}</p>
+                        <p className="text-[#111827] font-black text-[16px]">{formatKES(pay.amount_kes)}</p>
                       </div>
                     </div>
 
@@ -582,8 +582,8 @@ export default function PaymentsAdminPanel() {
                       <div className="flex gap-2 mt-3">
                         <button
                           onClick={() => setSelected(pay)}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-[#202938] active:scale-95 transition-all"
-                          style={{ background: 'linear-gradient(135deg, #2ECC71, #16A34A)' }}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-[#111827] active:scale-95 transition-all"
+                          style={{ background: 'linear-gradient(135deg, #10B981, #16A34A)' }}
                         >
                           <Eye size={13} /> Review & Confirm
                         </button>

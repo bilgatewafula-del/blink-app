@@ -46,26 +46,26 @@ const WalletPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-screen bg-[#F1F3F9] pb-24">
       {/* Top bar */}
-      <div className="sticky top-0 z-20 bg-white border-b border-[#E2E8F0] px-4 py-3 flex items-center gap-4">
-        <button onClick={() => goBack(navigate, '/')} className="text-[#64748B] hover:text-[#202938]">
+      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center gap-4">
+        <button onClick={() => goBack(navigate, '/')} className="text-[#CBD5E1] hover:text-white">
           <ArrowLeft size={22} />
         </button>
-        <h1 className="text-[#202938] font-bold text-lg">Wallet</h1>
+        <h1 className="text-white font-bold text-lg">Wallet</h1>
       </div>
 
       {/* Coming Soon hero */}
       <div className="mx-4 mt-6">
-        <div className="bg-gradient-to-br from-[#F97316]/20 via-[#F97316]/20 to-[#FFB020]/10 border border-[#F97316]/30 rounded-3xl p-6 text-center">
-          <div className="w-20 h-20 bg-[#F97316] rounded-full flex items-center justify-center mx-auto mb-4  ">
-            <Wallet size={36} className="text-[#202938]" />
+        <div className="bg-gradient-to-br from-[#7C3AED]/20 via-[#7C3AED]/20 to-[#FFB020]/10 border border-[#7C3AED]/30 rounded-3xl p-6 text-center">
+          <div className="w-20 h-20 bg-[#7C3AED] rounded-full flex items-center justify-center mx-auto mb-4  ">
+            <Wallet size={36} className="text-white" />
           </div>
           <div className="flex items-center justify-center gap-2 mb-2">
             <Clock size={16} className="text-[#B45309]" />
             <span className="bg-[#FFD700]/20 text-[#B45309] text-xs font-bold px-3 py-1 rounded-full">Coming Soon</span>
           </div>
-          <h2 className="text-[#202938] font-bold text-2xl mb-2">B-Link Wallet</h2>
+          <h2 className="text-[#111827] font-bold text-2xl mb-2">B-Link Wallet</h2>
           <p className="text-[#64748B] text-sm leading-relaxed">
             We're building a powerful creator economy platform with M-Pesa integration. Support your favorite creators and earn from your content.
           </p>
@@ -77,12 +77,12 @@ const WalletPage = () => {
         <p className="text-[#64748B] text-xs font-bold uppercase tracking-widest mb-3">Your Activity</p>
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4 text-center">
-            <p className="text-3xl font-bold text-[#2ECC71]">{tipsReceived}</p>
+            <p className="text-3xl font-bold text-[#10B981]">{tipsReceived}</p>
             <p className="text-[#64748B] text-xs mt-1">Tips Received</p>
             <p className="text-[#64748B] text-[10px]">Once wallet launches</p>
           </div>
           <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4 text-center">
-            <p className="text-3xl font-bold text-[#EA580C]">{tipsSent}</p>
+            <p className="text-3xl font-bold text-[#6D28D9]">{tipsSent}</p>
             <p className="text-[#64748B] text-xs mt-1">Tips Sent</p>
             <p className="text-[#64748B] text-[10px]">Once wallet launches</p>
           </div>
@@ -97,18 +97,18 @@ const WalletPage = () => {
               <TrendingUp size={18} className="text-[#B45309]" />
             </div>
             <div>
-              <p className="text-[#202938] font-bold text-sm">Your Earnings Potential</p>
+              <p className="text-[#111827] font-bold text-sm">Your Earnings Potential</p>
               <p className="text-[#64748B] text-xs">Based on your current followers</p>
             </div>
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-[#64748B] text-sm">Followers</p>
-              <p className="text-[#202938] font-semibold">{profile?.follower_count || 0}</p>
+              <p className="text-[#111827] font-semibold">{profile?.follower_count || 0}</p>
             </div>
             <div className="flex items-center justify-between">
               <p className="text-[#64748B] text-sm">Est. monthly tips</p>
-              <p className="text-[#2ECC71] font-semibold">
+              <p className="text-[#10B981] font-semibold">
                 KES {Math.floor((profile?.follower_count || 0) * 2.5).toLocaleString()}+
               </p>
             </div>
@@ -131,10 +131,10 @@ const WalletPage = () => {
             <div key={f.title} className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4 flex items-center gap-3">
               <IconTile icon={f.icon} size={40} iconSize={20} />
               <div className="flex-1 min-w-0">
-                <p className="text-[#202938] font-semibold text-sm">{f.title}</p>
+                <p className="text-[#111827] font-semibold text-sm">{f.title}</p>
                 <p className="text-[#64748B] text-xs">{f.desc}</p>
               </div>
-              <span className="bg-[#F97316]/20 text-[#EA580C] text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0">
+              <span className="bg-[#7C3AED]/20 text-[#6D28D9] text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0">
                 {f.eta}
               </span>
             </div>
@@ -144,14 +144,14 @@ const WalletPage = () => {
 
       {/* Notify me */}
       <div className="px-4 mt-4">
-        <div className="bg-gradient-to-r from-[#F97316]/10 to-[#F97316]/10 border border-[#F97316]/20 rounded-2xl p-5">
+        <div className="bg-gradient-to-r from-[#7C3AED]/10 to-[#7C3AED]/10 border border-[#7C3AED]/20 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-3">
-            <Bell size={18} className="text-[#EA580C]" />
-            <p className="text-[#202938] font-bold text-sm">Get Notified at Launch</p>
+            <Bell size={18} className="text-[#6D28D9]" />
+            <p className="text-[#111827] font-bold text-sm">Get Notified at Launch</p>
           </div>
           {notified ? (
-            <div className="bg-[#2ECC71]/10 border border-[#2ECC71]/20 rounded-xl p-3 text-center">
-              <p className="text-[#2ECC71] font-semibold text-sm inline-flex items-center gap-1.5"><CheckCircle2 size={16} /> You're on the list!</p>
+            <div className="bg-[#10B981]/10 border border-[#10B981]/20 rounded-xl p-3 text-center">
+              <p className="text-[#10B981] font-semibold text-sm inline-flex items-center gap-1.5"><CheckCircle2 size={16} /> You're on the list!</p>
               <p className="text-[#64748B] text-xs mt-1">We'll notify you when the wallet launches.</p>
             </div>
           ) : (
@@ -161,11 +161,11 @@ const WalletPage = () => {
                 value={notifyEmail}
                 onChange={(e) => setNotifyEmail(e.target.value)}
                 placeholder={user?.email || 'your@email.com'}
-                className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl py-3 px-4 text-[#202938] placeholder-[#94A3B8] text-sm focus:outline-none focus:border-[#F97316] mb-3"
+                className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl py-3 px-4 text-[#111827] placeholder-[#94A3B8] text-sm focus:outline-none focus:border-[#7C3AED] mb-3"
               />
               <button
                 onClick={handleNotify}
-                className="w-full bg-[#F97316] text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity"
+                className="w-full bg-[#7C3AED] text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity"
               >
                 Notify Me at Launch
               </button>

@@ -9,7 +9,7 @@ export default function TextPost({ text, bg, onHashtag, onMention }) {
   const parts = text.split(/(#\w+|@\w+)/g);
   return (
     <div className="rounded-3xl px-6 py-8 flex items-center justify-center text-center my-2" style={{ background: bgCss(bg), minHeight: 200 }}>
-      <p className="text-[#202938] font-extrabold whitespace-pre-wrap break-words"
+      <p className="text-[#111827] font-extrabold whitespace-pre-wrap break-words"
         style={{ fontSize: textSizeFor(text.length), lineHeight: 1.25, textShadow: '0 2px 12px rgba(0,0,0,.18)' }}>
         {parts.map((p, i) => {
           if (p.startsWith('#') && p.length > 1) return <button key={i} onClick={(e) => { e.stopPropagation(); onHashtag?.(p.slice(1)); }} className="underline decoration-white/60">{p}</button>;

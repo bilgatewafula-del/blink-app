@@ -104,7 +104,7 @@ function Sheet({ item, onClose }) {
     <div className="fixed inset-0 bg-black/75 z-50 flex items-end justify-center" onClick={onClose}>
       <div className="w-full max-w-[540px] bg-white border-t border-[#E2E8F0] rounded-t-3xl p-5 pb-8 max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4 flex-shrink-0">
-          <p className="text-[#202938] font-bold text-base flex items-center gap-2"><item.Icon size={18} className="text-[#EA580C]" /> {item.label}</p>
+          <p className="text-[#111827] font-bold text-base flex items-center gap-2"><item.Icon size={18} className="text-[#6D28D9]" /> {item.label}</p>
           <button onClick={onClose} aria-label="Close" className="text-[#64748B] p-1"><X size={20} /></button>
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -118,8 +118,8 @@ function Sheet({ item, onClose }) {
 function Row({ icon: Icon, label, sub, onClick, href, right }) {
   const inner = (
     <>
-      <span className="w-9 h-9 rounded-xl bg-[#F97316]/10 flex items-center justify-center flex-shrink-0"><Icon size={17} className="text-[#EA580C]" /></span>
-      <span className="flex-1 min-w-0 text-left"><span className="block text-[#202938] font-semibold text-[14px]">{label}</span>{sub && <span className="block text-[#64748B] text-[12px] mt-0.5">{sub}</span>}</span>
+      <span className="w-9 h-9 rounded-xl bg-[#7C3AED]/10 flex items-center justify-center flex-shrink-0"><Icon size={17} className="text-[#6D28D9]" /></span>
+      <span className="flex-1 min-w-0 text-left"><span className="block text-[#111827] font-semibold text-[14px]">{label}</span>{sub && <span className="block text-[#64748B] text-[12px] mt-0.5">{sub}</span>}</span>
       {right || <ChevronRight size={16} className="text-[#64748B]" />}
     </>
   );
@@ -141,34 +141,34 @@ export default function AboutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white pb-24">
-      {toast && <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[60] bg-[#202938] text-white text-[13px] font-semibold rounded-full px-5 py-2.5 shadow-xl">{toast}</div>}
+    <div className="min-h-screen bg-[#F1F3F9] pb-24">
+      {toast && <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[60] bg-[#111827] text-white text-[13px] font-semibold rounded-full px-5 py-2.5 shadow-xl">{toast}</div>}
       {legal && <Sheet item={legal} onClose={() => setLegal(null)} />}
 
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => goBack(navigate, '/')} aria-label="Back" className="text-[#64748B] hover:text-[#202938]"><ArrowLeft size={22} /></button>
-        <h1 className="text-[#202938] font-bold text-[16px]">About {APP_NAME}</h1>
+      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => goBack(navigate, '/')} aria-label="Back" className="text-[#CBD5E1] hover:text-white"><ArrowLeft size={22} /></button>
+        <h1 className="text-white font-bold text-[16px]">About {APP_NAME}</h1>
       </div>
 
       <div className="flex flex-col items-center px-6 pt-8 pb-6 text-center">
-        <div className="w-24 h-24 rounded-[28px] bg-[#F97316] flex items-center justify-center   mb-4">
-          <span className="text-[#202938] font-black text-4xl">B</span>
+        <div className="w-24 h-24 rounded-[28px] bg-[#7C3AED] flex items-center justify-center   mb-4">
+          <span className="text-[#111827] font-black text-4xl">B</span>
         </div>
-        <h2 className="text-[#202938] font-black text-3xl tracking-tight">{APP_NAME}</h2>
-        <p className="text-[#EA580C] font-semibold text-sm mt-1">{APP_TAGLINE}</p>
+        <h2 className="text-[#111827] font-black text-3xl tracking-tight">{APP_NAME}</h2>
+        <p className="text-[#6D28D9] font-semibold text-sm mt-1">{APP_TAGLINE}</p>
         <span className="text-[#94A3B8] text-xs bg-[#F1F5F9] px-3 py-1 rounded-full mt-3">Version {APP_VERSION}</span>
       </div>
 
       <div className="px-4 space-y-4">
         <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
-          <p className="text-[#202938] font-bold text-sm mb-2">What is {APP_NAME}?</p>
+          <p className="text-[#111827] font-bold text-sm mb-2">What is {APP_NAME}?</p>
           <p className="text-[#64748B] text-[13px] leading-relaxed">
             {APP_NAME} is a fast, modern social platform made for young Africans. Connect with friends, share moments, discover what is trending and grow your personal or business brand, all in one place.
           </p>
         </div>
 
-        <div className="bg-gradient-to-br from-[#F97316]/10 to-[#F97316]/10 border border-[#F97316]/20 rounded-2xl p-4">
-          <p className="text-[#202938] font-bold text-sm mb-2 flex items-center gap-2"><Target size={16} className="text-[#EA580C]" /> Our mission</p>
+        <div className="bg-gradient-to-br from-[#7C3AED]/10 to-[#7C3AED]/10 border border-[#7C3AED]/20 rounded-2xl p-4">
+          <p className="text-[#111827] font-bold text-sm mb-2 flex items-center gap-2"><Target size={16} className="text-[#6D28D9]" /> Our mission</p>
           <p className="text-[#64748B] text-[13px] leading-relaxed">
             To connect millions of young Africans on a fast, lightweight platform that works well even on limited data, built for the way Africa actually uses the internet.
           </p>
@@ -179,8 +179,8 @@ export default function AboutPage() {
           <div className="grid grid-cols-2 gap-2">
             {FEATURES.map(({ Icon, title, desc }) => (
               <div key={title} className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-3">
-                <span className="w-9 h-9 rounded-xl bg-[#F97316]/10 flex items-center justify-center mb-2"><Icon size={17} className="text-[#EA580C]" /></span>
-                <p className="text-[#202938] font-bold text-[13px]">{title}</p>
+                <span className="w-9 h-9 rounded-xl bg-[#7C3AED]/10 flex items-center justify-center mb-2"><Icon size={17} className="text-[#6D28D9]" /></span>
+                <p className="text-[#111827] font-bold text-[13px]">{title}</p>
                 <p className="text-[#94A3B8] text-[11px] mt-0.5 leading-snug">{desc}</p>
               </div>
             ))}
@@ -191,7 +191,7 @@ export default function AboutPage() {
           <p className="text-[#64748B] text-[11px] font-bold uppercase tracking-widest mb-2">The app</p>
           <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl overflow-hidden divide-y divide-[#E2E8F0]">
             {installed ? (
-              <Row icon={Smartphone} label="Installed on this device" right={<CheckCircle2 size={18} className="text-[#2ECC71]" />} onClick={() => {}} />
+              <Row icon={Smartphone} label="Installed on this device" right={<CheckCircle2 size={18} className="text-[#10B981]" />} onClick={() => {}} />
             ) : canInstall ? (
               <Row icon={Download} label={`Install ${APP_NAME}`} sub="Add it to your home screen for a full-screen app" onClick={async () => { if (await install()) say('Installed'); }} />
             ) : isIos() ? (

@@ -15,7 +15,7 @@ export default function Avatar({ url, name, size = 10, className = '', onClick }
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: '#F97316',
+    background: '#7C3AED',
     userSelect: 'none',
   };
 

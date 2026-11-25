@@ -217,7 +217,7 @@ const OtherProfile = () => {
     if (followStatus === 'accepted') {
       return {
         label: isFollowingMe ? '✓ Friends' : '✓ Following',
-        style: 'bg-[#F1F5F9] border border-[#E2E8F0] text-[#202938]',
+        style: 'bg-[#F1F5F9] border border-[#E2E8F0] text-[#111827]',
       };
     }
     if (followStatus === 'pending') {
@@ -226,22 +226,22 @@ const OtherProfile = () => {
     if (isFollowingMe) {
       return {
         label: 'Follow Back',
-        style: 'bg-[#F97316] text-white  ',
+        style: 'bg-[#7C3AED] text-white  ',
       };
     }
     return {
       label: '+ Follow',
-      style: 'bg-[#F97316] text-white  ',
+      style: 'bg-[#7C3AED] text-white  ',
     };
   };
 
   if (loading) return <ProfileSkeleton />;
 
   if (!profile) return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
+    <div className="min-h-screen bg-[#F1F3F9] flex flex-col items-center justify-center gap-4">
       <p className="text-5xl">👤</p>
-      <p className="text-[#202938] font-bold text-xl">User not found</p>
-      <button onClick={() => goBack(navigate, '/')} className="text-[#EA580C] text-sm">Go back</button>
+      <p className="text-[#111827] font-bold text-xl">User not found</p>
+      <button onClick={() => goBack(navigate, '/')} className="text-[#6D28D9] text-sm">Go back</button>
     </div>
   );
 
@@ -250,39 +250,39 @@ const OtherProfile = () => {
 
   return (
     <SwipeBack>
-      <div className="min-h-screen bg-white pb-24">
+      <div className="min-h-screen bg-[#F1F3F9] pb-24">
         {/* Top bar */}
-        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-3 flex items-center justify-between">
-          <button onClick={() => goBack(navigate, '/')} className="text-[#64748B] hover:text-[#202938] transition-colors">
+        <div className="sticky top-0 z-30 bg-[#11152E] px-4 py-3 flex items-center justify-between">
+          <button onClick={() => goBack(navigate, '/')} className="text-[#CBD5E1] hover:text-white transition-colors">
             <ArrowLeft size={22} />
           </button>
           <div className="flex items-center gap-2">
-            <h1 className="text-[#202938] font-bold text-base">@{profile.username}</h1>
+            <h1 className="text-white font-bold text-base">@{profile.username}</h1>
             {profile.is_verified && (
-              <span className="bg-[#F97316] text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold">✓</span>
+              <span className="bg-[#7C3AED] text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold">✓</span>
             )}
           </div>
           <div className="relative">
             <button
               onClick={() => setShowOptions(!showOptions)}
-              className="text-[#64748B] hover:text-[#202938] transition-colors"
+              className="text-[#CBD5E1] hover:text-white transition-colors"
             >
               <MoreHorizontal size={22} />
             </button>
             {showOptions && (
-              <div className="absolute right-0 top-8 bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden z-50 w-52 shadow-2xl">
+              <div className="absolute right-0 top-8 bg-white border border-white/15 rounded-2xl overflow-hidden z-50 w-52 shadow-2xl">
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(window.location.origin + '/profile/' + profile.username);
                     setShowOptions(false);
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-[#202938] hover:bg-[#F8FAFC] text-sm border-b border-[#E2E8F0]"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-white hover:bg-white/10 text-sm border-b border-white/15"
                 >
                   <Link size={16} /> Copy Profile Link
                 </button>
                 <button
                   onClick={() => setShowOptions(false)}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-[#202938] hover:bg-[#F8FAFC] text-sm border-b border-[#E2E8F0]"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-white hover:bg-white/10 text-sm border-b border-white/15"
                 >
                   <Flag size={16} /> Report @{profile.username}
                 </button>
@@ -299,7 +299,7 @@ const OtherProfile = () => {
 
         {/* Cover */}
         <div className="relative">
-          <div className="h-36 bg-gradient-to-br from-[#F97316]/40 via-[#F97316]/30 to-[#FFB020]/20 overflow-hidden">
+          <div className="h-36 bg-gradient-to-br from-[#7C3AED]/40 via-[#7C3AED]/30 to-[#FFB020]/20 overflow-hidden">
             {profile.cover_url && (
               <img src={profile.cover_url} alt="cover" className="w-full h-full object-cover" />
             )}
@@ -309,7 +309,7 @@ const OtherProfile = () => {
               {profile.avatar_url ? (
                 <img src={profile.avatar_url} alt="avatar" className="w-24 h-24 rounded-full object-cover" />
               ) : (
-                <div className="w-24 h-24 rounded-full bg-[#F97316] flex items-center justify-center text-white font-bold text-3xl">
+                <div className="w-24 h-24 rounded-full bg-[#7C3AED] flex items-center justify-center text-white font-bold text-3xl">
                   {profile.display_name?.[0]?.toUpperCase()}
                 </div>
               )}
@@ -322,8 +322,8 @@ const OtherProfile = () => {
           <div className="flex items-start justify-between mb-2">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-[#202938] font-bold text-xl">{profile.display_name}</h2>
-                {profile.is_verified && <BadgeCheck size={20} className="text-[#EA580C]" />}
+                <h2 className="text-[#111827] font-bold text-xl">{profile.display_name}</h2>
+                {profile.is_verified && <BadgeCheck size={20} className="text-[#6D28D9]" />}
                 <span className="text-xl">{flagMap[profile.country] || '🌍'}</span>
                 {profile.is_private && (
                   <span className="bg-[#F1F5F9] text-[#64748B] text-[10px] px-2 py-0.5 rounded-full">🔒 Private</span>
@@ -340,11 +340,11 @@ const OtherProfile = () => {
           </div>
 
           {profile.bio && (
-            <p className="text-[#202938] text-sm mb-2 leading-relaxed">{profile.bio}</p>
+            <p className="text-[#111827] text-sm mb-2 leading-relaxed">{profile.bio}</p>
           )}
 
          {profile.bio && (
-  <p className="text-[#202938] text-sm mb-2 leading-relaxed">
+  <p className="text-[#111827] text-sm mb-2 leading-relaxed">
     {profile.bio}
   </p>
 )}
@@ -354,7 +354,7 @@ const OtherProfile = () => {
     href={profile.website}
     target="_blank"
     rel="noreferrer"
-    className="flex items-center gap-1.5 text-[#EA580C] text-sm mb-3 hover:underline w-fit"
+    className="flex items-center gap-1.5 text-[#6D28D9] text-sm mb-3 hover:underline w-fit"
   >
     🔗 {profile.website.replace('https://', '')}
   </a>
@@ -365,13 +365,13 @@ const OtherProfile = () => {
             <div className="flex items-center gap-2 mb-3">
               <div className="flex -space-x-2">
                 {mutualFollowers.slice(0, 3).map((mf) => (
-                  <div key={mf.id} className="w-5 h-5 rounded-full border border-[#E2E8F0] overflow-hidden bg-[#F97316]">
+                  <div key={mf.id} className="w-5 h-5 rounded-full border border-[#E2E8F0] overflow-hidden bg-[#7C3AED]">
                     {mf.avatar_url && <img src={mf.avatar_url} alt="" className="w-full h-full object-cover" />}
                   </div>
                 ))}
               </div>
               <p className="text-[#64748B] text-xs">
-                Followed by <span className="text-[#202938] font-semibold">{mutualFollowers[0]?.display_name}</span>
+                Followed by <span className="text-[#111827] font-semibold">{mutualFollowers[0]?.display_name}</span>
                 {mutualFollowers.length > 1 && ' and ' + (mutualFollowers.length - 1) + ' others you follow'}
               </p>
             </div>
@@ -388,7 +388,7 @@ const OtherProfile = () => {
             </button>
             <button
               onClick={handleMessage}
-              className="flex-1 py-2.5 rounded-full font-bold text-sm bg-[#F1F5F9] border border-[#E2E8F0] text-[#202938] hover:bg-[#E2E8F0] transition-all flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 rounded-full font-bold text-sm bg-[#F1F5F9] border border-[#E2E8F0] text-[#111827] hover:bg-[#E2E8F0] transition-all flex items-center justify-center gap-2"
             >
               <MessageCircle size={16} /> Message
             </button>
@@ -397,7 +397,7 @@ const OtherProfile = () => {
           {/* Stats */}
           <div className="flex gap-6 pb-4 border-b border-[#E2E8F0]">
             <div className="text-center">
-              <p className="text-[#202938] font-bold text-lg">{posts.length}</p>
+              <p className="text-[#111827] font-bold text-lg">{posts.length}</p>
               <p className="text-[#64748B] text-xs">Posts</p>
             </div>
             <button
@@ -406,7 +406,7 @@ const OtherProfile = () => {
               }}
               className="text-center hover:opacity-80 transition-opacity"
             >
-              <p className="text-[#202938] font-bold text-lg">{formatNumber(followerCount)}</p>
+              <p className="text-[#111827] font-bold text-lg">{formatNumber(followerCount)}</p>
               <p className="text-[#64748B] text-xs">Followers</p>
             </button>
             <button
@@ -415,7 +415,7 @@ const OtherProfile = () => {
               }}
               className="text-center hover:opacity-80 transition-opacity"
             >
-              <p className="text-[#202938] font-bold text-lg">{formatNumber(followingCount)}</p>
+              <p className="text-[#111827] font-bold text-lg">{formatNumber(followingCount)}</p>
               <p className="text-[#64748B] text-xs">Following</p>
             </button>
           </div>
@@ -423,7 +423,7 @@ const OtherProfile = () => {
 
         {/* Tab */}
         <div className="flex border-b border-[#E2E8F0] sticky top-14 bg-white z-20">
-          <button className="flex-1 flex items-center justify-center gap-2 py-3.5 border-b-2 border-[#F97316] text-[#EA580C] text-sm font-semibold">
+          <button className="flex-1 flex items-center justify-center gap-2 py-3.5 border-b-2 border-[#7C3AED] text-[#6D28D9] text-sm font-semibold">
             <Grid size={16} /> Posts
           </button>
         </div>
@@ -434,14 +434,14 @@ const OtherProfile = () => {
             <div className="w-20 h-20 rounded-full bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center">
               <span className="text-4xl">🔒</span>
             </div>
-            <h3 className="text-[#202938] font-bold text-xl">This account is private</h3>
+            <h3 className="text-[#111827] font-bold text-xl">This account is private</h3>
             <p className="text-[#64748B] text-sm text-center">
               Follow @{profile.username} to see their photos and posts.
             </p>
             <button
               onClick={handleFollow}
               disabled={followLoading}
-              className="bg-[#F97316] text-white px-8 py-3 rounded-full font-bold text-sm   disabled:opacity-50"
+              className="bg-[#7C3AED] text-white px-8 py-3 rounded-full font-bold text-sm   disabled:opacity-50"
             >
               {followStatus === 'pending' ? 'Request Sent' : '+ Follow'}
             </button>
@@ -449,7 +449,7 @@ const OtherProfile = () => {
         ) : posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center mt-16 gap-3 px-6">
             <div className="text-5xl">📸</div>
-            <h3 className="text-[#202938] font-bold text-lg">No posts yet</h3>
+            <h3 className="text-[#111827] font-bold text-lg">No posts yet</h3>
             <p className="text-[#64748B] text-sm text-center">
               {profile.display_name} hasn't posted anything yet.
             </p>
@@ -473,14 +473,14 @@ const OtherProfile = () => {
                     style={{ background: post.bg_color || '#FFFFFF' }}
                     className="w-full h-full flex items-center justify-center p-2"
                   >
-                    <p className="text-[#202938] text-xs text-center font-semibold line-clamp-4 leading-relaxed">
+                    <p className="text-[#111827] text-xs text-center font-semibold line-clamp-4 leading-relaxed">
                       {post.caption}
                     </p>
                   </div>
                 )}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                  <span className="text-[#202938] text-xs font-bold">❤️ {post.likes_count || 0}</span>
-                  <span className="text-[#202938] text-xs font-bold">💬 {post.comments_count || 0}</span>
+                  <span className="text-[#111827] text-xs font-bold">❤️ {post.likes_count || 0}</span>
+                  <span className="text-[#111827] text-xs font-bold">💬 {post.comments_count || 0}</span>
                 </div>
               </div>
             ))}
@@ -490,7 +490,7 @@ const OtherProfile = () => {
         {/* Suggested users */}
         {!isPrivateAndNotFollowing && suggestedUsers.length > 0 && (
           <div className="px-4 mt-6 pb-6">
-            <p className="text-[#202938] font-bold text-sm mb-3">👥 People you may know</p>
+            <p className="text-[#111827] font-bold text-sm mb-3">👥 People you may know</p>
             <div className="space-y-3">
               {suggestedUsers.map((su) => (
                 <div key={su.id} className="flex items-center gap-3">
@@ -498,21 +498,21 @@ const OtherProfile = () => {
                     {su.avatar_url ? (
                       <img src={su.avatar_url} alt={su.display_name} className="w-10 h-10 rounded-full object-cover" />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-[#F97316] flex items-center justify-center text-white font-bold">
+                      <div className="w-10 h-10 rounded-full bg-[#7C3AED] flex items-center justify-center text-white font-bold">
                         {su.display_name?.[0]?.toUpperCase()}
                       </div>
                     )}
                   </button>
                   <button onClick={() => navigate('/profile/' + su.username)} className="flex-1 text-left min-w-0">
                     <div className="flex items-center gap-1">
-                      <p className="text-[#202938] font-semibold text-sm truncate">{su.display_name}</p>
-                      {su.is_verified && <span className="bg-[#F97316] text-white text-[8px] px-1 py-0.5 rounded-full font-bold">✓</span>}
+                      <p className="text-[#111827] font-semibold text-sm truncate">{su.display_name}</p>
+                      {su.is_verified && <span className="bg-[#7C3AED] text-white text-[8px] px-1 py-0.5 rounded-full font-bold">✓</span>}
                     </div>
                     <p className="text-[#64748B] text-xs">@{su.username}</p>
                   </button>
                   <button
                     onClick={() => navigate('/profile/' + su.username)}
-                    className="text-xs text-[#EA580C] border border-[#F97316]/40 px-3 py-1.5 rounded-full font-bold hover:bg-[#F97316]/10 transition-colors flex-shrink-0"
+                    className="text-xs text-[#6D28D9] border border-[#7C3AED]/40 px-3 py-1.5 rounded-full font-bold hover:bg-[#7C3AED]/10 transition-colors flex-shrink-0"
                   >
                     View
                   </button>
@@ -552,8 +552,8 @@ const UserListModal = ({ title, users, currentUserId, onClose, onNavigate }) => 
   <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center">
     <div className="w-full max-w-[620px] bg-white border-t border-[#E2E8F0] rounded-t-3xl max-h-[70vh] overflow-hidden flex flex-col slide-up">
       <div className="flex items-center justify-between px-5 py-4 border-b border-[#E2E8F0] flex-shrink-0">
-        <h2 className="text-[#202938] font-bold text-lg">{title}</h2>
-        <button onClick={onClose} className="text-[#64748B] hover:text-[#202938] text-2xl leading-none">✕</button>
+        <h2 className="text-[#111827] font-bold text-lg">{title}</h2>
+        <button onClick={onClose} className="text-[#64748B] hover:text-[#111827] text-2xl leading-none">✕</button>
       </div>
       <div className="overflow-y-auto flex-1">
         {users.length === 0 ? (
@@ -572,16 +572,16 @@ const UserListModal = ({ title, users, currentUserId, onClose, onNavigate }) => 
                 {u.avatar_url ? (
                   <img src={u.avatar_url} alt={u.display_name} className="w-11 h-11 rounded-full object-cover" />
                 ) : (
-                  <div className="w-11 h-11 rounded-full bg-[#F97316] flex items-center justify-center text-white font-bold">
+                  <div className="w-11 h-11 rounded-full bg-[#7C3AED] flex items-center justify-center text-white font-bold">
                     {u.display_name?.[0]?.toUpperCase()}
                   </div>
                 )}
               </div>
               <div className="flex-1 text-left min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <p className="text-[#202938] font-bold text-sm truncate">{u.display_name}</p>
+                  <p className="text-[#111827] font-bold text-sm truncate">{u.display_name}</p>
                   {u.is_verified && (
-                    <span className="bg-[#F97316] text-white text-[8px] px-1 py-0.5 rounded-full font-bold flex-shrink-0">✓</span>
+                    <span className="bg-[#7C3AED] text-white text-[8px] px-1 py-0.5 rounded-full font-bold flex-shrink-0">✓</span>
                   )}
                 </div>
                 <p className="text-[#64748B] text-xs">@{u.username}</p>

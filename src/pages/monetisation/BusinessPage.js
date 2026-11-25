@@ -41,12 +41,12 @@ export default function BusinessPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white pb-24">
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => goBack(navigate, '/')} className="text-[#64748B] hover:text-[#202938]"><ArrowLeft size={22} /></button>
+    <div className="min-h-screen bg-[#F1F3F9] pb-24">
+      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => goBack(navigate, '/')} className="text-[#CBD5E1] hover:text-white"><ArrowLeft size={22} /></button>
         <div>
-          <h1 className="text-[#202938] font-bold text-[15px] leading-none">Business Page</h1>
-          <p className="text-[#64748B] text-xs mt-0.5">{formatKES(BUSINESS_PAGE_PRICE)} / month</p>
+          <h1 className="text-white font-bold text-[15px] leading-none">Business Page</h1>
+          <p className="text-[#CBD5E1] text-xs mt-0.5">{formatKES(BUSINESS_PAGE_PRICE)} / month</p>
         </div>
       </div>
 
@@ -56,7 +56,7 @@ export default function BusinessPage() {
           <div className="bg-yellow-500/10 border border-yellow-500/25 rounded-2xl p-4 flex items-center gap-3">
             <Briefcase size={24} className="text-[#B45309]" />
             <div>
-              <p className="text-[#202938] font-bold">Business Page Active</p>
+              <p className="text-[#111827] font-bold">Business Page Active</p>
               <p className="text-[#64748B] text-xs mt-0.5">Your business features are live.</p>
             </div>
           </div>
@@ -75,18 +75,18 @@ export default function BusinessPage() {
         {/* Hero */}
         <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-2xl p-5 text-center">
           <Briefcase size={44} className="text-[#B45309] mb-3" />
-          <p className="text-[#202938] font-black text-xl mb-1">B-Link Business</p>
+          <p className="text-[#111827] font-black text-xl mb-1">B-Link Business</p>
           <p className="text-[#64748B] text-sm mb-3">Grow your brand on Africa's GenZ platform</p>
           <div className="bg-[#F1F5F9] rounded-xl px-4 py-3 inline-block">
             <p className="text-[#64748B] text-xs">Monthly subscription</p>
-            <p className="text-[#202938] font-black text-3xl">{formatKES(BUSINESS_PAGE_PRICE)}</p>
+            <p className="text-[#111827] font-black text-3xl">{formatKES(BUSINESS_PAGE_PRICE)}</p>
             <p className="text-[#94A3B8] text-[11px]">per month</p>
           </div>
         </div>
 
         {/* Features */}
         <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
-          <p className="text-[#202938] font-bold text-sm mb-3">Everything included</p>
+          <p className="text-[#111827] font-bold text-sm mb-3">Everything included</p>
           <div className="space-y-2.5">
             {FEATURES.map((f, i) => (
               <div key={i} className="flex items-center gap-3">
@@ -101,7 +101,7 @@ export default function BusinessPage() {
 
         {/* Who it's for */}
         <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
-          <p className="text-[#202938] font-bold text-sm mb-2">Who should use this?</p>
+          <p className="text-[#111827] font-bold text-sm mb-2">Who should use this?</p>
           <div className="space-y-1.5">
             {['Businesses & brands selling products/services','Content creators monetising their audience','Public figures building their personal brand','NGOs and community organisations'].map((item,i) => (
               <div key={i} className="flex items-center gap-2">
@@ -115,8 +115,8 @@ export default function BusinessPage() {
         {!isBusiness && !hasPending && (
           <button
             onClick={() => setShowPayment(true)}
-            className="w-full py-4 rounded-2xl font-bold text-[#202938] text-[15px] active:scale-[0.98] transition-all"
-            style={{ background:'linear-gradient(135deg, #FFD700, #F97316)', boxShadow:'0 8px 24px rgba(255,215,0,0.25)' }}
+            className="w-full py-4 rounded-2xl font-bold text-[#111827] text-[15px] active:scale-[0.98] transition-all"
+            style={{ background:'linear-gradient(135deg, #FBBF24, #D97706)', boxShadow:'0 8px 24px rgba(255,215,0,0.25)' }}
           >
             Set up Business Page — {formatKES(BUSINESS_PAGE_PRICE)}/mo
           </button>

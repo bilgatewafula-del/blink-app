@@ -80,13 +80,13 @@ export default function MentionTextarea({
   return (
     <div className="relative mb-2">
       <div className="grid" style={{ minHeight: rows * 28 }}>
-        <div aria-hidden="true" className={(dark ? 'text-white' : 'text-[#202938]') + ' pointer-events-none ' + className} style={{ gridArea: '1 / 1', ...common, ...style }}>
+        <div aria-hidden="true" className={(dark ? 'text-white' : 'text-[#111827]') + ' pointer-events-none ' + className} style={{ gridArea: '1 / 1', ...common, ...style }}>
           {tokenize(value).map((p) => (
             <span key={p.key} style={p.kind === 'mention' ? { color: MENTION_COLOR, fontWeight: 700 } : p.kind === 'tag' ? { color: TAG_COLOR, fontWeight: 700 } : undefined}>{p.text}</span>
           ))}
           {'\n'}
         </div>
-        {!value && <div aria-hidden="true" className={(dark ? 'text-[#8E8C88]' : 'text-[#64748B]') + ' pointer-events-none ' + className} style={{ gridArea: '1 / 1', ...common, ...style }}>{placeholder}</div>}
+        {!value && <div aria-hidden="true" className={(dark ? 'text-[#64748B]' : 'text-[#64748B]') + ' pointer-events-none ' + className} style={{ gridArea: '1 / 1', ...common, ...style }}>{placeholder}</div>}
         <textarea
           ref={ref}
           value={value}
@@ -97,20 +97,20 @@ export default function MentionTextarea({
           maxLength={maxLength}
           aria-label="Caption"
           className={'bg-transparent focus:outline-none resize-none overflow-hidden ' + className}
-          style={{ gridArea: '1 / 1', color: 'transparent', caretColor: dark ? '#fff' : '#202938', width: '100%', height: '100%', ...common, ...style }}
+          style={{ gridArea: '1 / 1', color: 'transparent', caretColor: dark ? '#fff' : '#111827', width: '100%', height: '100%', ...common, ...style }}
         />
       </div>
 
       {sug && (
-        <div className={'absolute left-0 right-0 top-full mt-1 z-30 rounded-2xl overflow-hidden shadow-lg border ' + (dark ? 'bg-[#1d1c1a] border-white/10' : 'bg-white border-[#E2E8F0]')}>
+        <div className={'absolute left-0 right-0 top-full mt-1 z-30 rounded-2xl overflow-hidden shadow-lg border ' + (dark ? 'bg-[#1d1c1a] border-[#E2E8F0]' : 'bg-white border-[#E2E8F0]')}>
           {sug.items.map((it) => (
             sug.kind === 'mention' ? (
               <button key={it.id} onMouseDown={(e) => e.preventDefault()} onClick={() => pick(it)}
-                className={'w-full flex items-center gap-3 px-4 py-2.5 text-left ' + (dark ? 'active:bg-white/[0.06]' : 'active:bg-[#F1F5F9]')}>
+                className={'w-full flex items-center gap-3 px-4 py-2.5 text-left ' + (dark ? 'active:bg-[#F1F5F9]' : 'active:bg-[#F1F5F9]')}>
                 <Avatar url={it.avatar_url} name={it.display_name || it.username} size={8} />
                 <span className="min-w-0">
-                  <span className={'flex items-center gap-1 text-[14px] font-bold truncate ' + (dark ? 'text-white' : 'text-[#202938]')}>{it.display_name || it.username}{it.is_verified && <VerifiedBadge size={13} />}</span>
-                  <span className={'block text-[12px] truncate ' + (dark ? 'text-[#8E8C88]' : 'text-[#64748B]')}>@{it.username}</span>
+                  <span className={'flex items-center gap-1 text-[14px] font-bold truncate ' + (dark ? 'text-white' : 'text-[#111827]')}>{it.display_name || it.username}{it.is_verified && <VerifiedBadge size={13} />}</span>
+                  <span className={'block text-[12px] truncate ' + (dark ? 'text-[#64748B]' : 'text-[#64748B]')}>@{it.username}</span>
                 </span>
               </button>
             ) : (

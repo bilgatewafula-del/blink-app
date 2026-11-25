@@ -71,27 +71,27 @@ export function ShareSheet({ post, onClose, onDone }) {
 
   return (
     <BottomSheet onClose={onClose}>
-      <p className="text-[#202938] font-bold text-[15px] px-5 pt-2 pb-3">{isVideo ? 'Share video' : 'Share post'}</p>
+      <p className="text-[#111827] font-bold text-[15px] px-5 pt-2 pb-3">{isVideo ? 'Share video' : 'Share post'}</p>
       <div className="flex gap-4 px-5 pb-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
         <button onClick={copy} className="flex flex-col items-center gap-1.5 flex-shrink-0 w-16 active:scale-95 transition-transform">
-          <span className="w-12 h-12 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[#202938]"><Link2 size={22} /></span>
-          <span className="text-[#202938] text-[11px] font-semibold">Copy link</span>
+          <span className="w-12 h-12 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[#111827]"><Link2 size={22} /></span>
+          <span className="text-[#111827] text-[11px] font-semibold">Copy link</span>
         </button>
         {TARGETS.map(({ label, Icon, bg, go }) => (
           <button key={label} onClick={go} className="flex flex-col items-center gap-1.5 flex-shrink-0 w-16 active:scale-95 transition-transform">
             <span className="w-12 h-12 rounded-full flex items-center justify-center text-white" style={{ background: bg }}><Icon size={22} /></span>
-            <span className="text-[#202938] text-[11px] font-semibold">{label}</span>
+            <span className="text-[#111827] text-[11px] font-semibold">{label}</span>
           </button>
         ))}
         {canNativeShare && (
           <button onClick={system} className="flex flex-col items-center gap-1.5 flex-shrink-0 w-16 active:scale-95 transition-transform">
-            <span className="w-12 h-12 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[#202938]"><Share2 size={22} /></span>
-            <span className="text-[#202938] text-[11px] font-semibold">More</span>
+            <span className="w-12 h-12 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[#111827]"><Share2 size={22} /></span>
+            <span className="text-[#111827] text-[11px] font-semibold">More</span>
           </button>
         )}
       </div>
       <p className="text-[#64748B] text-[11px] font-bold uppercase tracking-wider px-5 pt-2 pb-1">Send in chat</p>
-      {chats === null && <div className="flex justify-center py-6 text-[#EA580C]"><Spinner size={20} /></div>}
+      {chats === null && <div className="flex justify-center py-6 text-[#6D28D9]"><Spinner size={20} /></div>}
       {chats && chats.length === 0 && <p className="text-[#64748B] text-sm text-center py-5">No chats yet</p>}
       {(chats || []).map((c) => {
         const on = picked.includes(c.chat_id);
@@ -99,15 +99,15 @@ export function ShareSheet({ post, onClose, onDone }) {
           <button key={c.chat_id} onClick={() => setPicked((p) => (on ? p.filter((x) => x !== c.chat_id) : [...p, c.chat_id]))}
             className="w-full flex items-center gap-3 px-5 py-2.5 active:bg-[#F8FAFC]">
             <Avatar url={c.other_avatar_url} name={c.other_display_name} size={10} />
-            <span className="flex-1 text-left text-[#202938] text-[15px] font-semibold truncate">{c.other_display_name}</span>
-            <span className={'w-6 h-6 rounded-full border-2 flex items-center justify-center ' + (on ? 'bg-[#F97316] border-[#F97316]' : 'border-[#E2E8F0]')}>{on && <Check size={14} className="text-[#202938]" />}</span>
+            <span className="flex-1 text-left text-[#111827] text-[15px] font-semibold truncate">{c.other_display_name}</span>
+            <span className={'w-6 h-6 rounded-full border-2 flex items-center justify-center ' + (on ? 'bg-[#7C3AED] border-[#7C3AED]' : 'border-[#E2E8F0]')}>{on && <Check size={14} className="text-white" />}</span>
           </button>
         );
       })}
       {picked.length > 0 && (
         <div className="px-5 pt-3">
           <button onClick={sendChats} disabled={busy} className="w-full py-3.5 rounded-xl text-white font-bold flex items-center justify-center gap-2"
-            style={{ background: '#F97316' }}>
+            style={{ background: '#7C3AED' }}>
             {busy ? <Spinner size={16} /> : <Send size={16} />} Send ({picked.length})
           </button>
         </div>
@@ -134,20 +134,20 @@ export function InsightsSheet({ post, onClose }) {
   }, [post]);
 
   const tiles = data ? [
-    [Eye, 'Views', data.views, '#FF9B6A'], [Heart, 'Likes', data.likes, '#EF4444'], [MessageCircle, 'Comments', data.comments, '#F97316'],
-    [Repeat2, 'Reposts', data.reposts, '#2ECC71'], [Share, 'Shares', data.shares, '#F97316'], [Bookmark, 'Saves', data.saves, '#FFB020'],
+    [Eye, 'Views', data.views, '#A78BFA'], [Heart, 'Likes', data.likes, '#EF4444'], [MessageCircle, 'Comments', data.comments, '#7C3AED'],
+    [Repeat2, 'Reposts', data.reposts, '#10B981'], [Share, 'Shares', data.shares, '#7C3AED'], [Bookmark, 'Saves', data.saves, '#FFB020'],
   ] : [];
 
   return (
     <BottomSheet onClose={onClose}>
-      <p className="text-[#202938] font-bold text-[15px] px-5 pt-2 pb-3 flex items-center gap-2"><TrendingUp size={17} className="text-[#EA580C]" /> Post insights</p>
-      {!data ? <div className="flex justify-center py-12 text-[#EA580C]"><Spinner size={22} /></div> : (
+      <p className="text-[#111827] font-bold text-[15px] px-5 pt-2 pb-3 flex items-center gap-2"><TrendingUp size={17} className="text-[#6D28D9]" /> Post insights</p>
+      {!data ? <div className="flex justify-center py-12 text-[#6D28D9]"><Spinner size={22} /></div> : (
         <>
           <div className="grid grid-cols-3 gap-2.5 px-5">
             {tiles.map(([Icon, label, value, color]) => (
               <div key={label} className="rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] py-3.5 flex flex-col items-center gap-1">
                 <Icon size={18} color={color} />
-                <p className="text-[#202938] font-black text-[20px] tabular-nums leading-none">{value == null ? '–' : formatNumber(value)}</p>
+                <p className="text-[#111827] font-black text-[20px] tabular-nums leading-none">{value == null ? '–' : formatNumber(value)}</p>
                 <p className="text-[#64748B] text-[11px]">{label}</p>
               </div>
             ))}
@@ -155,7 +155,7 @@ export function InsightsSheet({ post, onClose }) {
           {data.engagement != null && (
             <div className="px-5 mt-4">
               <div className="flex justify-between text-[12px] mb-1.5"><span className="text-[#64748B]">Engagement rate</span><span className="text-white font-bold">{data.engagement}%</span></div>
-              <div className="h-2 rounded-full bg-[#F1F5F9] overflow-hidden"><div className="h-full rounded-full" style={{ width: Math.max(2, Math.min(100, data.engagement)) + '%', background: '#F97316' }} /></div>
+              <div className="h-2 rounded-full bg-[#F1F5F9] overflow-hidden"><div className="h-full rounded-full" style={{ width: Math.max(2, Math.min(100, data.engagement)) + '%', background: '#7C3AED' }} /></div>
               <p className="text-[#64748B] text-[11px] mt-1.5">Likes, comments, reposts, shares and saves compared with views.</p>
             </div>
           )}
@@ -164,7 +164,7 @@ export function InsightsSheet({ post, onClose }) {
               <p className="text-[#64748B] text-[11px] font-bold uppercase tracking-wider mb-2">Reactions</p>
               <div className="flex flex-wrap gap-2">
                 {Object.entries(data.reactions).sort((a, b) => b[1] - a[1]).map(([k, n]) => (
-                  <span key={k} className="bg-[#F1F5F9] rounded-full px-3 py-1.5 text-[13px] text-[#202938]">{REACTION_EMOJI[k] || '👍'} {formatNumber(n)}</span>
+                  <span key={k} className="bg-[#F1F5F9] rounded-full px-3 py-1.5 text-[13px] text-[#111827]">{REACTION_EMOJI[k] || '👍'} {formatNumber(n)}</span>
                 ))}
               </div>
             </div>

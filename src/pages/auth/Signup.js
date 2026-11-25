@@ -24,7 +24,7 @@ const COUNTRIES = [
   { code: 'US', name: 'United States' }, { code: 'CA', name: 'Canada' }, { code: 'OTHER', name: 'Other' },
 ];
 
-const inputCls = 'w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-11 pr-4 py-4 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60 transition-all';
+const inputCls = 'w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-11 pr-4 py-4 text-[#111827] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#7C3AED]/60 transition-all';
 
 function useDebounced(value, delay) {
   const [v, setV] = useState(value);
@@ -181,7 +181,7 @@ export default function SignUp() {
 
   if (step === 3 && pending) {
     return (
-      <div className="min-h-screen bg-white" style={{ maxWidth: 480, margin: '0 auto' }}>
+      <div className="min-h-screen bg-[#F1F3F9]" style={{ maxWidth: 480, margin: '0 auto' }}>
         <VerifyCode
           kind={pending.kind}
           target={pending.kind === 'email' ? maskIdentifier(pending.target) : pending.target}
@@ -194,35 +194,35 @@ export default function SignUp() {
         {captchaEnabled && <div className="px-6"><Captcha onToken={setCaptchaToken} resetKey={captchaReset} /></div>}
         <p className="text-center text-[#64748B] text-sm pb-10">
           Already have an account?{' '}
-          <button onClick={() => navigate('/login')} className="text-[#EA580C] font-bold">Sign in</button>
+          <button onClick={() => navigate('/login')} className="text-[#6D28D9] font-bold">Sign in</button>
         </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
-      <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+    <div className="min-h-screen bg-[#F1F3F9] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
+      <div className="flex items-center gap-3 px-4 pt-4 pb-4 bg-[#11152E] rounded-b-[24px]" style={{ paddingTop: 'max(16px, env(safe-area-inset-top))' }}>
         <button onClick={() => (step === 2 ? setStep(1) : navigate('/login'))} aria-label="Back"
-          className="w-9 h-9 rounded-xl hover:bg-[#F1F5F9] flex items-center justify-center text-[#64748B] hover:text-[#202938] transition-colors">
-          <ArrowLeft size={20} />
+          className="w-10 h-10 rounded-xl hover:bg-white/10 flex items-center justify-center text-white transition-colors">
+          <ArrowLeft size={22} />
         </button>
         <div>
-          <p className="text-[#202938] font-bold text-[15px] leading-none">{step === 1 ? 'Create account' : 'Your profile'}</p>
-          <p className="text-[#64748B] text-xs mt-0.5">Step {step} of 2</p>
+          <p className="text-white font-bold text-[17px] leading-none">{step === 1 ? 'Create account' : 'Your profile'}</p>
+          <p className="text-[#C4B5FD] text-xs mt-1">Step {step} of 2</p>
         </div>
         <div className="flex gap-1.5 ml-auto">
           {[1, 2].map((s) => (
-            <div key={s} className={`h-1.5 rounded-full transition-all duration-300 ${s <= step ? 'bg-[#F97316]' : 'bg-[#E2E8F0]'}`} style={{ width: s === step ? 20 : 8 }} />
+            <div key={s} className={`h-1.5 rounded-full transition-all duration-300 ${s <= step ? 'bg-[#A78BFA]' : 'bg-white/25'}`} style={{ width: s === step ? 20 : 8 }} />
           ))}
         </div>
       </div>
 
       <div className="flex flex-col items-center pt-4 pb-5 px-6">
-        <div className="w-16 h-16 rounded-[20px] bg-[#F97316] flex items-center justify-center   mb-3">
-          <span className="text-[#202938] font-black text-2xl">B</span>
+        <div className="w-16 h-16 rounded-[20px] bg-[#7C3AED] flex items-center justify-center   mb-3">
+          <span className="text-[#111827] font-black text-2xl">B</span>
         </div>
-        <h2 className="text-[#202938] font-black text-2xl">{step === 1 ? 'Join B-Link' : 'Who are you?'}</h2>
+        <h2 className="text-[#111827] font-black text-2xl">{step === 1 ? 'Join B-Link' : 'Who are you?'}</h2>
         <p className="text-[#94A3B8] text-sm text-center mt-1">{step === 1 ? 'Free forever. No credit card needed.' : 'How should the community know you?'}</p>
       </div>
 
@@ -233,7 +233,7 @@ export default function SignUp() {
             {[['email', 'Email', Mail], ['phone', 'Phone', Smartphone]].map(([key, label, Icon]) => (
               <button key={key} onClick={() => { setMethod(key); setError(''); setHint(''); }}
                 className={'flex-1 py-2.5 rounded-xl text-sm font-bold transition-all inline-flex items-center justify-center gap-2 ' +
-                  (method === key ? 'bg-[#F97316] text-white' : 'text-[#64748B]')}>
+                  (method === key ? 'bg-[#7C3AED] text-white' : 'text-[#64748B]')}>
                 <Icon size={15} /> {label}
               </button>
             ))}
@@ -249,17 +249,17 @@ export default function SignUp() {
           ) : (
             <div className="flex gap-2">
               <select value={phoneCountry} onChange={(e) => setPhoneCountry(e.target.value)} aria-label="Country code"
-                className="bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-3 py-4 text-[#202938] text-[14px] focus:outline-none focus:border-[#F97316]/60"
+                className="bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-3 py-4 text-[#111827] text-[14px] focus:outline-none focus:border-[#7C3AED]/60"
                 style={{ WebkitAppearance: 'none', width: 104 }}>
                 {PHONE_COUNTRIES.map((c) => <option key={c.code} value={c.code} style={{ background: '#FFFFFF' }}>{c.code} +{c.dial}</option>)}
               </select>
               <input type="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setError(''); }}
                 placeholder="712 345 678" autoComplete="tel-national" inputMode="tel"
-                className="flex-1 min-w-0 bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-4 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60" />
+                className="flex-1 min-w-0 bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-4 text-[#111827] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#7C3AED]/60" />
             </div>
           )}
           {hint && (
-            <button onClick={() => { setEmail(hint); setError(''); setHint(''); }} className="text-left text-[13px] text-[#EA580C] font-semibold -mt-1">
+            <button onClick={() => { setEmail(hint); setError(''); setHint(''); }} className="text-left text-[13px] text-[#6D28D9] font-semibold -mt-1">
               Use {hint}
             </button>
           )}
@@ -269,7 +269,7 @@ export default function SignUp() {
             <input type={showPass ? 'text' : 'password'} value={password} onChange={(e) => { setPassword(e.target.value); setError(''); }}
               placeholder="Password (8+ characters)" autoComplete="new-password" className={inputCls + ' pr-12'} />
             <button type="button" tabIndex={-1} onClick={() => setShowPass((v) => !v)} aria-label={showPass ? 'Hide password' : 'Show password'}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#202938]">
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#111827]">
               {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
@@ -278,10 +278,10 @@ export default function SignUp() {
               <div className="flex gap-1">
                 {[1, 2, 3, 4].map((i) => (
                   <div key={i} className="h-1 flex-1 rounded-full"
-                    style={{ background: i <= pwCheck.score ? (pwCheck.score >= 3 ? '#2ECC71' : '#FFB020') : '#F1F5F9' }} />
+                    style={{ background: i <= pwCheck.score ? (pwCheck.score >= 3 ? '#10B981' : '#FFB020') : '#F1F5F9' }} />
                 ))}
               </div>
-              <p className="text-[11px] mt-1" style={{ color: pwCheck.ok ? '#8E8C88' : '#FF8A5C' }}>
+              <p className="text-[11px] mt-1" style={{ color: pwCheck.ok ? '#64748B' : '#FF8A5C' }}>
                 {pwCheck.ok ? (pwCheck.score >= 3 ? 'Strong password' : 'Good. Longer is stronger.') : pwCheck.error}
               </p>
             </div>
@@ -297,11 +297,11 @@ export default function SignUp() {
 
           <button onClick={handleNext}
             className="w-full py-4 rounded-2xl font-bold text-white text-[15px] active:scale-[0.98] transition-all mt-1"
-            style={{ background: '#F97316', boxShadow: '0 8px 24px rgba(255,90,31,0.35)' }}>
+            style={{ background: '#7C3AED', boxShadow: '0 8px 24px rgba(124,58,237,0.35)' }}>
             Continue
           </button>
           <p className="text-center text-[#64748B] text-sm mt-2 pb-8">
-            Already have an account? <button onClick={() => navigate('/login')} className="text-[#EA580C] font-bold">Sign in</button>
+            Already have an account? <button onClick={() => navigate('/login')} className="text-[#6D28D9] font-bold">Sign in</button>
           </p>
         </div>
       )}
@@ -318,19 +318,19 @@ export default function SignUp() {
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] font-bold text-[15px] pointer-events-none">@</span>
             <input type="text" value={username} onChange={(e) => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')); setError(''); }}
               placeholder="username" maxLength={20} autoComplete="off" autoCapitalize="none"
-              className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-9 pr-10 py-4 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60 transition-all" />
+              className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-9 pr-10 py-4 text-[#111827] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#7C3AED]/60 transition-all" />
             {uStatus === 'checking' && <Spinner size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748B]" />}
-            {uStatus === 'available' && <CheckCircle2 size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#2ECC71]" />}
+            {uStatus === 'available' && <CheckCircle2 size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#10B981]" />}
             {uStatus === 'taken' && <XCircle size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-red-600" />}
           </div>
-          <p className={`text-[11px] -mt-1 pl-1 ${uStatus === 'taken' ? 'text-red-600' : uStatus === 'available' ? 'text-[#2ECC71]' : 'text-[#64748B]'}`}>
+          <p className={`text-[11px] -mt-1 pl-1 ${uStatus === 'taken' ? 'text-red-600' : uStatus === 'available' ? 'text-[#10B981]' : 'text-[#64748B]'}`}>
             {uStatus === 'taken' ? 'That username is already taken' : uStatus === 'available' ? 'Username is available' : 'Letters, numbers and _ only. 3 to 20 characters.'}
           </p>
 
           <div className="relative">
             <Globe size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none z-10" />
             <select value={country} onChange={(e) => setCountry(e.target.value)}
-              className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-11 pr-10 py-4 text-[#202938] text-[15px] focus:outline-none focus:border-[#F97316]/60 appearance-none transition-all"
+              className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-11 pr-10 py-4 text-[#111827] text-[15px] focus:outline-none focus:border-[#7C3AED]/60 appearance-none transition-all"
               style={{ WebkitAppearance: 'none' }}>
               {COUNTRIES.map((c) => <option key={c.code} value={c.code} style={{ background: '#FFFFFF' }}>{c.name}</option>)}
             </select>
@@ -346,14 +346,14 @@ export default function SignUp() {
           )}
           {ambiguous && (
             <button type="button" onClick={() => { const id = identity(); if (id.ok) { setPending({ kind: id.kind, target: id.value }); setStep(3); } }}
-              className="text-[#EA580C] text-sm font-semibold text-left">
+              className="text-[#6D28D9] text-sm font-semibold text-left">
               I already received a code
             </button>
           )}
 
           <button type="submit" disabled={busy}
             className="w-full py-4 rounded-2xl font-bold text-white text-[15px] disabled:opacity-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-1"
-            style={{ background: '#F97316', boxShadow: '0 8px 24px rgba(255,90,31,0.35)' }}>
+            style={{ background: '#7C3AED', boxShadow: '0 8px 24px rgba(124,58,237,0.35)' }}>
             {busy ? <><Spinner size={18} /> Creating account…</> : 'Create my account'}
           </button>
           <p className="text-center text-[#94A3B8] text-[11px] mt-1">By signing up you agree to our Terms and Privacy Policy.</p>

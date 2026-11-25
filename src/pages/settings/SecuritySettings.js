@@ -43,11 +43,11 @@ const SecuritySettings = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24">
-      <div className="sticky top-0 z-20 bg-[#F8FAFC] border-b border-[#E2E8F0] px-4 py-3 flex items-center gap-4">
-        <button onClick={() => navigate('/settings')} className="text-[#64748B] hover:text-[#202938]">
+      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center gap-4">
+        <button onClick={() => navigate('/settings')} className="text-[#CBD5E1] hover:text-white">
           <ArrowLeft size={22} />
         </button>
-        <h1 className="text-[#202938] font-bold text-lg">Password & Security</h1>
+        <h1 className="text-white font-bold text-lg">Password & Security</h1>
       </div>
 
       <div className="px-4 py-4 space-y-5">
@@ -69,7 +69,7 @@ const SecuritySettings = () => {
                   value={form[f.key]}
                   onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
                   placeholder={f.label}
-                  className="flex-1 bg-transparent text-[#202938] text-sm focus:outline-none placeholder-[#94A3B8]"
+                  className="flex-1 bg-transparent text-[#111827] text-sm focus:outline-none placeholder-[#94A3B8]"
                 />
                 <button onClick={() => setShowPwd(!showPwd)} className="text-[#64748B]">
                   {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -80,7 +80,7 @@ const SecuritySettings = () => {
           <button
             onClick={handleChangePassword}
             disabled={loading}
-            className="w-full mt-3 bg-[#2563EB] text-white font-bold py-3 rounded-xl disabled:opacity-50"
+            className="w-full mt-3 bg-[#0284C7] text-white font-bold py-3 rounded-xl disabled:opacity-50"
           >
             {loading ? 'Updating...' : 'Update Password'}
           </button>
@@ -92,34 +92,34 @@ const SecuritySettings = () => {
           <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between px-4 py-4 border-b border-[#E2E8F0]">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-[#2563EB]/20 rounded-xl flex items-center justify-center">
-                  <Shield size={18} className="text-[#2563EB]" />
+                <div className="w-9 h-9 bg-[#0284C7]/20 rounded-xl flex items-center justify-center">
+                  <Shield size={18} className="text-[#0284C7]" />
                 </div>
                 <div>
-                  <p className="text-[#202938] text-sm font-semibold">Two-Factor Authentication</p>
+                  <p className="text-[#111827] text-sm font-semibold">Two-Factor Authentication</p>
                   <p className="text-[#64748B] text-xs">Extra security for your account</p>
                 </div>
               </div>
               <button
                 onClick={() => setTwoFA(!twoFA)}
-                className={`w-12 h-6 rounded-full transition-colors ${twoFA ? 'bg-[#2563EB]' : 'bg-[#E2E8F0]'}`}
+                className={`w-12 h-6 rounded-full transition-colors ${twoFA ? 'bg-[#0284C7]' : 'bg-[#E2E8F0]'}`}
               >
                 <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform mx-0.5 ${twoFA ? 'translate-x-6' : 'translate-x-0'}`} />
               </button>
             </div>
             <div className="flex items-center justify-between px-4 py-4">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-[#F97316]/20 rounded-xl flex items-center justify-center">
-                  <Smartphone size={18} className="text-[#EA580C]" />
+                <div className="w-9 h-9 bg-[#7C3AED]/20 rounded-xl flex items-center justify-center">
+                  <Smartphone size={18} className="text-[#6D28D9]" />
                 </div>
                 <div>
-                  <p className="text-[#202938] text-sm font-semibold">Login Alerts</p>
+                  <p className="text-[#111827] text-sm font-semibold">Login Alerts</p>
                   <p className="text-[#64748B] text-xs">Get notified of new sign-ins</p>
                 </div>
               </div>
               <button
                 onClick={() => setLoginAlerts(!loginAlerts)}
-                className={`w-12 h-6 rounded-full transition-colors ${loginAlerts ? 'bg-[#2563EB]' : 'bg-[#E2E8F0]'}`}
+                className={`w-12 h-6 rounded-full transition-colors ${loginAlerts ? 'bg-[#0284C7]' : 'bg-[#E2E8F0]'}`}
               >
                 <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform mx-0.5 ${loginAlerts ? 'translate-x-6' : 'translate-x-0'}`} />
               </button>
@@ -138,9 +138,9 @@ const SecuritySettings = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-[#202938] text-sm font-semibold truncate">{s.device}</p>
+                    <p className="text-[#111827] text-sm font-semibold truncate">{s.device}</p>
                     {s.current && (
-                      <span className="bg-[#2ECC71]/20 text-[#2ECC71] text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">Current</span>
+                      <span className="bg-[#10B981]/20 text-[#10B981] text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">Current</span>
                     )}
                   </div>
                   <p className="text-[#64748B] text-xs">{s.location} · {s.time}</p>

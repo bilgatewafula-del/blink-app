@@ -68,13 +68,13 @@ const BusinessCenter = () => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24">
       {/* Top bar */}
-      <div className="sticky top-0 z-20 bg-[#F8FAFC] border-b border-[#E2E8F0] px-4 py-3 flex items-center gap-4">
-        <button onClick={() => goBack(navigate, '/settings')} className="text-[#64748B] hover:text-[#202938]">
+      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center gap-4">
+        <button onClick={() => goBack(navigate, '/settings')} className="text-[#CBD5E1] hover:text-white">
           <ArrowLeft size={22} />
         </button>
         <div className="flex-1">
-          <h1 className="text-[#202938] font-bold text-lg">Business Center</h1>
-          <p className="text-[#64748B] text-xs">@{profile?.username}</p>
+          <h1 className="text-white font-bold text-lg">Business Center</h1>
+          <p className="text-[#CBD5E1] text-xs">@{profile?.username}</p>
         </div>
         <div className="bg-[#FFD700]/20 border border-[#FFD700]/30 rounded-full px-3 py-1">
           <span className="text-[#B45309] text-xs font-bold">
@@ -93,8 +93,8 @@ const BusinessCenter = () => {
             className={
               'flex-shrink-0 px-5 py-3 text-sm font-semibold border-b-2 transition-all ' +
               (activeTab === tab.key
-                ? 'border-[#2563EB] text-[#2563EB]'
-                : 'border-transparent text-[#64748B] hover:text-[#202938]')
+                ? 'border-[#0284C7] text-[#0284C7]'
+                : 'border-transparent text-[#64748B] hover:text-[#111827]')
             }
           >
             {tab.label}
@@ -109,11 +109,11 @@ const BusinessCenter = () => {
             {/* Key metrics */}
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Total Impressions', value: formatNumber(totalStats.impressions), icon: Eye, color: 'text-[#2563EB]', bg: 'bg-[#2563EB]/20' },
-                { label: 'Total Reach', value: formatNumber(totalStats.reach), icon: Globe, color: 'text-[#7B2FFF]', bg: 'bg-[#7B2FFF]/20' },
+                { label: 'Total Impressions', value: formatNumber(totalStats.impressions), icon: Eye, color: 'text-[#0284C7]', bg: 'bg-[#0284C7]/20' },
+                { label: 'Total Reach', value: formatNumber(totalStats.reach), icon: Globe, color: 'text-[#7C3AED]', bg: 'bg-[#7C3AED]/20' },
                 { label: 'Total Reactions', value: formatNumber(totalStats.likes), icon: Heart, color: 'text-red-600', bg: 'bg-red-400/20' },
-                { label: 'Total Comments', value: formatNumber(totalStats.comments), icon: MessageCircle, color: 'text-[#EA580C]', bg: 'bg-[#F97316]/20' },
-                { label: 'Total Reposts', value: formatNumber(totalStats.reposts), icon: Repeat2, color: 'text-[#2ECC71]', bg: 'bg-[#2ECC71]/20' },
+                { label: 'Total Comments', value: formatNumber(totalStats.comments), icon: MessageCircle, color: 'text-[#6D28D9]', bg: 'bg-[#7C3AED]/20' },
+                { label: 'Total Reposts', value: formatNumber(totalStats.reposts), icon: Repeat2, color: 'text-[#10B981]', bg: 'bg-[#10B981]/20' },
                 { label: 'Total Posts', value: String(posts.length), icon: BarChart2, color: 'text-[#00D4C8]', bg: 'bg-[#00D4C8]/20' },
               ].map((stat) => (
                 <div key={stat.label} className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
@@ -127,17 +127,17 @@ const BusinessCenter = () => {
             </div>
 
             {/* Engagement rate */}
-            <div className="bg-gradient-to-r from-[#2563EB]/10 to-[#7B2FFF]/10 border border-[#2563EB]/20 rounded-2xl p-4">
+            <div className="bg-gradient-to-r from-[#0284C7]/10 to-[#7C3AED]/10 border border-[#0284C7]/20 rounded-2xl p-4">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-[#202938] font-bold text-sm">Engagement Rate</p>
+                <p className="text-[#111827] font-bold text-sm">Engagement Rate</p>
                 <span className={'text-xs font-bold px-2 py-0.5 rounded-full ' +
-                  (parseFloat(engagementRate) >= 3 ? 'bg-[#2ECC71]/20 text-[#2ECC71]' :
+                  (parseFloat(engagementRate) >= 3 ? 'bg-[#10B981]/20 text-[#10B981]' :
                    parseFloat(engagementRate) >= 1 ? 'bg-[#FFD700]/20 text-[#B45309]' :
                    'bg-[#F1F5F9] text-[#64748B]')}>
                   {parseFloat(engagementRate) >= 3 ? '🔥 High' : parseFloat(engagementRate) >= 1 ? '📈 Good' : '📊 Low'}
                 </span>
               </div>
-              <p className="text-[#2563EB] text-4xl font-bold">{engagementRate}%</p>
+              <p className="text-[#0284C7] text-4xl font-bold">{engagementRate}%</p>
               <p className="text-[#64748B] text-xs mt-1">
                 {parseFloat(engagementRate) >= 3
                   ? 'Excellent! Your content resonates with your audience.'
@@ -147,7 +147,7 @@ const BusinessCenter = () => {
               </p>
               <div className="w-full bg-[#F1F5F9] rounded-full h-2 mt-3">
                 <div
-                  className="h-2 rounded-full bg-[#2563EB] transition-all"
+                  className="h-2 rounded-full bg-[#0284C7] transition-all"
                   style={{ width: Math.min(parseFloat(engagementRate) * 10, 100) + '%' }}
                 />
               </div>
@@ -166,11 +166,11 @@ const BusinessCenter = () => {
                   ) : (
                     <div style={{ background: topPost.bg_color || '#111827' }}
                       className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <p className="text-[#202938] text-xs text-center line-clamp-3 p-1">{topPost.caption?.slice(0, 30)}</p>
+                      <p className="text-[#111827] text-xs text-center line-clamp-3 p-1">{topPost.caption?.slice(0, 30)}</p>
                     </div>
                   )}
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-[#202938] text-sm font-semibold line-clamp-2">
+                    <p className="text-[#111827] text-sm font-semibold line-clamp-2">
                       {topPost.caption || 'Photo post'}
                     </p>
                     <div className="flex items-center gap-3 mt-1">
@@ -196,7 +196,7 @@ const BusinessCenter = () => {
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3">
                     <span className="text-xl flex-shrink-0">{item.icon}</span>
-                    <p className="text-[#202938] text-sm">{item.tip}</p>
+                    <p className="text-[#111827] text-sm">{item.tip}</p>
                   </div>
                 ))}
               </div>
@@ -211,8 +211,8 @@ const BusinessCenter = () => {
             {posts.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-5xl mb-3">📝</p>
-                <p className="text-[#202938] font-bold">No posts yet</p>
-                <button onClick={() => navigate('/create')} className="mt-3 bg-[#2563EB] text-white font-bold px-6 py-2.5 rounded-full text-sm">
+                <p className="text-[#111827] font-bold">No posts yet</p>
+                <button onClick={() => navigate('/create')} className="mt-3 bg-[#0284C7] text-white font-bold px-6 py-2.5 rounded-full text-sm">
                   Create First Post
                 </button>
               </div>
@@ -228,11 +228,11 @@ const BusinessCenter = () => {
                       ) : (
                         <div style={{ background: post.bg_color || '#111827' }}
                           className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 p-1">
-                          <p className="text-[#202938] text-[10px] text-center line-clamp-3">{post.caption?.slice(0, 25)}</p>
+                          <p className="text-[#111827] text-[10px] text-center line-clamp-3">{post.caption?.slice(0, 25)}</p>
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-[#202938] text-sm font-semibold line-clamp-2">
+                        <p className="text-[#111827] text-sm font-semibold line-clamp-2">
                           {post.caption || 'Photo post'}
                         </p>
                         <p className="text-[#64748B] text-xs mt-0.5">
@@ -242,10 +242,10 @@ const BusinessCenter = () => {
                     </div>
                     <div className="grid grid-cols-4 gap-2">
                       {[
-                        { label: 'Views', value: formatNumber(impressions), color: 'text-[#2563EB]' },
+                        { label: 'Views', value: formatNumber(impressions), color: 'text-[#0284C7]' },
                         { label: 'Likes', value: formatNumber(post.likes_count || 0), color: 'text-red-600' },
-                        { label: 'Comments', value: formatNumber(post.comments_count || 0), color: 'text-[#EA580C]' },
-                        { label: 'Eng.', value: formatNumber(eng), color: 'text-[#2ECC71]' },
+                        { label: 'Comments', value: formatNumber(post.comments_count || 0), color: 'text-[#6D28D9]' },
+                        { label: 'Eng.', value: formatNumber(eng), color: 'text-[#10B981]' },
                       ].map((s) => (
                         <div key={s.label} className="bg-[#F8FAFC] rounded-xl p-2 text-center">
                           <p className={'font-bold text-sm ' + s.color}>{s.value}</p>
@@ -265,18 +265,18 @@ const BusinessCenter = () => {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4 text-center">
-                <p className="text-[#2563EB] text-3xl font-bold">{formatNumber(profile?.follower_count || 0)}</p>
+                <p className="text-[#0284C7] text-3xl font-bold">{formatNumber(profile?.follower_count || 0)}</p>
                 <p className="text-[#64748B] text-xs mt-1">Total Followers</p>
               </div>
               <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4 text-center">
-                <p className="text-[#7B2FFF] text-3xl font-bold">{formatNumber(profile?.following_count || 0)}</p>
+                <p className="text-[#7C3AED] text-3xl font-bold">{formatNumber(profile?.following_count || 0)}</p>
                 <p className="text-[#64748B] text-xs mt-1">Following</p>
               </div>
             </div>
 
             {/* Follower growth tips */}
-            <div className="bg-gradient-to-r from-[#7B2FFF]/10 to-[#2563EB]/10 border border-[#7B2FFF]/20 rounded-2xl p-4">
-              <p className="text-[#202938] font-bold text-sm mb-3">📈 Grow Your Audience</p>
+            <div className="bg-gradient-to-r from-[#7C3AED]/10 to-[#0284C7]/10 border border-[#7C3AED]/20 rounded-2xl p-4">
+              <p className="text-[#111827] font-bold text-sm mb-3">📈 Grow Your Audience</p>
               <div className="space-y-2">
                 {[
                   'Complete your profile with a photo and bio',
@@ -287,10 +287,10 @@ const BusinessCenter = () => {
                   'Post stories daily to stay visible',
                 ].map((tip, i) => (
                   <div key={i} className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-[#2563EB]/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-[#2563EB] text-[10px] font-bold">{i + 1}</span>
+                    <div className="w-5 h-5 rounded-full bg-[#0284C7]/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-[#0284C7] text-[10px] font-bold">{i + 1}</span>
                     </div>
-                    <p className="text-[#202938] text-sm">{tip}</p>
+                    <p className="text-[#111827] text-sm">{tip}</p>
                   </div>
                 ))}
               </div>
@@ -308,10 +308,10 @@ const BusinessCenter = () => {
                   { country: '🌍 Other', pct: 4 },
                 ].map((loc) => (
                   <div key={loc.country} className="flex items-center gap-3">
-                    <p className="text-[#202938] text-sm w-28 flex-shrink-0">{loc.country}</p>
+                    <p className="text-[#111827] text-sm w-28 flex-shrink-0">{loc.country}</p>
                     <div className="flex-1 bg-[#F1F5F9] rounded-full h-2">
                       <div
-                        className="h-2 rounded-full bg-[#2563EB]"
+                        className="h-2 rounded-full bg-[#0284C7]"
                         style={{ width: loc.pct + '%' }}
                       />
                     </div>
@@ -326,9 +326,9 @@ const BusinessCenter = () => {
         {/* BOOST TAB */}
         {activeTab === 'boost' && (
           <div className="space-y-4">
-            <div className="bg-gradient-to-br from-[#FFD700]/20 to-[#F97316]/10 border border-[#FFD700]/30 rounded-2xl p-5 text-center">
+            <div className="bg-gradient-to-br from-[#FFD700]/20 to-[#D97706]/10 border border-[#FFD700]/30 rounded-2xl p-5 text-center">
               <Zap size={32} className="text-[#B45309] mx-auto mb-2" />
-              <h3 className="text-[#202938] font-bold text-lg">Boost Your Posts</h3>
+              <h3 className="text-[#111827] font-bold text-lg">Boost Your Posts</h3>
               <p className="text-[#64748B] text-sm mt-1">Reach more people in Kenya and across Africa</p>
               <div className="flex items-center justify-center gap-2 mt-3">
                 <span className="bg-[#FFD700]/20 text-[#B45309] text-xs font-bold px-3 py-1 rounded-full">Coming Soon</span>
@@ -338,13 +338,13 @@ const BusinessCenter = () => {
             {/* Boost packages preview */}
             <p className="text-[#64748B] text-xs font-bold uppercase tracking-widest">Boost Packages</p>
             {[
-              { name: 'Starter', price: 'KES 200', reach: '500-1,000', duration: '3 days', color: 'from-[#2563EB] to-[#00D4C8]', icon: '🌱' },
-              { name: 'Growth', price: 'KES 500', reach: '2,000-5,000', duration: '7 days', color: 'from-[#7B2FFF] to-[#2563EB]', icon: '📈', popular: true },
-              { name: 'Viral', price: 'KES 1,000', reach: '10,000+', duration: '14 days', color: 'from-[#F97316] to-[#FFD700]', icon: '🔥' },
+              { name: 'Starter', price: 'KES 200', reach: '500-1,000', duration: '3 days', color: 'from-[#0284C7] to-[#00D4C8]', icon: '🌱' },
+              { name: 'Growth', price: 'KES 500', reach: '2,000-5,000', duration: '7 days', color: 'from-[#7C3AED] to-[#0284C7]', icon: '📈', popular: true },
+              { name: 'Viral', price: 'KES 1,000', reach: '10,000+', duration: '14 days', color: 'from-[#7C3AED] to-[#FFD700]', icon: '🔥' },
             ].map((pkg) => (
-              <div key={pkg.name} className={'relative bg-[#F8FAFC] border rounded-2xl p-4 ' + (pkg.popular ? 'border-[#2563EB]/50' : 'border-[#E2E8F0]')}>
+              <div key={pkg.name} className={'relative bg-[#F8FAFC] border rounded-2xl p-4 ' + (pkg.popular ? 'border-[#0284C7]/50' : 'border-[#E2E8F0]')}>
                 {pkg.popular && (
-                  <span className="absolute -top-2 left-4 bg-[#2563EB] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  <span className="absolute -top-2 left-4 bg-[#0284C7] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
                     Most Popular
                   </span>
                 )}
@@ -353,11 +353,11 @@ const BusinessCenter = () => {
                     {pkg.icon}
                   </div>
                   <div className="flex-1">
-                    <p className="text-[#202938] font-bold text-base">{pkg.name}</p>
+                    <p className="text-[#111827] font-bold text-base">{pkg.name}</p>
                     <p className="text-[#64748B] text-xs">Reach {pkg.reach} people · {pkg.duration}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[#202938] font-bold">{pkg.price}</p>
+                    <p className="text-[#111827] font-bold">{pkg.price}</p>
                     <button className="mt-1 bg-[#F1F5F9] text-[#64748B] text-xs font-bold px-3 py-1 rounded-full">
                       Soon
                     </button>
@@ -367,8 +367,8 @@ const BusinessCenter = () => {
             ))}
 
             <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4 text-center">
-              <Target size={24} className="text-[#2563EB] mx-auto mb-2" />
-              <p className="text-[#202938] font-bold text-sm">Advanced Targeting</p>
+              <Target size={24} className="text-[#0284C7] mx-auto mb-2" />
+              <p className="text-[#111827] font-bold text-sm">Advanced Targeting</p>
               <p className="text-[#64748B] text-xs mt-1">Target by country, age, interests when we launch</p>
             </div>
           </div>

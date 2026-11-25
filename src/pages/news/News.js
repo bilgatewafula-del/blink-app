@@ -182,7 +182,7 @@ const News = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-screen bg-[#F1F3F9] pb-24">
 
       {/* BREAKING */}
       {breaking && (
@@ -192,17 +192,17 @@ const News = () => {
       )}
 
       {/* TOP BAR */}
-      <div className="sticky top-0 z-20 bg-white border-b border-[#E2E8F0] px-4 py-3">
+      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3">
 
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <button onClick={() => goBack(navigate, '/')}>
-              <ArrowLeft size={22} className="text-[#64748B]" />
+              <ArrowLeft size={22} className="text-[#CBD5E1]" />
             </button>
 
             <div>
-              <h1 className="text-[#202938] font-bold">News</h1>
-              <p className="text-xs text-[#64748B]">
+              <h1 className="text-white font-bold">News</h1>
+              <p className="text-xs text-[#CBD5E1]">
                 BBC + CNN Hybrid Feed
               </p>
             </div>
@@ -210,7 +210,7 @@ const News = () => {
 
           <button
             onClick={() => fetchNews(activeCategory)}
-            className={loading ? 'animate-spin text-[#202938]' : 'text-[#64748B]'}
+            className={loading ? 'animate-spin text-white' : 'text-[#CBD5E1]'}
           >
             <RefreshCw size={18} />
           </button>
@@ -225,8 +225,8 @@ const News = () => {
               className={
                 'px-3 py-1 rounded-full text-xs capitalize ' +
                 (activeCategory === cat
-                  ? 'bg-[#F97316] text-white'
-                  : 'bg-[#F8FAFC] text-[#64748B]')
+                  ? 'bg-[#7C3AED] text-white'
+                  : 'bg-white/10 text-[#CBD5E1]')
               }
             >
               {cat}
@@ -247,15 +247,15 @@ const News = () => {
             />
 
             <div className="p-4">
-              <p className="text-[#EA580C] text-xs font-bold">TOP STORY</p>
-              <h2 className="text-[#202938] font-bold text-lg">{news[0].title}</h2>
+              <p className="text-[#6D28D9] text-xs font-bold">TOP STORY</p>
+              <h2 className="text-[#111827] font-bold text-lg">{news[0].title}</h2>
               <p className="text-[#64748B] text-xs mt-2">
                 {news[0].source?.name} · {formatTime(news[0].publishedAt)}
               </p>
 
               <button
                 onClick={() => window.open(news[0].url, '_blank', 'noopener,noreferrer')}
-                className="mt-3 text-[#EA580C] text-xs font-bold"
+                className="mt-3 text-[#6D28D9] text-xs font-bold"
               >
                 Read full story <ExternalLink size={12} />
               </button>
@@ -274,14 +274,14 @@ const News = () => {
 
             <div className="p-3">
 
-              <p className="text-[#EA580C] text-xs font-bold">
+              <p className="text-[#6D28D9] text-xs font-bold">
                 {article.source?.name}
                 {lastRefreshIds.current.has(article.url) && (
                   <span className="ml-2 text-green-700">NEW</span>
                 )}
               </p>
 
-              <h3 className="text-[#202938] font-bold text-sm mt-1">
+              <h3 className="text-[#111827] font-bold text-sm mt-1">
                 {article.title}
               </h3>
 
@@ -291,7 +291,7 @@ const News = () => {
 
               <button
                 onClick={() => window.open(article.url, '_blank', 'noopener,noreferrer')}
-                className="mt-2 text-[#EA580C] text-xs font-bold"
+                className="mt-2 text-[#6D28D9] text-xs font-bold"
               >
                 Read full story <ExternalLink size={12} />
               </button>

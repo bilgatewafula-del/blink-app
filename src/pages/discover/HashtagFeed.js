@@ -58,22 +58,22 @@ const HashtagFeed = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-screen bg-[#F1F3F9] pb-24">
       {/* Top bar */}
-      <div className="sticky top-0 z-20 bg-white border-b border-[#E2E8F0] px-4 py-3">
+      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3">
         <div className="flex items-center gap-3 mb-3">
-          <button onClick={() => goBack(navigate, '/discover')} className="text-[#64748B] hover:text-[#202938] transition-colors">
+          <button onClick={() => goBack(navigate, '/discover')} className="text-[#CBD5E1] hover:text-white transition-colors">
             <ArrowLeft size={22} />
           </button>
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-[#F97316]/20 rounded-full flex items-center justify-center">
-                <Hash size={16} className="text-[#EA580C]" />
+              <div className="w-8 h-8 bg-[#7C3AED]/20 rounded-full flex items-center justify-center">
+                <Hash size={16} className="text-[#C4B5FD]" />
               </div>
-              <h1 className="text-[#202938] font-bold text-xl">#{tag}</h1>
+              <h1 className="text-white font-bold text-xl">#{tag}</h1>
             </div>
             {hashtagInfo && (
-              <p className="text-[#64748B] text-xs mt-0.5 ml-10">
+              <p className="text-[#CBD5E1] text-xs mt-0.5 ml-10">
                 {formatNumber(hashtagInfo.post_count)} posts
               </p>
             )}
@@ -81,7 +81,7 @@ const HashtagFeed = () => {
         </div>
 
         {/* Sort tabs */}
-        <div className="flex gap-1 bg-[#F8FAFC] rounded-xl p-1">
+        <div className="flex gap-1 bg-white/10 rounded-xl p-1">
           {[
             { key: 'recent', label: '🕐 Recent' },
             { key: 'top', label: '🔥 Top' },
@@ -92,8 +92,8 @@ const HashtagFeed = () => {
               className={
                 'flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ' +
                 (activeSort === tab.key
-                  ? 'bg-[#F97316] text-white  '
-                  : 'text-[#64748B] hover:text-white')
+                  ? 'bg-[#7C3AED] text-white  '
+                  : 'text-[#CBD5E1] hover:text-white')
               }
             >
               {tab.label}
@@ -109,16 +109,16 @@ const HashtagFeed = () => {
         </div>
       ) : posts.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-20 gap-4 px-6">
-          <div className="w-16 h-16 bg-[#F97316]/20 rounded-full flex items-center justify-center">
-            <Hash size={28} className="text-[#EA580C]" />
+          <div className="w-16 h-16 bg-[#7C3AED]/20 rounded-full flex items-center justify-center">
+            <Hash size={28} className="text-[#6D28D9]" />
           </div>
-          <h2 className="text-[#202938] font-bold text-xl text-center">No posts yet</h2>
+          <h2 className="text-[#111827] font-bold text-xl text-center">No posts yet</h2>
           <p className="text-[#64748B] text-sm text-center">
             Be the first to use #{tag} in a post.
           </p>
           <button
             onClick={() => navigate('/create')}
-            className="bg-[#F97316] text-white px-6 py-3 rounded-full font-bold text-sm  "
+            className="bg-[#7C3AED] text-white px-6 py-3 rounded-full font-bold text-sm  "
           >
             Create Post
           </button>

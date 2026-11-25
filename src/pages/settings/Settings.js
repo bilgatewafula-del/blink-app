@@ -22,25 +22,25 @@ const Settings = () => {
     {
       title: 'Account',
       items: [
-        { icon: User, label: 'Account Information', sub: 'Name, username, email, phone', path: '/settings/account', color: 'text-[#2563EB]', bg: 'bg-[#2563EB]/20' },
-        { icon: Lock, label: 'Password & Security', sub: 'Change password, 2FA, sessions', path: '/settings/security', color: 'text-[#EA580C]', bg: 'bg-[#F97316]/20' },
-        { icon: Eye, label: 'Privacy', sub: 'Account privacy, blocked users', path: '/settings/privacy', color: 'text-[#7B2FFF]', bg: 'bg-[#7B2FFF]/20' },
+        { icon: User, label: 'Account Information', sub: 'Name, username, email, phone', path: '/settings/account', color: 'text-[#0284C7]', bg: 'bg-[#0284C7]/20' },
+        { icon: Lock, label: 'Password & Security', sub: 'Change password, 2FA, sessions', path: '/settings/security', color: 'text-[#6D28D9]', bg: 'bg-[#7C3AED]/20' },
+        { icon: Eye, label: 'Privacy', sub: 'Account privacy, blocked users', path: '/settings/privacy', color: 'text-[#7C3AED]', bg: 'bg-[#7C3AED]/20' },
       ],
     },
     {
       title: 'Preferences',
       items: [
-        { icon: Bell, label: 'Notifications', sub: 'Push, email, quiet hours', path: '/settings/notifications', color: 'text-[#EA580C]', bg: 'bg-[#F97316]/20' },
+        { icon: Bell, label: 'Notifications', sub: 'Push, email, quiet hours', path: '/settings/notifications', color: 'text-[#6D28D9]', bg: 'bg-[#7C3AED]/20' },
         { icon: Palette, label: 'Appearance', sub: 'Theme, font size, language', path: '/settings/appearance', color: 'text-[#00D4C8]', bg: 'bg-[#00D4C8]/20' },
-        { icon: Globe, label: 'Language & Region', sub: 'English, Swahili + more', path: '/settings/appearance', color: 'text-[#2ECC71]', bg: 'bg-[#2ECC71]/20' },
+        { icon: Globe, label: 'Language & Region', sub: 'English, Swahili + more', path: '/settings/appearance', color: 'text-[#10B981]', bg: 'bg-[#10B981]/20' },
         { icon: Smartphone, label: 'Data Usage', sub: 'Low data mode, cache', path: '/settings/appearance', color: 'text-[#64748B]', bg: 'bg-[#6B7280]/20' },
       ],
     },
     {
       title: 'Creator & Business',
       items: [
-        { icon: BadgeCheck, label: 'Verification', sub: 'Apply for blue tick', path: '/verification', color: 'text-[#2563EB]', bg: 'bg-[#2563EB]/20' },
-        { icon: Wallet, label: 'Wallet & Payments', sub: 'M-Pesa, tips, earnings', path: '/wallet', color: 'text-[#2ECC71]', bg: 'bg-[#2ECC71]/20' },
+        { icon: BadgeCheck, label: 'Verification', sub: 'Apply for blue tick', path: '/verification', color: 'text-[#0284C7]', bg: 'bg-[#0284C7]/20' },
+        { icon: Wallet, label: 'Wallet & Payments', sub: 'M-Pesa, tips, earnings', path: '/wallet', color: 'text-[#10B981]', bg: 'bg-[#10B981]/20' },
         { icon: BarChart2, label: 'Analytics', sub: 'Impressions, reach, growth', path: '/profile', color: 'text-[#B45309]', bg: 'bg-[#FFD700]/20' },
       ],
     },
@@ -57,8 +57,8 @@ const Settings = () => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24">
       {/* Top bar */}
-      <div className="sticky top-0 z-20 bg-[#F8FAFC] border-b border-[#E2E8F0] px-4 py-3">
-        <h1 className="text-[#202938] font-bold text-xl">Settings</h1>
+      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3">
+        <h1 className="text-white font-bold text-xl">Settings</h1>
       </div>
 
       {/* Profile card */}
@@ -69,13 +69,13 @@ const Settings = () => {
         <Avatar url={profile?.avatar_url} name={profile?.display_name} size={14} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="text-[#202938] font-bold text-base truncate">{profile?.display_name}</p>
+            <p className="text-[#111827] font-bold text-base truncate">{profile?.display_name}</p>
             {profile?.is_verified && (
-              <span className="bg-[#2563EB] text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">✓</span>
+              <span className="bg-[#0284C7] text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">✓</span>
             )}
           </div>
           <p className="text-[#64748B] text-sm">@{profile?.username}</p>
-          <p className="text-[#2563EB] text-xs mt-0.5 font-semibold">Edit Profile →</p>
+          <p className="text-[#0284C7] text-xs mt-0.5 font-semibold">Edit Profile →</p>
         </div>
         <ChevronRight size={18} className="text-[#64748B] flex-shrink-0" />
       </div>
@@ -100,7 +100,7 @@ const Settings = () => {
                     <item.icon size={18} className={item.color} />
                   </div>
                   <div className="flex-1 text-left min-w-0">
-                    <p className="text-[#202938] text-sm font-semibold">{item.label}</p>
+                    <p className="text-[#111827] text-sm font-semibold">{item.label}</p>
                     <p className="text-[#64748B] text-xs truncate">{item.sub}</p>
                   </div>
                   <ChevronRight size={16} className="text-[#64748B] flex-shrink-0" />

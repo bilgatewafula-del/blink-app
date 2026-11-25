@@ -47,13 +47,13 @@ export default function VerificationPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-screen bg-[#F1F3F9] pb-24">
 
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => goBack(navigate, '/')} className="text-[#64748B] hover:text-[#202938]"><ArrowLeft size={22} /></button>
+      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => goBack(navigate, '/')} className="text-[#CBD5E1] hover:text-white"><ArrowLeft size={22} /></button>
         <div>
-          <h1 className="text-[#202938] font-bold text-[15px] leading-none">Get Verified</h1>
-          <p className="text-[#64748B] text-xs mt-0.5">One-time verification fee</p>
+          <h1 className="text-white font-bold text-[15px] leading-none">Get Verified</h1>
+          <p className="text-[#CBD5E1] text-xs mt-0.5">One-time verification fee</p>
         </div>
       </div>
 
@@ -61,10 +61,10 @@ export default function VerificationPage() {
 
         {/* Already verified */}
         {isVerified && (
-          <div className="bg-[#F97316]/10 border border-[#F97316]/25 rounded-2xl p-5 flex flex-col items-center text-center gap-3">
+          <div className="bg-[#7C3AED]/10 border border-[#7C3AED]/25 rounded-2xl p-5 flex flex-col items-center text-center gap-3">
             <VerifiedBadge size={48} />
             <div>
-              <p className="text-[#202938] font-black text-lg">Verified Account ✓</p>
+              <p className="text-[#111827] font-black text-lg">Verified Account ✓</p>
               <p className="text-[#64748B] text-xs mt-1">
                 Your B-Link verified badge is live and visible on your profile, posts, and comments.
               </p>
@@ -93,21 +93,21 @@ export default function VerificationPage() {
         )}
 
         {/* Hero */}
-        <div className="bg-gradient-to-br from-[#F97316]/15 to-[#F97316]/15 border border-[#F97316]/20 rounded-2xl p-5 text-center">
+        <div className="bg-gradient-to-br from-[#7C3AED]/15 to-[#7C3AED]/15 border border-[#7C3AED]/20 rounded-2xl p-5 text-center">
           <div className="flex justify-center mb-3">
             <VerifiedBadge size={56} />
           </div>
-          <p className="text-[#202938] font-black text-xl mb-1">B-Link Verified Badge</p>
+          <p className="text-[#111827] font-black text-xl mb-1">B-Link Verified Badge</p>
           <p className="text-[#64748B] text-sm mb-3">One-time fee — badge stays forever</p>
           <div className="bg-[#F1F5F9] rounded-xl px-4 py-3 inline-block">
             <p className="text-[#64748B] text-xs">One-time verification fee</p>
-            <p className="text-[#202938] font-black text-3xl">{formatKES(VERIFICATION_PRICE)}</p>
+            <p className="text-[#111827] font-black text-3xl">{formatKES(VERIFICATION_PRICE)}</p>
           </div>
         </div>
 
         {/* Benefits */}
         <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
-          <p className="text-[#202938] font-bold text-sm mb-3">What you get</p>
+          <p className="text-[#111827] font-bold text-sm mb-3">What you get</p>
           <div className="space-y-2">
             {BENEFITS.map((b,i) => (
               <p key={i} className="text-[#64748B] text-[13px]">{b}</p>
@@ -117,11 +117,11 @@ export default function VerificationPage() {
 
         {/* Requirements */}
         <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
-          <p className="text-[#202938] font-bold text-sm mb-3">Requirements</p>
+          <p className="text-[#111827] font-bold text-sm mb-3">Requirements</p>
           <div className="space-y-2">
             {REQUIREMENTS.map((r,i) => (
               <div key={i} className="flex items-start gap-2">
-                <Check size={12} className="text-[#EA580C] flex-shrink-0 mt-0.5" />
+                <Check size={12} className="text-[#6D28D9] flex-shrink-0 mt-0.5" />
                 <p className="text-[#64748B] text-[12px]">{r}</p>
               </div>
             ))}
@@ -133,7 +133,7 @@ export default function VerificationPage() {
           <button
             onClick={() => setShowPayment(true)}
             className="w-full py-4 rounded-2xl font-bold text-white text-[15px] active:scale-[0.98] transition-all"
-            style={{ background: '#F97316', boxShadow:'0 8px 24px rgba(255,90,31,0.3)' }}
+            style={{ background: '#7C3AED', boxShadow:'0 8px 24px rgba(124,58,237,0.3)' }}
           >
             Apply for Verification — {formatKES(VERIFICATION_PRICE)}
           </button>

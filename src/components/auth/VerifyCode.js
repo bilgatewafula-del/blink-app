@@ -76,14 +76,14 @@ export default function VerifyCode({ kind = 'email', target, title, hint, onVeri
 
   return (
     <div className="flex flex-col items-center px-6 pt-6 pb-10">
-      <div className="w-16 h-16 rounded-2xl bg-[#FF5A1F]/15 border border-[#FF5A1F]/30 flex items-center justify-center mb-4">
-        <Icon size={28} className="text-[#FF5A1F]" />
+      <div className="w-16 h-16 rounded-2xl bg-[#7C3AED]/15 border border-[#7C3AED]/30 flex items-center justify-center mb-4">
+        <Icon size={28} className="text-[#7C3AED]" />
       </div>
-      <h2 className="text-white font-black text-2xl text-center">{title || (kind === 'phone' ? 'Check your phone' : 'Check your email')}</h2>
-      <p className="text-[#8E8C88] text-sm text-center mt-2 max-w-[300px]">
+      <h2 className="text-[#111827] font-black text-2xl text-center">{title || (kind === 'phone' ? 'Check your phone' : 'Check your email')}</h2>
+      <p className="text-[#64748B] text-sm text-center mt-2 max-w-[300px]">
         {hint || `We sent a 6-digit code to`}
       </p>
-      <p className="text-[#FF5A1F] font-semibold text-sm mt-1 break-all text-center">{target}</p>
+      <p className="text-[#7C3AED] font-semibold text-sm mt-1 break-all text-center">{target}</p>
 
       <div className="flex gap-2 justify-center mt-7" onPaste={(e) => { e.preventDefault(); setAt(0, e.clipboardData.getData('text')); }}>
         {digits.map((d, i) => (
@@ -94,27 +94,27 @@ export default function VerifyCode({ kind = 'email', target, title, hint, onVeri
             onChange={(e) => setAt(i, e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Backspace' && !digits[i] && i > 0) refs.current[i - 1]?.focus(); }}
             aria-label={`Digit ${i + 1}`}
-            className="w-12 h-14 bg-white/[0.07] border border-white/15 rounded-xl text-center text-white text-xl font-bold focus:outline-none focus:border-[#FF5A1F] disabled:opacity-50"
+            className="w-12 h-14 bg-white border border-[#CBD5E1] rounded-xl text-center text-[#111827] text-xl font-bold focus:outline-none focus:border-[#7C3AED] disabled:opacity-50"
           />
         ))}
       </div>
 
       <div className="min-h-[44px] mt-4 w-full max-w-[340px]">
-        {lock.locked && <p className="text-red-400 text-sm text-center">Too many wrong codes. Try again in {formatWait(lock.remainingMs)}.</p>}
-        {!lock.locked && error && <p className="text-red-400 text-sm text-center">{error}</p>}
-        {info && !error && <p className="text-[#2ECC71] text-sm text-center">{info}</p>}
-        {busy && <p className="text-[#8E8C88] text-sm text-center">Verifying…</p>}
+        {lock.locked && <p className="text-[#DC2626] text-sm text-center">Too many wrong codes. Try again in {formatWait(lock.remainingMs)}.</p>}
+        {!lock.locked && error && <p className="text-[#DC2626] text-sm text-center">{error}</p>}
+        {info && !error && <p className="text-[#10B981] text-sm text-center">{info}</p>}
+        {busy && <p className="text-[#64748B] text-sm text-center">Verifying…</p>}
       </div>
 
       {onResend && (
         <button onClick={resend} disabled={cooldown > 0}
-          className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-[#FF5A1F] disabled:text-[#8E8C88]">
+          className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-[#7C3AED] disabled:text-[#64748B]">
           <RefreshCw size={14} /> {cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}
         </button>
       )}
 
       {onBack && (
-        <button onClick={onBack} className="mt-6 inline-flex items-center gap-1.5 text-sm text-[#8E8C88] hover:text-white">
+        <button onClick={onBack} className="mt-6 inline-flex items-center gap-1.5 text-sm text-[#64748B] hover:text-[#111827]">
           <ArrowLeft size={14} /> {backLabel}
         </button>
       )}

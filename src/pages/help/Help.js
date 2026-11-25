@@ -125,24 +125,24 @@ const Help = () => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-[#F8FAFC] border-b border-[#E2E8F0] px-4 py-3 flex items-center gap-4">
+      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center gap-4">
         <button
           onClick={() => goBack(navigate, '/')}
-          className="text-[#64748B] hover:text-[#202938]"
+          className="text-[#CBD5E1] hover:text-white"
         >
           <ArrowLeft size={22} />
         </button>
 
-        <h1 className="text-[#202938] font-bold text-lg">
+        <h1 className="text-white font-bold text-lg">
           Help Center
         </h1>
       </div>
 
       {/* Hero */}
-      <div className="mx-4 mt-4 bg-gradient-to-br from-[#2563EB]/20 to-[#7B2FFF]/20 border border-[#2563EB]/30 rounded-2xl p-5 text-center">
+      <div className="mx-4 mt-4 bg-gradient-to-br from-[#0284C7]/20 to-[#7C3AED]/20 border border-[#0284C7]/30 rounded-2xl p-5 text-center">
         <p className="text-3xl mb-2">👋</p>
 
-        <h2 className="text-[#202938] font-bold text-lg">
+        <h2 className="text-[#111827] font-bold text-lg">
           How can we help?
         </h2>
 
@@ -165,7 +165,7 @@ const Help = () => {
             }}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
               activeCategory === f.category
-                ? 'bg-[#2563EB] text-white'
+                ? 'bg-[#0284C7] text-white'
                 : 'bg-[#F8FAFC] border border-[#E2E8F0] text-[#64748B]'
             }`}
           >
@@ -187,14 +187,14 @@ const Help = () => {
               }
               className="w-full flex items-center justify-between px-4 py-4 text-left"
             >
-              <p className="text-[#202938] text-sm font-semibold pr-4">
+              <p className="text-[#111827] text-sm font-semibold pr-4">
                 {item.q}
               </p>
 
               {openItem === idx ? (
                 <ChevronUp
                   size={16}
-                  className="text-[#2563EB] flex-shrink-0"
+                  className="text-[#0284C7] flex-shrink-0"
                 />
               ) : (
                 <ChevronDown
@@ -217,7 +217,7 @@ const Help = () => {
 
       {/* Report Problem */}
       <div className="px-4 mt-6">
-        <h3 className="text-[#202938] font-bold text-base mb-3">
+        <h3 className="text-[#111827] font-bold text-base mb-3">
           Report a Problem
         </h3>
 
@@ -225,7 +225,7 @@ const Help = () => {
           {reportSent ? (
             <div className="text-center py-4">
               <p className="text-3xl mb-2">✅</p>
-              <p className="text-[#202938] font-bold">
+              <p className="text-[#111827] font-bold">
                 Report sent!
               </p>
               <p className="text-[#64748B] text-sm mt-1">
@@ -242,7 +242,7 @@ const Help = () => {
                 }
                 placeholder="Describe the problem you're experiencing..."
                 rows={4}
-                className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl py-3 px-4 text-[#202938] placeholder-[#94A3B8] text-sm focus:outline-none focus:border-[#2563EB] resize-none"
+                className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl py-3 px-4 text-[#111827] placeholder-[#94A3B8] text-sm focus:outline-none focus:border-[#0284C7] resize-none"
               />
 
               <button
@@ -252,7 +252,7 @@ const Help = () => {
                   }
                 }}
                 disabled={!reportText.trim()}
-                className="w-full bg-[#2563EB] text-white font-bold py-3 rounded-xl disabled:opacity-50"
+                className="w-full bg-[#0284C7] text-white font-bold py-3 rounded-xl disabled:opacity-50"
               >
                 Send Report
               </button>
@@ -263,7 +263,7 @@ const Help = () => {
 
       {/* Contact */}
       <div className="px-4 mt-4 space-y-3">
-        <h3 className="text-[#202938] font-bold text-base mb-3">
+        <h3 className="text-[#111827] font-bold text-base mb-3">
           Contact Support
         </h3>
 
@@ -271,15 +271,15 @@ const Help = () => {
           href="mailto:support@blink.africa"
           className="flex items-center gap-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4 hover:bg-[#F1F5F9] transition-colors"
         >
-          <div className="w-10 h-10 bg-[#2563EB]/20 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-[#0284C7]/20 rounded-xl flex items-center justify-center">
             <Mail
               size={18}
-              className="text-[#2563EB]"
+              className="text-[#0284C7]"
             />
           </div>
 
           <div>
-            <p className="text-[#202938] font-semibold text-sm">
+            <p className="text-[#111827] font-semibold text-sm">
               Email Support
             </p>
             <p className="text-[#64748B] text-xs">
@@ -294,15 +294,15 @@ const Help = () => {
         </a>
 
         <div className="flex items-center gap-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
-          <div className="w-10 h-10 bg-[#2ECC71]/20 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-[#10B981]/20 rounded-xl flex items-center justify-center">
             <MessageCircle
               size={18}
-              className="text-[#2ECC71]"
+              className="text-[#10B981]"
             />
           </div>
 
           <div>
-            <p className="text-[#202938] font-semibold text-sm">
+            <p className="text-[#111827] font-semibold text-sm">
               Live Chat
             </p>
             <p className="text-[#64748B] text-xs">

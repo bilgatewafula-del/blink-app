@@ -1,3 +1,4 @@
+import AuthBanner from '../../components/auth/AuthBanner';
 import { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
@@ -12,7 +13,7 @@ import { PHONE_COUNTRIES, normalisePhone, friendlyAuthError, submitGuard, maskId
 // set this to true to show the Phone tab again.
 const SHOW_PHONE_SIGNIN = false;
 
-const inputCls = 'w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-11 pr-4 py-4 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60 transition-all';
+const inputCls = 'w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-11 pr-4 py-4 text-[#111827] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#7C3AED]/60 transition-all';
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
@@ -74,7 +75,7 @@ export default function ForgotPassword() {
 
   if (sent) {
     return (
-      <div className="min-h-screen bg-white" style={{ maxWidth: 480, margin: '0 auto' }}>
+      <div className="min-h-screen bg-[#F1F3F9]" style={{ maxWidth: 480, margin: '0 auto' }}>
         <VerifyCode
           kind={sent.kind}
           target={sent.kind === 'email' ? maskIdentifier(sent.target) : sent.target}
@@ -101,22 +102,16 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
-      <div className="px-4 pt-4">
-        <button onClick={() => navigate('/login')} aria-label="Back"
-          className="w-9 h-9 rounded-xl hover:bg-[#F1F5F9] flex items-center justify-center text-[#64748B] hover:text-[#202938]"><ArrowLeft size={20} /></button>
-      </div>
-      <div className="px-6 pt-4 pb-6">
-        <h1 className="text-[#202938] font-black text-2xl">Reset your password</h1>
-        <p className="text-[#64748B] text-sm mt-2">Enter the email or phone number you signed up with and we will send you a code.</p>
-      </div>
+    <div className="min-h-screen bg-[#F1F3F9] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
+      <AuthBanner onBack={() => navigate('/login')} title="Reset your password" subtitle="Enter the email or phone number you signed up with and we will send you a code." />
+      <div className="h-5" />
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3 px-5">
         {SHOW_PHONE_SIGNIN && (
         <div className="flex bg-[#F1F5F9] rounded-2xl p-1">
           {[['email', 'Email', Mail], ['phone', 'Phone', Smartphone]].map(([key, label, Icon]) => (
             <button type="button" key={key} onClick={() => { setTab(key); setError(''); }}
-              className={'flex-1 py-2.5 rounded-xl text-sm font-bold transition-all inline-flex items-center justify-center gap-2 ' + (tab === key ? 'bg-[#F97316] text-white' : 'text-[#64748B]')}>
+              className={'flex-1 py-2.5 rounded-xl text-sm font-bold transition-all inline-flex items-center justify-center gap-2 ' + (tab === key ? 'bg-[#7C3AED] text-white' : 'text-[#64748B]')}>
               <Icon size={15} /> {label}
             </button>
           ))}
@@ -132,13 +127,13 @@ export default function ForgotPassword() {
         ) : (
           <div className="flex gap-2">
             <select value={country} onChange={(e) => setCountry(e.target.value)} aria-label="Country code"
-              className="bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-3 py-4 text-[#202938] text-[14px] focus:outline-none"
+              className="bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-3 py-4 text-[#111827] text-[14px] focus:outline-none"
               style={{ WebkitAppearance: 'none', width: 104 }}>
               {PHONE_COUNTRIES.map((c) => <option key={c.code} value={c.code} style={{ background: '#FFFFFF' }}>{c.code} +{c.dial}</option>)}
             </select>
             <input type="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setError(''); }}
               placeholder="712 345 678" autoComplete="tel-national" inputMode="tel"
-              className="flex-1 min-w-0 bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-4 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60" />
+              className="flex-1 min-w-0 bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-4 text-[#111827] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#7C3AED]/60" />
           </div>
         )}
 
@@ -152,7 +147,7 @@ export default function ForgotPassword() {
 
         <button type="submit" disabled={busy}
           className="w-full py-4 rounded-2xl font-bold text-white text-[15px] disabled:opacity-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-          style={{ background: '#F97316', boxShadow: '0 8px 24px rgba(255,90,31,0.35)' }}>
+          style={{ background: '#7C3AED', boxShadow: '0 8px 24px rgba(124,58,237,0.35)' }}>
           {busy ? <><Spinner size={18} /> Sending…</> : 'Send code'}
         </button>
       </form>

@@ -34,7 +34,7 @@ import {
 } from '../../lib/posts';
 
 /* ── design tokens (change the brand colour in ONE place) ── */
-const ACCENT = '#F97316';
+const ACCENT = '#E11D48';
 const ICON = 24;
 const STROKE = 1.9;
 const PAGE = 8;
@@ -123,7 +123,7 @@ const BF_CSS = `
 @keyframes bfSwing{0%{transform:rotate(0)}25%{transform:rotate(-16deg)}60%{transform:rotate(10deg)}100%{transform:rotate(0)}}
 @keyframes bfNudge{0%{transform:translate(0,0)}40%{transform:translate(4px,-4px)}100%{transform:translate(0,0)}}
 @keyframes bfWiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(90deg)}}
-@keyframes bfPlus{0%{box-shadow:0 0 0 0 rgba(255,90,31,.55)}70%{box-shadow:0 0 0 12px rgba(255,90,31,0)}100%{box-shadow:0 0 0 0 rgba(255,90,31,0)}}
+@keyframes bfPlus{0%{box-shadow:0 0 0 0 rgba(225,29,72,.55)}70%{box-shadow:0 0 0 12px rgba(225,29,72,0)}100%{box-shadow:0 0 0 0 rgba(225,29,72,0)}}
 @keyframes bfBroken{0%{transform:translate(-50%,-50%) scale(.6);opacity:1}100%{transform:translate(-50%,calc(-50% + 40px)) scale(1.1) rotate(8deg);opacity:0}}
 .bf-nomotion .bfa{animation:none!important}
 @media (prefers-reduced-motion:reduce){.bfa{animation:none!important}}
@@ -170,7 +170,7 @@ function PlusButton({ onClick }) {
   return (
     <button onClick={onClick} aria-label="Create a video" className="w-11 h-11 flex items-center justify-center active:scale-90 transition-transform">
       <span className="bfa w-8 h-8 rounded-full flex items-center justify-center"
-        style={{ background: '#F97316', animation: 'bfPlus 2.2s ease-out 3', boxShadow: '0 2px 10px rgba(255,90,31,.45)' }}>
+        style={{ background: '#E11D48', animation: 'bfPlus 2.2s ease-out 3', boxShadow: '0 2px 10px rgba(225,29,72,.45)' }}>
         <Plus size={19} strokeWidth={2.6} color="#fff" />
       </span>
     </button>
@@ -183,7 +183,7 @@ function Toggle({ label, desc, on, onChange }) {
       className="w-full flex items-center gap-3 px-5 py-3 text-left active:bg-white/[0.04]">
       <span className="flex-1 min-w-0">
         <span className="block text-white text-[15px] font-semibold">{label}</span>
-        {desc && <span className="block text-[#8E8C88] text-[12px] mt-0.5 leading-snug">{desc}</span>}
+        {desc && <span className="block text-[#64748B] text-[12px] mt-0.5 leading-snug">{desc}</span>}
       </span>
       <span className="w-11 h-6 rounded-full flex-shrink-0 relative transition-colors" style={{ background: on ? ACCENT : 'rgba(255,255,255,.18)' }}>
         <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all" style={{ left: on ? 22 : 2 }} />
@@ -200,7 +200,7 @@ function Sheet({ onClose, title, children }) {
         <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mt-2.5" />
         <div className="flex items-center justify-between pl-5 pr-1.5">
           <p className="text-white font-bold text-[15px] py-3">{title || ''}</p>
-          <button onClick={onClose} aria-label="Close" className="w-11 h-11 flex items-center justify-center text-[#8E8C88] active:scale-90 transition-transform"><X size={20} /></button>
+          <button onClick={onClose} aria-label="Close" className="w-11 h-11 flex items-center justify-center text-[#64748B] active:scale-90 transition-transform"><X size={20} /></button>
         </div>
         {children}
       </div>
@@ -210,7 +210,7 @@ function Sheet({ onClose, title, children }) {
 }
 
 function SectionLabel({ children }) {
-  return <p className="px-5 pt-4 pb-1 text-[12px] font-bold uppercase tracking-wide text-[#8E8C88]">{children}</p>;
+  return <p className="px-5 pt-4 pb-1 text-[12px] font-bold uppercase tracking-wide text-[#64748B]">{children}</p>;
 }
 
 function SheetRow({ icon: Icon, label, value, onClick, danger }) {
@@ -218,7 +218,7 @@ function SheetRow({ icon: Icon, label, value, onClick, danger }) {
     <button onClick={onClick} className="w-full flex items-center gap-3.5 px-5 py-3.5 active:bg-white/[0.05] text-left">
       <Icon size={20} strokeWidth={STROKE} color={danger ? '#FF5C5C' : '#fff'} />
       <span className="flex-1 text-[15px] font-semibold" style={{ color: danger ? '#FF5C5C' : '#fff' }}>{label}</span>
-      {value && <span className="text-[13px] text-[#8E8C88]">{value}</span>}
+      {value && <span className="text-[13px] text-[#64748B]">{value}</span>}
     </button>
   );
 }
@@ -258,7 +258,7 @@ function CreatorPanel({ post, isMe, onClose, onOpenProfile, onMute, onBlock }) {
   const close = () => { setOpen(false); setTimeout(onClose, 200); };
 
   return (
-    <div className="absolute inset-0 z-30 bg-[#0D0C0B] overflow-y-auto"
+    <div className="absolute inset-0 z-30 bg-[#0B0D1F] overflow-y-auto"
       style={{ transform: open ? 'translateX(0)' : 'translateX(100%)', transition: 'transform .2s ease', touchAction: 'pan-y' }}
       onPointerDown={(e) => { start.current = { x: e.clientX, y: e.clientY }; }}
       onPointerUp={(e) => {
@@ -279,12 +279,12 @@ function CreatorPanel({ post, isMe, onClose, onOpenProfile, onMute, onBlock }) {
           <p className="text-white font-extrabold text-[18px]">{u.display_name || u.username}</p>
           {u.is_verified && <VerifiedBadge size={17} />}
         </div>
-        <p className="text-[#8E8C88] text-[14px]">@{u.username}</p>
+        <p className="text-[#64748B] text-[14px]">@{u.username}</p>
         <div className="flex gap-8 mt-5">
           {[['Followers', info?.followers_count], ['Following', info?.following_count], ['Posts', info?.posts_count]].map(([l, v]) => (
             <div key={l}>
               <p className="text-white font-extrabold text-[17px]">{info ? formatNumber(v || 0) : '–'}</p>
-              <p className="text-[#8E8C88] text-[12px]">{l}</p>
+              <p className="text-[#64748B] text-[12px]">{l}</p>
             </div>
           ))}
         </div>
@@ -625,14 +625,14 @@ function Slide({
           <div className={'absolute bottom-[18px] flex flex-col items-center gap-3.5 ' + side}>
             <div className="relative mb-2">
               <button onClick={onCreator} aria-label={'Open ' + (u.username || 'creator') + ' details'} className="active:scale-90 transition-transform">
-                <span className="block rounded-full p-[2px]" style={{ background: '#F97316' }}>
+                <span className="block rounded-full p-[2px]" style={{ background: '#E11D48' }}>
                   <Avatar url={u.avatar_url} name={u.display_name || u.username} size={10} />
                 </span>
               </button>
               {!isMine && u.id && rel !== undefined && !iFollowThem(rel) && (
                 <button onClick={(e) => { e.stopPropagation(); onFollow(); }} aria-label={'Follow @' + (u.username || 'creator')}
                   className="absolute left-1/2 -translate-x-1/2 -bottom-4 w-10 h-10 flex items-center justify-center active:scale-90 transition-transform">
-                  <span className="w-[22px] h-[22px] rounded-full flex items-center justify-center" style={{ background: '#F97316', border: '2px solid #0D0C0B' }}>
+                  <span className="w-[22px] h-[22px] rounded-full flex items-center justify-center" style={{ background: '#E11D48', border: '2px solid #0B0D1F' }}>
                     <Plus size={13} strokeWidth={3} color="#fff" />
                   </span>
                 </button>
@@ -1300,7 +1300,7 @@ export default function BFlash() {
         const isPaused = !vid || vid.paused;
         return (
           <Sheet onClose={() => setMenuId(null)} title="Video options">
-            <p className="px-5 pb-1 text-[12px] font-bold uppercase tracking-wide text-[#8E8C88]">Playback speed</p>
+            <p className="px-5 pb-1 text-[12px] font-bold uppercase tracking-wide text-[#64748B]">Playback speed</p>
             <Chips options={SPEEDS} value={fp.speed} onPick={(v) => setFlashPref({ speed: v })} format={(v) => v + '×'} />
             <div className="h-px bg-white/10 my-1" />
             {mine && (
@@ -1379,7 +1379,7 @@ export default function BFlash() {
       )}
       {panel && panelPost && panel.type === 'confirm-delete' && (
         <Sheet onClose={() => setPanel(null)} title="Delete this video?">
-          <p className="px-5 pb-3 text-[#8E8C88] text-[14px] leading-snug">It will be removed for everyone, along with its likes and comments. This can’t be undone.</p>
+          <p className="px-5 pb-3 text-[#64748B] text-[14px] leading-snug">It will be removed for everyone, along with its likes and comments. This can’t be undone.</p>
           <div className="px-5 flex flex-col gap-2.5">
             <button onClick={() => deleteVideo(panelPost)} className="h-12 rounded-xl bg-[#E5484D] text-white font-bold">Delete video</button>
             <button onClick={() => setPanel(null)} className="h-12 rounded-xl bg-white/10 text-white font-bold">Cancel</button>
@@ -1388,7 +1388,7 @@ export default function BFlash() {
       )}
       {panel && panelPost && panel.type === 'confirm-block' && (
         <Sheet onClose={() => setPanel(null)} title={'Block @' + (panelPost.users?.username || 'this creator') + '?'}>
-          <p className="px-5 pb-3 text-[#8E8C88] text-[14px] leading-snug">You won’t see each other’s videos, and they won’t be able to follow or contact you. You can unblock them any time in Settings.</p>
+          <p className="px-5 pb-3 text-[#64748B] text-[14px] leading-snug">You won’t see each other’s videos, and they won’t be able to follow or contact you. You can unblock them any time in Settings.</p>
           <div className="px-5 flex flex-col gap-2.5">
             <button onClick={() => blockCreator(panelPost)} className="h-12 rounded-xl bg-[#E5484D] text-white font-bold">Block</button>
             <button onClick={() => setPanel(null)} className="h-12 rounded-xl bg-white/10 text-white font-bold">Cancel</button>
@@ -1408,7 +1408,7 @@ export default function BFlash() {
             on={fp.pauseOnComments} onChange={(v) => setFlashPref({ pauseOnComments: v })} />
           <Toggle label="Show captions" desc="Subtitles typed by the creator, when a video has them."
             on={fp.captions} onChange={(v) => setFlashPref({ captions: v })} />
-          <p className="px-5 pt-2 text-[#8E8C88] text-[12px]">Default speed</p>
+          <p className="px-5 pt-2 text-[#64748B] text-[12px]">Default speed</p>
           <Chips options={SPEEDS} value={fp.speed} onPick={(v) => setFlashPref({ speed: v })} format={(v) => v + '×'} />
 
           <SectionLabel>Sound</SectionLabel>
@@ -1418,7 +1418,7 @@ export default function BFlash() {
           <SectionLabel>Data & quality</SectionLabel>
           <Toggle label="Data saver" desc="Lower video quality and no preloading. Autoplay stays off."
             on={saver} onChange={(v) => setPrefs({ data_saver: v })} />
-          <p className="px-5 pt-2 text-[#8E8C88] text-[12px]">Video quality</p>
+          <p className="px-5 pt-2 text-[#64748B] text-[12px]">Video quality</p>
           <Chips options={['auto', 'high', 'medium', 'low']} value={prefs.video_quality} onPick={(v) => setPrefs({ video_quality: v })}
             format={(v) => v.charAt(0).toUpperCase() + v.slice(1)} />
 
@@ -1435,7 +1435,7 @@ export default function BFlash() {
             on={fp.haptics} onChange={(v) => setFlashPref({ haptics: v })} />
 
           <SectionLabel>Your feed</SectionLabel>
-          <p className="px-5 text-[#8E8C88] text-[12px]">Open B-Flash on</p>
+          <p className="px-5 text-[#64748B] text-[12px]">Open B-Flash on</p>
           <Chips options={TABS.map((t) => t[0])} value={fp.defaultTab} onPick={(v) => setFlashPref({ defaultTab: v })}
             format={(v) => (TABS.find((t) => t[0] === v) || [0, v])[1]} />
           <SheetRow icon={RotateCcw} label="Clear watched history" value="For You starts fresh"
@@ -1472,14 +1472,14 @@ function EditSheet({ post, onClose, onSave }) {
   return (
     <Sheet onClose={onClose} title="Edit video details">
       <div className="px-5 flex flex-col gap-3">
-        <label className="text-[#8E8C88] text-[12px] font-bold">Caption</label>
-        <div className="bg-white/[0.07] border border-white/10 rounded-2xl px-4 py-3 focus-within:border-[#F97316]/60">
+        <label className="text-[#64748B] text-[12px] font-bold">Caption</label>
+        <div className="bg-white/[0.07] border border-white/10 rounded-2xl px-4 py-3 focus-within:border-[#E11D48]/60">
           <MentionTextarea tone="dark" value={caption} onChange={setCaption} rows={4} maxLength={500} placeholder="Write a caption…" className="text-[16px] leading-snug" />
         </div>
-        <p className="text-right text-[11px] text-[#8E8C88]">{caption.length}/500</p>
-        <label className="text-[#8E8C88] text-[12px] font-bold">Hashtags</label>
+        <p className="text-right text-[11px] text-[#64748B]">{caption.length}/500</p>
+        <label className="text-[#64748B] text-[12px] font-bold">Hashtags</label>
         <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="#comedy #nairobi"
-          className="w-full bg-white/[0.07] border border-white/10 rounded-2xl px-4 h-12 text-white outline-none focus:border-[#F97316]/60" style={{ fontSize: 16 }} />
+          className="w-full bg-white/[0.07] border border-white/10 rounded-2xl px-4 h-12 text-white outline-none focus:border-[#E11D48]/60" style={{ fontSize: 16 }} />
         <button onClick={submit} disabled={saving} className="h-12 rounded-xl text-white font-bold flex items-center justify-center gap-2 disabled:opacity-60" style={{ background: ACCENT }}>
           {saving ? <Spinner size={16} /> : <Check size={18} />} Save changes
         </button>
@@ -1504,18 +1504,18 @@ function InsightsSheet({ post, onClose }) {
   return (
     <Sheet onClose={onClose} title="Video analytics">
       {!data && !err && <div className="flex justify-center py-8 text-white"><Spinner size={24} /></div>}
-      {err && <p className="px-5 pb-4 text-[#8E8C88]">{err}</p>}
+      {err && <p className="px-5 pb-4 text-[#64748B]">{err}</p>}
       {data && (
         <>
           <div className="grid grid-cols-3 gap-2.5 px-5">
             {cells.map(([l, v]) => (
               <div key={l} className="bg-white/[0.06] rounded-2xl py-3.5 text-center">
                 <p className="text-white font-extrabold text-[18px]">{typeof v === 'number' ? formatNumber(v) : v}</p>
-                <p className="text-[#8E8C88] text-[12px] mt-0.5">{l}</p>
+                <p className="text-[#64748B] text-[12px] mt-0.5">{l}</p>
               </div>
             ))}
           </div>
-          <p className="px-5 pt-3 text-[#8E8C88] text-[12px] leading-snug">These are real counts from your video. Watch time and completion rate will appear once view tracking is added.</p>
+          <p className="px-5 pt-3 text-[#64748B] text-[12px] leading-snug">These are real counts from your video. Watch time and completion rate will appear once view tracking is added.</p>
         </>
       )}
     </Sheet>
@@ -1599,7 +1599,7 @@ function PollSheet({ post, mine, onClose }) {
             <button key={i} onClick={() => vote(i)} disabled={busy || !res || res.voted}
               className="relative h-12 rounded-xl overflow-hidden text-left disabled:opacity-100"
               style={{ background: 'rgba(255,255,255,.08)', border: '1px solid ' + (picked ? ACCENT : 'rgba(255,255,255,.12)') }}>
-              {showResults && <span className="absolute inset-y-0 left-0" style={{ width: pct + '%', background: picked ? 'rgba(255,90,31,.45)' : 'rgba(255,255,255,.14)', transition: 'width .5s ease' }} />}
+              {showResults && <span className="absolute inset-y-0 left-0" style={{ width: pct + '%', background: picked ? 'rgba(225,29,72,.45)' : 'rgba(255,255,255,.14)', transition: 'width .5s ease' }} />}
               <span className="relative h-full flex items-center justify-between gap-3 px-4">
                 <span className="text-white font-semibold text-[15px] truncate flex items-center gap-2">{picked && <Check size={16} color={ACCENT} />}{o}</span>
                 {showResults && <span className="text-white font-bold text-[14px]">{pct}%</span>}
@@ -1608,7 +1608,7 @@ function PollSheet({ post, mine, onClose }) {
           );
         })}
       </div>
-      <p className="px-5 pt-3 text-[#8E8C88] text-[12px]">
+      <p className="px-5 pt-3 text-[#64748B] text-[12px]">
         {!res ? (err || 'Loading…') : res.voted ? total + ' vote' + (total === 1 ? '' : 's') + ' so far. Thanks for voting!'
           : mine ? total + ' vote' + (total === 1 ? '' : 's') + ' so far.' : 'Pick one to see the results. You can’t change your vote.'}
       </p>

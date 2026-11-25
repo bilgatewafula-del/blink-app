@@ -7,7 +7,7 @@ import { ArrowLeft, Lock, Eye, Heart, Users, MessageCircle, Search } from 'lucid
 const Toggle = ({ value, onChange }) => (
   <button
     onClick={() => onChange(!value)}
-    className={`w-12 h-6 rounded-full transition-colors flex-shrink-0 ${value ? 'bg-[#2563EB]' : 'bg-[#E2E8F0]'}`}
+    className={`w-12 h-6 rounded-full transition-colors flex-shrink-0 ${value ? 'bg-[#0284C7]' : 'bg-[#E2E8F0]'}`}
   >
     <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform mx-0.5 ${value ? 'translate-x-6' : 'translate-x-0'}`} />
   </button>
@@ -44,7 +44,7 @@ const PrivacySettings = () => {
     <select
       value={settings[key]}
       onChange={(e) => update(key, e.target.value)}
-      className="bg-[#111827] border border-[#E2E8F0] text-[#202938] text-xs rounded-lg px-2 py-1.5 focus:outline-none"
+      className="bg-[#111827] border border-[#E2E8F0] text-[#111827] text-xs rounded-lg px-2 py-1.5 focus:outline-none"
     >
       {options.map((o) => (
         <option key={o.value} value={o.value} className="bg-[#F8FAFC]">{o.label}</option>
@@ -54,12 +54,12 @@ const PrivacySettings = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24">
-      <div className="sticky top-0 z-20 bg-[#F8FAFC] border-b border-[#E2E8F0] px-4 py-3 flex items-center justify-between">
-        <button onClick={() => navigate('/settings')} className="text-[#64748B] hover:text-[#202938]">
+      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center justify-between">
+        <button onClick={() => navigate('/settings')} className="text-[#CBD5E1] hover:text-white">
           <ArrowLeft size={22} />
         </button>
-        <h1 className="text-[#202938] font-bold text-lg">Privacy</h1>
-        <button onClick={handleSave} disabled={saving} className="text-[#2563EB] font-bold text-sm disabled:opacity-50">
+        <h1 className="text-white font-bold text-lg">Privacy</h1>
+        <button onClick={handleSave} disabled={saving} className="text-[#0284C7] font-bold text-sm disabled:opacity-50">
           {saving ? 'Saving...' : 'Save'}
         </button>
       </div>
@@ -75,13 +75,13 @@ const PrivacySettings = () => {
                 icon: Lock, label: 'Private Account',
                 sub: 'Only approved followers see your posts',
                 type: 'toggle', key: 'is_private',
-                color: 'text-[#7B2FFF]', bg: 'bg-[#7B2FFF]/20',
+                color: 'text-[#7C3AED]', bg: 'bg-[#7C3AED]/20',
               },
               {
                 icon: Search, label: 'Show in Search',
                 sub: 'Let others find you in search',
                 type: 'toggle', key: 'show_in_search',
-                color: 'text-[#2563EB]', bg: 'bg-[#2563EB]/20',
+                color: 'text-[#0284C7]', bg: 'bg-[#0284C7]/20',
               },
               {
                 icon: Eye, label: 'Activity Status',
@@ -104,7 +104,7 @@ const PrivacySettings = () => {
                 icon: Users, label: 'Hide Follower Count',
                 sub: 'Keep your follower numbers private',
                 type: 'toggle', key: 'hide_followers',
-                color: 'text-[#2ECC71]', bg: 'bg-[#2ECC71]/20',
+                color: 'text-[#10B981]', bg: 'bg-[#10B981]/20',
               },
               {
                 icon: Users, label: 'Allow Tagging',
@@ -121,7 +121,7 @@ const PrivacySettings = () => {
                 icon: MessageCircle, label: 'Who can comment',
                 sub: 'Control who comments on your posts',
                 type: 'select', key: 'allow_comments',
-                color: 'text-[#2563EB]', bg: 'bg-[#2563EB]/20',
+                color: 'text-[#0284C7]', bg: 'bg-[#0284C7]/20',
                 options: [
                   { value: 'everyone', label: 'Everyone' },
                   { value: 'followers', label: 'Followers' },
@@ -151,7 +151,7 @@ const PrivacySettings = () => {
                     <item.icon size={18} className={item.color} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[#202938] text-sm font-semibold">{item.label}</p>
+                    <p className="text-[#111827] text-sm font-semibold">{item.label}</p>
                     <p className="text-[#64748B] text-xs leading-relaxed">{item.sub}</p>
                   </div>
                   {item.type === 'toggle' ? (

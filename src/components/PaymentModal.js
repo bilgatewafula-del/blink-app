@@ -156,27 +156,27 @@ export default function PaymentModal({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-[#E2E8F0]">
           <div>
-            <p className="text-[#202938] font-black text-[16px]">{title}</p>
+            <p className="text-[#111827] font-black text-[16px]">{title}</p>
             <p className="text-[#94A3B8] text-xs">{description}</p>
           </div>
-          <button onClick={onClose} className="text-[#64748B] hover:text-[#202938] w-8 h-8 flex items-center justify-center">
+          <button onClick={onClose} className="text-[#64748B] hover:text-[#111827] w-8 h-8 flex items-center justify-center">
             <X size={20} />
           </button>
         </div>
 
         {/* Amount badge */}
-        <div className="mx-5 mt-4 bg-[#F97316]/10 border border-[#F97316]/20 rounded-2xl px-4 py-3 flex items-center justify-between">
+        <div className="mx-5 mt-4 bg-[#7C3AED]/10 border border-[#7C3AED]/20 rounded-2xl px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <DollarSign size={16} className="text-[#EA580C]" />
+            <DollarSign size={16} className="text-[#6D28D9]" />
             <span className="text-[#64748B] text-sm">Amount to pay</span>
           </div>
-          <span className="text-[#202938] font-black text-xl">{formatKES(amount)}</span>
+          <span className="text-[#111827] font-black text-xl">{formatKES(amount)}</span>
         </div>
 
         {/* ── STEP 1: M-Pesa instructions ── */}
         {step === 1 && (
           <div className="px-5 pt-4 pb-2">
-            <p className="text-[#202938] font-bold text-sm mb-4">
+            <p className="text-[#111827] font-bold text-sm mb-4">
               Pay via M-Pesa — Follow these steps exactly
             </p>
 
@@ -213,17 +213,17 @@ export default function PaymentModal({
                 },
               ].map(step => (
                 <div key={step.n} className="flex gap-3">
-                  <div className="w-7 h-7 rounded-full bg-[#F97316]/20 text-[#EA580C] font-bold text-[13px] flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-7 h-7 rounded-full bg-[#7C3AED]/20 text-[#6D28D9] font-bold text-[13px] flex items-center justify-center flex-shrink-0 mt-0.5">
                     {step.n}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[#202938] font-bold text-[13px]">{step.title}</p>
+                    <p className="text-[#111827] font-bold text-[13px]">{step.title}</p>
                     {step.body && <p className="text-[#64748B] text-[12px] mt-0.5 leading-snug">{step.body}</p>}
                     {step.field && (
                       <div className={`mt-2 rounded-xl px-3 py-2 flex items-center justify-between gap-2 ${step.field.important ? 'bg-yellow-500/10 border border-yellow-500/30' : 'bg-[#F1F5F9] border border-[#E2E8F0]'}`}>
                         <div className="min-w-0">
                           <p className="text-[#64748B] text-[10px] font-bold uppercase">{step.field.label}</p>
-                          <p className={`font-black text-[16px] font-mono ${step.field.important ? 'text-yellow-700' : 'text-[#202938]'}`}>
+                          <p className={`font-black text-[16px] font-mono ${step.field.important ? 'text-yellow-700' : 'text-[#111827]'}`}>
                             {step.field.value}
                           </p>
                         </div>
@@ -238,13 +238,13 @@ export default function PaymentModal({
             {/* Till name */}
             <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-3 mb-5">
               <p className="text-[#64748B] text-[11px] font-bold uppercase mb-1">Business Name (confirm on M-Pesa screen)</p>
-              <p className="text-[#202938] font-bold text-[14px]">{MPESA.name}</p>
+              <p className="text-[#111827] font-bold text-[14px]">{MPESA.name}</p>
             </div>
 
             <button
               onClick={() => setStep(2)}
               className="w-full py-4 rounded-2xl font-bold text-white text-[15px] flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-              style={{ background: '#F97316', boxShadow: '0 8px 24px rgba(255,90,31,0.3)' }}
+              style={{ background: '#7C3AED', boxShadow: '0 8px 24px rgba(124,58,237,0.3)' }}
             >
               I Have Paid — Confirm Details <ChevronRight size={18} />
             </button>
@@ -258,7 +258,7 @@ export default function PaymentModal({
         {/* ── STEP 2: Fill confirmation details ── */}
         {step === 2 && (
           <div className="px-5 pt-4 pb-2">
-            <p className="text-[#202938] font-bold text-sm mb-1">Confirm your payment details</p>
+            <p className="text-[#111827] font-bold text-sm mb-1">Confirm your payment details</p>
             <p className="text-[#94A3B8] text-xs mb-4">These must match your M-Pesa transaction exactly. Admin will verify against M-Pesa records.</p>
 
             <div className="space-y-3 mb-4">
@@ -274,7 +274,7 @@ export default function PaymentModal({
                   onChange={e => { setMpesaPhone(e.target.value); setError(''); }}
                   placeholder="e.g. 0712 345 678"
                   inputMode="tel"
-                  className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-3.5 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60 transition-all"
+                  className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-3.5 text-[#111827] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#7C3AED]/60 transition-all"
                 />
               </div>
 
@@ -289,7 +289,7 @@ export default function PaymentModal({
                   value={mpesaName}
                   onChange={e => { setMpesaName(e.target.value); setError(''); }}
                   placeholder="e.g. John Doe"
-                  className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-3.5 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60 transition-all"
+                  className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-3.5 text-[#111827] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#7C3AED]/60 transition-all"
                 />
               </div>
 
@@ -305,7 +305,7 @@ export default function PaymentModal({
                   onChange={e => { setConfirmAmount(e.target.value); setError(''); }}
                   placeholder={String(amount)}
                   inputMode="numeric"
-                  className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-3.5 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60 transition-all"
+                  className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-3.5 text-[#111827] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#7C3AED]/60 transition-all"
                 />
               </div>
 
@@ -342,8 +342,8 @@ export default function PaymentModal({
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="w-full py-4 rounded-2xl font-bold text-[#202938] text-[15px] disabled:opacity-50 flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-              style={{ background: 'linear-gradient(135deg, #2ECC71, #16A34A)', boxShadow: '0 8px 24px rgba(46,204,113,0.3)' }}
+              className="w-full py-4 rounded-2xl font-bold text-[#111827] text-[15px] disabled:opacity-50 flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+              style={{ background: 'linear-gradient(135deg, #10B981, #16A34A)', boxShadow: '0 8px 24px rgba(16,185,129,0.3)' }}
             >
               {submitting
                 ? <><div className="w-5 h-5 border-2 border-[#E2E8F0] border-t-white rounded-full animate-spin" /> Submitting...</>
@@ -359,16 +359,16 @@ export default function PaymentModal({
             <div className="w-20 h-20 rounded-full bg-green-500/15 flex items-center justify-center mx-auto mb-4">
               <CheckCircle size={40} className="text-green-700" />
             </div>
-            <h3 className="text-[#202938] font-black text-xl mb-2">Payment submitted</h3>
+            <h3 className="text-[#111827] font-black text-xl mb-2">Payment submitted</h3>
             <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl px-4 py-3 mb-4 text-left">
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-[#64748B] text-sm">Reference</span>
-                  <span className="text-[#202938] font-black font-mono">{ref}</span>
+                  <span className="text-[#111827] font-black font-mono">{ref}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#64748B] text-sm">Amount</span>
-                  <span className="text-[#202938] font-bold">{formatKES(amount)}</span>
+                  <span className="text-[#111827] font-bold">{formatKES(amount)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#64748B] text-sm">Status</span>
@@ -376,16 +376,16 @@ export default function PaymentModal({
                 </div>
               </div>
             </div>
-            <div className="bg-[#F97316]/10 border border-[#F97316]/20 rounded-2xl p-4 mb-5 text-left">
-              <p className="text-[#EA580C] font-bold text-sm mb-1">⏱ What happens next?</p>
+            <div className="bg-[#7C3AED]/10 border border-[#7C3AED]/20 rounded-2xl p-4 mb-5 text-left">
+              <p className="text-[#6D28D9] font-bold text-sm mb-1">⏱ What happens next?</p>
               <p className="text-[#64748B] text-xs leading-relaxed">
-                An admin will verify your payment on M-Pesa using reference <strong className="text-[#202938]">{ref}</strong>. Once confirmed, your service activates automatically and you'll receive a notification. This usually takes 5–60 minutes during business hours.
+                An admin will verify your payment on M-Pesa using reference <strong className="text-[#111827]">{ref}</strong>. Once confirmed, your service activates automatically and you'll receive a notification. This usually takes 5–60 minutes during business hours.
               </p>
             </div>
             <button
               onClick={onClose}
               className="w-full py-4 rounded-2xl font-bold text-white"
-              style={{ background: '#F97316' }}
+              style={{ background: '#7C3AED' }}
             >
               Done — I'll wait for confirmation
             </button>

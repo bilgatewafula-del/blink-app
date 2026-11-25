@@ -48,7 +48,7 @@ export default function EmojiPanel({ onPick, onBackspace, height = 250 }) {
         {tabs.map((t) => (
           <button key={t.key} role="tab" aria-selected={tab === t.key} aria-label={t.label} onClick={() => setTab(t.key)}
             className="w-10 h-9 flex-shrink-0 flex items-center justify-center rounded-lg active:scale-90 transition-transform"
-            style={{ color: tab === t.key ? '#F97316' : '#65676B', background: tab === t.key ? 'rgba(255,90,31,.10)' : 'transparent' }}>
+            style={{ color: tab === t.key ? '#7C3AED' : '#65676B', background: tab === t.key ? 'rgba(124,58,237,.10)' : 'transparent' }}>
             <t.icon size={20} strokeWidth={1.9} />
           </button>
         ))}
@@ -66,7 +66,7 @@ export default function EmojiPanel({ onPick, onBackspace, height = 250 }) {
         )}
       </div>
       <button onPointerDown={startHold} onPointerUp={stopHold} onPointerLeave={stopHold} onPointerCancel={stopHold} aria-label="Delete last emoji or character"
-        className="absolute right-3 bottom-3 w-14 h-10 rounded-xl bg-white border border-[#E4E6EB] shadow-md flex items-center justify-center text-[#202938] active:scale-95 transition-transform">
+        className="absolute right-3 bottom-3 w-14 h-10 rounded-xl bg-white border border-[#E4E6EB] shadow-md flex items-center justify-center text-[#111827] active:scale-95 transition-transform">
         <Delete size={22} strokeWidth={1.8} />
       </button>
     </div>

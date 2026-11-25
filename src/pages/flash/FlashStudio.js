@@ -20,13 +20,13 @@ import MentionTextarea from '../../components/MentionTextarea';
 import { Spinner } from '../../components/ui';
 import { goBack } from '../../lib/nav';
 
-const ACCENT = '#F97316';
+const ACCENT = '#E11D48';
 const MAX_LEN = 180;           // seconds
 const MIN_LEN = 1;
 const MAX_MB = 100;
 const MAX_TEXTS = 4;
 const MAX_CAPS = 40;
-const TEXT_COLORS = ['#FFFFFF', '#FFD23F', '#F97316', '#4DB6FF', '#34D6A0', '#FF4D6D', '#000000'];
+const TEXT_COLORS = ['#FFFFFF', '#FFD23F', '#E11D48', '#4DB6FF', '#34D6A0', '#FF4D6D', '#000000'];
 const TAG_IDEAS = ['kenya', 'nairobi', 'comedy', 'music', 'dance', 'fashion', 'tech', 'sports', 'food', 'travel', 'education', 'business'];
 
 const FILTERS = [
@@ -188,7 +188,7 @@ function TrimBar({ duration, start, end, now, onChange, onScrub }) {
   return (
     <div ref={ref} className="relative h-14 mx-5 select-none" style={{ touchAction: 'none' }} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
       <div className="absolute inset-x-0 top-2 bottom-2 rounded-lg bg-[#F1F5F9]" />
-      <div className="absolute top-2 bottom-2 rounded-lg" style={{ left: pct(start), width: ((end - start) / duration) * 100 + '%', background: 'rgba(255,90,31,.28)', borderTop: '2px solid ' + ACCENT, borderBottom: '2px solid ' + ACCENT }} />
+      <div className="absolute top-2 bottom-2 rounded-lg" style={{ left: pct(start), width: ((end - start) / duration) * 100 + '%', background: 'rgba(225,29,72,.28)', borderTop: '2px solid ' + ACCENT, borderBottom: '2px solid ' + ACCENT }} />
       {now >= start && now <= end && <div className="absolute top-1 bottom-1 w-0.5 bg-white pointer-events-none" style={{ left: pct(now) }} />}
       {[['start', start], ['end', end]].map(([k, t]) => (
         <button key={k} onPointerDown={down(k)} aria-label={k === 'start' ? 'Trim start' : 'Trim end'}
@@ -204,7 +204,7 @@ function Pill({ active, onClick, children, ariaLabel }) {
   return (
     <button onClick={onClick} aria-label={ariaLabel} aria-pressed={!!active}
       className="px-3.5 h-9 rounded-full text-[13px] font-bold flex-shrink-0 transition-colors"
-      style={{ background: active ? ACCENT : '#F1F5F9', color: active ? '#fff' : '#202938' }}>{children}</button>
+      style={{ background: active ? ACCENT : '#F1F5F9', color: active ? '#fff' : '#111827' }}>{children}</button>
   );
 }
 
@@ -531,10 +531,10 @@ export default function FlashStudio() {
   /* ───────────── screens ───────────── */
   const header = (
     <div className="flex items-center justify-between px-2 pt-[max(8px,env(safe-area-inset-top))] pb-1 flex-shrink-0">
-      <button onClick={back} aria-label="Back" className="w-11 h-11 flex items-center justify-center text-[#202938]">
+      <button onClick={back} aria-label="Back" className="w-11 h-11 flex items-center justify-center text-[#111827]">
         {step === 'pick' ? <X size={22} /> : <ChevronLeft size={24} />}
       </button>
-      <p className="text-[#202938] font-extrabold text-[16px]">
+      <p className="text-[#111827] font-extrabold text-[16px]">
         {step === 'pick' ? (source ? (stitch ? 'Stitch' : 'Duet') : 'New video') : step === 'edit' ? 'Edit' : 'Details'}
       </p>
       {step === 'edit' ? (
@@ -570,7 +570,7 @@ export default function FlashStudio() {
                 {source.video_thumbnail && <img src={source.video_thumbnail} alt="" className="w-full h-full object-cover" />}
               </div>
               <div className="min-w-0">
-                <p className="text-[#202938] font-bold text-[15px] flex items-center gap-2">{stitch ? <Combine size={17} /> : <Columns2 size={17} />}{stitch ? 'Stitch with' : 'Duet with'} @{source.users && source.users.username}</p>
+                <p className="text-[#111827] font-bold text-[15px] flex items-center gap-2">{stitch ? <Combine size={17} /> : <Columns2 size={17} />}{stitch ? 'Stitch with' : 'Duet with'} @{source.users && source.users.username}</p>
                 <p className="text-[#64748B] text-[13px] leading-snug mt-1">
                   {stitch ? 'Viewers see the first seconds of their video, then yours.' : 'Their video plays next to yours. Their name is shown on your video.'}
                 </p>
@@ -580,15 +580,15 @@ export default function FlashStudio() {
 
           <div onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); handleFile(e.dataTransfer.files && e.dataTransfer.files[0]); }}
             className="rounded-3xl border-2 border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-6 py-9 flex flex-col items-center text-center">
-            <span className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: 'rgba(249,115,22,.12)' }}><UploadCloud size={30} color="#F97316" strokeWidth={1.8} /></span>
-            <p className="text-[#202938] font-extrabold text-[19px]">Upload a video</p>
+            <span className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: 'rgba(225,29,72,.12)' }}><UploadCloud size={30} color="#E11D48" strokeWidth={1.8} /></span>
+            <p className="text-[#111827] font-extrabold text-[19px]">Upload a video</p>
             <p className="text-[#64748B] text-[13px] mt-1 leading-snug">MP4 or MOV · up to 3 minutes · up to {MAX_MB} MB</p>
             <button onClick={() => galleryRef.current && galleryRef.current.click()}
-              className="mt-5 h-12 px-8 rounded-full text-white font-bold text-[15px] flex items-center gap-2 active:scale-95 transition-transform" style={{ background: '#F97316' }}>
+              className="mt-5 h-12 px-8 rounded-full text-white font-bold text-[15px] flex items-center gap-2 active:scale-95 transition-transform" style={{ background: '#E11D48' }}>
               <Images size={19} /> Choose from gallery
             </button>
             <button onClick={() => camRef.current && camRef.current.click()}
-              className="mt-2.5 h-11 px-6 rounded-full text-[#202938] font-bold text-[14px] flex items-center gap-2 border border-[#E2E8F0] bg-white active:scale-95 transition-transform">
+              className="mt-2.5 h-11 px-6 rounded-full text-[#111827] font-bold text-[14px] flex items-center gap-2 border border-[#E2E8F0] bg-white active:scale-95 transition-transform">
               <Camera size={18} /> Record with camera
             </button>
           </div>
@@ -600,7 +600,7 @@ export default function FlashStudio() {
               [SlidersHorizontal, 'Polish it next', 'Trim, filters, text, captions, a cover and a poll come after you pick a video.']].map(([Icon, t, d]) => (
               <div key={t} className="flex items-start gap-3 px-4 py-3">
                 <Icon size={18} className="text-[#64748B] mt-0.5 flex-shrink-0" />
-                <div><p className="text-[#202938] text-[14px] font-semibold">{t}</p><p className="text-[#64748B] text-[12px] leading-snug">{d}</p></div>
+                <div><p className="text-[#111827] text-[14px] font-semibold">{t}</p><p className="text-[#64748B] text-[12px] leading-snug">{d}</p></div>
               </div>
             ))}
           </div>
@@ -637,7 +637,7 @@ export default function FlashStudio() {
             {AUDIENCES.map((a) => (
               <button key={a.key} onClick={() => setAudience(a.key)} aria-pressed={audience === a.key}
                 className="flex-1 h-12 rounded-xl text-[13px] font-bold flex items-center justify-center gap-2"
-                style={{ background: audience === a.key ? ACCENT : '#F1F5F9', color: audience === a.key ? '#fff' : '#202938' }}>
+                style={{ background: audience === a.key ? ACCENT : '#F1F5F9', color: audience === a.key ? '#fff' : '#111827' }}>
                 <a.icon size={16} /> {a.label}
               </button>
             ))}
@@ -650,7 +650,7 @@ export default function FlashStudio() {
             <button key={l} onClick={() => !off && set(!on)} disabled={off} role="switch" aria-checked={on}
               className="w-full flex items-center gap-3 py-3 text-left disabled:opacity-50">
               <span className="flex-1 min-w-0">
-                <span className="block text-[#202938] text-[15px] font-semibold">{l}</span>
+                <span className="block text-[#111827] text-[15px] font-semibold">{l}</span>
                 <span className="block text-[#64748B] text-[12px] mt-0.5 leading-snug">{d}</span>
               </span>
               <span className="w-11 h-6 rounded-full flex-shrink-0 relative transition-colors" style={{ background: on ? ACCENT : '#E2E8F0' }}>
@@ -661,7 +661,7 @@ export default function FlashStudio() {
 
           <button onClick={() => setPollOn(!pollOn)} role="switch" aria-checked={pollOn} className="w-full flex items-center gap-3 py-3 text-left">
             <span className="flex-1 min-w-0">
-              <span className="block text-[#202938] text-[15px] font-semibold flex items-center gap-2"><BarChart3 size={17} /> Add a poll</span>
+              <span className="block text-[#111827] text-[15px] font-semibold flex items-center gap-2"><BarChart3 size={17} /> Add a poll</span>
               <span className="block text-[#64748B] text-[12px] mt-0.5 leading-snug">Ask viewers a question. Results show after they vote.</span>
             </span>
             <span className="w-11 h-6 rounded-full flex-shrink-0 relative transition-colors" style={{ background: pollOn ? ACCENT : '#E2E8F0' }}>
@@ -671,18 +671,18 @@ export default function FlashStudio() {
           {pollOn && (
             <div className="rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] p-3 flex flex-col gap-2.5 mb-2">
               <input value={pollQ} onChange={(e) => setPollQ(e.target.value.slice(0, 120))} placeholder="Your question" aria-label="Poll question"
-                className="h-12 rounded-xl bg-[#F1F5F9] px-4 text-[#202938] outline-none" style={{ fontSize: 16 }} />
+                className="h-12 rounded-xl bg-[#F1F5F9] px-4 text-[#111827] outline-none" style={{ fontSize: 16 }} />
               {pollOpts.map((o, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <input value={o} onChange={(e) => setPollOpts((a) => a.map((x, j) => (j === i ? e.target.value.slice(0, 40) : x)))} placeholder={'Option ' + (i + 1)} aria-label={'Poll option ' + (i + 1)}
-                    className="flex-1 min-w-0 h-11 rounded-xl bg-[#F1F5F9] px-4 text-[#202938] outline-none" style={{ fontSize: 16 }} />
+                    className="flex-1 min-w-0 h-11 rounded-xl bg-[#F1F5F9] px-4 text-[#111827] outline-none" style={{ fontSize: 16 }} />
                   {pollOpts.length > 2 && (
                     <button onClick={() => setPollOpts((a) => a.filter((_, j) => j !== i))} aria-label={'Remove option ' + (i + 1)} className="w-10 h-10 flex items-center justify-center text-[#FF6B6B]"><Minus size={18} /></button>
                   )}
                 </div>
               ))}
               {pollOpts.length < 4 && (
-                <button onClick={() => setPollOpts((a) => [...a, ''])} className="h-10 rounded-xl bg-[#F1F5F9] text-[#202938] text-[13px] font-bold flex items-center justify-center gap-1.5"><Plus size={15} /> Add option</button>
+                <button onClick={() => setPollOpts((a) => [...a, ''])} className="h-10 rounded-xl bg-[#F1F5F9] text-[#111827] text-[13px] font-bold flex items-center justify-center gap-1.5"><Plus size={15} /> Add option</button>
               )}
             </div>
           )}
@@ -713,23 +713,23 @@ export default function FlashStudio() {
           {done ? (
             <>
               <span className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center" style={{ background: ACCENT }}><Check size={28} color="#fff" /></span>
-              <p className="text-[#202938] font-bold">Posted to B-Flash</p>
+              <p className="text-[#111827] font-bold">Posted to B-Flash</p>
               {note && <p className="text-[#64748B] text-[12px] leading-snug mt-2">{note}</p>}
             </>
           ) : problem ? (
             <>
-              <p className="text-[#202938] font-bold mb-1">Your edits couldn’t be made</p>
+              <p className="text-[#111827] font-bold mb-1">Your edits couldn’t be made</p>
               <p className="text-[#64748B] text-[13px] leading-snug mb-4">The edited video didn’t load. You can try again, or post your original video without the edits.</p>
               <div className="flex flex-col gap-2.5">
                 <button onClick={() => publish()} className="h-11 rounded-xl text-white font-bold" style={{ background: ACCENT }}>Try again</button>
-                <button onClick={() => publish({ original: true })} className="h-11 rounded-xl text-[#202938] font-bold bg-[#F1F5F9]">Post original</button>
+                <button onClick={() => publish({ original: true })} className="h-11 rounded-xl text-[#111827] font-bold bg-[#F1F5F9]">Post original</button>
                 <button onClick={() => setProblem(false)} className="h-10 text-[#64748B] font-semibold">Cancel</button>
               </div>
             </>
           ) : (
             <>
-              <div className="flex justify-center text-[#202938] mb-3"><Spinner size={28} /></div>
-              <p className="text-[#202938] font-bold">
+              <div className="flex justify-center text-[#111827] mb-3"><Spinner size={28} /></div>
+              <p className="text-[#111827] font-bold">
                 {phase === 'upload' ? 'Uploading… ' + progress + '%' : phase === 'process' ? 'Applying your edits…' : phase === 'cover' ? 'Saving your cover…' : 'Publishing…'}
               </p>
               {phase === 'upload' && (
@@ -737,7 +737,7 @@ export default function FlashStudio() {
               )}
               <p className="text-[#64748B] text-[12px] mt-3">Keep this screen open. If your signal drops, the upload waits and carries on.</p>
               {phase !== 'save' && (
-                <button onClick={() => { cancelRef.current = true; if (abortRef.current) abortRef.current.abort(); }} className="mt-4 h-10 px-5 rounded-full bg-[#F1F5F9] text-[#202938] text-[13px] font-bold">Cancel upload</button>
+                <button onClick={() => { cancelRef.current = true; if (abortRef.current) abortRef.current.abort(); }} className="mt-4 h-10 px-5 rounded-full bg-[#F1F5F9] text-[#111827] text-[13px] font-bold">Cancel upload</button>
               )}
             </>
           )}
@@ -765,7 +765,7 @@ export default function FlashStudio() {
             <div className="absolute inset-0" ref={ownRef} onClick={togglePlay} role="button" aria-label={playing ? 'Pause' : 'Play'}>
               {capNow && (
                 <div className="absolute left-3 right-3 flex justify-center pointer-events-none" style={{ bottom: '12%' }}>
-                  <span className="px-2 py-0.5 rounded-md text-[#202938] font-bold text-center leading-snug" style={{ background: 'rgba(0,0,0,.62)', fontSize: Math.max(11, box.h * 0.03) }}>{capNow.t}</span>
+                  <span className="px-2 py-0.5 rounded-md text-[#111827] font-bold text-center leading-snug" style={{ background: 'rgba(0,0,0,.62)', fontSize: Math.max(11, box.h * 0.03) }}>{capNow.t}</span>
                 </div>
               )}
               {texts.map((t) => (
@@ -800,7 +800,7 @@ export default function FlashStudio() {
               <TrimBar duration={meta.duration} start={trim.start} end={trim.end} now={now} onChange={setTrim} onScrub={seek} />
               <div className="flex items-center justify-between px-5 text-[12px] text-[#64748B]">
                 <span>Start {fmt(trim.start)}</span>
-                <span className="font-bold text-[#202938]">{Math.round(trimLen)}s selected</span>
+                <span className="font-bold text-[#111827]">{Math.round(trimLen)}s selected</span>
                 <span>End {fmt(trim.end)}</span>
               </div>
               {meta.duration > MAX_LEN && <p className="px-5 pt-1 text-[11px] text-[#64748B]">This video is {fmt(meta.duration)} long. B-Flash videos can be up to 3 minutes.</p>}
@@ -823,7 +823,7 @@ export default function FlashStudio() {
                 {sel && (
                   <>
                     <input value={sel.text} onChange={(e) => patchText(sel.id, { text: e.target.value.slice(0, 40) })} aria-label="Text"
-                      className="flex-1 min-w-0 h-9 rounded-full bg-[#F1F5F9] px-4 text-[#202938] outline-none" style={{ fontSize: 16 }} />
+                      className="flex-1 min-w-0 h-9 rounded-full bg-[#F1F5F9] px-4 text-[#111827] outline-none" style={{ fontSize: 16 }} />
                     <button onClick={() => { setTexts((a) => a.filter((t) => t.id !== sel.id)); setSelText(null); }} aria-label="Delete text" className="w-9 h-9 flex items-center justify-center text-[#FF6B6B] flex-shrink-0"><Trash2 size={18} /></button>
                   </>
                 )}
@@ -847,9 +847,9 @@ export default function FlashStudio() {
             <div className="px-5">
               <div className="flex items-center gap-3">
                 <button onClick={() => setVolume(volume === 0 ? 100 : 0)} aria-label={volume === 0 ? 'Turn original sound on' : 'Mute original sound'}
-                  className="w-11 h-11 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[#202938] flex-shrink-0">{volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}</button>
+                  className="w-11 h-11 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[#111827] flex-shrink-0">{volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}</button>
                 <input type="range" min="0" max="150" step="5" value={volume} onChange={(e) => setVolume(Number(e.target.value))} aria-label="Original sound volume" className="flex-1" style={{ accentColor: ACCENT }} />
-                <span className="w-12 text-right text-[#202938] text-[13px] font-bold">{volume}%</span>
+                <span className="w-12 text-right text-[#111827] text-[13px] font-bold">{volume}%</span>
               </div>
               <p className="text-[11px] text-[#64748B] mt-2 leading-snug">Changes the original sound of your video. The preview can’t play louder than 100%.</p>
             </div>
@@ -859,9 +859,9 @@ export default function FlashStudio() {
               {FRAMES.map((f) => (
                 <button key={f.key} onClick={() => !duet && setFrame(f.key)} disabled={duet} aria-pressed={frame === f.key}
                   className="flex flex-col items-center gap-1 py-2 rounded-xl disabled:opacity-50"
-                  style={{ background: frame === f.key ? 'rgba(255,90,31,.18)' : '#F1F5F9', border: '1px solid ' + (frame === f.key ? ACCENT : 'transparent') }}>
+                  style={{ background: frame === f.key ? 'rgba(225,29,72,.18)' : '#F1F5F9', border: '1px solid ' + (frame === f.key ? ACCENT : 'transparent') }}>
                   <span className="block border-2 rounded-sm" style={{ borderColor: frame === f.key ? ACCENT : '#B8B6B2', width: f.key === 'square' ? 22 : f.key === 'orig' ? 26 : 16, height: f.key === 'orig' ? 18 : f.key === 'square' ? 22 : 28 }} />
-                  <span className="text-[12px] font-bold text-[#202938]">{f.label}</span>
+                  <span className="text-[12px] font-bold text-[#111827]">{f.label}</span>
                   <span className="text-[10px] text-[#64748B]">{f.sub}</span>
                 </button>
               ))}
@@ -883,16 +883,16 @@ export default function FlashStudio() {
                     <div key={c.id} className="rounded-xl bg-[#F1F5F9] p-2 flex flex-col gap-1.5">
                       <div className="flex items-center gap-2">
                         <input value={c.t} onChange={(e) => patchCap(c.id, { t: e.target.value.slice(0, 100) })} aria-label="Caption text"
-                          className="flex-1 min-w-0 h-9 rounded-lg bg-[#F1F5F9] px-3 text-[#202938] outline-none" style={{ fontSize: 16 }} />
+                          className="flex-1 min-w-0 h-9 rounded-lg bg-[#F1F5F9] px-3 text-[#111827] outline-none" style={{ fontSize: 16 }} />
                         <button onClick={() => setCaps((a) => a.filter((x) => x.id !== c.id))} aria-label="Delete line" className="w-9 h-9 flex items-center justify-center text-[#FF6B6B]"><Trash2 size={16} /></button>
                       </div>
                       <div className="flex items-center justify-between text-[12px] text-[#64748B]">
                         {[['Start', 's', -0.5, 0.5], ['End', 'e', -0.5, 0.5]].map(([l, k]) => (
                           <span key={k} className="flex items-center gap-1.5">
                             {l}
-                            <button onClick={() => patchCap(c.id, { [k]: clamp(c[k] - 0.5, k === 's' ? 0 : c.s + 0.5, k === 's' ? c.e - 0.5 : trimLen) })} aria-label={l + ' earlier'} className="w-7 h-7 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[#202938]"><Minus size={13} /></button>
-                            <span className="w-10 text-center text-[#202938] font-bold">{c[k].toFixed(1)}s</span>
-                            <button onClick={() => patchCap(c.id, { [k]: clamp(c[k] + 0.5, k === 's' ? 0 : c.s + 0.5, k === 's' ? c.e - 0.5 : trimLen) })} aria-label={l + ' later'} className="w-7 h-7 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[#202938]"><Plus size={13} /></button>
+                            <button onClick={() => patchCap(c.id, { [k]: clamp(c[k] - 0.5, k === 's' ? 0 : c.s + 0.5, k === 's' ? c.e - 0.5 : trimLen) })} aria-label={l + ' earlier'} className="w-7 h-7 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[#111827]"><Minus size={13} /></button>
+                            <span className="w-10 text-center text-[#111827] font-bold">{c[k].toFixed(1)}s</span>
+                            <button onClick={() => patchCap(c.id, { [k]: clamp(c[k] + 0.5, k === 's' ? 0 : c.s + 0.5, k === 's' ? c.e - 0.5 : trimLen) })} aria-label={l + ' later'} className="w-7 h-7 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[#111827]"><Plus size={13} /></button>
                           </span>
                         ))}
                       </div>
@@ -924,7 +924,7 @@ export default function FlashStudio() {
           )}
           {tool === 'clip' && stitch && (
             <div className="px-5">
-              <p className="text-[#202938] text-[14px] font-bold mb-1">Show {clipEnd}s of @{source.users && source.users.username}’s video first</p>
+              <p className="text-[#111827] text-[14px] font-bold mb-1">Show {clipEnd}s of @{source.users && source.users.username}’s video first</p>
               <input type="range" min="1" max={Math.min(5, Math.max(1, Math.floor(source.video_duration || 5)))} step="1" value={clipEnd}
                 onChange={(e) => setClipEnd(Number(e.target.value))} aria-label="Clip length" className="w-full" style={{ accentColor: ACCENT }} />
               <p className="text-[11px] text-[#64748B] mt-1 leading-snug">Viewers see this clip from the start of their video, then your video. Clips are 1 to 5 seconds.</p>
@@ -933,7 +933,7 @@ export default function FlashStudio() {
         </div>
 
         <div className="flex items-center justify-around px-1 pb-[max(8px,env(safe-area-inset-bottom))] pt-1 border-t border-[#E2E8F0] overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          <button onClick={togglePlay} aria-label={playing ? 'Pause' : 'Play'} className="w-11 h-11 flex items-center justify-center text-[#202938]">
+          <button onClick={togglePlay} aria-label={playing ? 'Pause' : 'Play'} className="w-11 h-11 flex items-center justify-center text-[#111827]">
             {playing ? <Pause size={22} /> : <Play size={22} />}
           </button>
           {tools.map((t) => (
@@ -949,11 +949,11 @@ export default function FlashStudio() {
       {confirmDiscard && (
         <div className="fixed inset-0 z-[90] bg-black/70 flex items-end justify-center" onClick={() => setConfirmDiscard(false)}>
           <div className="w-full max-w-[520px] bg-white border-t border-[#E2E8F0] rounded-t-3xl px-5 pt-5 pb-[max(20px,env(safe-area-inset-bottom))]" onClick={(e) => e.stopPropagation()}>
-            <p className="text-[#202938] font-bold text-[16px] mb-1">Discard this video?</p>
+            <p className="text-[#111827] font-bold text-[16px] mb-1">Discard this video?</p>
             <p className="text-[#64748B] text-[13px] leading-snug mb-4">Your edits will be lost. Your original video on your phone is not affected.</p>
             <div className="flex flex-col gap-2.5">
               <button onClick={() => { setConfirmDiscard(false); dropGuard(); setStep('pick'); setFile(null); }} className="h-12 rounded-xl bg-[#E5484D] text-white font-bold">Discard</button>
-              <button onClick={() => setConfirmDiscard(false)} className="h-12 rounded-xl bg-[#F1F5F9] text-[#202938] font-bold">Keep editing</button>
+              <button onClick={() => setConfirmDiscard(false)} className="h-12 rounded-xl bg-[#F1F5F9] text-[#111827] font-bold">Keep editing</button>
             </div>
           </div>
         </div>

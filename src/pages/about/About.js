@@ -26,28 +26,28 @@ const About = () => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-[#F8FAFC] border-b border-[#E2E8F0] px-4 py-3 flex items-center gap-4">
-        <button onClick={() => goBack(navigate, '/')} className="text-[#64748B] hover:text-[#202938]">
+      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center gap-4">
+        <button onClick={() => goBack(navigate, '/')} className="text-[#CBD5E1] hover:text-white">
           <ArrowLeft size={22} />
         </button>
-        <h1 className="text-[#202938] font-bold text-lg">About B-Link</h1>
+        <h1 className="text-white font-bold text-lg">About B-Link</h1>
       </div>
 
       {/* Logo Section */}
       <div className="flex flex-col items-center py-8 px-4">
-        <div className="w-20 h-20 rounded-full bg-[#2563EB] flex items-center justify-center text-white font-bold text-3xl shadow-xl shadow-[#2563EB]/30 mb-4">
+        <div className="w-20 h-20 rounded-full bg-[#0284C7] flex items-center justify-center text-white font-bold text-3xl shadow-xl shadow-[#0284C7]/30 mb-4">
           B
         </div>
-        <h2 className="text-[#202938] font-bold text-2xl">B-Link</h2>
+        <h2 className="text-[#111827] font-bold text-2xl">B-Link</h2>
         <p className="text-[#64748B] text-sm mt-1">
           Africa's Lightweight Social Platform
         </p>
 
         <div className="flex items-center gap-2 mt-2">
-          <span className="bg-[#2563EB]/20 text-[#2563EB] text-xs font-bold px-3 py-1 rounded-full">
+          <span className="bg-[#0284C7]/20 text-[#0284C7] text-xs font-bold px-3 py-1 rounded-full">
             Version {APP_VERSION}
           </span>
-          <span className="bg-[#2ECC71]/20 text-[#2ECC71] text-xs font-bold px-3 py-1 rounded-full">
+          <span className="bg-[#10B981]/20 text-[#10B981] text-xs font-bold px-3 py-1 rounded-full">
             Beta
           </span>
         </div>
@@ -57,7 +57,7 @@ const About = () => {
 
         {/* Mission */}
         <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-5">
-          <h3 className="text-[#202938] font-bold text-base mb-2">Our Mission</h3>
+          <h3 className="text-[#111827] font-bold text-base mb-2">Our Mission</h3>
           <p className="text-[#64748B] text-sm leading-relaxed">
             B-Link is Africa's first GenZ-centric lightweight social media platform,
             engineered to deliver fast, authentic, and data-efficient social experiences
@@ -71,7 +71,7 @@ const About = () => {
 
         {/* Core Values */}
         <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-5">
-          <h3 className="text-[#202938] font-bold text-base mb-3">Core Values</h3>
+          <h3 className="text-[#111827] font-bold text-base mb-3">Core Values</h3>
 
           <div className="space-y-3">
             {[
@@ -84,7 +84,7 @@ const About = () => {
               <div key={v.title} className="flex items-start gap-3">
                 <span className="text-xl flex-shrink-0">{v.icon}</span>
                 <div>
-                  <p className="text-[#202938] font-semibold text-sm">{v.title}</p>
+                  <p className="text-[#111827] font-semibold text-sm">{v.title}</p>
                   <p className="text-[#64748B] text-xs mt-0.5">{v.desc}</p>
                 </div>
               </div>
@@ -95,7 +95,7 @@ const About = () => {
         {/* Tech Stack */}
         <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl overflow-hidden">
           <div className="px-5 py-4 border-b border-[#E2E8F0]">
-            <h3 className="text-[#202938] font-bold text-base">Built With</h3>
+            <h3 className="text-[#111827] font-bold text-base">Built With</h3>
           </div>
 
           {stack.map((tech, idx) => (
@@ -108,7 +108,7 @@ const About = () => {
             >
               <span className="text-xl">{tech.icon}</span>
               <div className="flex-1">
-                <p className="text-[#202938] font-semibold text-sm">{tech.name}</p>
+                <p className="text-[#111827] font-semibold text-sm">{tech.name}</p>
                 <p className="text-[#64748B] text-xs">{tech.role}</p>
               </div>
             </div>
@@ -118,7 +118,7 @@ const About = () => {
         {/* Legal */}
         <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl overflow-hidden">
           <div className="px-5 py-4 border-b border-[#E2E8F0]">
-            <h3 className="text-[#202938] font-bold text-base">Legal</h3>
+            <h3 className="text-[#111827] font-bold text-base">Legal</h3>
           </div>
 
           {links.map((link, idx) => (
@@ -132,7 +132,7 @@ const About = () => {
             >
               <div className="flex items-center gap-3">
                 <span className="text-base">{link.icon}</span>
-                <p className="text-[#202938] text-sm">{link.label}</p>
+                <p className="text-[#111827] text-sm">{link.label}</p>
               </div>
               <ExternalLink size={14} className="text-[#64748B]" />
             </button>
@@ -140,15 +140,15 @@ const About = () => {
         </div>
 
         {/* Creator Section */}
-        <div className="bg-gradient-to-br from-[#2563EB]/10 to-[#7B2FFF]/10 border border-[#2563EB]/20 rounded-2xl p-5 text-center">
+        <div className="bg-gradient-to-br from-[#0284C7]/10 to-[#7C3AED]/10 border border-[#0284C7]/20 rounded-2xl p-5 text-center">
           <p className="text-2xl mb-2">🌍</p>
-          <h3 className="text-[#202938] font-bold text-base">
+          <h3 className="text-[#111827] font-bold text-base">
             Made in Africa, for Africa
           </h3>
 
           <p className="text-[#64748B] text-sm mt-2 leading-relaxed">
             B-Link is a Kibabii University BIT student project created by
-            <span className="text-[#202938] font-semibold"> Bilgate Mukhayo</span>,
+            <span className="text-[#111827] font-semibold"> Bilgate Mukhayo</span>,
             built with passion for the African tech ecosystem.
           </p>
 

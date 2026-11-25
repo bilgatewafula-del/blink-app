@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Bell, RefreshCw, Feather, Menu, WifiOff, ChevronUp, Users } from 'lucide-react';
+import { Bell, RefreshCw, Feather, Menu, WifiOff, ChevronUp, Users, Search, Flame } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import Drawer from '../../components/Drawer';
 import PostCard from '../../components/PostCard';
-import Stories from '../../components/Stories';
+import StoryRail from '../../components/stories/StoryRail';
+import ExploreCards from '../../components/ExploreCards';
+import CreatePostCard from '../../components/CreatePostCard';
 
 const POSTS_PER_PAGE = 15;
 const LOAD_TIMEOUT_MS = 12000;
@@ -48,7 +50,7 @@ function usePrefersReducedMotion() {
 
 function PostSkeleton() {
   return (
-    <div className="border-b border-[#E2E8F0] px-4 py-3">
+    <div className="bg-white border border-[#E2E8F0] rounded-2xl mx-3 mb-3 px-4 py-3">
       <div className="flex gap-3">
         <div className="w-10 h-10 rounded-full skeleton flex-shrink-0" />
         <div className="flex-1 space-y-2 pt-1">
@@ -535,72 +537,89 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-[#EEF1F8] pb-24">
       <Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       {/* Toast */}
       {toast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-[#F1F5F9] backdrop-blur border border-[#E2E8F0] rounded-full px-4 py-2 pointer-events-none animate-[fadeIn_0.2s_ease-out]">
-          <p className="text-[#202938] text-sm font-semibold whitespace-nowrap">{toast}</p>
+          <p className="text-[#111827] text-sm font-semibold whitespace-nowrap">{toast}</p>
         </div>
       )}
 
-      {/* ── Top bar ── */}
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0]">
+      {/* ── Brand header (Midnight Navy) ── */}
+      <header className="sticky top-0 z-20 bg-[#11152E]" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="flex items-center justify-between px-4 py-3">
-          <button
-            onClick={() => setDrawerOpen(true)}
-            aria-label="Open menu"
-            className="w-9 h-9 rounded-xl hover:bg-[#F1F5F9] flex items-center justify-center transition-colors"
-          >
-            <Menu size={22} className="text-[#202938]" />
-          </button>
-
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-[#F97316] flex items-center justify-center  ">
-              <span className="text-[#202938] font-black text-base">B</span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #7C3AED, #5B21B6)' }}>
+              <span className="text-white font-black text-[19px] leading-none italic">B</span>
             </div>
-            <span className="text-[#202938] font-extrabold text-lg tracking-tight">B-Link</span>
+            <div className="leading-none">
+              <p className="text-white font-extrabold text-[20px] tracking-tight">B-Link</p>
+              <p className="text-[#94A3B8] text-[10px] font-medium mt-0.5">Connect · Share · Belong</p>
+            </div>
           </div>
 
-          <button
-            onClick={() => navigate('/notifications')}
-            aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
-            className="relative w-9 h-9 flex items-center justify-center"
-          >
-            <Bell size={22} className="text-[#64748B]" />
-            {unread > 0 && (
-              <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-[#F97316] rounded-full text-[9px] text-white flex items-center justify-center font-bold px-0.5 animate-pulse">
-                {unread > 9 ? '9+' : unread}
-              </span>
-            )}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => navigate('/discover')}
+              aria-label="Search"
+              className="w-10 h-10 rounded-xl hover:bg-white/10 active:bg-white/15 flex items-center justify-center transition-colors"
+            >
+              <Search size={22} className="text-white" />
+            </button>
+            <button
+              onClick={() => navigate('/notifications')}
+              aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
+              className="relative w-10 h-10 rounded-xl hover:bg-white/10 active:bg-white/15 flex items-center justify-center transition-colors"
+            >
+              <Bell size={22} className="text-white" />
+              {unread > 0 && (
+                <span className="absolute top-1 right-1 min-w-[17px] h-[17px] bg-[#E11D48] rounded-full text-[10px] text-white flex items-center justify-center font-bold px-1 border-2 border-[#11152E]">
+                  {unread > 9 ? '9+' : unread}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setDrawerOpen(true)}
+              aria-label="Open menu"
+              className="w-10 h-10 rounded-xl hover:bg-white/10 active:bg-white/15 flex items-center justify-center transition-colors"
+            >
+              <Menu size={22} className="text-white" />
+            </button>
+          </div>
         </div>
+      </header>
 
-        {/* Feed tabs */}
-        <div className="flex" role="tablist">
+      <StoryRail />
+
+      <CreatePostCard />
+
+      <ExploreCards />
+
+      {/* ── Community feed heading + filters ── */}
+      <div className="px-3 pt-6 pb-3">
+        <div className="flex items-center gap-2 px-1 mb-2.5">
+          <Flame size={20} className="text-[#D97706]" />
+          <h2 className="text-[#111827] font-bold text-[19px] leading-none">Community Feed</h2>
+        </div>
+        <div className="flex gap-2 overflow-x-auto scrollbar-none" role="tablist" aria-label="Feed filters">
           {tabs.map(tab => (
             <button
               key={tab.key}
               role="tab"
               aria-selected={activeTab === tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className="flex-1 py-3 text-sm font-semibold transition-colors relative"
-              style={{ color: activeTab === tab.key ? 'white' : '#8E8C88' }}
+              className={'flex-shrink-0 px-4 py-2 rounded-xl text-[14px] font-semibold transition-colors active:scale-95 ' +
+                (activeTab === tab.key
+                  ? 'bg-[#7C3AED] text-white'
+                  : 'bg-white text-[#64748B] border border-[#E2E8F0]')}
             >
               {tab.label}
-              {activeTab === tab.key && (
-                <div
-                  className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-[#F97316] rounded-full transition-all duration-200"
-                  style={{ width:'60%' }}
-                />
-              )}
             </button>
           ))}
         </div>
       </div>
-
-      <Stories />
 
       {isOffline && (
         <div className="mx-4 mt-3 flex items-center gap-3 bg-red-500/10 border border-red-500/20 rounded-2xl px-4 py-3">
@@ -610,10 +629,10 @@ export default function Home() {
       )}
 
       {newPostsBanner && !loading && (
-        <div className="flex justify-center py-2 sticky top-[106px] z-10">
+        <div className="flex justify-center py-2 sticky top-[72px] z-10">
           <button
             onClick={scrollToTopAndRefresh}
-            className="bg-[#F97316] text-white text-xs font-bold px-4 py-2 rounded-full   flex items-center gap-2 active:scale-95 transition-transform"
+            className="bg-[#7C3AED] text-white text-xs font-bold px-4 py-2 rounded-full   flex items-center gap-2 active:scale-95 transition-transform"
           >
             <RefreshCw size={12} />
             {newPostsCount > 0
@@ -627,7 +646,7 @@ export default function Home() {
         className="overflow-hidden flex items-center justify-center transition-all"
         style={{ height: isPulling || refreshing ? Math.max(pullDist, refreshing ? 44 : 0) : 0 }}
       >
-        <div className={`flex items-center gap-2 text-sm ${pullDist >= PULL_THRESHOLD || refreshing ? 'text-[#F97316]' : 'text-[#64748B]'}`}>
+        <div className={`flex items-center gap-2 text-sm ${pullDist >= PULL_THRESHOLD || refreshing ? 'text-[#7C3AED]' : 'text-[#64748B]'}`}>
           <RefreshCw size={14} className={refreshing && !reducedMotion ? 'animate-spin' : ''} />
           <span>{refreshing ? 'Refreshing...' : pullDist >= PULL_THRESHOLD ? 'Release to refresh' : 'Pull to refresh'}</span>
         </div>
@@ -645,7 +664,7 @@ export default function Home() {
             <div className="flex gap-2">
               <button
                 onClick={() => { setFetchError(''); setPage(0); loadPosts(0, true); }}
-                className="flex items-center gap-1.5 text-xs font-bold text-[#EA580C]"
+                className="flex items-center gap-1.5 text-xs font-bold text-[#6D28D9]"
               >
                 <RefreshCw size={12} /> Try again
               </button>
@@ -668,7 +687,7 @@ export default function Home() {
         {!loading && !fetchError && posts.length === 0 && (
           <div className="flex flex-col items-center justify-center mt-20 gap-4 px-6">
             <Users size={46} className="text-[#64748B] mx-auto" />
-            <h2 className="text-[#202938] font-bold text-xl text-center">
+            <h2 className="text-[#111827] font-bold text-xl text-center">
               {activeTab === 'following' ? 'Nothing in your feed yet' : 'No posts yet'}
             </h2>
             <p className="text-[#64748B] text-sm text-center">
@@ -676,11 +695,11 @@ export default function Home() {
             </p>
             <div className="flex gap-3">
               <button onClick={() => navigate('/discover')}
-                className="bg-[#F97316] text-white px-5 py-2.5 rounded-full font-bold text-sm   active:scale-95 transition-transform">
+                className="bg-[#7C3AED] text-white px-5 py-2.5 rounded-full font-bold text-sm   active:scale-95 transition-transform">
                 Find people
               </button>
               <button onClick={() => navigate('/create')}
-                className="bg-[#F1F5F9] text-[#202938] px-5 py-2.5 rounded-full font-bold text-sm border border-[#E2E8F0] active:scale-95 transition-transform">
+                className="bg-[#F1F5F9] text-[#111827] px-5 py-2.5 rounded-full font-bold text-sm border border-[#E2E8F0] active:scale-95 transition-transform">
                 Create post
               </button>
             </div>
@@ -695,7 +714,7 @@ export default function Home() {
             <div ref={loadMoreRef} className="flex justify-center py-6 min-h-[60px]">
               {loadingMore && (
                 <div className="flex items-center gap-2 text-[#64748B]">
-                  <div className={`w-5 h-5 border-2 border-[#F97316] border-t-transparent rounded-full ${reducedMotion ? '' : 'animate-spin'}`} />
+                  <div className={`w-5 h-5 border-2 border-[#7C3AED] border-t-transparent rounded-full ${reducedMotion ? '' : 'animate-spin'}`} />
                   <span className="text-sm">Loading more...</span>
                 </div>
               )}
@@ -714,7 +733,7 @@ export default function Home() {
           aria-label="Scroll to top"
           className="fixed bottom-40 right-4 w-11 h-11 rounded-full bg-[#F1F5F9] backdrop-blur border border-[#E2E8F0] flex items-center justify-center shadow-lg z-20 active:scale-95 transition-transform"
         >
-          <ChevronUp size={20} className="text-[#202938]" />
+          <ChevronUp size={20} className="text-[#111827]" />
         </button>
       )}
 
@@ -722,7 +741,7 @@ export default function Home() {
       <button
         onClick={() => navigate('/create')}
         aria-label="Create post"
-        className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-[#F97316] flex items-center justify-center   hover:bg-[#EA580C] active:scale-95 transition-all z-20"
+        className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-[#7C3AED] flex items-center justify-center   hover:bg-[#6D28D9] active:scale-95 transition-all z-20"
         style={{
           transform: fabVisible ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.85)',
           opacity: fabVisible ? 1 : 0,

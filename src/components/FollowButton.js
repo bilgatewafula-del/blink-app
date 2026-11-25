@@ -12,10 +12,10 @@ import Avatar from './Avatar';
 import { Spinner } from './ui';
 
 const LOOK = {
-  none:        { label: 'Follow',      Icon: UserPlus,  cls: 'bg-[#F97316] text-white   hover:bg-[#EA580C]' },
-  following:   { label: 'Following',   Icon: UserCheck, cls: 'bg-[#F1F5F9] text-[#202938] border border-[#E2E8F0] hover:bg-[#F1F5F9]' },
-  follow_back: { label: 'Follow Back', Icon: UserPlus,  cls: 'bg-[#F97316] text-white  ' },
-  friends:     { label: 'Friends',     Icon: Users2,    cls: 'bg-[#2ECC71]/10 text-[#2ECC71] border border-[#2ECC71]/40 hover:bg-[#2ECC71]/15' },
+  none:        { label: 'Follow',      Icon: UserPlus,  cls: 'bg-[#7C3AED] text-white   hover:bg-[#6D28D9]' },
+  following:   { label: 'Following',   Icon: UserCheck, cls: 'bg-[#F1F5F9] text-[#111827] border border-[#E2E8F0] hover:bg-[#F1F5F9]' },
+  follow_back: { label: 'Follow Back', Icon: UserPlus,  cls: 'bg-[#7C3AED] text-white  ' },
+  friends:     { label: 'Friends',     Icon: Users2,    cls: 'bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/40 hover:bg-[#10B981]/15' },
 };
 
 export default function FollowButton({
@@ -101,7 +101,7 @@ export default function FollowButton({
           <div className="w-full max-w-[620px] bg-white border-t border-[#E2E8F0] rounded-t-3xl p-5 pb-8" onClick={(e) => e.stopPropagation()}>
             <div className="flex flex-col items-center text-center">
               <Avatar url={avatarUrl} name={displayName || username} size={16} />
-              <p className="text-[#202938] font-bold text-base mt-3">
+              <p className="text-[#111827] font-bold text-base mt-3">
                 {rel === REL.FRIENDS ? 'Stop being friends' : 'Unfollow'}{username ? ` @${username}` : ''}?
               </p>
               <p className="text-[#64748B] text-sm mt-1 max-w-[300px]">
@@ -117,7 +117,7 @@ export default function FollowButton({
               >
                 {rel === REL.FRIENDS ? 'Unfollow' : 'Unfollow'}
               </button>
-              <button onClick={() => setConfirm(false)} className="w-full py-3 rounded-xl bg-[#F1F5F9] text-[#202938] font-bold text-sm active:scale-[0.98]">
+              <button onClick={() => setConfirm(false)} className="w-full py-3 rounded-xl bg-[#F1F5F9] text-[#111827] font-bold text-sm active:scale-[0.98]">
                 Cancel
               </button>
             </div>

@@ -39,26 +39,26 @@ export default function SubscriptionPage() {
   const planOrder = ['free', 'pro', 'creator', 'business'];
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-screen bg-[#F1F3F9] pb-24">
 
       {/* Top bar */}
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => goBack(navigate, '/')} className="text-[#64748B] hover:text-[#202938]">
+      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => goBack(navigate, '/')} className="text-[#CBD5E1] hover:text-white">
           <ArrowLeft size={22} />
         </button>
         <div className="flex-1">
-          <h1 className="text-[#202938] font-bold text-[15px] leading-none">B-Link Subscription</h1>
+          <h1 className="text-white font-bold text-[15px] leading-none">B-Link Subscription</h1>
           <div className="flex items-center gap-2 mt-0.5">
             <span className={`text-xs font-bold px-2 py-0.5 rounded-full capitalize inline-flex items-center gap-1 ${
-              activePlan === 'free' ? 'bg-[#F1F5F9] text-[#64748B]' :
-              activePlan === 'pro' ? 'bg-[#F97316]/20 text-[#F97316]' :
-              activePlan === 'creator' ? 'bg-[#F97316]/20 text-[#F97316]' :
+              activePlan === 'free' ? 'bg-white/10 text-[#CBD5E1]' :
+              activePlan === 'pro' ? 'bg-[#7C3AED]/20 text-[#C4B5FD]' :
+              activePlan === 'creator' ? 'bg-[#7C3AED]/20 text-[#C4B5FD]' :
               'bg-yellow-500/20 text-yellow-700'
             }`}>
               <PlanIcon plan={activePlan} size={12} /> {activePlan} plan
             </span>
             {isActive && profile?.subscription_expires_at && (
-              <span className="text-[#64748B] text-[11px]">
+              <span className="text-[#CBD5E1] text-[11px]">
                 expires {new Date(profile.subscription_expires_at).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' })}
               </span>
             )}
@@ -71,7 +71,7 @@ export default function SubscriptionPage() {
         {[['plans', 'Plans'], ['history', 'Payment History']].map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)}
             className={'flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ' +
-              (tab === k ? 'bg-[#F97316] text-white  ' : 'text-[#64748B]')}>
+              (tab === k ? 'bg-[#7C3AED] text-white  ' : 'text-[#64748B]')}>
             {l}
           </button>
         ))}
@@ -113,7 +113,7 @@ export default function SubscriptionPage() {
                     <div className="flex items-center gap-2.5">
                       <PlanIcon plan={p.key} size={26} />
                       <div>
-                        <p className="text-[#202938] font-black text-[17px] leading-none">{p.label}</p>
+                        <p className="text-[#111827] font-black text-[17px] leading-none">{p.label}</p>
                         <p className="text-[#94A3B8] text-xs mt-1">
                           {p.price === 0 ? 'Always free' : `${formatKES(p.price)} / month`}
                         </p>
@@ -135,7 +135,7 @@ export default function SubscriptionPage() {
                       {!isCurrent && !isPending && p.price > 0 && (
                         <button
                           onClick={() => setSelectedPlan(key)}
-                          className="px-4 py-2 rounded-xl text-xs font-bold text-[#202938] active:scale-95 transition-all"
+                          className="px-4 py-2 rounded-xl text-xs font-bold text-[#111827] active:scale-95 transition-all"
                           style={{ background: p.color, boxShadow: '0 4px 14px ' + p.color + '40' }}
                         >
                           Upgrade
@@ -147,7 +147,7 @@ export default function SubscriptionPage() {
                   <div className="space-y-1.5">
                     {p.features.map((f, i) => (
                       <div key={i} className="flex items-center gap-2">
-                        <Check size={12} style={{ color: p.price === 0 ? '#8E8C88' : p.color, flexShrink: 0 }} />
+                        <Check size={12} style={{ color: p.price === 0 ? '#64748B' : p.color, flexShrink: 0 }} />
                         <span className="text-[#64748B] text-[12px]">{f}</span>
                       </div>
                     ))}
@@ -171,7 +171,7 @@ export default function SubscriptionPage() {
           {payments.length === 0 ? (
             <div className="text-center py-16">
               <CreditCard size={38} className="text-[#64748B] mx-auto mb-3" />
-              <p className="text-[#202938] font-bold">No payments yet</p>
+              <p className="text-[#111827] font-bold">No payments yet</p>
               <p className="text-[#64748B] text-sm mt-1">Upgrade your plan to get started</p>
             </div>
           ) : payments.map(pay => (
@@ -183,7 +183,7 @@ export default function SubscriptionPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className="text-[#202938] font-bold text-[14px] capitalize">
+                    <span className="text-[#111827] font-bold text-[14px] capitalize">
                       {PLANS[pay.plan]?.label || pay.plan} Plan
                     </span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
@@ -196,7 +196,7 @@ export default function SubscriptionPage() {
                        pay.status === 'rejected'  ? '✗ Rejected' : pay.status}
                     </span>
                     {pay.service_active && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F97316]/20 text-[#EA580C] border border-[#F97316]/30">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#7C3AED]/20 text-[#6D28D9] border border-[#7C3AED]/30">
                         Active
                       </span>
                     )}
@@ -215,7 +215,7 @@ export default function SubscriptionPage() {
                   )}
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-[#202938] font-black text-[16px]">{formatKES(pay.amount_kes)}</p>
+                  <p className="text-[#111827] font-black text-[16px]">{formatKES(pay.amount_kes)}</p>
                   <p className="text-[#64748B] text-[11px] mt-0.5">{pay.mpesa_phone}</p>
                 </div>
               </div>

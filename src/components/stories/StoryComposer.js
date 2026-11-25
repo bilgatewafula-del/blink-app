@@ -94,18 +94,18 @@ export default function StoryComposer({ onClose, onCreated }) {
             <span className="absolute bottom-3 right-4 text-white/70 text-[12px] font-semibold">{text.length}/{MAX_TEXT}</span>
           </div>
         ) : !preview ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-8 bg-[#0D0C0B]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-8 bg-[#11152E]">
             <button onClick={() => galleryRef.current?.click()}
-              className="w-full max-w-[300px] rounded-3xl border border-white/15 bg-white/[0.06] py-6 flex flex-col items-center gap-2 active:scale-[0.98]">
-              <ImageIcon size={30} className="text-[#F97316]" />
+              className="w-full max-w-[300px] rounded-3xl border border-white/20 bg-white/10 py-6 flex flex-col items-center gap-2 active:scale-[0.98]">
+              <ImageIcon size={30} className="text-[#C4B5FD]" />
               <span className="text-white font-bold">Choose from gallery</span>
             </button>
             <button onClick={() => cameraRef.current?.click()}
-              className="w-full max-w-[300px] rounded-3xl border border-white/15 bg-white/[0.06] py-6 flex flex-col items-center gap-2 active:scale-[0.98]">
-              <Camera size={30} className="text-[#F97316]" />
+              className="w-full max-w-[300px] rounded-3xl border border-white/20 bg-white/10 py-6 flex flex-col items-center gap-2 active:scale-[0.98]">
+              <Camera size={30} className="text-[#C4B5FD]" />
               <span className="text-white font-bold">Take a photo</span>
             </button>
-            <p className="text-white/40 text-xs text-center">Photos are fitted to the screen, never stretched.</p>
+            <p className="text-white/70 text-xs text-center">Photos are fitted to the screen, never stretched.</p>
           </div>
         ) : (
           <div className="absolute inset-0 overflow-hidden bg-black">
@@ -135,7 +135,7 @@ export default function StoryComposer({ onClose, onCreated }) {
 
         {mode === 'photo' && preview && (
           <input value={caption} onChange={(e) => setCaption(e.target.value.slice(0, MAX_CAPTION))} placeholder="Add a caption"
-            className="w-full bg-white/[0.09] rounded-full px-4 py-3 text-white text-[15px] outline-none placeholder-white/40 mb-3" />
+            className="w-full bg-white/[0.09] rounded-full px-4 py-3 text-white text-[15px] outline-none placeholder-white/60 mb-3" />
         )}
 
         <div className="flex items-center justify-between gap-3">
@@ -149,7 +149,7 @@ export default function StoryComposer({ onClose, onCreated }) {
           </div>
           <button onClick={send} disabled={!canSend || busy} aria-label="Post status"
             className="h-12 px-5 rounded-full text-white font-bold text-[14px] inline-flex items-center gap-2 disabled:opacity-40 active:scale-95 transition-transform"
-            style={{ background: '#F97316', boxShadow: '0 6px 20px rgba(255,90,31,.4)' }}>
+            style={{ background: '#7C3AED', boxShadow: '0 6px 20px rgba(124,58,237,.4)' }}>
             {busy ? <><Spinner size={16} /> Posting</> : <><Send size={17} /> Post</>}
           </button>
         </div>

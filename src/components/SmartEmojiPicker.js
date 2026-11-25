@@ -9,7 +9,7 @@ class EmojiErrorBoundary extends Component {
       return (
         <div style={{
           background: '#FFFFFF', borderRadius: 16, padding: '16px 20px',
-          color: '#8E8C88', fontSize: 13, border: '1px solid #E2E8F0',
+          color: '#64748B', fontSize: 13, border: '1px solid #E2E8F0',
         }}>
           Emoji picker failed to load. You can type emoji directly 😊
         </div>
@@ -31,11 +31,11 @@ function LazyPicker(props) {
       .catch(() => setErr(true));
   }, []);
 
-  if (err)  return <div style={{ padding: '12px 16px', color: '#8E8C88', fontSize: 13 }}>Emoji picker unavailable.</div>;
+  if (err)  return <div style={{ padding: '12px 16px', color: '#64748B', fontSize: 13 }}>Emoji picker unavailable.</div>;
   if (!Comp) return (
     <div style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: 8 }}>
-      <div style={{ width: 16, height: 16, border: '2px solid #F97316', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-      <span style={{ color: '#8E8C88', fontSize: 12 }}>Loading emojis…</span>
+      <div style={{ width: 16, height: 16, border: '2px solid #7C3AED', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <span style={{ color: '#64748B', fontSize: 12 }}>Loading emojis…</span>
     </div>
   );
   return <Comp {...props} />;

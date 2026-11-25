@@ -1,3 +1,4 @@
+import AuthBanner from '../../components/auth/AuthBanner';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
@@ -23,7 +24,7 @@ const NOTICES = {
   suspended: { tone: 'error', text: 'This account is temporarily suspended.' },
 };
 
-const inputCls = 'w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-11 pr-4 py-4 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60 transition-all';
+const inputCls = 'w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-11 pr-4 py-4 text-[#111827] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#7C3AED]/60 transition-all';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -168,7 +169,7 @@ export default function Login() {
 
   if (verify) {
     return (
-      <div className="min-h-screen bg-white" style={{ maxWidth: 480, margin: '0 auto' }}>
+      <div className="min-h-screen bg-[#F1F3F9]" style={{ maxWidth: 480, margin: '0 auto' }}>
         <VerifyCode
           kind={verify.kind}
           target={verify.kind === 'phone' ? verify.target : maskIdentifier(verify.target)}
@@ -190,18 +191,13 @@ export default function Login() {
     ? ' until ' + new Date(notice.extra).toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
 
   return (
-    <div className="min-h-screen bg-white flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
-      <div className="flex flex-col items-center pt-12 pb-6 px-6">
-        <div className="w-20 h-20 rounded-[24px] bg-[#F97316] flex items-center justify-center   mb-5">
-          <span className="text-[#202938] font-black text-3xl">B</span>
-        </div>
-        <h1 className="text-[#202938] font-black text-[28px] tracking-tight mb-1">B-Link</h1>
-        <p className="text-[#94A3B8] text-sm text-center">Africa's GenZ Social Platform</p>
-      </div>
+    <div className="min-h-screen bg-[#F1F3F9] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
+      <AuthBanner big title="B-Link" subtitle="Connect · Share · Belong" />
+      <div className="h-5" />
 
       {nt && (
         <div className={'mx-5 mb-4 rounded-2xl px-4 py-3 flex items-start gap-2.5 text-sm ' +
-          (nt.tone === 'error' ? 'bg-red-500/10 border border-red-500/25 text-red-600' : 'bg-[#F97316]/10 border border-[#F97316]/25 text-[#EA580C]')}>
+          (nt.tone === 'error' ? 'bg-red-500/10 border border-red-500/25 text-red-600' : 'bg-[#7C3AED]/10 border border-[#7C3AED]/25 text-[#6D28D9]')}>
           {nt.tone === 'error' ? <ShieldAlert size={18} className="flex-shrink-0 mt-0.5" /> : <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />}
           <span>{nt.text}{suspendedUntil}</span>
         </div>
@@ -210,17 +206,17 @@ export default function Login() {
       {remembered ? (
         <div className="mx-5 mb-5 rounded-3xl bg-[#F8FAFC] border border-[#E2E8F0] p-5 flex flex-col items-center">
           <Avatar url={remembered.avatar_url} name={remembered.display_name} size={20} />
-          <p className="text-[#202938] font-bold text-lg mt-3">Welcome back, {remembered.display_name?.split(' ')[0]}</p>
+          <p className="text-[#111827] font-bold text-lg mt-3">Welcome back, {remembered.display_name?.split(' ')[0]}</p>
           <p className="text-[#64748B] text-sm">{maskIdentifier(remembered.identifier)}</p>
           <button onClick={() => { forgetAccount(); setRemembered(null); setPassword(''); setError(''); }}
-            className="text-[#EA580C] text-sm font-semibold mt-3">Not you? Use another account</button>
+            className="text-[#6D28D9] text-sm font-semibold mt-3">Not you? Use another account</button>
         </div>
       ) : SHOW_PHONE_SIGNIN ? (
         <div className="flex mx-5 mb-5 bg-[#F1F5F9] rounded-2xl p-1">
           {[['email', 'Email', Mail], ['phone', 'Phone', Smartphone]].map(([key, label, Icon]) => (
             <button key={key} onClick={() => { setTab(key); setError(''); }}
               className={'flex-1 py-3 rounded-xl text-sm font-bold transition-all inline-flex items-center justify-center gap-2 ' +
-                (tab === key ? 'bg-[#F97316] text-white  ' : 'text-[#64748B]')}>
+                (tab === key ? 'bg-[#7C3AED] text-white  ' : 'text-[#64748B]')}>
               <Icon size={15} /> {label}
             </button>
           ))}
@@ -239,13 +235,13 @@ export default function Login() {
         {!remembered && tab === 'phone' && (
           <div className="flex gap-2">
             <select value={country} onChange={(e) => setCountry(e.target.value)} aria-label="Country code"
-              className="bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-3 py-4 text-[#202938] text-[14px] focus:outline-none focus:border-[#F97316]/60"
+              className="bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-3 py-4 text-[#111827] text-[14px] focus:outline-none focus:border-[#7C3AED]/60"
               style={{ WebkitAppearance: 'none', width: 104 }}>
               {PHONE_COUNTRIES.map((c) => <option key={c.code} value={c.code} style={{ background: '#FFFFFF' }}>{c.code} +{c.dial}</option>)}
             </select>
             <input type="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setError(''); }}
               placeholder="712 345 678" autoComplete="tel-national" inputMode="tel"
-              className="flex-1 min-w-0 bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-4 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60" />
+              className="flex-1 min-w-0 bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-4 text-[#111827] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#7C3AED]/60" />
           </div>
         )}
 
@@ -255,7 +251,7 @@ export default function Login() {
             <input type={showPass ? 'text' : 'password'} value={password} onChange={(e) => { setPassword(e.target.value); setError(''); }}
               placeholder="Password" autoComplete="current-password" className={inputCls + ' pr-12'} />
             <button type="button" tabIndex={-1} onClick={() => setShowPass((v) => !v)} aria-label={showPass ? 'Hide password' : 'Show password'}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#202938]">
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#111827]">
               {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
@@ -264,12 +260,12 @@ export default function Login() {
         <div className="flex items-center justify-between -mt-1">
           {!remembered && tab === 'phone' ? (
             <button type="button" onClick={() => { setPhoneMode(phoneMode === 'password' ? 'code' : 'password'); setError(''); }}
-              className="text-[#EA580C] text-sm font-semibold">
+              className="text-[#6D28D9] text-sm font-semibold">
               {phoneMode === 'password' ? 'Sign in with a text code' : 'Use password instead'}
             </button>
           ) : <span />}
           <button type="button" onClick={() => navigate('/forgot-password', { state: { identifier: remembered?.identifier || (tab === 'email' ? email : '') } })}
-            className="text-[#EA580C] text-sm font-semibold">Forgot password?</button>
+            className="text-[#6D28D9] text-sm font-semibold">Forgot password?</button>
         </div>
 
         {captchaEnabled && <Captcha onToken={setCaptchaToken} resetKey={captchaReset} />}
@@ -287,7 +283,7 @@ export default function Login() {
 
         <button type="submit" disabled={busy || lock.locked}
           className="w-full py-4 rounded-2xl font-bold text-white text-[15px] disabled:opacity-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-1"
-          style={{ background: '#F97316', boxShadow: '0 8px 24px rgba(255,90,31,0.35)' }}>
+          style={{ background: '#7C3AED', boxShadow: '0 8px 24px rgba(124,58,237,0.35)' }}>
           {busy ? <><Spinner size={18} /> {isCodeFlow ? 'Sending code…' : 'Signing in…'}</> : isCodeFlow ? 'Send code' : 'Sign in'}
         </button>
       </form>
@@ -300,7 +296,7 @@ export default function Login() {
 
       <div className="px-5">
         <button onClick={() => navigate('/signup')}
-          className="w-full py-4 rounded-2xl font-bold text-[#202938] text-[15px] border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-[#F1F5F9] active:scale-[0.98] transition-all">
+          className="w-full py-4 rounded-2xl font-bold text-[#111827] text-[15px] border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-[#F1F5F9] active:scale-[0.98] transition-all">
           Create free account
         </button>
       </div>

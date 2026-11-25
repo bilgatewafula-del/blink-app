@@ -23,7 +23,7 @@ export default function MonetisationHub() {
       subtitle: `Current: ${planInfo?.label || 'Free'} plan`,
       badge: activePlan !== 'free' ? { label: planInfo?.label, color: planInfo?.color } : null,
       path: '/subscription',
-      color: '#F97316',
+      color: '#7C3AED',
     },
     {
       Icon: Coins,
@@ -37,7 +37,7 @@ export default function MonetisationHub() {
       title: 'Boost a Post',
       subtitle: 'Promote your content across B-Link',
       path: '/boost',
-      color: '#F97316',
+      color: '#7C3AED',
       disabled: !['pro','creator','business'].includes(activePlan),
       hint: activePlan === 'free' ? 'Requires Pro plan or higher' : null,
     },
@@ -46,8 +46,8 @@ export default function MonetisationHub() {
       title: 'Get Verified',
       subtitle: isVerified ? 'Your account is verified' : 'One-time KES 500 verification fee',
       path: '/verification',
-      color: '#F97316',
-      badge: isVerified ? { label: 'Verified', color: '#F97316' } : null,
+      color: '#7C3AED',
+      badge: isVerified ? { label: 'Verified', color: '#7C3AED' } : null,
     },
     {
       Icon: Briefcase,
@@ -60,12 +60,12 @@ export default function MonetisationHub() {
   ];
 
   return (
-    <div className="min-h-screen bg-white pb-24">
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => goBack(navigate, '/')} className="text-[#64748B] hover:text-[#202938]"><ArrowLeft size={22} /></button>
+    <div className="min-h-screen bg-[#F1F3F9] pb-24">
+      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => goBack(navigate, '/')} className="text-[#CBD5E1] hover:text-white"><ArrowLeft size={22} /></button>
         <div>
-          <h1 className="text-[#202938] font-bold text-[15px] leading-none">B-Link Premium</h1>
-          <p className="text-[#64748B] text-xs mt-0.5">Monetisation & features</p>
+          <h1 className="text-white font-bold text-[15px] leading-none">B-Link Premium</h1>
+          <p className="text-[#CBD5E1] text-xs mt-0.5">Monetisation & features</p>
         </div>
       </div>
 
@@ -75,7 +75,7 @@ export default function MonetisationHub() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[#64748B] text-xs font-bold uppercase tracking-wider mb-1">Current Plan</p>
-            <p className="text-[#202938] font-black text-2xl">
+            <p className="text-[#111827] font-black text-2xl">
               <span className="inline-flex items-center gap-2"><PlanIcon plan={activePlan} size={22} /> {planInfo?.label}</span>
             </p>
             {profile?.subscription_expires_at && activePlan !== 'free' && (
@@ -109,7 +109,7 @@ export default function MonetisationHub() {
             </div>
             <div className="flex-1 min-w-0 text-left">
               <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-[#202938] font-bold text-[14px]">{item.title}</p>
+                <p className="text-[#111827] font-bold text-[14px]">{item.title}</p>
                 {item.badge && (
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                     style={{ background: item.badge.color + '20', color: item.badge.color, border:'1px solid '+item.badge.color+'30' }}>

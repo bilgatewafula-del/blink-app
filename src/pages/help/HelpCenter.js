@@ -74,7 +74,7 @@ const TYPES = [
 const STATUS = {
   open: { color: '#EF4444', label: 'Received' },
   pending: { color: '#FFB020', label: 'In progress' },
-  resolved: { color: '#2ECC71', label: 'Resolved' },
+  resolved: { color: '#10B981', label: 'Resolved' },
 };
 
 function Faq({ q, a, id }) {
@@ -84,7 +84,7 @@ function Faq({ q, a, id }) {
   return (
     <div className="border-b border-[#E2E8F0] last:border-0">
       <button onClick={() => setOpen(!open)} className="w-full flex items-start justify-between gap-3 px-4 py-3.5 text-left active:bg-[#F8FAFC]">
-        <span className="text-[#202938] text-[14px] font-medium leading-snug flex-1">{q}</span>
+        <span className="text-[#111827] text-[14px] font-medium leading-snug flex-1">{q}</span>
         <ChevronDown size={16} className={'text-[#64748B] flex-shrink-0 mt-0.5 transition-transform ' + (open ? 'rotate-180' : '')} />
       </button>
       {open && (
@@ -92,7 +92,7 @@ function Faq({ q, a, id }) {
           <p className="text-[#64748B] text-[13px] leading-relaxed bg-[#F8FAFC] rounded-xl p-3">{a}</p>
           <div className="flex items-center gap-3 mt-2.5 text-[12px] text-[#64748B]">
             <span>Was this helpful?</span>
-            <button onClick={() => cast('yes')} aria-label="Yes" className={'p-1.5 rounded-full ' + (vote === 'yes' ? 'bg-[#2ECC71]/20 text-[#2ECC71]' : '')}><ThumbsUp size={14} /></button>
+            <button onClick={() => cast('yes')} aria-label="Yes" className={'p-1.5 rounded-full ' + (vote === 'yes' ? 'bg-[#10B981]/20 text-[#10B981]' : '')}><ThumbsUp size={14} /></button>
             <button onClick={() => cast('no')} aria-label="No" className={'p-1.5 rounded-full ' + (vote === 'no' ? 'bg-red-500/20 text-red-600' : '')}><ThumbsDown size={14} /></button>
           </div>
         </div>
@@ -191,18 +191,18 @@ export default function HelpCenter() {
   };
 
   return (
-    <div className="min-h-screen bg-white pb-24">
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => goBack(navigate, '/')} aria-label="Back" className="text-[#64748B] hover:text-[#202938]"><ArrowLeft size={22} /></button>
-        <div><h1 className="text-[#202938] font-bold text-[16px] leading-none">Help Center</h1><p className="text-[#64748B] text-xs mt-0.5">Answers and support</p></div>
+    <div className="min-h-screen bg-[#F1F3F9] pb-24">
+      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => goBack(navigate, '/')} aria-label="Back" className="text-[#CBD5E1] hover:text-white"><ArrowLeft size={22} /></button>
+        <div><h1 className="text-white font-bold text-[16px] leading-none">Help Center</h1><p className="text-[#CBD5E1] text-xs mt-0.5">Answers and support</p></div>
       </div>
 
       <div className="flex mx-4 mt-4 mb-4 bg-[#F1F5F9] rounded-2xl p-1">
         {[['help', 'Help'], ['new', 'New request'], ['mine', 'My requests']].map(([k, l]) => (
           <button key={k} onClick={() => { setTab(k); setSentId(''); }}
-            className={'flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-all relative ' + (tab === k ? 'bg-[#F97316] text-white' : 'text-[#64748B]')}>
+            className={'flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-all relative ' + (tab === k ? 'bg-[#7C3AED] text-white' : 'text-[#64748B]')}>
             {l}
-            {k === 'mine' && unresolved > 0 && <span className="absolute -top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#F97316] text-white text-[10px] flex items-center justify-center">{unresolved}</span>}
+            {k === 'mine' && unresolved > 0 && <span className="absolute -top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#7C3AED] text-white text-[10px] flex items-center justify-center">{unresolved}</span>}
           </button>
         ))}
       </div>
@@ -211,20 +211,20 @@ export default function HelpCenter() {
         <div className="px-4">
           <div className="flex items-center gap-3 bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-3 mb-4">
             <Search size={16} className="text-[#64748B]" />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search for help" className="flex-1 bg-transparent text-[#202938] text-[15px] placeholder-[#94A3B8] outline-none" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search for help" className="flex-1 bg-transparent text-[#111827] text-[15px] placeholder-[#94A3B8] outline-none" />
             {search && <button onClick={() => setSearch('')} aria-label="Clear"><X size={16} className="text-[#64748B]" /></button>}
           </div>
 
           {filtered.length === 0 ? (
             <EmptyState icon={Search} title="No answers found" text="Try different words, or send us a request.">
-              <button onClick={() => { setTitle(search); setTab('new'); }} className="bg-[#F97316] text-white px-5 py-2.5 rounded-full font-bold text-sm">Ask support</button>
+              <button onClick={() => { setTitle(search); setTab('new'); }} className="bg-[#7C3AED] text-white px-5 py-2.5 rounded-full font-bold text-sm">Ask support</button>
             </EmptyState>
           ) : filtered.map((c) => (
             <div key={c.id} className="mb-3">
               <button onClick={() => setOpen(open === c.id ? null : c.id)} className="w-full flex items-center justify-between px-4 py-3.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl active:bg-[#F1F5F9]">
                 <span className="flex items-center gap-3">
-                  <span className="w-9 h-9 rounded-xl bg-[#F97316]/10 flex items-center justify-center"><c.Icon size={17} className="text-[#EA580C]" /></span>
-                  <span className="text-[#202938] font-bold text-[14px]">{c.title}</span>
+                  <span className="w-9 h-9 rounded-xl bg-[#7C3AED]/10 flex items-center justify-center"><c.Icon size={17} className="text-[#6D28D9]" /></span>
+                  <span className="text-[#111827] font-bold text-[14px]">{c.title}</span>
                   <span className="text-[#64748B] text-[11px]">{c.items.length}</span>
                 </span>
                 <ChevronDown size={16} className={'text-[#64748B] transition-transform ' + ((open === c.id || search) ? 'rotate-180' : '')} />
@@ -237,14 +237,14 @@ export default function HelpCenter() {
             </div>
           ))}
 
-          <div className="mt-5 bg-gradient-to-br from-[#F97316]/10 to-[#F97316]/10 border border-[#F97316]/20 rounded-2xl p-4">
-            <p className="text-[#202938] font-bold text-[15px]">Still need help?</p>
+          <div className="mt-5 bg-gradient-to-br from-[#7C3AED]/10 to-[#7C3AED]/10 border border-[#7C3AED]/20 rounded-2xl p-4">
+            <p className="text-[#111827] font-bold text-[15px]">Still need help?</p>
             <p className="text-[#64748B] text-[13px] mt-1">Send us a request and our team will reply here in the app.</p>
-            <button onClick={() => setTab('new')} className="mt-3 bg-[#F97316] text-white font-bold text-sm px-5 py-2.5 rounded-full">Contact support</button>
+            <button onClick={() => setTab('new')} className="mt-3 bg-[#7C3AED] text-white font-bold text-sm px-5 py-2.5 rounded-full">Contact support</button>
             {(SUPPORT_EMAIL || SUPPORT_WHATSAPP) && (
               <div className="flex gap-2 mt-3">
-                {SUPPORT_EMAIL && <a href={`mailto:${SUPPORT_EMAIL}`} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#F1F5F9] text-[#202938] text-[13px] font-semibold"><Mail size={14} /> Email</a>}
-                {SUPPORT_WHATSAPP && <a href={`https://wa.me/${SUPPORT_WHATSAPP}`} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#F1F5F9] text-[#202938] text-[13px] font-semibold"><MessageCircle size={14} /> WhatsApp</a>}
+                {SUPPORT_EMAIL && <a href={`mailto:${SUPPORT_EMAIL}`} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#F1F5F9] text-[#111827] text-[13px] font-semibold"><Mail size={14} /> Email</a>}
+                {SUPPORT_WHATSAPP && <a href={`https://wa.me/${SUPPORT_WHATSAPP}`} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#F1F5F9] text-[#111827] text-[13px] font-semibold"><MessageCircle size={14} /> WhatsApp</a>}
               </div>
             )}
           </div>
@@ -254,16 +254,16 @@ export default function HelpCenter() {
       {tab === 'new' && (
         <div className="px-4">
           {sentId ? (
-            <EmptyState icon={CheckCircle2} color="#2ECC71" title="Request sent" text={`Reference ${sentId}. We will reply in My requests. You will get a notification when something changes.`}>
-              <button onClick={() => { setSentId(''); setTab('mine'); }} className="bg-[#F97316] text-white px-5 py-2.5 rounded-full font-bold text-sm">View my requests</button>
+            <EmptyState icon={CheckCircle2} color="#10B981" title="Request sent" text={`Reference ${sentId}. We will reply in My requests. You will get a notification when something changes.`}>
+              <button onClick={() => { setSentId(''); setTab('mine'); }} className="bg-[#7C3AED] text-white px-5 py-2.5 rounded-full font-bold text-sm">View my requests</button>
             </EmptyState>
           ) : (
             <div className="space-y-4">
               <div className="grid grid-cols-4 gap-2">
                 {TYPES.map(({ key, label, Icon }) => (
                   <button key={key} onClick={() => setType(key)}
-                    className={'flex flex-col items-center gap-1.5 py-3 rounded-2xl border text-[12px] font-bold ' + (type === key ? 'bg-[#F97316]/15 border-[#F97316]/50 text-white' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B]')}>
-                    <Icon size={18} className={type === key ? 'text-[#EA580C]' : ''} /> {label}
+                    className={'flex flex-col items-center gap-1.5 py-3 rounded-2xl border text-[12px] font-bold ' + (type === key ? 'bg-[#7C3AED]/15 border-[#7C3AED]/50 text-[#6D28D9]' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B]')}>
+                    <Icon size={18} className={type === key ? 'text-[#6D28D9]' : ''} /> {label}
                   </button>
                 ))}
               </div>
@@ -271,13 +271,13 @@ export default function HelpCenter() {
                 <label className="text-[#64748B] text-[11px] font-bold uppercase tracking-wider block mb-1.5">Title</label>
                 <input value={title} maxLength={120} onChange={(e) => { setTitle(e.target.value); setErr(''); }}
                   placeholder={type === 'payment' ? 'e.g. Paid for Pro but not active' : type === 'bug' ? 'e.g. Photos will not upload' : type === 'feature' ? 'e.g. Polls on posts' : 'What do you need help with?'}
-                  className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-3.5 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60" />
+                  className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-3.5 text-[#111827] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#7C3AED]/60" />
               </div>
               <div>
                 <label className="text-[#64748B] text-[11px] font-bold uppercase tracking-wider block mb-1.5">Details</label>
                 <textarea value={desc} rows={5} maxLength={2000} onChange={(e) => { setDesc(e.target.value); setErr(''); }}
                   placeholder={type === 'payment' ? 'Include the M-Pesa transaction code and the amount.' : type === 'bug' ? 'What happened, and what did you expect? Steps help a lot.' : 'Tell us more.'}
-                  className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-3.5 text-[#202938] text-[14px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60 resize-none" />
+                  className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl px-4 py-3.5 text-[#111827] text-[14px] placeholder-[#94A3B8] focus:outline-none focus:border-[#7C3AED]/60 resize-none" />
                 <p className="text-right text-[#64748B] text-xs mt-0.5">{desc.length}/2000</p>
               </div>
 
@@ -292,13 +292,13 @@ export default function HelpCenter() {
               <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={pickShot} />
 
               <button onClick={() => setDiag((v) => !v)} className="w-full flex items-center gap-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl px-4 py-3 text-left">
-                <span className={'w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 ' + (diag ? 'bg-[#F97316] border-[#F97316]' : 'border-[#E2E8F0]')}>{diag && <Check size={13} className="text-[#202938]" />}</span>
-                <span className="flex-1"><span className="block text-[#202938] text-[13px] font-semibold">Include technical details</span><span className="block text-[#64748B] text-[11px]">App version, device and connection speed. Helps us fix problems faster.</span></span>
+                <span className={'w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 ' + (diag ? 'bg-[#7C3AED] border-[#7C3AED]' : 'border-[#E2E8F0]')}>{diag && <Check size={13} className="text-white" />}</span>
+                <span className="flex-1"><span className="block text-[#111827] text-[13px] font-semibold">Include technical details</span><span className="block text-[#64748B] text-[11px]">App version, device and connection speed. Helps us fix problems faster.</span></span>
               </button>
 
               {err && <p className="text-red-600 text-sm">{err}</p>}
               <button onClick={submit} disabled={busy} className="w-full py-4 rounded-2xl font-bold text-white disabled:opacity-50 flex items-center justify-center gap-2"
-                style={{ background: '#F97316', boxShadow: '0 8px 24px rgba(255,90,31,0.3)' }}>
+                style={{ background: '#7C3AED', boxShadow: '0 8px 24px rgba(124,58,237,0.3)' }}>
                 {busy ? <><Spinner size={18} /> Sending…</> : <><Send size={17} /> Send request</>}
               </button>
               <p className="text-[#64748B] text-[11px] text-center">Signed in as @{profile?.username}. Replies appear in My requests.</p>
@@ -309,21 +309,21 @@ export default function HelpCenter() {
 
       {tab === 'mine' && (
         <div className="px-4">
-          {tickets === null ? <div className="flex justify-center py-12 text-[#EA580C]"><Spinner size={22} /></div>
+          {tickets === null ? <div className="flex justify-center py-12 text-[#6D28D9]"><Spinner size={22} /></div>
             : tickets.length === 0 ? (
               <EmptyState icon={Inbox} title="No requests yet" text="Questions, problems and ideas you send appear here, with our replies.">
-                <button onClick={() => setTab('new')} className="bg-[#F97316] text-white px-5 py-2.5 rounded-full font-bold text-sm">New request</button>
+                <button onClick={() => setTab('new')} className="bg-[#7C3AED] text-white px-5 py-2.5 rounded-full font-bold text-sm">New request</button>
               </EmptyState>
             ) : tickets.map((t) => {
-              const st = STATUS[t.status] || { color: '#8E8C88', label: t.status };
+              const st = STATUS[t.status] || { color: '#64748B', label: t.status };
               const T = TYPES.find((x) => x.key === t.type) || TYPES[0];
               const isOpen = expanded === t.id;
               return (
                 <button key={t.id} onClick={() => setExpanded(isOpen ? null : t.id)} className="w-full text-left bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4 mb-2.5 active:bg-[#F1F5F9]">
                   <div className="flex items-start gap-3">
-                    <span className="w-9 h-9 rounded-xl bg-[#F97316]/10 flex items-center justify-center flex-shrink-0"><T.Icon size={16} className="text-[#EA580C]" /></span>
+                    <span className="w-9 h-9 rounded-xl bg-[#7C3AED]/10 flex items-center justify-center flex-shrink-0"><T.Icon size={16} className="text-[#6D28D9]" /></span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[#202938] font-bold text-[14px] truncate">{t.title}</p>
+                      <p className="text-[#111827] font-bold text-[14px] truncate">{t.title}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ color: st.color, background: st.color + '22', border: '1px solid ' + st.color + '44' }}>{st.label}</span>
                         <span className="text-[#64748B] text-[11px] flex items-center gap-1"><Clock size={11} /> {new Date(t.created_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}</span>
@@ -336,9 +336,9 @@ export default function HelpCenter() {
                       <p className="text-[#64748B] text-[13px] leading-relaxed whitespace-pre-wrap">{t.description}</p>
                       {t.screenshot_url && <img src={t.screenshot_url} alt="Screenshot" className="rounded-xl max-h-40 object-cover" loading="lazy" />}
                       {t.admin_notes && (
-                        <div className="bg-[#F97316]/10 border border-[#F97316]/25 rounded-xl px-3 py-2.5">
-                          <p className="text-[#EA580C] text-[11px] font-bold">Reply from support</p>
-                          <p className="text-[#202938] text-[13px] mt-0.5 whitespace-pre-wrap">{t.admin_notes}</p>
+                        <div className="bg-[#7C3AED]/10 border border-[#7C3AED]/25 rounded-xl px-3 py-2.5">
+                          <p className="text-[#6D28D9] text-[11px] font-bold">Reply from support</p>
+                          <p className="text-[#111827] text-[13px] mt-0.5 whitespace-pre-wrap">{t.admin_notes}</p>
                         </div>
                       )}
                     </div>

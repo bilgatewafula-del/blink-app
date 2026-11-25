@@ -1,3 +1,4 @@
+import AuthBanner from '../../components/auth/AuthBanner';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
@@ -66,33 +67,31 @@ export default function CompleteProfile() {
   };
 
   if (loading || !user || (!profileChecked && !profile)) {
-    return <div className="min-h-screen bg-white flex items-center justify-center text-[#EA580C]"><Spinner size={28} /></div>;
+    return <div className="min-h-screen bg-[#F1F3F9] flex items-center justify-center text-[#6D28D9]"><Spinner size={28} /></div>;
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
-      <div className="px-6 pt-14 pb-6">
-        <h1 className="text-[#202938] font-black text-2xl">Finish your profile</h1>
-        <p className="text-[#64748B] text-sm mt-2">One last step. Pick how people will find you.</p>
-      </div>
+    <div className="min-h-screen bg-[#F1F3F9] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
+      <AuthBanner title="Finish your profile" subtitle="One last step. Pick how people will find you." />
+      <div className="h-5" />
       <form onSubmit={submit} className="flex flex-col gap-3 px-5">
         <div className="relative">
           <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" />
           <input value={displayName} onChange={(e) => { setDisplayName(e.target.value); setError(''); }} placeholder="Display name" maxLength={40}
-            className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-11 pr-4 py-4 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60" />
+            className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-11 pr-4 py-4 text-[#111827] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#7C3AED]/60" />
         </div>
         <div className="relative">
           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] font-bold pointer-events-none">@</span>
           <input value={username} onChange={(e) => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')); setError(''); }} placeholder="username" maxLength={20} autoCapitalize="none"
-            className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-9 pr-10 py-4 text-[#202938] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#F97316]/60" />
+            className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-9 pr-10 py-4 text-[#111827] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#7C3AED]/60" />
           {status === 'checking' && <Spinner size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748B]" />}
-          {status === 'available' && <CheckCircle2 size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#2ECC71]" />}
+          {status === 'available' && <CheckCircle2 size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#10B981]" />}
           {status === 'taken' && <XCircle size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-red-600" />}
         </div>
         <div className="relative">
           <Globe size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none z-10" />
           <select value={country} onChange={(e) => setCountry(e.target.value)}
-            className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-11 pr-10 py-4 text-[#202938] text-[15px] focus:outline-none appearance-none" style={{ WebkitAppearance: 'none' }}>
+            className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-11 pr-10 py-4 text-[#111827] text-[15px] focus:outline-none appearance-none" style={{ WebkitAppearance: 'none' }}>
             {COUNTRIES.map((c) => <option key={c.code} value={c.code} style={{ background: '#FFFFFF' }}>{c.name}</option>)}
           </select>
           <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" />
@@ -104,7 +103,7 @@ export default function CompleteProfile() {
         )}
         <button type="submit" disabled={busy}
           className="w-full py-4 rounded-2xl font-bold text-white text-[15px] disabled:opacity-50 flex items-center justify-center gap-2"
-          style={{ background: '#F97316', boxShadow: '0 8px 24px rgba(255,90,31,0.35)' }}>
+          style={{ background: '#7C3AED', boxShadow: '0 8px 24px rgba(124,58,237,0.35)' }}>
           {busy ? <><Spinner size={18} /> Saving…</> : 'Continue'}
         </button>
         <button type="button" onClick={signOut} className="text-[#64748B] text-sm font-semibold py-2">Sign out</button>

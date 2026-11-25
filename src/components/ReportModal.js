@@ -39,17 +39,17 @@ export default function ReportModal({ target, onClose, userId }) {
         {done ? (
           <div className="text-center py-6">
             <p className="text-4xl mb-3">✅</p>
-            <p className="text-[#202938] font-bold text-lg">Report submitted</p>
+            <p className="text-[#111827] font-bold text-lg">Report submitted</p>
             <p className="text-[#64748B] text-sm mt-1">Our team will review this anonymously. Thank you for helping keep B-Link safe.</p>
           </div>
         ) : (
           <>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[#202938] font-bold text-lg flex items-center gap-2">
+              <h3 className="text-[#111827] font-bold text-lg flex items-center gap-2">
                 <Flag size={18} className="text-red-600" />
                 Report {target.type}
               </h3>
-              <button onClick={onClose} className="text-[#64748B] hover:text-[#202938]"><X size={20} /></button>
+              <button onClick={onClose} className="text-[#64748B] hover:text-[#111827]"><X size={20} /></button>
             </div>
 
             <p className="text-[#64748B] text-sm mb-3">Why are you reporting this {target.type}?</p>
@@ -58,7 +58,7 @@ export default function ReportModal({ target, onClose, userId }) {
               {REASONS.map((r) => (
                 <button key={r} onClick={() => setReason(r)}
                   className={'w-full text-left px-4 py-3 rounded-xl border text-sm font-medium transition-all ' +
-                    (reason === r ? 'bg-red-500/15 border-red-500/40 text-red-600' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#202938] hover:bg-[#F1F5F9]')}>
+                    (reason === r ? 'bg-red-500/15 border-red-500/40 text-red-600' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#111827] hover:bg-[#F1F5F9]')}>
                   {r}
                 </button>
               ))}
@@ -69,7 +69,7 @@ export default function ReportModal({ target, onClose, userId }) {
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
                 placeholder="Please describe the issue..."
-                className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3 text-[#202938] placeholder-[#94A3B8] text-sm focus:outline-none focus:border-red-500/50 resize-none mb-4"
+                className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3 text-[#111827] placeholder-[#94A3B8] text-sm focus:outline-none focus:border-red-500/50 resize-none mb-4"
                 rows={3}
               />
             )}

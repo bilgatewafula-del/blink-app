@@ -1,6 +1,6 @@
 // src/components/stories/StoryRail.js — the status strip on the home feed
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Camera } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import Avatar from '../Avatar';
@@ -11,7 +11,7 @@ import { fetchStoryFeed, getCachedFeed, groupStories, patchCachedFeed } from '..
 function Ring({ group, own, onOpen, onAdd }) {
   const has = group?.stories?.length > 0;
   const fresh = !own && group?.hasUnviewed;
-  const name = own ? 'Your status' : group.user.display_name?.split(' ')[0] || '';
+  const name = own ? 'Your moment' : group.user.display_name?.split(' ')[0] || '';
 
   return (
     <div className="flex flex-col items-center gap-1.5 flex-shrink-0" style={{ width: 68 }}>
@@ -19,23 +19,23 @@ function Ring({ group, own, onOpen, onAdd }) {
         <button onClick={onOpen} aria-label={own ? (has ? 'View your status' : 'Add status') : `View ${name}'s status`}
           className="rounded-full p-[3px] active:scale-95 transition-transform"
           style={{
-            background: fresh || (own && has) ? '#F97316' : has ? 'rgba(255,255,255,0.28)' : 'transparent',
-            border: !has ? '2px dashed rgba(255,255,255,0.22)' : 'none',
+            background: fresh || (own && has) ? 'linear-gradient(135deg, #7C3AED, #E11D48)' : has ? '#CBD5E1' : 'transparent',
+            border: !has ? '2px dashed #CBD5E1' : 'none',
             padding: !has ? 2 : 3,
           }}>
-          <div className="rounded-full p-[2px] bg-[#0D0C0B]">
+          <div className="rounded-full p-[2px] bg-white">
             <Avatar url={own ? group.user?.avatar_url : group.user.avatar_url} name={own ? group.user?.display_name : group.user.display_name} size={14} />
           </div>
         </button>
         {own && (
           <button onClick={onAdd} aria-label="Add a new status"
-            className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full flex items-center justify-center border-2 border-[#0D0C0B] active:scale-90 transition-transform"
-            style={{ background: '#F97316' }}>
+            className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full flex items-center justify-center border-2 border-white active:scale-90 transition-transform"
+            style={{ background: '#7C3AED' }}>
             <Plus size={14} className="text-white" strokeWidth={3} />
           </button>
         )}
       </div>
-      <span className={'text-[11px] truncate w-full text-center ' + (fresh ? 'text-white font-semibold' : 'text-[#8E8C88]')}>{name}</span>
+      <span className={'text-[11px] truncate w-full text-center ' + (fresh ? 'text-[#111827] font-semibold' : 'text-[#64748B]')}>{name}</span>
     </div>
   );
 }
@@ -43,8 +43,8 @@ function Ring({ group, own, onOpen, onAdd }) {
 function RingSkeleton() {
   return (
     <div className="flex flex-col items-center gap-1.5 flex-shrink-0 animate-pulse" style={{ width: 68 }}>
-      <div className="w-[62px] h-[62px] rounded-full bg-white/10" />
-      <div className="h-2 w-10 rounded-full bg-white/10" />
+      <div className="w-[62px] h-[62px] rounded-full bg-[#E2E8F0]" />
+      <div className="h-2 w-10 rounded-full bg-[#E2E8F0]" />
     </div>
   );
 }
@@ -103,11 +103,42 @@ export default function StoryRail() {
 
   return (
     <>
-      <div className="flex gap-2 overflow-x-auto px-3 pt-3 pb-2.5 border-b border-white/[0.06]" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-        <Ring group={ownGroup} own onOpen={() => (own ? open(own) : setComposer(true))} onAdd={() => setComposer(true)} />
-        {loading
-          ? [0, 1, 2, 3].map((i) => <RingSkeleton key={i} />)
-          : friends.map((g) => <Ring key={g.userId} group={g} onOpen={() => open(g)} />)}
+      {/* Create a moment — expressive violet→rose action; opens the existing StoryComposer */}
+      <div className="px-3 pt-3">
+        <button
+          onClick={() => setComposer(true)}
+          aria-label="Create a moment"
+          className="group block w-full rounded-[20px] p-[2px] text-left active:scale-[0.99] transition-transform shadow-[0_4px_14px_rgba(124,58,237,0.18)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED] focus-visible:ring-offset-2 focus-visible:ring-offset-[#EEF1F8]"
+          style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #C026D3 50%, #E11D48 100%)' }}
+        >
+          <span className="relative flex items-center gap-3.5 rounded-[18px] px-3.5 py-3 overflow-hidden" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF1F2 100%)' }}>
+            {/* camera-lens rings */}
+            <span aria-hidden="true" className="absolute -right-8 -top-8 w-28 h-28 rounded-full border-[10px] border-[#7C3AED]/10" />
+            <span aria-hidden="true" className="absolute -right-3 -top-3 w-16 h-16 rounded-full border-[6px] border-[#E11D48]/10" />
+
+            <span className="relative w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm" style={{ background: 'linear-gradient(135deg, #7C3AED, #E11D48)' }}>
+              <Plus size={26} className="text-white" strokeWidth={2.8} />
+              <span className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-white border-2 border-[#F5F3FF] flex items-center justify-center">
+                <Camera size={13} className="text-[#E11D48]" strokeWidth={2.4} />
+              </span>
+            </span>
+
+            <span className="relative flex-1 min-w-0">
+              <span className="block text-[#111827] font-extrabold text-[17px] leading-tight tracking-tight">Create a moment</span>
+              <span className="block text-[#475569] text-[13px] font-medium mt-1 leading-snug">Share a photo, text or moment with your friends</span>
+            </span>
+          </span>
+        </button>
+      </div>
+
+      {/* Status rail: your moment first, then your friends' moments */}
+      <div className="mx-3 mt-3 bg-white border border-[#E2E8F0] rounded-2xl">
+        <div className="flex gap-2 overflow-x-auto px-2.5 pt-2.5 pb-2" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+          <Ring group={ownGroup} own onOpen={() => (own ? open(own) : setComposer(true))} onAdd={() => setComposer(true)} />
+          {loading
+            ? [0, 1, 2, 3].map((i) => <RingSkeleton key={i} />)
+            : friends.map((g) => <Ring key={g.userId} group={g} onOpen={() => open(g)} />)}
+        </div>
       </div>
 
       {viewer && (

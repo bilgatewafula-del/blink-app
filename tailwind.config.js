@@ -8,15 +8,15 @@ module.exports = {
     extend: {
       colors: {
         // Original palette — unchanged, every existing className keeps working
-        primary: '#F97316',
-        secondary: '#FFB020',
-        accent: '#F97316',
+        primary: '#7C3AED',
+        secondary: '#E11D48',
+        accent: '#7C3AED',
         amber:     '#FF9F1C',
-        blinkorange: '#F97316',
+        blinkorange: '#7C3AED', // legacy name kept so old classNames keep working (now violet)
         gold: '#FFD700',
-        success: '#2ECC71',
-        ink:       '#202938',
-        darktext: '#202938',
+        success: '#10B981',
+        ink:       '#111827',
+        darktext: '#111827',
         midgray: '#64748B',
 
         // Extended — most components hardcode these exact hex values
@@ -27,12 +27,16 @@ module.exports = {
         // future file I touch will prefer these over raw hex so the
         // palette stays centralized in one place.
         surface: {
-          DEFAULT: '#FFFFFF',   // page background
+          DEFAULT: '#F1F3F9',   // page background
           raised:  '#FFFFFF',   // sheets, drawer, modals
           card:    '#F8FAFC',   // secondary background
           input:   '#F1F5F9',   // inputs
         },
-        blink: { orange: '#F97316', blue: '#2563EB', ink: '#202938', slate: '#64748B', line: '#E2E8F0' },
+        blink: {
+          navy: '#11152E', violet: '#7C3AED', rose: '#E11D48', emerald: '#059669', blue: '#0284C7', amber: '#D97706',
+          ink: '#111827', slate: '#64748B', line: '#E2E8F0', orange: '#7C3AED',
+          bg: '#F1F3F9', feed: '#EEF1F8', profile: '#F2EFFA', chats: '#EDF3FA', plum: '#28134F',
+        },
         border: {
           subtle: '#E2E8F0',
           DEFAULT: '#E2E8F0',

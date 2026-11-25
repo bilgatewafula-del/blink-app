@@ -339,7 +339,7 @@ export default function StoryViewer({ groups, startGroup = 0, onClose, onViewed,
               {reply.trim() ? (
                 <button onMouseDown={(e) => e.preventDefault()} onClick={sendReply} disabled={sending} aria-label="Send reply"
                   className="w-11 h-11 rounded-full flex items-center justify-center text-white flex-shrink-0"
-                  style={{ background: '#F97316' }}>{sending ? <Spinner size={16} /> : <Send size={18} />}</button>
+                  style={{ background: '#7C3AED' }}>{sending ? <Spinner size={16} /> : <Send size={18} />}</button>
               ) : (
                 <button onClick={() => setTray((t) => !t)} aria-label="React"
                   className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 bg-white/[0.12] text-white text-[22px]">
@@ -352,22 +352,22 @@ export default function StoryViewer({ groups, startGroup = 0, onClose, onViewed,
 
         {toast && (
           <div className="absolute left-3 right-3 z-50 bg-white text-black rounded-2xl px-4 py-3 flex items-center justify-between gap-3 shadow-xl" style={{ bottom: 96 }}>
-            <span className="text-[14px] font-semibold flex items-center gap-2"><Check size={16} className="text-[#2ECC71]" />{toast.text}</span>
-            {toast.action && <button onClick={toast.onAction} className="text-[#F97316] font-bold text-[14px]">{toast.action}</button>}
+            <span className="text-[14px] font-semibold flex items-center gap-2"><Check size={16} className="text-[#10B981]" />{toast.text}</span>
+            {toast.action && <button onClick={toast.onAction} className="text-[#7C3AED] font-bold text-[14px]">{toast.action}</button>}
           </div>
         )}
 
         {viewersOpen && (
           <Sheet onClose={() => setViewersOpen(false)}>
             <p className="text-white font-bold text-[15px] px-5 pt-2 pb-2 flex items-center gap-2"><Eye size={17} /> Viewed by {c.views}</p>
-            {viewers === null && <div className="flex justify-center py-8 text-[#F97316]"><Spinner size={22} /></div>}
-            {viewers && viewers.length === 0 && <p className="text-[#8E8C88] text-sm text-center px-6 py-8">No views yet. Friends who watch will appear here instantly.</p>}
+            {viewers === null && <div className="flex justify-center py-8 text-[#7C3AED]"><Spinner size={22} /></div>}
+            {viewers && viewers.length === 0 && <p className="text-[#64748B] text-sm text-center px-6 py-8">No views yet. Friends who watch will appear here instantly.</p>}
             {(viewers || []).map((v) => (
               <div key={v.user_id} className="flex items-center gap-3 px-5 py-2.5">
                 <Avatar url={v.avatar_url} name={v.display_name} size={10} />
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-[15px] font-semibold truncate">{v.display_name}</p>
-                  <p className="text-[#8E8C88] text-[12px]">{timeAgo(v.viewed_at)}</p>
+                  <p className="text-[#64748B] text-[12px]">{timeAgo(v.viewed_at)}</p>
                 </div>
                 {v.reaction && <span className="text-[22px]">{v.reaction}</span>}
               </div>
@@ -381,7 +381,7 @@ export default function StoryViewer({ groups, startGroup = 0, onClose, onViewed,
           <Sheet onClose={() => setConfirmDel(false)}>
             <div className="px-5 pt-3 text-center">
               <p className="text-white font-bold text-base">Delete this status?</p>
-              <p className="text-[#8E8C88] text-sm mt-1">It disappears for everyone and the view count is removed.</p>
+              <p className="text-[#64748B] text-sm mt-1">It disappears for everyone and the view count is removed.</p>
             </div>
             <div className="px-5 pt-4 space-y-2">
               <button onClick={doDelete} className="w-full py-3 rounded-xl bg-red-500/15 text-red-400 font-bold border border-red-500/30">Delete</button>
@@ -411,8 +411,8 @@ function ShareSheet({ storyId, onClose, onDone, onError }) {
   return (
     <Sheet onClose={onClose}>
       <p className="text-white font-bold text-[15px] px-5 pt-2 pb-2">Share status to</p>
-      {chats === null && <div className="flex justify-center py-8 text-[#F97316]"><Spinner size={22} /></div>}
-      {chats && chats.length === 0 && <p className="text-[#8E8C88] text-sm text-center py-8">No chats yet</p>}
+      {chats === null && <div className="flex justify-center py-8 text-[#7C3AED]"><Spinner size={22} /></div>}
+      {chats && chats.length === 0 && <p className="text-[#64748B] text-sm text-center py-8">No chats yet</p>}
       {(chats || []).map((c) => {
         const on = picked.includes(c.chat_id);
         return (
@@ -420,14 +420,14 @@ function ShareSheet({ storyId, onClose, onDone, onError }) {
             className="w-full flex items-center gap-3 px-5 py-2.5 active:bg-white/[0.05]">
             <Avatar url={c.other_avatar_url} name={c.other_display_name} size={10} />
             <span className="flex-1 text-left text-white text-[15px] font-semibold truncate">{c.other_display_name}</span>
-            <span className={'w-6 h-6 rounded-full border-2 flex items-center justify-center ' + (on ? 'bg-[#F97316] border-[#F97316]' : 'border-white/30')}>{on && <Check size={14} className="text-white" />}</span>
+            <span className={'w-6 h-6 rounded-full border-2 flex items-center justify-center ' + (on ? 'bg-[#7C3AED] border-[#7C3AED]' : 'border-white/30')}>{on && <Check size={14} className="text-white" />}</span>
           </button>
         );
       })}
       <div className="px-5 pt-3">
         <button onClick={send} disabled={!picked.length || busy}
           className="w-full py-3.5 rounded-xl text-white font-bold disabled:opacity-40 flex items-center justify-center gap-2"
-          style={{ background: '#F97316' }}>
+          style={{ background: '#7C3AED' }}>
           {busy ? <Spinner size={16} /> : <Send size={16} />} Send{picked.length ? ` (${picked.length})` : ''}
         </button>
       </div>

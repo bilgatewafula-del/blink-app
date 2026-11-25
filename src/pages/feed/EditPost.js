@@ -72,25 +72,25 @@ const EditPost = () => {
   const renderCaption = (text) => {
     return text.split(/(\s+)/).map((word, i) => {
       if (word.startsWith('#'))
-        return <span key={i} className="text-[#EA580C]">{word}</span>;
+        return <span key={i} className="text-[#6D28D9]">{word}</span>;
       if (word.startsWith('@'))
-        return <span key={i} className="text-[#EA580C]">{word}</span>;
+        return <span key={i} className="text-[#6D28D9]">{word}</span>;
       return word;
     });
   };
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-screen bg-[#F1F3F9] pb-24">
       {/* Top bar */}
-      <div className="sticky top-0 z-20 bg-white border-b border-[#E2E8F0] px-4 py-3 flex items-center justify-between">
-        <button onClick={() => goBack(navigate, '/')} className="text-[#64748B] hover:text-[#202938] transition-colors">
+      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center justify-between">
+        <button onClick={() => goBack(navigate, '/')} className="text-[#CBD5E1] hover:text-white transition-colors">
           <ArrowLeft size={22} />
         </button>
-        <h1 className="text-[#202938] font-bold text-lg">Edit Post</h1>
+        <h1 className="text-white font-bold text-lg">Edit Post</h1>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 bg-[#F97316] text-white font-bold px-4 py-2 rounded-xl text-sm disabled:opacity-50"
+          className="flex items-center gap-2 bg-[#7C3AED] text-white font-bold px-4 py-2 rounded-xl text-sm disabled:opacity-50"
         >
           <Save size={14} />
           {saving ? 'Saving...' : 'Save'}
@@ -131,14 +131,14 @@ const EditPost = () => {
               placeholder="Write something..."
               maxLength={500}
               rows={5}
-              className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl py-3 px-4 text-[#202938] placeholder-[#94A3B8] text-sm focus:outline-none focus:border-[#F97316] transition-colors resize-none"
+              className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl py-3 px-4 text-[#111827] placeholder-[#94A3B8] text-sm focus:outline-none focus:border-[#7C3AED] transition-colors resize-none"
             />
           </div>
           <div className="flex items-center justify-between mt-1">
             <p className="text-[#64748B] text-xs">{caption.length}/500</p>
             <div className="flex flex-wrap gap-1">
               {extractHashtags(caption).map((tag) => (
-                <span key={tag} className="bg-[#F97316]/20 text-[#EA580C] text-xs px-2 py-0.5 rounded-full">
+                <span key={tag} className="bg-[#7C3AED]/20 text-[#6D28D9] text-xs px-2 py-0.5 rounded-full">
                   #{tag}
                 </span>
               ))}
@@ -150,7 +150,7 @@ const EditPost = () => {
         {caption && (
           <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
             <p className="text-[#64748B] text-xs mb-2 font-semibold uppercase tracking-wide">Preview</p>
-            <p className="text-[#202938] text-sm leading-relaxed">
+            <p className="text-[#111827] text-sm leading-relaxed">
               {renderCaption(caption)}
             </p>
           </div>
@@ -164,7 +164,7 @@ const EditPost = () => {
             value={location_}
             onChange={(e) => setLocation_(e.target.value)}
             placeholder="Add or edit location..."
-            className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl py-3 px-4 text-[#202938] placeholder-[#94A3B8] text-sm focus:outline-none focus:border-[#F97316] transition-colors"
+            className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl py-3 px-4 text-[#111827] placeholder-[#94A3B8] text-sm focus:outline-none focus:border-[#7C3AED] transition-colors"
           />
         </div>
 
@@ -179,14 +179,14 @@ const EditPost = () => {
                 className={
                   'w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all ' +
                   (audience === a.value
-                    ? 'border-[#F97316] bg-[#F97316]/10'
+                    ? 'border-[#7C3AED] bg-[#7C3AED]/10'
                     : 'border-[#E2E8F0] bg-[#F8FAFC]')
                 }
               >
                 <span className="text-xl">{a.icon}</span>
-                <span className="text-[#202938] text-sm font-semibold">{a.label}</span>
+                <span className="text-[#111827] text-sm font-semibold">{a.label}</span>
                 {audience === a.value && (
-                  <span className="ml-auto text-[#EA580C] font-bold">✓</span>
+                  <span className="ml-auto text-[#6D28D9] font-bold">✓</span>
                 )}
               </button>
             ))}
@@ -208,7 +208,7 @@ const EditPost = () => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full bg-[#F97316] text-white font-bold py-4 rounded-2xl disabled:opacity-50  "
+          className="w-full bg-[#7C3AED] text-white font-bold py-4 rounded-2xl disabled:opacity-50  "
         >
           {saving ? 'Saving changes...' : '💾 Save Changes'}
         </button>

@@ -41,7 +41,7 @@ export const PostCardSkeleton = () => (
 
 // Profile skeleton
 export const ProfileSkeleton = () => (
-  <div className="min-h-screen bg-white">
+  <div className="min-h-screen bg-[#F1F3F9]">
     {/* Cover */}
     <div className="h-36 bg-[#F8FAFC] animate-pulse" />
     {/* Avatar */}
@@ -136,7 +136,7 @@ export const DiscoverSkeleton = () => (
 
 // Post detail skeleton
 export const PostDetailSkeleton = () => (
-  <div className="min-h-screen bg-white pb-24">
+  <div className="min-h-screen bg-[#F1F3F9] pb-24">
     <div className="px-4 py-4 flex items-center gap-3">
       <div className="w-12 h-12 rounded-full bg-[#F1F5F9] animate-pulse" />
       <div className="space-y-2 flex-1">

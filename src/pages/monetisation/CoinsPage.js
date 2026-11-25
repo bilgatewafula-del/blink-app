@@ -41,14 +41,14 @@ export default function CoinsPage() {
   const balance    = profile?.coins_balance || 0;
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-screen bg-[#F1F3F9] pb-24">
 
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => goBack(navigate, '/')} className="text-[#64748B] hover:text-[#202938]"><ArrowLeft size={22} /></button>
+      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => goBack(navigate, '/')} className="text-[#CBD5E1] hover:text-white"><ArrowLeft size={22} /></button>
         <div className="flex-1">
-          <h1 className="text-[#202938] font-bold text-[15px] leading-none">B-Link Coins</h1>
-          <p className="text-[#64748B] text-xs mt-0.5">In-app currency — not withdrawable</p>
+          <h1 className="text-white font-bold text-[15px] leading-none">B-Link Coins</h1>
+          <p className="text-[#CBD5E1] text-xs mt-0.5">In-app currency — not withdrawable</p>
         </div>
         {/* Balance chip */}
         <div className="bg-yellow-500/15 border border-yellow-500/25 rounded-2xl px-4 py-2 flex items-center gap-2">
@@ -62,8 +62,8 @@ export default function CoinsPage() {
         {[['buy','Buy Coins'],['history','History']].map(([k,l]) => (
           <button key={k} onClick={() => setTab(k)}
             className={'flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ' +
-              (tab === k ? 'text-[#202938] shadow-lg' : 'text-[#64748B]')}
-            style={tab === k ? { background:'linear-gradient(135deg,#FFD700,#F97316)', boxShadow:'0 4px 16px rgba(255,215,0,0.25)' } : {}}>
+              (tab === k ? 'text-[#111827] shadow-lg' : 'text-[#64748B]')}
+            style={tab === k ? { background:'linear-gradient(135deg,#FBBF24,#D97706)', boxShadow:'0 4px 16px rgba(255,215,0,0.25)' } : {}}>
             {l}
           </button>
         ))}
@@ -86,7 +86,7 @@ export default function CoinsPage() {
 
           {/* What are coins */}
           <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
-            <p className="text-[#202938] font-bold text-sm mb-3 flex items-center gap-2"><Coins size={16} className="text-yellow-700" /> What are B-Link Coins?</p>
+            <p className="text-[#111827] font-bold text-sm mb-3 flex items-center gap-2"><Coins size={16} className="text-yellow-700" /> What are B-Link Coins?</p>
             <div className="space-y-2">
               {[
                 { Icon:Heart, text:'React to posts with premium reactions' },
@@ -95,7 +95,7 @@ export default function CoinsPage() {
                 { Icon:Sparkles, text:'Highlight your comments' },
               ].map((item,i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <item.Icon size={18} className="text-[#EA580C] flex-shrink-0" />
+                  <item.Icon size={18} className="text-[#6D28D9] flex-shrink-0" />
                   <span className="text-[#64748B] text-sm">{item.text}</span>
                 </div>
               ))}
@@ -117,7 +117,7 @@ export default function CoinsPage() {
                   className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4 text-left active:scale-95 transition-all hover:border-yellow-500/30 hover:bg-[#F1F5F9]"
                 >
                   <Coins size={30} className="text-yellow-700 mb-2" />
-                  <p className="text-[#202938] font-black text-lg leading-none">{formatNumber(pkg.coins)}</p>
+                  <p className="text-[#111827] font-black text-lg leading-none">{formatNumber(pkg.coins)}</p>
                   {pkg.bonus > 0 && (
                     <p className="text-yellow-700 text-[11px] font-bold mt-0.5">+{pkg.bonus} bonus!</p>
                   )}
@@ -156,7 +156,7 @@ export default function CoinsPage() {
           {transactions.length === 0 ? (
             <div className="text-center py-14">
               <Coins size={38} className="text-yellow-700 mx-auto mb-3" />
-              <p className="text-[#202938] font-bold">No transactions yet</p>
+              <p className="text-[#111827] font-bold">No transactions yet</p>
               <p className="text-[#64748B] text-sm mt-1">Buy coins to get started</p>
             </div>
           ) : transactions.map(tx => (
@@ -165,7 +165,7 @@ export default function CoinsPage() {
                 {tx.amount > 0 ? <Coins size={18} className="text-yellow-700" /> : <ArrowUpRight size={18} className="text-red-600" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[#202938] text-[13px] font-semibold truncate">{tx.description || tx.transaction_type}</p>
+                <p className="text-[#111827] text-[13px] font-semibold truncate">{tx.description || tx.transaction_type}</p>
                 <p className="text-[#64748B] text-[11px]">
                   {new Date(tx.created_at).toLocaleDateString('en-KE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}
                 </p>
