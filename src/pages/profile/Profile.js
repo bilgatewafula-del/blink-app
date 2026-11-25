@@ -56,7 +56,7 @@ const profileCache = new Map();
 
 function ProfileSkeleton() {
   return (
-    <div className="min-h-screen bg-[#F2EFFA] pb-24 animate-pulse">
+    <div className="min-h-screen bg-[#E7E0F8] pb-24 animate-pulse">
       <div className="px-4 pt-5 pb-4">
         <div className="w-20 h-20 rounded-full skeleton" />
         <div className="h-4 w-32 rounded-full skeleton mt-4" />
@@ -517,7 +517,7 @@ export default function Profile() {
   if (loading) return <ProfileSkeleton />;
 
   if (fetchError && !profile) return (
-    <div className="min-h-screen bg-[#F1F3F9]">
+    <div className="min-h-screen bg-[#E6E9F6]">
       <EmptyState icon={AlertTriangle} color="#EF4444" title="Could not load profile" text={fetchError}>
         <button onClick={() => setReloadKey((k) => k + 1)} className="bg-[#7C3AED] text-white px-5 py-2.5 rounded-full font-bold text-sm">Try again</button>
         <button onClick={() => goBack(navigate, '/')} className="text-[#64748B] font-semibold text-sm px-3">Go back</button>
@@ -526,7 +526,7 @@ export default function Profile() {
   );
 
   if (!profile) return (
-    <div className="min-h-screen bg-[#F1F3F9]">
+    <div className="min-h-screen bg-[#E6E9F6]">
       <EmptyState icon={UserX} title="User not found" text="This account may have been renamed or removed.">
         <button onClick={() => goBack(navigate, '/')} className="bg-[#F1F5F9] text-[#111827] px-5 py-2.5 rounded-full font-bold text-sm">Go back</button>
       </EmptyState>
@@ -554,7 +554,7 @@ export default function Profile() {
   }[tab];
 
   return (
-    <div className="min-h-screen bg-[#F2EFFA] pb-24">
+    <div className="min-h-screen bg-[#E7E0F8] pb-24">
       {imgViewer && profile.avatar_url && <ImageViewer images={[profile.avatar_url]} index={0} onClose={() => setImgViewer(false)} />}
 
       {toast && (

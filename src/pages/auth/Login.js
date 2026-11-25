@@ -169,7 +169,7 @@ export default function Login() {
 
   if (verify) {
     return (
-      <div className="min-h-screen bg-[#F1F3F9]" style={{ maxWidth: 480, margin: '0 auto' }}>
+      <div className="min-h-screen bg-[#E6E9F6]" style={{ maxWidth: 480, margin: '0 auto' }}>
         <VerifyCode
           kind={verify.kind}
           target={verify.kind === 'phone' ? verify.target : maskIdentifier(verify.target)}
@@ -191,7 +191,7 @@ export default function Login() {
     ? ' until ' + new Date(notice.extra).toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
 
   return (
-    <div className="min-h-screen bg-[#F1F3F9] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
+    <div className="min-h-screen bg-[#E6E9F6] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
       <AuthBanner big title="B-Link" subtitle="Connect · Share · Belong" />
       <div className="h-5" />
 

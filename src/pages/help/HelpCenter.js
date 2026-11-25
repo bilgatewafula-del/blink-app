@@ -191,7 +191,7 @@ export default function HelpCenter() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F1F3F9] pb-24">
+    <div className="min-h-screen bg-[#E6E9F6] pb-24">
       <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center gap-3">
         <button onClick={() => goBack(navigate, '/')} aria-label="Back" className="text-[#CBD5E1] hover:text-white"><ArrowLeft size={22} /></button>
         <div><h1 className="text-white font-bold text-[16px] leading-none">Help Center</h1><p className="text-[#CBD5E1] text-xs mt-0.5">Answers and support</p></div>

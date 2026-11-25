@@ -28,16 +28,16 @@ export default function Verify2FA() {
 
   if (failed) {
     return (
-      <div className="min-h-screen bg-[#F1F3F9] flex flex-col items-center justify-center px-6 text-center gap-4">
+      <div className="min-h-screen bg-[#E6E9F6] flex flex-col items-center justify-center px-6 text-center gap-4">
         <p className="text-[#111827] font-bold text-lg">Could not start two-step verification</p>
         <button onClick={signOut} className="bg-[#7C3AED] text-white font-bold rounded-full px-6 py-2.5">Sign out</button>
       </div>
     );
   }
-  if (!factorId) return <div className="min-h-screen bg-[#F1F3F9] flex items-center justify-center text-[#6D28D9]"><Spinner size={26} /></div>;
+  if (!factorId) return <div className="min-h-screen bg-[#E6E9F6] flex items-center justify-center text-[#6D28D9]"><Spinner size={26} /></div>;
 
   return (
-    <div className="min-h-screen bg-[#F1F3F9]" style={{ maxWidth: 480, margin: '0 auto' }}>
+    <div className="min-h-screen bg-[#E6E9F6]" style={{ maxWidth: 480, margin: '0 auto' }}>
       <VerifyCode
         kind="totp"
         title="Two-step verification"

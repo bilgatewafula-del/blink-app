@@ -141,7 +141,7 @@ export default function AboutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F1F3F9] pb-24">
+    <div className="min-h-screen bg-[#E6E9F6] pb-24">
       {toast && <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[60] bg-[#111827] text-white text-[13px] font-semibold rounded-full px-5 py-2.5 shadow-xl">{toast}</div>}
       {legal && <Sheet item={legal} onClose={() => setLegal(null)} />}
 

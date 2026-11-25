@@ -182,7 +182,7 @@ const News = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F1F3F9] pb-24">
+    <div className="min-h-screen bg-[#E6E9F6] pb-24">
 
       {/* BREAKING */}
       {breaking && (

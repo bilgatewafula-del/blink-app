@@ -276,7 +276,7 @@ export default function Discover() {
   const TabIcon = TABS.find((t) => t.key === mainTab)?.Icon || FileText;
 
   return (
-    <div className="min-h-screen bg-[#F1F3F9] pb-20">
+    <div className="min-h-screen bg-[#E6E9F6] pb-20">
       <div className="sticky top-0 z-20 bg-[#11152E]">
         <div className="px-4 py-3">
           <div className="flex items-center gap-3 bg-white/10 border border-white/15 rounded-2xl px-4 py-2.5">

@@ -6,7 +6,6 @@ import { useAuth } from '../../context/AuthContext';
 import Drawer from '../../components/Drawer';
 import PostCard from '../../components/PostCard';
 import StoryRail from '../../components/stories/StoryRail';
-import ExploreCards from '../../components/ExploreCards';
 import CreatePostCard from '../../components/CreatePostCard';
 
 const POSTS_PER_PAGE = 15;
@@ -537,7 +536,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#EEF1F8] pb-24">
+    <div className="min-h-screen bg-[#E2E6F5] pb-24">
       <Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       {/* Toast */}
@@ -595,8 +594,6 @@ export default function Home() {
 
       <CreatePostCard />
 
-      <ExploreCards />
-
       {/* ── Community feed heading + filters ── */}
       <div className="px-3 pt-6 pb-3">
         <div className="flex items-center gap-2 px-1 mb-2.5">
@@ -613,7 +610,7 @@ export default function Home() {
               className={'flex-shrink-0 px-4 py-2 rounded-xl text-[14px] font-semibold transition-colors active:scale-95 ' +
                 (activeTab === tab.key
                   ? 'bg-[#7C3AED] text-white'
-                  : 'bg-white text-[#64748B] border border-[#E2E8F0]')}
+                  : 'bg-[#EDE9FE] text-[#5B21B6] border border-[#DDD6FE]')}
             >
               {tab.label}
             </button>

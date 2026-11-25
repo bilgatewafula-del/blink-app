@@ -15,7 +15,7 @@ export default function OTPVerify() {
   if (!kind || !target) return null;
 
   return (
-    <div className="min-h-screen bg-[#F1F3F9]" style={{ maxWidth: 480, margin: '0 auto' }}>
+    <div className="min-h-screen bg-[#E6E9F6]" style={{ maxWidth: 480, margin: '0 auto' }}>
       <VerifyCode
         kind={kind}
         target={kind === 'email' ? maskIdentifier(target) : target}

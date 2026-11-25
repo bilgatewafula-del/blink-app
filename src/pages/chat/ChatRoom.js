@@ -794,7 +794,7 @@ export default function ChatRoom() {
       : <span className="text-[#64748B] text-[12px] truncate">{formatLastSeen(otherUser?.last_seen)}</span>;
 
   return (
-    <div className="fixed left-0 right-0 flex flex-col bg-[#EDF3FA]" style={{ top: vp.top, height: vp.h }}>
+    <div className="fixed left-0 right-0 flex flex-col bg-[#DCE8F6]" style={{ top: vp.top, height: vp.h }}>
       {toast && (
         <div className={'fixed top-3 left-1/2 -translate-x-1/2 z-[90] px-4 py-2.5 rounded-full text-[13px] font-semibold shadow-xl max-w-[90vw] text-center ' +
           (toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-[#111827] text-white')}>{toast.text}</div>

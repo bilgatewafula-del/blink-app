@@ -452,7 +452,7 @@ export default function SettingsPage() {
   const phoneShown = user?.phone ? maskIdentifier('+' + String(user.phone).replace(/^\+/, '')) : 'Not added';
 
   return (
-    <div className="min-h-screen bg-[#F1F3F9] pb-24">
+    <div className="min-h-screen bg-[#E6E9F6] pb-24">
       {toast && <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[60] bg-[#111827] text-white text-[13px] font-semibold rounded-full px-5 py-2.5 shadow-xl max-w-[90vw] text-center">{toast}</div>}
 
       {sheet === 'password' && <ChangePasswordSheet user={user} onClose={() => setSheet(null)} onDone={done} />}

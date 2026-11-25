@@ -194,7 +194,7 @@ export default function EditProfile() {
   const labelCls = 'text-[#64748B] text-[11px] font-bold uppercase tracking-wider block mb-1.5';
 
   return (
-    <div className="min-h-screen bg-[#F1F3F9] pb-24">
+    <div className="min-h-screen bg-[#E6E9F6] pb-24">
       <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center justify-between">
         <button onClick={goBack} aria-label="Back" className="text-[#CBD5E1] hover:text-white"><ArrowLeft size={22} /></button>
         <h1 className="text-white font-bold text-[15px]">Edit Profile</h1>

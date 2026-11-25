@@ -833,7 +833,6 @@ function PostCard({
   };
 
   const getReactionEmoji = () => REACTIONS.find(r => r.type === reaction)?.emoji || null;
-  const getReactionColor = () => REACTIONS.find(r => r.type === reaction)?.color || '#64748B';
 
   if (isPostHidden(post.id) || isUserMuted(post.user_id)) return null;
 
@@ -904,7 +903,8 @@ function PostCard({
       )}
 
       <div
-        className="bg-white border border-[#E2E8F0] rounded-2xl mx-3 mb-3 shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:border-[#CBD5E1] transition-colors cursor-pointer relative"
+        className="border border-[#CFC8F0] rounded-2xl mx-3 mb-3 shadow-[0_2px_10px_rgba(17,21,46,0.10)] hover:border-[#B4A9EA] transition-colors cursor-pointer relative"
+        style={{ background: 'linear-gradient(180deg, #F1EDFF 0%, #FFFFFF 40%)' }}
         onClick={() => navigate('/post/' + post.id)}
       >
         {post.is_pinned && (
@@ -1007,100 +1007,90 @@ function PostCard({
               </p>
             )}
 
-            <div className="flex items-center flex-wrap gap-1.5 mt-2.5 pt-2.5 border-t border-[#EEF1F8]" onClick={e => e.stopPropagation()}>
+          </div>
+        </div>
 
-              <button onClick={() => setCommentsOpen(true)}
-                aria-label="Comment"
-                className="flex items-center gap-1.5 text-[#0284C7] bg-[#F0F9FF] border border-[#BAE6FD] px-2.5 py-1.5 rounded-xl active:scale-95 transition-all disabled:opacity-50"
-                disabled={post.comments_disabled}>
-                <MessageCircle size={17} />
-                {(post.comments_count||0) > 0 && <span className="text-[13px] font-semibold">{formatNumber(post.comments_count)}</span>}
+        {/* One Chats-blue action card: comment · repost · like · views · save · share, all on one line */}
+        <div className="px-3 pb-3" onClick={e => e.stopPropagation()}>
+          <div className="flex items-center justify-between gap-1 rounded-2xl bg-[#0284C7] px-2 shadow-[0_2px_8px_rgba(2,132,199,0.30)]">
+            <button onClick={() => setCommentsOpen(true)}
+              aria-label="Comment"
+              className="flex items-center gap-1.5 text-white px-2 py-2.5 active:opacity-70 disabled:opacity-50"
+              disabled={post.comments_disabled}>
+              <MessageCircle size={19} />
+              {(post.comments_count||0) > 0 && <span className="text-[13px] font-semibold">{formatNumber(post.comments_count)}</span>}
+            </button>
+
+            <div className="relative">
+              {showRepostMenu && (
+                <div className="absolute bottom-11 left-0 bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden z-30 shadow-2xl" style={{ minWidth:180 }}>
+                  <button onClick={handleDirectRepost}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F8FAFC] text-sm border-b border-[#E2E8F0]"
+                    style={{ color: reposted ? '#10B981':'#111827' }}>
+                    <Repeat2 size={16} style={{ color: reposted?'#10B981':'#64748B' }} />
+                    {reposted ? 'Undo Repost' : 'Repost'}
+                  </button>
+                  <button onClick={() => { setShowRepostMenu(false); setShowQuoteModal(true); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F8FAFC] text-[#111827] text-sm">
+                    <Quote size={16} className="text-[#64748B]" /> Quote
+                  </button>
+                </div>
+              )}
+              <button onClick={e => { e.stopPropagation(); setShowRepostMenu(!showRepostMenu); setShowReactionPicker(false); }}
+                aria-label="Repost"
+                className={'flex items-center gap-1.5 px-2 py-2.5 active:opacity-70 ' + (reposted ? 'text-[#BBF7D0]' : 'text-white')}>
+                <Repeat2 size={19} strokeWidth={reposted ? 2.8 : 2} />
+                {repostCount > 0 && <span className="text-[13px] font-semibold">{formatNumber(repostCount)}</span>}
               </button>
-
-              <div className="relative">
-                {showRepostMenu && (
-                  <div className="absolute bottom-10 left-0 bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden z-30 shadow-2xl" style={{ minWidth:180 }}>
-                    <button onClick={handleDirectRepost}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F8FAFC] text-sm border-b border-[#E2E8F0]"
-                      style={{ color: reposted ? '#10B981':'#111827' }}>
-                      <Repeat2 size={16} style={{ color: reposted?'#10B981':'#64748B' }} />
-                      {reposted ? 'Undo Repost' : 'Repost'}
-                    </button>
-                    <button onClick={() => { setShowRepostMenu(false); setShowQuoteModal(true); }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F8FAFC] text-[#111827] text-sm">
-                      <Quote size={16} className="text-[#64748B]" /> Quote
-                    </button>
-                  </div>
-                )}
-                <button onClick={e => { e.stopPropagation(); setShowRepostMenu(!showRepostMenu); setShowReactionPicker(false); }}
-                  aria-label="Repost"
-                  className={'flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border active:scale-95 transition-all ' +
-                    (reposted ? 'text-white bg-[#059669] border-[#059669]' : 'text-[#059669] bg-[#ECFDF5] border-[#A7F3D0]')}>
-                  <Repeat2 size={17} />
-                  {repostCount > 0 && <span className="text-[13px] font-semibold">{formatNumber(repostCount)}</span>}
-                </button>
-              </div>
-
-              <div className="relative">
-                {showReactionPicker && (
-                  <div className="absolute bottom-10 left-0 bg-white border border-[#E2E8F0] rounded-full px-2 py-2 flex gap-1 z-30 shadow-2xl" style={{ minWidth:'max-content' }}>
-                    {REACTIONS.map(r => (
-                      <button key={r.type} onClick={() => handleLike(r.type)}
-                        className="text-lg hover:scale-125 transition-transform w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#F1F5F9]">
-                        {r.emoji}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <button
-                  onClick={e => { e.stopPropagation(); if (pressed.current) { pressed.current = false; return; } handleLike(reaction||'like'); }}
-                  onMouseDown={() => { pressed.current = false; longPressTimer.current = setTimeout(() => { pressed.current = true; setShowReactionPicker(true); }, 500); }}
-                  onMouseUp={() => clearTimeout(longPressTimer.current)}
-                  onMouseLeave={() => clearTimeout(longPressTimer.current)}
-                  onTouchStart={e => { e.stopPropagation(); pressed.current = false; longPressTimer.current = setTimeout(() => { pressed.current = true; navigator.vibrate?.(10); setShowReactionPicker(true); }, 450); }}
-                  onTouchEnd={() => clearTimeout(longPressTimer.current)}
-                  onTouchMove={() => clearTimeout(longPressTimer.current)}
-                  onContextMenu={e => e.preventDefault()}
-                  aria-label="Like"
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-[#FECDD3] bg-[#FFF1F2] active:scale-95 transition-all"
-                  style={{ color: liked ? getReactionColor() : '#E11D48' }}>
-                  {liked && reaction
-                    ? <span className="text-base leading-none">{getReactionEmoji()}</span>
-                    : <Heart size={17} fill={liked ? 'currentColor' : 'none'} />
-                  }
-                  {likesCount > 0 && (
-                    <span className="text-[13px] font-semibold" style={{ color: liked ? getReactionColor() : '#E11D48' }}>
-                      {formatNumber(likesCount)}
-                    </span>
-                  )}
-                </button>
-              </div>
-
-              {/* Views — previously had no onClick at all (a dead
-                  interactive-looking button). Now opens the post's
-                  insights tab, same destination as the owner's
-                  Options → View Insights entry. */}
-              <button
-                onClick={isOwner ? handleViewInsights : undefined}
-                aria-label="View count"
-                className={'flex items-center gap-1.5 px-2 py-1.5 rounded-full transition-all ' +
-                  (isOwner ? 'text-[#64748B] hover:text-[#6D28D9] hover:bg-[#7C3AED]/10 cursor-pointer' : 'text-[#64748B] cursor-default')}>
-                <BarChart2 size={17} />
-                {(post.views_count||0) > 0 && <span className="text-[13px]">{formatNumber(post.views_count)}</span>}
-              </button>
-
-              <div className="flex items-center gap-1.5 ml-auto">
-                <button onClick={handleSave} aria-label={saved ? 'Remove from saved' : 'Save post'}
-                  className={'px-2 py-1.5 rounded-xl border active:scale-95 transition-all ' +
-                    (saved ? 'text-[#D97706] bg-[#FFFBEB] border-[#FDE68A]' : 'text-[#64748B] bg-[#F8FAFC] border-[#E2E8F0]')}>
-                  <Bookmark size={17} fill={saved ? 'currentColor' : 'none'} />
-                </button>
-                <button onClick={handleShare} aria-label="Share post"
-                  className="text-[#7C3AED] bg-[#F5F3FF] border border-[#DDD6FE] px-2 py-1.5 rounded-xl active:scale-95 transition-all">
-                  <Share2 size={17} />
-                </button>
-              </div>
             </div>
+
+            <div className="relative">
+              {showReactionPicker && (
+                <div className="absolute bottom-11 left-0 bg-white border border-[#E2E8F0] rounded-full px-2 py-2 flex gap-1 z-30 shadow-2xl" style={{ minWidth:'max-content' }}>
+                  {REACTIONS.map(r => (
+                    <button key={r.type} onClick={() => handleLike(r.type)}
+                      className="text-lg hover:scale-125 transition-transform w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#F1F5F9]">
+                      {r.emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button
+                onClick={e => { e.stopPropagation(); if (pressed.current) { pressed.current = false; return; } handleLike(reaction||'like'); }}
+                onMouseDown={() => { pressed.current = false; longPressTimer.current = setTimeout(() => { pressed.current = true; setShowReactionPicker(true); }, 500); }}
+                onMouseUp={() => clearTimeout(longPressTimer.current)}
+                onMouseLeave={() => clearTimeout(longPressTimer.current)}
+                onTouchStart={e => { e.stopPropagation(); pressed.current = false; longPressTimer.current = setTimeout(() => { pressed.current = true; navigator.vibrate?.(10); setShowReactionPicker(true); }, 450); }}
+                onTouchEnd={() => clearTimeout(longPressTimer.current)}
+                onTouchMove={() => clearTimeout(longPressTimer.current)}
+                onContextMenu={e => e.preventDefault()}
+                aria-label="Like"
+                className="flex items-center gap-1.5 px-2 py-2.5 text-white active:opacity-70">
+                {liked && reaction
+                  ? <span className="text-lg leading-none">{getReactionEmoji()}</span>
+                  : <Heart size={19} fill={liked ? 'currentColor' : 'none'} />
+                }
+                {likesCount > 0 && <span className="text-[13px] font-semibold">{formatNumber(likesCount)}</span>}
+              </button>
+            </div>
+
+            {/* Views — opens the post's insights for the owner */}
+            <button
+              onClick={isOwner ? handleViewInsights : undefined}
+              aria-label="View count"
+              className={'flex items-center gap-1.5 px-2 py-2.5 text-white ' + (isOwner ? 'cursor-pointer active:opacity-70' : 'cursor-default')}>
+              <BarChart2 size={19} />
+              {(post.views_count||0) > 0 && <span className="text-[13px] font-semibold">{formatNumber(post.views_count)}</span>}
+            </button>
+
+            <button onClick={handleSave} aria-label={saved ? 'Remove from saved' : 'Save post'}
+              className="px-2 py-2.5 text-white active:opacity-70">
+              <Bookmark size={19} fill={saved ? 'currentColor' : 'none'} />
+            </button>
+            <button onClick={handleShare} aria-label="Share post"
+              className="px-2 py-2.5 text-white active:opacity-70">
+              <Share2 size={19} />
+            </button>
           </div>
         </div>
       </div>

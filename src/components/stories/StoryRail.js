@@ -1,5 +1,6 @@
 // src/components/stories/StoryRail.js — the status strip on the home feed
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Plus, Camera } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
@@ -11,7 +12,7 @@ import { fetchStoryFeed, getCachedFeed, groupStories, patchCachedFeed } from '..
 function Ring({ group, own, onOpen, onAdd }) {
   const has = group?.stories?.length > 0;
   const fresh = !own && group?.hasUnviewed;
-  const name = own ? 'Your moment' : group.user.display_name?.split(' ')[0] || '';
+  const name = own ? 'You' : group.user.display_name?.split(' ')[0] || '';
 
   return (
     <div className="flex flex-col items-center gap-1.5 flex-shrink-0" style={{ width: 68 }}>
@@ -23,7 +24,7 @@ function Ring({ group, own, onOpen, onAdd }) {
             border: !has ? '2px dashed #CBD5E1' : 'none',
             padding: !has ? 2 : 3,
           }}>
-          <div className="rounded-full p-[2px] bg-white">
+          <div className="rounded-full p-[2px] bg-[#F5F3FF]">
             <Avatar url={own ? group.user?.avatar_url : group.user.avatar_url} name={own ? group.user?.display_name : group.user.display_name} size={14} />
           </div>
         </button>
@@ -108,7 +109,7 @@ export default function StoryRail() {
         <button
           onClick={() => setComposer(true)}
           aria-label="Create a moment"
-          className="group block w-full rounded-[20px] p-[2px] text-left active:scale-[0.99] transition-transform shadow-[0_4px_14px_rgba(124,58,237,0.18)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED] focus-visible:ring-offset-2 focus-visible:ring-offset-[#EEF1F8]"
+          className="group block w-full rounded-[20px] p-[2px] text-left active:scale-[0.99] transition-transform shadow-[0_4px_14px_rgba(124,58,237,0.18)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E2E6F5]"
           style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #C026D3 50%, #E11D48 100%)' }}
         >
           <span className="relative flex items-center gap-3.5 rounded-[18px] px-3.5 py-3 overflow-hidden" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF1F2 100%)' }}>
@@ -132,7 +133,7 @@ export default function StoryRail() {
       </div>
 
       {/* Status rail: your moment first, then your friends' moments */}
-      <div className="mx-3 mt-3 bg-white border border-[#E2E8F0] rounded-2xl">
+      <div className="mx-3 mt-3 border border-[#DDD6FE] rounded-2xl shadow-[0_2px_8px_rgba(17,21,46,0.08)]" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF1F2 100%)' }}>
         <div className="flex gap-2 overflow-x-auto px-2.5 pt-2.5 pb-2" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
           <Ring group={ownGroup} own onOpen={() => (own ? open(own) : setComposer(true))} onAdd={() => setComposer(true)} />
           {loading
@@ -141,7 +142,7 @@ export default function StoryRail() {
         </div>
       </div>
 
-      {viewer && (
+      {viewer && createPortal(
         <StoryViewer
           groups={viewer.groups}
           startGroup={viewer.start}
@@ -149,9 +150,10 @@ export default function StoryRail() {
           onViewed={markViewed}
           onDeleted={removeStory}
           onAdd={() => setComposer(true)}
-        />
+        />,
+        document.body
       )}
-      {composer && <StoryComposer onClose={() => setComposer(false)} onCreated={load} />}
+      {composer && createPortal(<StoryComposer onClose={() => setComposer(false)} onCreated={load} />, document.body)}
     </>
   );
 }

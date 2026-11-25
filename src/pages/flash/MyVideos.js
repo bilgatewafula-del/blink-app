@@ -107,7 +107,7 @@ export default function MyVideos() {
   const list = tab === 'posted' ? mine : saved;
 
   return (
-    <div className="min-h-screen bg-[#F1F3F9] pb-24">
+    <div className="min-h-screen bg-[#E6E9F6] pb-24">
       <div className="sticky top-0 z-20 bg-[#11152E] px-2 py-2 flex items-center gap-1">
         <button onClick={() => goBack(navigate, '/flash')} aria-label="Back" className="w-11 h-11 flex items-center justify-center text-white"><ArrowLeft size={22} /></button>
         <p className="flex-1 text-white font-extrabold text-[18px]">My videos</p>

@@ -67,11 +67,11 @@ export default function CompleteProfile() {
   };
 
   if (loading || !user || (!profileChecked && !profile)) {
-    return <div className="min-h-screen bg-[#F1F3F9] flex items-center justify-center text-[#6D28D9]"><Spinner size={28} /></div>;
+    return <div className="min-h-screen bg-[#E6E9F6] flex items-center justify-center text-[#6D28D9]"><Spinner size={28} /></div>;
   }
 
   return (
-    <div className="min-h-screen bg-[#F1F3F9] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
+    <div className="min-h-screen bg-[#E6E9F6] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
       <AuthBanner title="Finish your profile" subtitle="One last step. Pick how people will find you." />
       <div className="h-5" />
       <form onSubmit={submit} className="flex flex-col gap-3 px-5">

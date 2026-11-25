@@ -58,7 +58,7 @@ const HashtagFeed = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F1F3F9] pb-24">
+    <div className="min-h-screen bg-[#E6E9F6] pb-24">
       {/* Top bar */}
       <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3">
         <div className="flex items-center gap-3 mb-3">

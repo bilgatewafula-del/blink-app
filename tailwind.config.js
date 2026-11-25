@@ -27,7 +27,7 @@ module.exports = {
         // future file I touch will prefer these over raw hex so the
         // palette stays centralized in one place.
         surface: {
-          DEFAULT: '#F1F3F9',   // page background
+          DEFAULT: '#E6E9F6',   // page background
           raised:  '#FFFFFF',   // sheets, drawer, modals
           card:    '#F8FAFC',   // secondary background
           input:   '#F1F5F9',   // inputs
@@ -35,7 +35,7 @@ module.exports = {
         blink: {
           navy: '#11152E', violet: '#7C3AED', rose: '#E11D48', emerald: '#059669', blue: '#0284C7', amber: '#D97706',
           ink: '#111827', slate: '#64748B', line: '#E2E8F0', orange: '#7C3AED',
-          bg: '#F1F3F9', feed: '#EEF1F8', profile: '#F2EFFA', chats: '#EDF3FA', plum: '#28134F',
+          bg: '#E6E9F6', feed: '#E2E6F5', profile: '#E7E0F8', chats: '#DCE8F6', plum: '#28134F',
         },
         border: {
           subtle: '#E2E8F0',

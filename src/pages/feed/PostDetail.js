@@ -567,13 +567,13 @@ export default function PostDetail() {
   const getReactionColor = () => REACTIONS.find(r => r.type === reaction)?.color || '#64748B';
 
   if (loading) return (
-    <div className="min-h-screen bg-[#F1F3F9] flex items-center justify-center">
+    <div className="min-h-screen bg-[#E6E9F6] flex items-center justify-center">
       <div className="w-7 h-7 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
   if (fetchError === 'not_found' || !post) return (
-    <div className="min-h-screen bg-[#F1F3F9] flex flex-col items-center justify-center gap-3 px-6">
+    <div className="min-h-screen bg-[#E6E9F6] flex flex-col items-center justify-center gap-3 px-6">
       <p className="text-5xl">🔍</p>
       <p className="text-[#111827] font-bold text-lg">Post not found</p>
       <p className="text-[#64748B] text-sm text-center">This post may have been deleted or is unavailable.</p>
@@ -582,7 +582,7 @@ export default function PostDetail() {
   );
 
   if (fetchError) return (
-    <div className="min-h-screen bg-[#F1F3F9] flex flex-col items-center justify-center gap-3 px-6">
+    <div className="min-h-screen bg-[#E6E9F6] flex flex-col items-center justify-center gap-3 px-6">
       <p className="text-5xl">⚠️</p>
       <p className="text-[#111827] font-bold text-lg">Could not load post</p>
       <p className="text-[#64748B] text-sm text-center">{fetchError}</p>
@@ -595,7 +595,7 @@ export default function PostDetail() {
   const isOwner  = (post.users?.id || post.user_id) === user?.id;
 
   return (
-    <div className="min-h-screen bg-[#F1F3F9] pb-32">
+    <div className="min-h-screen bg-[#E6E9F6] pb-32">
       {actionToast && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 bg-[#E2E8F0] backdrop-blur border border-[#E2E8F0] rounded-full px-5 py-2.5 pointer-events-none">
           <p className="text-[#111827] text-sm font-semibold whitespace-nowrap">{actionToast}</p>

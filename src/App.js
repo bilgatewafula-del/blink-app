@@ -50,7 +50,7 @@ const AboutPage    = lazy(() => import('./pages/about/AboutPage'));
 function ComingSoon({ title }) {
   const nav = typeof window !== 'undefined' ? null : null;
   return (
-    <div className="min-h-screen bg-[#F1F3F9] flex flex-col items-center justify-center gap-4 px-6">
+    <div className="min-h-screen bg-[#E6E9F6] flex flex-col items-center justify-center gap-4 px-6">
       <p className="text-5xl">🚧</p>
       <p className="text-[#111827] font-bold text-xl">{title}</p>
       <p className="text-[#64748B] text-sm text-center">Coming soon!</p>
@@ -66,7 +66,7 @@ const VibesPage  = () => <ComingSoon title="Vibes"        />;
 /* ── Loaders ── */
 function PageLoader() {
   return (
-    <div className="min-h-screen bg-[#F1F3F9] flex items-center justify-center">
+    <div className="min-h-screen bg-[#E6E9F6] flex items-center justify-center">
       <div className="w-6 h-6 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
     </div>
   );

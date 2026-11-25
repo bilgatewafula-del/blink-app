@@ -41,7 +41,7 @@ export default function CoinsPage() {
   const balance    = profile?.coins_balance || 0;
 
   return (
-    <div className="min-h-screen bg-[#F1F3F9] pb-24">
+    <div className="min-h-screen bg-[#E6E9F6] pb-24">
 
       {/* Header */}
       <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center gap-3">

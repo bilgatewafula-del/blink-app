@@ -181,7 +181,7 @@ export default function SignUp() {
 
   if (step === 3 && pending) {
     return (
-      <div className="min-h-screen bg-[#F1F3F9]" style={{ maxWidth: 480, margin: '0 auto' }}>
+      <div className="min-h-screen bg-[#E6E9F6]" style={{ maxWidth: 480, margin: '0 auto' }}>
         <VerifyCode
           kind={pending.kind}
           target={pending.kind === 'email' ? maskIdentifier(pending.target) : pending.target}
@@ -201,7 +201,7 @@ export default function SignUp() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F1F3F9] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
+    <div className="min-h-screen bg-[#E6E9F6] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
       <div className="flex items-center gap-3 px-4 pt-4 pb-4 bg-[#11152E] rounded-b-[24px]" style={{ paddingTop: 'max(16px, env(safe-area-inset-top))' }}>
         <button onClick={() => (step === 2 ? setStep(1) : navigate('/login'))} aria-label="Back"
           className="w-10 h-10 rounded-xl hover:bg-white/10 flex items-center justify-center text-white transition-colors">

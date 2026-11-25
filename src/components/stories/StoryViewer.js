@@ -247,7 +247,8 @@ export default function StoryViewer({ groups, startGroup = 0, onClose, onViewed,
   const myEmoji = mine[story.id];
 
   return (
-    <div className="fixed left-0 right-0 z-[80] bg-black flex justify-center" style={{ top: vp.top, height: vp.h }}>
+    <div className="fixed left-0 right-0 z-[80] bg-black flex justify-center" style={{ top: vp.top, height: vp.h }}
+      onClick={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
       <div className="relative w-full max-w-[460px] h-full flex flex-col bg-black overflow-hidden">
         {/* progress + header */}
         <div className="absolute top-0 left-0 right-0 z-20 pt-2 px-2 bg-gradient-to-b from-black/60 to-transparent pb-8 pointer-events-none">
@@ -303,7 +304,7 @@ export default function StoryViewer({ groups, startGroup = 0, onClose, onViewed,
         {/* footer */}
         {isOwner ? (
           <div className="flex-shrink-0 bg-black flex items-center justify-between px-4 py-3" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
-            <button onClick={() => setViewersOpen(true)} className="flex items-center gap-2 text-white min-w-0">
+            <button type="button" onClick={(e) => { e.stopPropagation(); setViewersOpen(true); }} className="flex items-center gap-2 text-white min-w-0">
               <Eye size={19} />
               <span className="font-bold tabular-nums">{c.views}</span>
               <span className="text-white/60 text-[13px]">{c.views === 1 ? 'view' : 'views'}</span>
@@ -311,9 +312,9 @@ export default function StoryViewer({ groups, startGroup = 0, onClose, onViewed,
               <ChevronUp size={16} className="text-white/50" />
             </button>
             <div className="flex items-center gap-1">
-              <button onClick={() => setShareOpen(true)} aria-label="Share to chat" className="w-10 h-10 rounded-full flex items-center justify-center text-white active:bg-white/10"><Share2 size={20} /></button>
-              <button onClick={() => { onClose(); onAdd?.(); }} aria-label="Add status" className="w-10 h-10 rounded-full flex items-center justify-center text-white active:bg-white/10"><Plus size={22} /></button>
-              <button onClick={() => setConfirmDel(true)} aria-label="Delete status" className="w-10 h-10 rounded-full flex items-center justify-center text-red-400 active:bg-white/10"><Trash2 size={20} /></button>
+              <button type="button" onClick={(e) => { e.stopPropagation(); setShareOpen(true); }} aria-label="Share to chat" className="w-11 h-11 rounded-full flex items-center justify-center text-white active:bg-white/10"><Share2 size={20} /></button>
+              <button type="button" onClick={(e) => { e.stopPropagation(); onClose(); setTimeout(() => onAdd?.(), 60); }} aria-label="Add status" className="w-11 h-11 rounded-full flex items-center justify-center text-white active:bg-white/10"><Plus size={22} /></button>
+              <button type="button" onClick={(e) => { e.stopPropagation(); setConfirmDel(true); }} aria-label="Delete status" className="w-11 h-11 rounded-full flex items-center justify-center text-red-400 active:bg-white/10"><Trash2 size={20} /></button>
             </div>
           </div>
         ) : (

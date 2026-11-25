@@ -75,7 +75,7 @@ export default function ForgotPassword() {
 
   if (sent) {
     return (
-      <div className="min-h-screen bg-[#F1F3F9]" style={{ maxWidth: 480, margin: '0 auto' }}>
+      <div className="min-h-screen bg-[#E6E9F6]" style={{ maxWidth: 480, margin: '0 auto' }}>
         <VerifyCode
           kind={sent.kind}
           target={sent.kind === 'email' ? maskIdentifier(sent.target) : sent.target}
@@ -102,7 +102,7 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F1F3F9] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
+    <div className="min-h-screen bg-[#E6E9F6] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
       <AuthBanner onBack={() => navigate('/login')} title="Reset your password" subtitle="Enter the email or phone number you signed up with and we will send you a code." />
       <div className="h-5" />
 

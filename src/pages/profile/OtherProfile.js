@@ -238,7 +238,7 @@ const OtherProfile = () => {
   if (loading) return <ProfileSkeleton />;
 
   if (!profile) return (
-    <div className="min-h-screen bg-[#F1F3F9] flex flex-col items-center justify-center gap-4">
+    <div className="min-h-screen bg-[#E6E9F6] flex flex-col items-center justify-center gap-4">
       <p className="text-5xl">👤</p>
       <p className="text-[#111827] font-bold text-xl">User not found</p>
       <button onClick={() => goBack(navigate, '/')} className="text-[#6D28D9] text-sm">Go back</button>
@@ -250,7 +250,7 @@ const OtherProfile = () => {
 
   return (
     <SwipeBack>
-      <div className="min-h-screen bg-[#F1F3F9] pb-24">
+      <div className="min-h-screen bg-[#E6E9F6] pb-24">
         {/* Top bar */}
         <div className="sticky top-0 z-30 bg-[#11152E] px-4 py-3 flex items-center justify-between">
           <button onClick={() => goBack(navigate, '/')} className="text-[#CBD5E1] hover:text-white transition-colors">

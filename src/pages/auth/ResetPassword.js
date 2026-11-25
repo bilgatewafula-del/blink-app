@@ -41,12 +41,12 @@ export default function ResetPassword() {
   };
 
   if (loading || (!user && !done)) {
-    return <div className="min-h-screen bg-[#F1F3F9] flex items-center justify-center text-[#6D28D9]"><Spinner size={28} /></div>;
+    return <div className="min-h-screen bg-[#E6E9F6] flex items-center justify-center text-[#6D28D9]"><Spinner size={28} /></div>;
   }
 
   if (done) {
     return (
-      <div className="min-h-screen bg-[#F1F3F9] flex flex-col items-center justify-center px-6 text-center">
+      <div className="min-h-screen bg-[#E6E9F6] flex flex-col items-center justify-center px-6 text-center">
         <CheckCircle2 size={56} className="text-[#10B981] mb-4" />
         <h1 className="text-[#111827] font-black text-2xl">Password updated</h1>
         <p className="text-[#64748B] text-sm mt-2">Other devices have been signed out. Taking you in…</p>
@@ -55,7 +55,7 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F1F3F9] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
+    <div className="min-h-screen bg-[#E6E9F6] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
       <AuthBanner title="Choose a new password" subtitle="Use at least 8 characters with letters and numbers." />
       <div className="h-5" />
       <form onSubmit={submit} className="flex flex-col gap-3 px-5">

@@ -417,7 +417,7 @@ export default function CreatePost() {
   const totalMediaCount = mediaFiles.length + existingMedia.images.length + (existingMedia.video ? 1 : 0);
 
   return (
-    <div className="min-h-screen bg-[#F1F3F9] flex flex-col">
+    <div className="min-h-screen bg-[#E6E9F6] flex flex-col">
 
       <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3 flex items-center justify-between">
         <button onClick={() => goBack(navigate, '/')} aria-label="Back" className="text-[#CBD5E1] hover:text-white transition-colors">

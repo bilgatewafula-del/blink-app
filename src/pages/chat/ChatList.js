@@ -209,7 +209,7 @@ const ChatList = () => {
   const searching = q.length > 0;
 
   return (
-    <div className="min-h-screen bg-[#EDF3FA] pb-24">
+    <div className="min-h-screen bg-[#DCE8F6] pb-24">
       <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3" style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}>
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-white font-extrabold text-[26px] leading-none">Chats</h1>
