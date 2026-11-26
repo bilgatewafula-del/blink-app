@@ -11,31 +11,20 @@ const Shimmer = ({ className }) => (
 
 // Post card skeleton
 export const PostCardSkeleton = () => (
-  <div className="bg-white border-b border-[#E2E8F0] py-4 px-4">
-    {/* Header */}
-    <div className="flex items-center gap-3 mb-3">
-      <div className="w-10 h-10 rounded-full bg-[#F1F5F9] animate-pulse flex-shrink-0" />
+  <div className="bg-white border border-[#DDE1F0] rounded-[20px] mx-3 mb-3 p-4 animate-pulse">
+    <div className="flex items-center gap-3">
+      <div className="w-10 h-10 rounded-full bg-[#EEF0F8] flex-shrink-0" />
       <div className="flex-1 space-y-2">
-        <div className="h-3 bg-[#F1F5F9] rounded-full animate-pulse w-32" />
-        <div className="h-2.5 bg-[#F8FAFC] rounded-full animate-pulse w-24" />
+        <div className="h-3 w-32 rounded-full bg-[#EEF0F8]" />
+        <div className="h-2.5 w-20 rounded-full bg-[#F3F4FA]" />
       </div>
-      <div className="h-7 w-16 bg-[#F8FAFC] rounded-full animate-pulse" />
     </div>
-    {/* Caption lines */}
-    <div className="space-y-2 mb-3">
-      <div className="h-3 bg-[#F1F5F9] rounded-full animate-pulse w-full" />
-      <div className="h-3 bg-[#F1F5F9] rounded-full animate-pulse w-4/5" />
-      <div className="h-3 bg-[#F8FAFC] rounded-full animate-pulse w-2/3" />
+    <div className="mt-3 space-y-2">
+      <div className="h-3 w-full rounded-full bg-[#EEF0F8]" />
+      <div className="h-3 w-4/5 rounded-full bg-[#EEF0F8]" />
     </div>
-    {/* Image placeholder */}
-    <div className="aspect-square bg-[#F8FAFC] rounded-none animate-pulse mb-3" />
-    {/* Action bar */}
-    <div className="flex items-center gap-5 mt-2">
-      <div className="h-5 w-12 bg-[#F8FAFC] rounded-full animate-pulse" />
-      <div className="h-5 w-12 bg-[#F8FAFC] rounded-full animate-pulse" />
-      <div className="h-5 w-12 bg-[#F8FAFC] rounded-full animate-pulse" />
-      <div className="h-5 w-8 bg-[#F8FAFC] rounded-full animate-pulse" />
-    </div>
+    <div className="mt-3 h-40 rounded-2xl bg-[#F3F4FA]" />
+    <div className="mt-3 h-11 rounded-2xl bg-[#E4E8F5]" />
   </div>
 );
 

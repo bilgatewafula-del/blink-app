@@ -629,7 +629,7 @@ export default function PostDetail() {
                 <button onClick={handleDeletePost} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-500/10 text-red-600 text-sm"><Trash2 size={15} /> Delete Post</button>
               ) : (
                 <>
-                  <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/10 text-white text-sm"><Flag size={15} className="text-[#CBD5E1]" /> Report Post</button>
+                  <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F1F5F9] text-[#111827] text-sm"><Flag size={15} className="text-[#64748B]" /> Report Post</button>
                   <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-500/10 text-red-600 text-sm"><UserX size={15} /> Block User</button>
                 </>
               )}
@@ -653,7 +653,9 @@ export default function PostDetail() {
         </div>
 
         {post.caption && isColoredTextPost(post) && (
-          <TextPost text={post.caption} bg={post.bg_color} onHashtag={t => navigate('/hashtag/'+t)} onMention={u => navigate('/profile/'+u)} />
+          <div className="mb-3">
+            <TextPost text={post.caption} bg={post.bg_color} onHashtag={t => navigate('/hashtag/'+t)} onMention={u => navigate('/profile/'+u)} />
+          </div>
         )}
         {post.caption && !isColoredTextPost(post) && (
           <div className="mb-3">
@@ -674,7 +676,7 @@ export default function PostDetail() {
             </button>
             {post.video_duration && (
               <div className="absolute bottom-3 left-3 bg-black/60 rounded-full px-2.5 py-0.5">
-                <span className="text-[#111827] text-xs font-medium">{Math.floor(post.video_duration/60)}:{String(post.video_duration%60).padStart(2,'0')}</span>
+                <span className="text-white text-xs font-medium">{Math.floor(post.video_duration/60)}:{String(post.video_duration%60).padStart(2,'0')}</span>
               </div>
             )}
           </div>

@@ -49,22 +49,20 @@ function usePrefersReducedMotion() {
 
 function PostSkeleton() {
   return (
-    <div className="bg-white border border-[#E2E8F0] rounded-2xl mx-3 mb-3 px-4 py-3">
-      <div className="flex gap-3">
-        <div className="w-10 h-10 rounded-full skeleton flex-shrink-0" />
-        <div className="flex-1 space-y-2 pt-1">
-          <div className="flex gap-2">
-            <div className="h-3 skeleton rounded-full w-24" />
-            <div className="h-3 skeleton rounded-full w-16" />
-          </div>
-          <div className="h-3 skeleton rounded-full w-full" />
-          <div className="h-3 skeleton rounded-full w-4/5" />
-          <div className="h-3 skeleton rounded-full w-3/5" />
-          <div className="flex gap-6 mt-2">
-            {[1,2,3,4].map(i => <div key={i} className="h-3 skeleton rounded-full w-8" />)}
-          </div>
+    <div className="bg-white border border-[#DDE1F0] rounded-[20px] mx-3 mb-3 p-4 animate-pulse">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-[#EEF0F8] flex-shrink-0" />
+        <div className="flex-1 space-y-2">
+          <div className="h-3 w-32 rounded-full bg-[#EEF0F8]" />
+          <div className="h-2.5 w-20 rounded-full bg-[#F3F4FA]" />
         </div>
       </div>
+      <div className="mt-3 space-y-2">
+        <div className="h-3 w-full rounded-full bg-[#EEF0F8]" />
+        <div className="h-3 w-4/5 rounded-full bg-[#EEF0F8]" />
+      </div>
+      <div className="mt-3 h-40 rounded-2xl bg-[#F3F4FA]" />
+      <div className="mt-3 h-11 rounded-2xl bg-[#E4E8F5]" />
     </div>
   );
 }

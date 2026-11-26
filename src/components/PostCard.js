@@ -72,8 +72,37 @@ function RichCaption({ text, onHashtag, onMention }) {
 }
 
 /* ═══════════════════════════════════════════════
-   MEDIA GRID — now supports double-tap-to-like
+   MEDIA GRID — full card width, aspect-aware, double-tap to like
 ═══════════════════════════════════════════════ */
+const MIN_IMG_ASPECT = 0.8;   // 4:5 portrait is the tallest a feed image gets
+const MAX_IMG_ASPECT = 1.91;  // widest a feed image gets
+
+function Tile({ src, onTap, children, className = '' }) {
+  return (
+    <div className={'relative overflow-hidden bg-[#EEF0F8] cursor-pointer ' + className} onClick={onTap}>
+      <img src={feedImageUrl(src, 800)} alt="" loading="lazy" decoding="async"
+        className="absolute inset-0 w-full h-full object-cover" draggable={false} />
+      {children}
+    </div>
+  );
+}
+
+function SingleImage({ src, onTap }) {
+  // Frame follows the photo's real shape (clamped), so there are no dead
+  // bars around it and nothing gets awkwardly cropped.
+  const [aspect, setAspect] = useState(4 / 3);
+  return (
+    <div className="relative overflow-hidden bg-[#EEF0F8] cursor-pointer" style={{ aspectRatio: aspect }} onClick={onTap}>
+      <img src={feedImageUrl(src, 800)} alt="" loading="lazy" decoding="async" draggable={false}
+        onLoad={(e) => {
+          const { naturalWidth: w, naturalHeight: h } = e.currentTarget;
+          if (w && h) setAspect(Math.min(MAX_IMG_ASPECT, Math.max(MIN_IMG_ASPECT, w / h)));
+        }}
+        className="absolute inset-0 w-full h-full object-cover" />
+    </div>
+  );
+}
+
 function MediaGrid({ images, onImageClick, onDoubleTapLike }) {
   const [burst, setBurst] = useState(false);
   const lastTapRef = useRef(0);
@@ -81,11 +110,10 @@ function MediaGrid({ images, onImageClick, onDoubleTapLike }) {
   if (!images?.length) return null;
   const n = images.length;
 
-  const handleTap = (e, idx) => {
+  const tap = (idx) => (e) => {
     e.stopPropagation();
     const now = Date.now();
     if (now - lastTapRef.current < 300) {
-      // double tap
       onDoubleTapLike?.();
       setBurst(true);
       setTimeout(() => setBurst(false), 700);
@@ -93,68 +121,49 @@ function MediaGrid({ images, onImageClick, onDoubleTapLike }) {
     } else {
       lastTapRef.current = now;
       setTimeout(() => {
-        // if no second tap arrived, treat as a normal single click
         if (Date.now() - lastTapRef.current >= 300) onImageClick?.(idx);
       }, 300);
     }
   };
 
-  const HeartBurst = () => burst ? (
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-      <Heart size={72} className="text-[#111827] drop-shadow-lg animate-heartBurst" fill="currentColor" />
-    </div>
-  ) : null;
+  const more = n > 4 ? n - 4 : 0;
+  const shown = images.slice(0, 4);
 
   return (
-    <div className="mb-2 overflow-hidden rounded-2xl border border-[#E2E8F0] relative">
-      {n === 1 && (
-        <div className="relative">
-          <img src={feedImageUrl(images[0], 800)} alt="" className="w-full object-cover cursor-pointer"
-            style={{ maxHeight:420 }} loading="lazy" decoding="async"
-            onClick={e => handleTap(e, 0)} />
-          <HeartBurst />
-        </div>
-      )}
+    <div className="relative overflow-hidden rounded-2xl border border-[#E2E6F3]">
+      {n === 1 && <SingleImage src={images[0]} onTap={tap(0)} />}
+
       {n === 2 && (
-        <div className="grid grid-cols-2 gap-[2px] relative">
-          {images.map((img,i) => (
-            <img key={i} src={feedImageUrl(img, 800)} alt="" className="w-full object-cover cursor-pointer"
-              style={{ aspectRatio:'1/1' }} loading="lazy" decoding="async"
-              onClick={e => handleTap(e, i)} />
-          ))}
-          <HeartBurst />
+        <div className="grid grid-cols-2 gap-[2px]" style={{ aspectRatio: '4/3' }}>
+          {shown.map((img, i) => <Tile key={i} src={img} onTap={tap(i)} />)}
         </div>
       )}
+
       {n === 3 && (
-        <div className="grid gap-[2px] relative" style={{ gridTemplateColumns:'1fr 1fr', gridTemplateRows:'1fr 1fr' }}>
-          <img src={feedImageUrl(images[0], 800)} alt="" className="row-span-2 w-full h-full object-cover cursor-pointer"
-            style={{ aspectRatio:'1/2' }} loading="lazy" decoding="async"
-            onClick={e => handleTap(e, 0)} />
-          <img src={feedImageUrl(images[1], 800)} alt="" className="w-full object-cover cursor-pointer"
-            style={{ aspectRatio:'1/1' }} loading="lazy" decoding="async"
-            onClick={e => handleTap(e, 1)} />
-          <img src={feedImageUrl(images[2], 800)} alt="" className="w-full object-cover cursor-pointer"
-            style={{ aspectRatio:'1/1' }} loading="lazy" decoding="async"
-            onClick={e => handleTap(e, 2)} />
-          <HeartBurst />
+        <div className="grid grid-cols-2 grid-rows-2 gap-[2px]" style={{ aspectRatio: '4/3' }}>
+          <Tile src={images[0]} onTap={tap(0)} className="row-span-2" />
+          <Tile src={images[1]} onTap={tap(1)} />
+          <Tile src={images[2]} onTap={tap(2)} />
         </div>
       )}
+
       {n >= 4 && (
-        <div className="grid grid-cols-2 gap-[2px] relative">
-          {images.slice(0,4).map((img,i) => (
-            <div key={i} className="relative">
-              <img src={feedImageUrl(img, 800)} alt="" className="w-full object-cover cursor-pointer"
-                style={{ aspectRatio:'1/1' }} loading="lazy" decoding="async"
-                onClick={e => handleTap(e, i)} />
-              {i === 3 && n > 4 && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer"
-                  onClick={e => { e.stopPropagation(); onImageClick?.(3); }}>
-                  <span className="text-[#111827] font-bold text-2xl">+{n-4}</span>
+        <div className="grid grid-cols-2 grid-rows-2 gap-[2px]" style={{ aspectRatio: '4/3' }}>
+          {shown.map((img, i) => (
+            <Tile key={i} src={img} onTap={tap(i)}>
+              {i === 3 && more > 0 && (
+                <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+                  <span className="text-white font-bold text-2xl">+{more}</span>
                 </div>
               )}
-            </div>
+            </Tile>
           ))}
-          <HeartBurst />
+        </div>
+      )}
+
+      {burst && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <Heart size={72} className="text-white drop-shadow-lg animate-heartBurst" fill="currentColor" />
         </div>
       )}
     </div>
@@ -273,7 +282,7 @@ function VideoPlayer({ src, poster, duration }) {
   );
 
   return (
-    <div ref={containerRef} className="relative rounded-2xl overflow-hidden bg-black mb-2 border border-[#E2E8F0]"
+    <div ref={containerRef} className="relative rounded-2xl overflow-hidden bg-black border border-[#E2E8F0]"
       style={{ aspectRatio: aspect, maxHeight: '600px' }}>
       <video
         ref={videoRef}
@@ -295,7 +304,7 @@ function VideoPlayer({ src, poster, duration }) {
       <div className="absolute inset-0 flex items-center justify-center cursor-pointer" onClick={toggle}>
         {buffering && (
           <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
-            <div className="w-6 h-6 border-2 border-[#E2E8F0] border-t-white rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           </div>
         )}
         {!playing && !buffering && (
@@ -307,7 +316,7 @@ function VideoPlayer({ src, poster, duration }) {
 
       <div className="absolute bottom-0 left-0 right-0 px-3 pb-2 pt-4"
         style={{ background:'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)' }}>
-        <div className="w-full h-[3px] bg-[#E2E8F0] rounded-full mb-2 cursor-pointer"
+        <div className="w-full h-[3px] bg-white/30 rounded-full mb-2 cursor-pointer"
           onClick={e => {
             e.stopPropagation();
             const v = videoRef.current;
@@ -316,11 +325,11 @@ function VideoPlayer({ src, poster, duration }) {
             const pct  = (e.clientX - rect.left) / rect.width;
             v.currentTime = pct * v.duration;
           }}>
-          <div className="h-full bg-[#F8FAFC] rounded-full transition-all" style={{ width: progress + '%' }} />
+          <div className="h-full bg-white rounded-full transition-all" style={{ width: progress + '%' }} />
         </div>
         <div className="flex items-center justify-between">
           {duration && (
-            <span className="text-[#111827] text-[11px] font-medium">{fmtDur(duration)}</span>
+            <span className="text-white text-[11px] font-medium">{fmtDur(duration)}</span>
           )}
           <button
             onClick={e => { e.stopPropagation(); setMuted(m => !m); }}
@@ -342,7 +351,7 @@ function QuotedPost({ quotedPost, navigate }) {
   const a    = quotedPost.users;
   const imgs = quotedPost.media_urls || [];
   return (
-    <div className="border border-[#E2E8F0] rounded-2xl p-3 mb-2 bg-[#F8FAFC] cursor-pointer hover:bg-[#F1F5F9] transition-colors"
+    <div className="border border-[#E2E6F3] rounded-2xl p-3 bg-[#F8F9FD] cursor-pointer active:bg-[#F1F3FA] transition-colors"
       onClick={e => { e.stopPropagation(); navigate('/post/' + quotedPost.id); }}>
       <div className="flex items-center gap-1.5 mb-1 flex-wrap">
         {a?.avatar_url
@@ -357,8 +366,8 @@ function QuotedPost({ quotedPost, navigate }) {
       {quotedPost.caption && <p className="text-[#64748B] text-[13px] leading-snug line-clamp-3 mb-1">{quotedPost.caption}</p>}
       {imgs.length > 0 && <img src={imgs[0]} alt="" className="w-full object-cover rounded-xl" style={{ maxHeight:160 }} loading="lazy" />}
       {quotedPost.video_url && !imgs.length && (
-        <div className="w-full bg-black/40 rounded-xl flex items-center justify-center gap-2 py-4">
-          <Play size={18} color="white" fill="white" /><span className="text-[#111827] text-xs">Video</span>
+        <div className="w-full bg-[#11152E] rounded-xl flex items-center justify-center gap-2 py-4">
+          <Play size={18} color="white" fill="white" /><span className="text-white text-xs font-medium">Video</span>
         </div>
       )}
     </div>
@@ -609,9 +618,9 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
               <button onClick={confirm.fn} disabled={!!busy}
                 className="flex-1 py-3 rounded-2xl font-bold text-sm text-white bg-red-500 hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5">
                 {busy === 'delete'
-                  ? <><div className="w-4 h-4 border-2 border-[#E2E8F0] border-t-white rounded-full animate-spin" />Deleting...</>
+                  ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Deleting...</>
                   : busy === 'block'
-                    ? <><div className="w-4 h-4 border-2 border-[#E2E8F0] border-t-white rounded-full animate-spin" />Blocking...</>
+                    ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Blocking...</>
                     : confirm.fn === handleDelete ? '🗑️ Delete' : '🚫 Block'
                 }
               </button>
@@ -644,7 +653,7 @@ function OptionsMenu({ post, isOwner, currentUserId, onClose, onActionDone }) {
                   >
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${item.danger ? 'bg-red-500/15' : 'bg-[#F1F5F9]'}`}>
                       {busy === item.key
-                        ? <div className="w-4 h-4 border-2 border-[#E2E8F0] border-t-white rounded-full animate-spin" />
+                        ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         : Icon ? <Icon size={16} className={item.danger ? 'text-red-600' : 'text-[#64748B]'} /> : null
                       }
                     </div>
@@ -903,94 +912,94 @@ function PostCard({
       )}
 
       <div
-        className="border border-[#CFC8F0] rounded-2xl mx-3 mb-3 shadow-[0_2px_10px_rgba(17,21,46,0.10)] hover:border-[#B4A9EA] transition-colors cursor-pointer relative"
-        style={{ background: 'linear-gradient(180deg, #F1EDFF 0%, #FFFFFF 40%)' }}
+        className="bg-white border border-[#DDE1F0] rounded-[20px] mx-3 mb-3 shadow-[0_1px_2px_rgba(17,21,46,0.04),0_6px_18px_rgba(17,21,46,0.07)] cursor-pointer relative"
         onClick={() => navigate('/post/' + post.id)}
       >
         {post.is_pinned && (
-          <div className="flex items-center gap-1.5 px-4 pt-2">
+          <div className="flex items-center gap-1.5 px-4 pt-3">
             <Pin size={12} className="text-[#64748B]" />
             <span className="text-[#64748B] text-xs font-medium">Pinned post</span>
           </div>
         )}
 
         {post.is_boosted && (
-          <div className="flex items-center gap-1.5 px-4 pt-2">
+          <div className="flex items-center gap-1.5 px-4 pt-3">
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#7C3AED]/15 text-[#6D28D9] border border-[#7C3AED]/25"><Zap size={10} className="inline -mt-0.5 mr-0.5" />Promoted</span>
           </div>
         )}
 
         {isRepost && !post.is_pinned && !post.is_boosted && (
-          <div className="flex items-center gap-1.5 px-4 pt-2.5 pb-0">
+          <div className="flex items-center gap-1.5 px-4 pt-3 pb-0">
             <Repeat2 size={13} className="text-[#64748B]" />
             <span className="text-[#64748B] text-xs font-medium">{author?.display_name} reposted</span>
           </div>
         )}
 
-        <div className="flex gap-3 px-4 pt-3 pb-2">
-          <div className="flex-shrink-0">
-            <button onClick={e => { e.stopPropagation(); navigate('/profile/' + author?.username); }}>
-              <Avatar url={author?.avatar_url} name={author?.display_name} size={10} />
-            </button>
-          </div>
+        {/* ── Header: avatar + identity on one row, so the body below can use the full card width ── */}
+        <div className="flex items-center gap-3 px-4 pt-3.5">
+          <button onClick={e => { e.stopPropagation(); navigate('/profile/' + author?.username); }}
+            aria-label={'Open ' + (author?.display_name || 'profile')} className="flex-shrink-0">
+            <Avatar url={author?.avatar_url} name={author?.display_name} size={10} />
+          </button>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-1 mb-0.5">
-              <div className="flex items-center gap-1 flex-wrap min-w-0">
-                <button onClick={e => { e.stopPropagation(); navigate('/profile/' + author?.username); }}
-                  className="text-[#111827] font-bold text-[14px] hover:underline truncate max-w-[120px]">
-                  {author?.display_name}
-                </button>
-                {author?.is_verified && <VerifiedBadge size={15} />}
-                {author?.role === 'blink'  && <Crown size={12} className="flex-shrink-0 text-[#B45309]" fill="#FFD700" fillOpacity={0.25} />}
-                {author?.role === 'admin'  && <ShieldCheck size={12} className="flex-shrink-0 text-[#6D28D9]" />}
-                <span className="text-[#64748B] text-[13px] truncate max-w-[80px]">@{author?.username}</span>
-                <span className="text-[#64748B] text-[13px]">·</span>
-                <span className="text-[#64748B] text-[12px] whitespace-nowrap">{formatTime(post.created_at)}</span>
-                {flagMap[author?.country] && <span className="text-[13px]">{flagMap[author?.country]}</span>}
-              </div>
-
-              <button
-                onClick={e => { e.stopPropagation(); setShowOptionsMenu(true); }}
-                aria-label="Post options"
-                className="text-[#64748B] hover:text-[#111827] p-1 rounded-full hover:bg-[#F1F5F9] transition-colors flex-shrink-0"
-              >
-                <MoreHorizontal size={16} />
+            <div className="flex items-center gap-1 min-w-0">
+              <button onClick={e => { e.stopPropagation(); navigate('/profile/' + author?.username); }}
+                className="text-[#111827] font-bold text-[15px] leading-tight hover:underline truncate min-w-0">
+                {author?.display_name}
               </button>
+              {author?.is_verified && <span className="flex-shrink-0 inline-flex"><VerifiedBadge size={15} /></span>}
+              {author?.role === 'blink' && <Crown size={13} className="flex-shrink-0 text-[#B45309]" fill="#FFD700" fillOpacity={0.25} />}
+              {author?.role === 'admin' && <ShieldCheck size={13} className="flex-shrink-0 text-[#6D28D9]" />}
             </div>
+            <div className="flex items-center gap-1.5 text-[12.5px] text-[#64748B] leading-tight mt-0.5 min-w-0">
+              <span className="truncate min-w-0">@{author?.username}</span>
+              <span className="flex-shrink-0">·</span>
+              <span className="whitespace-nowrap flex-shrink-0">{formatTime(post.created_at)}</span>
+              {flagMap[author?.country] && <span className="flex-shrink-0 text-[13px] leading-none">{flagMap[author?.country]}</span>}
+            </div>
+          </div>
 
-            {post.caption && !isRepost && isColoredTextPost(post) && (
-              <TextPost text={post.caption} bg={post.bg_color}
-                onHashtag={t => navigate('/hashtag/' + t)} onMention={u => navigate('/profile/' + u)} />
-            )}
-            {post.caption && !isRepost && !isColoredTextPost(post) && (
-              <div className="mb-2">
-                <RichCaption text={post.caption}
-                  onHashtag={t => { navigate('/hashtag/' + t); }}
-                  onMention={u => { navigate('/profile/' + u); }} />
-              </div>
-            )}
+          <button
+            onClick={e => { e.stopPropagation(); setShowOptionsMenu(true); }}
+            aria-label="Post options"
+            className="text-[#64748B] hover:text-[#111827] w-9 h-9 -mr-2 rounded-full hover:bg-[#F1F5F9] active:bg-[#E8EBF5] transition-colors flex-shrink-0 flex items-center justify-center"
+          >
+            <MoreHorizontal size={18} />
+          </button>
+        </div>
 
-            {post.caption && post.quoted_post_id && !post.is_repost && (
-              <div className="mb-2">
-                <RichCaption text={post.caption}
-                  onHashtag={t => navigate('/hashtag/' + t)}
-                  onMention={u => navigate('/profile/' + u)} />
-              </div>
-            )}
+        {/* ── Body: caption, quote, video, images — all aligned to the same left/right edges ── */}
+        <div className="px-4 pt-3 pb-3 flex flex-col gap-2.5 min-w-0">
+          {post.caption && !isRepost && isColoredTextPost(post) && (
+            <TextPost text={post.caption} bg={post.bg_color}
+              onHashtag={t => navigate('/hashtag/' + t)} onMention={u => navigate('/profile/' + u)} />
+          )}
+          {post.caption && !isRepost && !isColoredTextPost(post) && (
+            <RichCaption text={post.caption}
+              onHashtag={t => navigate('/hashtag/' + t)}
+              onMention={u => navigate('/profile/' + u)} />
+          )}
 
-            {post.quoted_post_id && quotedPost && (
-              <div onClick={e => e.stopPropagation()}>
-                <QuotedPost quotedPost={quotedPost} navigate={navigate} />
-              </div>
-            )}
+          {post.caption && post.quoted_post_id && !post.is_repost && (
+            <RichCaption text={post.caption}
+              onHashtag={t => navigate('/hashtag/' + t)}
+              onMention={u => navigate('/profile/' + u)} />
+          )}
 
-            {post.video_url && (
-              <div onClick={e => e.stopPropagation()}>
-                <VideoPlayer src={post.video_url} poster={post.video_thumbnail} duration={post.video_duration} />
-              </div>
-            )}
+          {post.quoted_post_id && quotedPost && (
+            <div onClick={e => e.stopPropagation()}>
+              <QuotedPost quotedPost={quotedPost} navigate={navigate} />
+            </div>
+          )}
 
+          {post.video_url && (
+            <div onClick={e => e.stopPropagation()}>
+              <VideoPlayer src={post.video_url} poster={post.video_thumbnail} duration={post.video_duration} />
+            </div>
+          )}
+
+          {images.length > 0 && (
             <div onClick={e => e.stopPropagation()}>
               <MediaGrid
                 images={images}
@@ -998,30 +1007,31 @@ function PostCard({
                 onDoubleTapLike={() => { if (!liked) handleLike('like'); }}
               />
             </div>
+          )}
 
-            {post.location && <p className="text-[#64748B] text-xs mb-1.5 flex items-center gap-1"><MapPin size={12} /> {post.location}</p>}
+          {post.location && (
+            <p className="text-[#64748B] text-xs flex items-center gap-1"><MapPin size={12} /> {post.location}</p>
+          )}
 
-            {post.comments_disabled && (
-              <p className="text-[#64748B] text-xs mb-1.5 flex items-center gap-1">
-                <MessageSquareOff size={11} /> Comments are turned off
-              </p>
-            )}
-
-          </div>
+          {post.comments_disabled && (
+            <p className="text-[#64748B] text-xs flex items-center gap-1">
+              <MessageSquareOff size={11} /> Comments are turned off
+            </p>
+          )}
         </div>
 
         {/* One Chats-blue action card: comment · repost · like · views · save · share, all on one line */}
         <div className="px-3 pb-3" onClick={e => e.stopPropagation()}>
-          <div className="flex items-center justify-between gap-1 rounded-2xl bg-[#0284C7] px-2 shadow-[0_2px_8px_rgba(2,132,199,0.30)]">
+          <div className="flex items-stretch rounded-2xl bg-[#0284C7] px-1 shadow-[0_2px_8px_rgba(2,132,199,0.25)]">
             <button onClick={() => setCommentsOpen(true)}
               aria-label="Comment"
-              className="flex items-center gap-1.5 text-white px-2 py-2.5 active:opacity-70 disabled:opacity-50"
+              className="flex-1 flex items-center justify-center gap-1.5 text-white px-1 py-3 active:opacity-70 disabled:opacity-50"
               disabled={post.comments_disabled}>
               <MessageCircle size={19} />
               {(post.comments_count||0) > 0 && <span className="text-[13px] font-semibold">{formatNumber(post.comments_count)}</span>}
             </button>
 
-            <div className="relative">
+            <div className="relative flex-1 flex justify-center">
               {showRepostMenu && (
                 <div className="absolute bottom-11 left-0 bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden z-30 shadow-2xl" style={{ minWidth:180 }}>
                   <button onClick={handleDirectRepost}
@@ -1038,13 +1048,13 @@ function PostCard({
               )}
               <button onClick={e => { e.stopPropagation(); setShowRepostMenu(!showRepostMenu); setShowReactionPicker(false); }}
                 aria-label="Repost"
-                className={'flex items-center gap-1.5 px-2 py-2.5 active:opacity-70 ' + (reposted ? 'text-[#BBF7D0]' : 'text-white')}>
+                className={'flex items-center justify-center gap-1.5 px-1 py-3 active:opacity-70 ' + (reposted ? 'text-[#BBF7D0]' : 'text-white')}>
                 <Repeat2 size={19} strokeWidth={reposted ? 2.8 : 2} />
                 {repostCount > 0 && <span className="text-[13px] font-semibold">{formatNumber(repostCount)}</span>}
               </button>
             </div>
 
-            <div className="relative">
+            <div className="relative flex-1 flex justify-center">
               {showReactionPicker && (
                 <div className="absolute bottom-11 left-0 bg-white border border-[#E2E8F0] rounded-full px-2 py-2 flex gap-1 z-30 shadow-2xl" style={{ minWidth:'max-content' }}>
                   {REACTIONS.map(r => (
@@ -1065,7 +1075,7 @@ function PostCard({
                 onTouchMove={() => clearTimeout(longPressTimer.current)}
                 onContextMenu={e => e.preventDefault()}
                 aria-label="Like"
-                className="flex items-center gap-1.5 px-2 py-2.5 text-white active:opacity-70">
+                className="flex items-center justify-center gap-1.5 px-1 py-3 text-white active:opacity-70">
                 {liked && reaction
                   ? <span className="text-lg leading-none">{getReactionEmoji()}</span>
                   : <Heart size={19} fill={liked ? 'currentColor' : 'none'} />
@@ -1078,17 +1088,17 @@ function PostCard({
             <button
               onClick={isOwner ? handleViewInsights : undefined}
               aria-label="View count"
-              className={'flex items-center gap-1.5 px-2 py-2.5 text-white ' + (isOwner ? 'cursor-pointer active:opacity-70' : 'cursor-default')}>
+              className={'flex-1 flex items-center justify-center gap-1.5 px-1 py-3 text-white ' + (isOwner ? 'cursor-pointer active:opacity-70' : 'cursor-default')}>
               <BarChart2 size={19} />
               {(post.views_count||0) > 0 && <span className="text-[13px] font-semibold">{formatNumber(post.views_count)}</span>}
             </button>
 
             <button onClick={handleSave} aria-label={saved ? 'Remove from saved' : 'Save post'}
-              className="px-2 py-2.5 text-white active:opacity-70">
+              className="flex-1 flex items-center justify-center px-1 py-3 text-white active:opacity-70">
               <Bookmark size={19} fill={saved ? 'currentColor' : 'none'} />
             </button>
             <button onClick={handleShare} aria-label="Share post"
-              className="px-2 py-2.5 text-white active:opacity-70">
+              className="flex-1 flex items-center justify-center px-1 py-3 text-white active:opacity-70">
               <Share2 size={19} />
             </button>
           </div>

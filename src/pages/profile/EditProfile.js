@@ -209,7 +209,7 @@ export default function EditProfile() {
         <div className="relative h-32 bg-[#F8FAFC] border-b border-[#E2E8F0]">
           {coverPreview && <img src={coverPreview} alt="" className="w-full h-full object-cover" />}
           <button onClick={() => coverInput.current?.click()}
-            className="absolute inset-0 flex items-center justify-center gap-2 text-[#111827] text-sm font-semibold bg-black/25 hover:bg-black/35 transition-colors">
+            className="absolute inset-0 flex items-center justify-center gap-2 text-white text-sm font-semibold bg-black/25 hover:bg-black/35 transition-colors">
             <ImagePlus size={18} /> {coverPreview ? 'Change cover photo' : 'Add cover photo'}
           </button>
           <input ref={coverInput} type="file" accept="image/*" className="hidden" onChange={(e) => pickImage(e, 'cover')} />
