@@ -63,15 +63,15 @@ export const ProfileSkeleton = () => (
 
 // Chat list skeleton
 export const ChatListSkeleton = () => (
-  <div className="divide-y divide-[#E2E8F0]">
+  <div className="px-3 pt-3 space-y-2">
     {Array(6).fill(0).map((_, i) => (
-      <div key={i} className="flex items-center gap-3 px-4 py-4">
-        <div className="w-12 h-12 rounded-full bg-[#F1F5F9] animate-pulse flex-shrink-0" />
+      <div key={i} className="flex items-center gap-3 px-4 py-3.5 bg-white border border-[#D5E3F5] rounded-2xl animate-pulse">
+        <div className="w-12 h-12 rounded-full bg-[#E3EEFB] flex-shrink-0" />
         <div className="flex-1 space-y-2">
-          <div className="h-3.5 bg-[#F1F5F9] rounded-full animate-pulse w-32" />
-          <div className="h-3 bg-[#F8FAFC] rounded-full animate-pulse w-48" />
+          <div className="h-3.5 bg-[#E3EEFB] rounded-full w-32" />
+          <div className="h-3 bg-[#EEF4FC] rounded-full w-48" />
         </div>
-        <div className="h-3 w-10 bg-[#F8FAFC] rounded-full animate-pulse" />
+        <div className="h-3 w-10 bg-[#EEF4FC] rounded-full" />
       </div>
     ))}
   </div>

@@ -26,7 +26,7 @@ function renderBody(text, term, mine) {
       return (
         <a key={i} href={href} target="_blank" rel="noopener noreferrer nofollow"
           onClick={(e) => e.stopPropagation()}
-          className={'underline break-all ' + (mine ? 'text-[#243B53]' : 'text-[#6D28D9]')}>
+          className={'underline break-all ' + (mine ? 'text-[#243B53]' : 'text-[#0369A1]')}>
           {highlight(part, term)}
         </a>
       );
@@ -40,9 +40,9 @@ const timeOf = (iso) => new Date(iso).toLocaleTimeString('en-KE', { hour: '2-dig
 function Ticks({ m }) {
   if (m._failed) return <AlertCircle size={13} className="text-[#243B53]" />;
   if (m._pending) return <Clock size={11} className="text-[#64748B]" />;
-  if (m.seen_at) return <CheckCheck size={14} className="text-[#243B53]" strokeWidth={2.6} />;
-  if (m.delivered_at) return <CheckCheck size={14} className="text-[#64748B]" />;
-  return <Check size={13} className="text-[#64748B]" />;
+  if (m.seen_at) return <CheckCheck size={14} className="tick-seen text-[#243B53]" strokeWidth={2.6} />;
+  if (m.delivered_at) return <CheckCheck size={14} className="tick-dim text-[#64748B]" />;
+  return <Check size={13} className="tick-dim text-[#64748B]" />;
 }
 
 function MessageBubble({
@@ -123,8 +123,13 @@ function MessageBubble({
         <div
           className={'relative px-3 py-2 ' + (flash ? 'msg-flash ' : '') +
             (m._failed ? 'border border-red-400 ' : '') +
-            (isMine ? 'bubble-mine bg-[#7C3AED]' : 'bg-white border border-[#D9E2EC]')}
-          style={{ borderRadius: radius, opacity: deleted ? 0.7 : 1 }}
+            (isMine ? 'bubble-mine bg-[#2563EB]' : 'bg-white border border-[#CFE0F5]')}
+          style={{
+            borderRadius: radius, opacity: deleted ? 0.7 : 1,
+            ...(isMine
+              ? { background: 'linear-gradient(135deg,#0284C7 0%,#2563EB 55%,#4F46E5 100%)', boxShadow: '0 2px 6px rgba(37,99,235,0.28)' }
+              : { boxShadow: '0 1px 3px rgba(15,23,42,0.07)' }),
+          }}
           onClick={m._failed ? () => onRetry(m) : undefined}
         >
           {m.forwarded && !deleted && (
@@ -150,9 +155,9 @@ function MessageBubble({
             <button
               onClick={(e) => { e.stopPropagation(); onJump(m.parent_message_id); }}
               className={'block w-full text-left mb-1.5 pl-2.5 pr-2 py-1.5 rounded-lg border-l-[3px] ' +
-                (isMine ? 'bg-black/20 border-[#E2E8F0]' : 'bg-[#F1F5F9] border-[#7C3AED]')}
+                (isMine ? 'bg-black/20 border-[#E2E8F0]' : 'bg-[#F1F5F9] border-[#0284C7]')}
             >
-              <p className={'text-[11px] font-bold ' + (isMine ? 'text-[#243B53]' : 'text-[#6D28D9]')}>{parentName || 'Message'}</p>
+              <p className={'text-[11px] font-bold ' + (isMine ? 'text-[#243B53]' : 'text-[#0369A1]')}>{parentName || 'Message'}</p>
               <p className="text-[12px] text-[#64748B] truncate flex items-center gap-1">
                 {parent?.message_type === 'image' && <ImageIcon size={11} />}
                 {parent ? (parent.is_deleted ? 'Deleted message' : parent.message_type === 'image' ? 'Photo' : parent.body) : 'Original message'}

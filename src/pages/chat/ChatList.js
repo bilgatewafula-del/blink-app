@@ -27,6 +27,7 @@ const ChatList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState('all'); // 'all' | 'unread'
   const [msgHits, setMsgHits] = useState([]);
   const [msgBusy, setMsgBusy] = useState(false);
 
@@ -104,13 +105,15 @@ const ChatList = () => {
   /* ── search: people in my chats + message text ── */
   const q = safeLike(query);
   const filteredChats = useMemo(() => {
-    if (!q) return chats;
+    const base = filter === 'unread' ? chats.filter((c) => c.unread > 0) : chats;
+    if (!q) return base;
     const t = q.toLowerCase();
-    return chats.filter((c) =>
+    return base.filter((c) =>
       c.other_user?.display_name?.toLowerCase().includes(t) ||
       c.other_user?.username?.toLowerCase().includes(t) ||
       c.last_message?.toLowerCase().includes(t));
-  }, [chats, q]);
+  }, [chats, q, filter]);
+  const unreadTotal = useMemo(() => chats.filter((c) => c.unread > 0).length, [chats]);
 
   useEffect(() => {
     if (q.length < 2) { setMsgHits([]); setMsgBusy(false); return; }
@@ -202,30 +205,68 @@ const ChatList = () => {
         </div>
         <p className="text-[#64748B] text-xs truncate">@{u.username}</p>
       </div>
-      {starting === u.id && <Spinner size={16} className="text-[#6D28D9]" />}
+      {starting === u.id && <Spinner size={16} className="text-[#0369A1]" />}
     </button>
   );
 
   const searching = q.length > 0;
 
   return (
-    <div className="min-h-screen bg-[#DCE8F6] pb-24">
-      <div className="sticky top-0 z-20 bg-[#11152E] px-4 py-3" style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}>
+    <div className="min-h-screen pb-24" style={{ background: 'linear-gradient(180deg,#C9E3FF 0%,#DAE9FF 38%,#D8F1EA 100%)' }}>
+      <div className="sticky top-0 z-20 px-4 py-3 shadow-[0_4px_14px_rgba(11,58,122,0.25)]" style={{ paddingTop: 'max(12px, env(safe-area-inset-top))', background: 'linear-gradient(135deg,#11152E 0%,#0B3A7A 60%,#0284C7 100%)' }}>
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-white font-extrabold text-[26px] leading-none">Chats</h1>
           <button onClick={openNewChat} aria-label="New message"
-            className="w-10 h-10 bg-[#7C3AED] rounded-xl flex items-center justify-center active:scale-90 transition-transform">
+            className="w-10 h-10 rounded-xl flex items-center justify-center active:scale-90 transition-transform shadow-[0_4px_12px_rgba(6,182,212,0.45)]"
+            style={{ background: 'linear-gradient(135deg,#22D3EE 0%,#2563EB 100%)' }}>
             <Edit size={18} className="text-white" />
           </button>
         </div>
         <div className="relative">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
           <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search chats and messages"
-            className="w-full bg-white/10 border border-white/15 rounded-xl py-2.5 pl-9 pr-9 text-white placeholder-[#94A3B8] text-[15px] focus:outline-none focus:border-[#7C3AED] transition-colors" />
+            className="w-full bg-white/10 border border-white/15 rounded-xl py-2.5 pl-9 pr-9 text-white placeholder-[#94A3B8] text-[15px] focus:outline-none focus:border-[#67E8F9] focus:bg-white/15 transition-colors" />
           {query && <button onClick={() => setQuery('')} aria-label="Clear" className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8]"><X size={15} /></button>}
         </div>
         {error && <p className="text-[#FCA5A5] text-xs mt-2">{error}</p>}
       </div>
+
+      {!loading && !searching && (
+        <>
+          {(() => {
+            const onlineChats = chats.filter((c) => isUserOnline(c.other_user, onlineIds)).slice(0, 14);
+            if (!onlineChats.length) return null;
+            return (
+              <div className="pt-3.5">
+                <p className="text-[#0369A1] text-[11px] font-bold uppercase tracking-wider px-4 pb-2">Online now</p>
+                <div className="flex gap-3.5 overflow-x-auto scrollbar-none px-4 pb-1">
+                  {onlineChats.map((c) => (
+                    <button key={c.id} onClick={() => openChat(c)} className="flex flex-col items-center gap-1 flex-shrink-0 w-[58px] active:scale-95 transition-transform">
+                      <span className="relative p-[2.5px] rounded-full" style={{ background: 'linear-gradient(135deg,#22D3EE,#2563EB,#7C3AED)' }}>
+                        <span className="block rounded-full bg-white p-[2px]">
+                          <Avatar url={c.other_user?.avatar_url} name={c.other_user?.display_name} size={11} />
+                        </span>
+                        <span className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-[#10B981] rounded-full border-2 border-white" />
+                      </span>
+                      <span className="text-[11px] font-medium text-[#1E3A5F] truncate w-full text-center">{(c.other_user?.display_name || '').split(' ')[0]}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
+          <div className="flex gap-2 px-4 pt-3" role="tablist" aria-label="Chat filters">
+            {[{ key: 'all', label: 'All' }, { key: 'unread', label: unreadTotal > 0 ? 'Unread · ' + unreadTotal : 'Unread' }].map((f) => (
+              <button key={f.key} role="tab" aria-selected={filter === f.key} onClick={() => setFilter(f.key)}
+                className={'px-4 py-1.5 rounded-full text-[13px] font-semibold transition-colors active:scale-95 ' +
+                  (filter === f.key ? 'bg-[#0284C7] text-white shadow-[0_2px_8px_rgba(2,132,199,0.35)]' : 'bg-white/80 text-[#0369A1] border border-[#BFD7F2]')}>
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
       {showNewChat && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center" onClick={() => setShowNewChat(false)}>
@@ -241,13 +282,13 @@ const ChatList = () => {
             </div>
             <div className="overflow-y-auto flex-1 -mx-2 px-2">
               {safeLike(peopleQuery).length >= 2 ? (
-                peopleBusy ? <div className="flex justify-center py-6 text-[#6D28D9]"><Spinner size={20} /></div>
+                peopleBusy ? <div className="flex justify-center py-6 text-[#0369A1]"><Spinner size={20} /></div>
                   : people.length === 0 ? <p className="text-[#64748B] text-sm text-center py-8">No one found</p>
                   : people.map(personRow)
               ) : (
                 <>
                   <p className="text-[#64748B] text-[11px] font-bold uppercase tracking-wider px-3 pb-2">People you follow</p>
-                  {suggested === null ? <div className="flex justify-center py-6 text-[#6D28D9]"><Spinner size={20} /></div>
+                  {suggested === null ? <div className="flex justify-center py-6 text-[#0369A1]"><Spinner size={20} /></div>
                     : suggested.length === 0 ? <p className="text-[#64748B] text-sm text-center py-8">Follow people to message them quickly, or search above.</p>
                     : suggested.map(personRow)}
                 </>
@@ -295,10 +336,10 @@ const ChatList = () => {
 
           {filteredChats.length === 0 && !(searching && msgHits.length > 0) ? (
             searching ? (
-              msgBusy ? <div className="flex justify-center py-12 text-[#6D28D9]"><Spinner size={22} /></div>
+              msgBusy ? <div className="flex justify-center py-12 text-[#0369A1]"><Spinner size={22} /></div>
                 : <EmptyState icon={SearchX} title="No results" text="Try a different name or word from the message." />
             ) : (
-              <EmptyState icon={MessageCircle} title="No conversations yet" text="Message someone you follow, or search for a new friend.">
+              <EmptyState icon={MessageCircle} title={filter === 'unread' ? "You're all caught up" : "No conversations yet"} text={filter === 'unread' ? "No unread chats right now." : "Message someone you follow, or search for a new friend."}>
                 <button onClick={openNewChat} className="bg-[#7C3AED] text-white px-6 py-3 rounded-full font-bold text-sm  ">Start a chat</button>
               </EmptyState>
             )
@@ -307,14 +348,14 @@ const ChatList = () => {
               {filteredChats.map((chat) => {
                 const on = isUserOnline(chat.other_user, onlineIds);
                 return (
-                  <div key={chat.id} className="relative overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white">
+                  <div key={chat.id} className={'relative overflow-hidden rounded-2xl border shadow-[0_1px_3px_rgba(11,58,122,0.08)] ' + (chat.unread > 0 ? 'border-[#7DD3FC] bg-[#F0F9FF]' : 'border-[#D5E3F5] bg-white')}>
                     <div className="absolute right-0 top-0 bottom-0 flex items-center">
                       <button onClick={() => setDeleteTarget(chat.id)} aria-label="Delete conversation" className="w-20 h-full bg-red-500 flex flex-col items-center justify-center gap-1">
                         <Trash2 size={18} className="text-white" /><span className="text-white text-xs font-bold">Delete</span>
                       </button>
                     </div>
                     <div
-                      className={'flex items-center gap-3 px-4 py-3.5 bg-white transition-transform duration-200 ' + (swipedChat === chat.id ? '-translate-x-20' : 'translate-x-0')}
+                      className={'flex items-center gap-3 px-4 py-3.5 transition-transform duration-200 ' + (chat.unread > 0 ? 'bg-[#F0F9FF] ' : 'bg-white ') + + (swipedChat === chat.id ? '-translate-x-20' : 'translate-x-0')}
                       onTouchStart={(e) => {
                         const startX = e.touches[0].clientX;
                         const move = (me) => {
@@ -336,7 +377,7 @@ const ChatList = () => {
                               <p className={'font-bold text-[15px] truncate ' + (chat.unread > 0 ? 'text-[#111827]' : 'text-[#111827]')}>{chat.other_user?.display_name || 'Unknown'}</p>
                               {chat.other_user?.is_verified && <VerifiedBadge size={13} />}
                             </div>
-                            <span className={'text-[11px] flex-shrink-0 ml-2 ' + (chat.unread > 0 ? 'text-[#6D28D9] font-semibold' : 'text-[#64748B]')}>
+                            <span className={'text-[11px] flex-shrink-0 ml-2 ' + (chat.unread > 0 ? 'text-[#0369A1] font-bold' : 'text-[#64748B]')}>
                               {chat.last_message_at ? formatTime(chat.last_message_at) : ''}
                             </span>
                           </div>
@@ -345,7 +386,7 @@ const ChatList = () => {
                               {chat.last_message || 'Say hello'}
                             </p>
                             {chat.unread > 0 && (
-                              <span className="ml-2 min-w-[20px] h-5 bg-[#E11D48] rounded-full text-[10px] text-white flex items-center justify-center font-bold px-1.5 flex-shrink-0">
+                              <span className="ml-2 min-w-[20px] h-5 rounded-full text-[10px] text-white flex items-center justify-center font-bold px-1.5 flex-shrink-0 shadow-[0_2px_6px_rgba(37,99,235,0.4)]" style={{ background: 'linear-gradient(135deg,#0EA5E9,#4F46E5)' }}>
                                 {chat.unread > 99 ? '99+' : chat.unread}
                               </span>
                             )}

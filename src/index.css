@@ -200,6 +200,9 @@ html.theme-amoled { color-scheme: dark; }
 .bubble-mine, .bubble-mine p, .bubble-mine span, .bubble-mine svg, .bubble-mine a, .bubble-mine div { color: #FFFFFF !important; }
 .bubble-mine .text-\[\#64748B\] { color: rgba(255,255,255,0.85) !important; }
 .bubble-mine a { text-decoration: underline; }
+/* read receipts on blue bubbles: seen = bright aqua, sent/delivered = softer white */
+.bubble-mine svg.tick-seen { color: #7DF9FF !important; }
+.bubble-mine svg.tick-dim  { opacity: 0.7; }
 
 
 /* ── Keyboard focus: clear violet ring for every interactive control ── */
