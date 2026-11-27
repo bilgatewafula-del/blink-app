@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AuthProvider, useAuth } from './context/AuthContext';
 import BottomNav from './components/BottomNav';
 import NetworkBanner from './components/NetworkBanner';
+import PushBridge from './components/PushBridge';
 import ErrorBoundary from './components/ErrorBoundary';
 import { startPresence, stopPresence } from './lib/presence';
 import { supabase } from './lib/supabaseClient';
@@ -166,6 +167,7 @@ function AppShell() {
   return (
     <>
       <NetworkBanner />
+      <PushBridge />
       <ErrorBoundary>
       <Suspense fallback={<PageLoader />}>
         <Routes>

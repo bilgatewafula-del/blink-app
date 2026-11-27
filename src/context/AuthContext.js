@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useRef } f
 import { supabase } from '../lib/supabaseClient';
 import { markActive, isIdleTooLong, setAuthNotice, rememberAccount } from '../lib/authSecurity';
 import { fetchMyPrivate, clearPrivateCache } from '../lib/privateProfile';
+import { detachPushDevice } from '../lib/push';
 
 const AuthContext = createContext(null);
 
@@ -233,6 +234,7 @@ export function AuthProvider({ children }) {
   }, [user, fetchProfile]);
 
   const signOut = useCallback(async () => {
+    await detachPushDevice();   // while still signed in: this phone stops getting this person's alerts
     _profileCache = null; clearPrivateCache();
     if (mountedRef.current) { setProfile(null); setUser(null); setProfileChecked(false); setRecovery(false); }
     await supabase.auth.signOut();

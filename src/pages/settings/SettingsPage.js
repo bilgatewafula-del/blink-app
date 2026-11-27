@@ -18,6 +18,7 @@ import {
 } from '../../lib/authSecurity';
 import { APP_NAME } from '../../config/appInfo';
 import { goBack } from '../../lib/nav';
+import { usePushStatus, sendLocalTest } from '../../lib/push';
 
 let settingsCache = null;
 const NOTIF = [
@@ -368,6 +369,7 @@ export default function SettingsPage() {
   const location = useLocation();
   const { user, profile, signOut } = useAuth();
   const prefs = usePrefs();
+  const push = usePushStatus(user.id);
   const [settings, setSettings] = useState(settingsCache);
   const [toast, setToast] = useState('');
   const [sheet, setSheet] = useState(null);
@@ -495,7 +497,49 @@ export default function SettingsPage() {
       </Section>
 
       <Section title="Notifications">
-        {NOTIF.map((n) => <Row key={n.key} icon={n.Icon} label={n.label} toggle={{ value: get(n.key, true), onChange: (v) => save(n.key, v) }} />)}
+        {[
+          ...NOTIF.map((n) => <Row key={n.key} icon={n.Icon} label={n.label} toggle={{ value: get(n.key, true), onChange: (v) => save(n.key, v) }} />),
+          (push.supported && push.configured) && (
+            <Row key="push" icon={Smartphone} label="Push notifications on this phone"
+              sub={push.needsInstall ? 'Add B-Link to your Home Screen first'
+                : push.permission === 'denied' ? 'Blocked. Allow notifications in your browser or phone settings'
+                : push.enabled ? 'On. Alerts arrive even when B-Link is closed' : 'Off'}
+              toggle={{
+                value: push.enabled,
+                onChange: async (v) => {
+                  if (push.busy) return;
+                  if (!v) { await push.disable(); say('Push notifications are off on this phone'); return; }
+                  const r = await push.enable();
+                  say(r.ok ? 'Push notifications are on'
+                    : ({ denied: 'Blocked. Allow notifications in your browser or phone settings.', install: 'On iPhone, add B-Link to your Home Screen first.', dismissed: 'Permission was not granted.', no_sw: 'Reload the app and try again.' }[r.reason] || "Couldn't turn on push notifications."));
+                },
+              }} />
+          ),
+          (push.supported && push.configured && push.enabled) && (
+            <Row key="pushtest" icon={Bell} label="Send a test notification" sub="Check that alerts show up on this phone"
+              onPress={() => sendLocalTest().then(() => say('Test sent')).catch(() => say("Couldn't show a test notification."))} />
+          ),
+          <Row key="quiet" icon={Moon} label="Quiet hours" sub="Mute push alerts at night (warnings from B-Link still come through)"
+            toggle={{
+              value: get('quiet_hours', false),
+              onChange: async (v) => {
+                await save('quiet_hours', v);
+                if (v) { try { await save('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Nairobi'); } catch { /* keep default */ } }
+              },
+            }} />,
+          get('quiet_hours', false) && (
+            <div key="quiettimes" className="flex items-center gap-3 px-4 py-3.5">
+              <div className="flex-1">
+                <p className="text-[#64748B] text-[11px] font-bold uppercase tracking-wider mb-1.5">From</p>
+                <input type="time" value={get('quiet_start', '22:00')} onChange={(e) => /^\d{2}:\d{2}$/.test(e.target.value) && save('quiet_start', e.target.value)} className={inputCls} />
+              </div>
+              <div className="flex-1">
+                <p className="text-[#64748B] text-[11px] font-bold uppercase tracking-wider mb-1.5">Until</p>
+                <input type="time" value={get('quiet_end', '07:00')} onChange={(e) => /^\d{2}:\d{2}$/.test(e.target.value) && save('quiet_end', e.target.value)} className={inputCls} />
+              </div>
+            </div>
+          ),
+        ]}
       </Section>
 
       <Section title="Appearance">

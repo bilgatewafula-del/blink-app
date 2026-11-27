@@ -16,6 +16,7 @@ import FollowButton from '../../components/FollowButton';
 import { fetchRelationships } from '../../lib/follows';
 import Avatar from '../../components/Avatar';
 import VerifiedBadge from '../../components/VerifiedBadge';
+import PushPrompt from '../../components/PushPrompt';
 
 /* ── Notification type config ──────────────────── */
 const TYPE_CONFIG = {
@@ -343,11 +344,7 @@ export default function Notifications() {
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'notifications',
         filter: 'user_id=eq.' + user.id,
-      }, () => { fetchNotifications(); fetchUnreadCount(); })
-      .on('postgres_changes', {
-        event: 'UPDATE', schema: 'public', table: 'notifications',
-        filter: 'user_id=eq.' + user.id,
-      }, () => { fetchNotifications(); fetchUnreadCount(); })
+      }, () => { fetchNotifications({ silent: true }); })
       .subscribe();
     return () => supabase.removeChannel(ch);
   }, [activeTab]);
@@ -385,8 +382,11 @@ export default function Notifications() {
     setAnnouncements((data || []).filter(a => !readIds.has(a.id)));
   };
 
-  const fetchNotifications = async () => {
-    setLoading(true);
+  const reqRef = useRef(0);
+
+  const fetchNotifications = async ({ silent = false } = {}) => {
+    const reqId = ++reqRef.current;          // ignore answers that arrive after a newer request
+    if (!silent) setLoading(true);
     const tabTypes = {
       activity: ['like','haha','wow','sad','angry','fire','comment','reply','repost','quote','share','milestone','achievement'],
       social:   ['follow','follow_request','mention'],
@@ -407,6 +407,7 @@ export default function Notifications() {
     }
 
     const { data } = await q;
+    if (reqId !== reqRef.current) return;
     setNotifs(data || []);
 
     // Today stats
@@ -424,11 +425,13 @@ export default function Notifications() {
 
     setLoading(false);
 
-    // Mark all as read (except system ones that need attention)
-    await supabase.from('notifications').update({ is_read: true })
-      .eq('user_id', user.id)
-      .eq('is_read', false)
-      .not('type', 'in', '(ban,restrict,suspend,warning)');
+    // Mark what was just shown as read (except system ones that need attention).
+    // The list keeps its "new" highlight for this visit; only the badge clears.
+    const toMark = (data || []).filter((n) => !n.is_read && !['ban', 'restrict', 'suspend', 'warning'].includes(n.type)).map((n) => n.id);
+    if (toMark.length) {
+      await supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id).in('id', toMark);
+    }
+    fetchUnreadCount();
   };
 
   const handleMarkAllRead = async () => {
@@ -557,6 +560,8 @@ export default function Notifications() {
       </div>
 
       <div className="px-4 pt-4 space-y-3">
+
+        <PushPrompt />
 
         {/* ── ANNOUNCEMENTS (unread only) ── */}
         {announcements.length > 0 && (activeTab === 'all' || activeTab === 'system') && (
