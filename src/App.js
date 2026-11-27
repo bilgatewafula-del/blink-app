@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import BottomNav from './components/BottomNav';
 import NetworkBanner from './components/NetworkBanner';
 import PushBridge from './components/PushBridge';
+import ChatBridge from './components/ChatBridge';
 import ErrorBoundary from './components/ErrorBoundary';
 import { startPresence, stopPresence } from './lib/presence';
 import { supabase } from './lib/supabaseClient';
@@ -168,6 +169,7 @@ function AppShell() {
     <>
       <NetworkBanner />
       <PushBridge />
+      <ChatBridge />
       <ErrorBoundary>
       <Suspense fallback={<PageLoader />}>
         <Routes>

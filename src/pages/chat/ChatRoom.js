@@ -9,8 +9,9 @@ import { useOnlineIds, isUserOnline, formatLastSeen } from '../../lib/presence';
 import {
   ArrowLeft, Send, ImageIcon, Smile, MoreVertical, Search, X, Copy, Reply, Forward,
   Star, Pin, Edit3, Trash2, Info, Volume2, VolumeX, Shield, Flag, Paperclip, Camera,
-  CalendarClock, MapPin, Zap, ChevronDown, ChevronUp, Check, Eraser, Clock, Download,
+  CalendarClock, MapPin, Zap, ChevronDown, ChevronUp, Check, Eraser, Clock, Download, Timer,
 } from 'lucide-react';
+import { useTypingIn, sendTyping, refreshUnread } from '../../lib/chatLive';
 import Avatar from '../../components/Avatar';
 import ImageViewer from '../../components/ImageViewer';
 import VerifiedBadge from '../../components/VerifiedBadge';
@@ -97,8 +98,7 @@ export default function ChatRoom() {
   const inputRef = useRef(null);
   const fileRef = useRef(null);
   const cameraRef = useRef(null);
-  const typingCh = useRef(null);
-  const typingTimer = useRef(null);
+  const onceRef = useRef(null);
   const lastTypingSent = useRef(0);
   const mountedRef = useRef(true);
   const nearBottom = useRef(true);
@@ -124,7 +124,8 @@ export default function ChatRoom() {
   const [recents, setRecents] = useState(() => lsGet('blink_recent_emoji', []));
   const [replyTo, setReplyTo] = useState(null);
   const [editing, setEditing] = useState(null);
-  const [isTyping, setIsTyping] = useState(false);
+  const isTyping = useTypingIn(id);
+  const [onceView, setOnceView] = useState(null);      // view-once photo being opened
   const [muted, setMuted] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -236,6 +237,7 @@ export default function ChatRoom() {
     if (document.visibilityState !== 'visible') return;
     await supabase.from('messages').update({ seen_at: new Date().toISOString() })
       .eq('chat_id', id).neq('sender_id', user.id).is('seen_at', null);
+    refreshUnread();
   }, [id, user.id]);
 
   /* ── init ── */
@@ -344,23 +346,12 @@ export default function ChatRoom() {
       })
       .subscribe();
 
-    const tc = supabase.channel('typing:' + id)
-      .on('broadcast', { event: 'typing' }, (p) => {
-        if (p.payload?.uid && p.payload.uid === otherRef.current?.id) {
-          setIsTyping(true);
-          clearTimeout(typingTimer.current);
-          typingTimer.current = setTimeout(() => setIsTyping(false), 2800);
-        }
-      }).subscribe();
-    typingCh.current = tc;
-
     const onVis = () => { if (document.visibilityState === 'visible') markRead(); };
     document.addEventListener('visibilitychange', onVis);
 
     return () => {
-      supabase.removeChannel(ch); supabase.removeChannel(tc);
+      supabase.removeChannel(ch);
       document.removeEventListener('visibilitychange', onVis);
-      clearTimeout(typingTimer.current);
     };
   }, [id, user.id, markRead, scrollBottom]);
 
@@ -431,7 +422,7 @@ export default function ChatRoom() {
 
   const insertMessage = async (payload) => {
     const { data, error } = await supabase.from('messages')
-      .insert({ ...payload, chat_id: id, sender_id: user.id, delivered_at: new Date().toISOString(), deleted_for: [], starred_by: [] })
+      .insert({ ...payload, chat_id: id, sender_id: user.id, deleted_for: [], starred_by: [] })
       .select('*').single();
     if (error) throw error;
     return data;
@@ -478,6 +469,7 @@ export default function ChatRoom() {
     if (!allowSend()) return;
     const payload = { body: text, message_type: 'text', parent_message_id: replyTo?.id || null };
     setMsg(''); setReplyTo(null); setPanel(null);
+    sendTyping(otherRef.current?.id, id, 'stop');
     localStorage.removeItem('blink_draft_' + id);
     const row = await sendOptimistic(payload);
     if (row) notifyOther('sent you a message: "' + text.slice(0, 50) + '"');
@@ -486,18 +478,18 @@ export default function ChatRoom() {
   const retryFailed = async (m) => {
     setMessages((prev) => prev.filter((x) => x.id !== m.id));
     if (m._payload) {
-      if (m._payload.message_type === 'image' && m._file) await sendImage(m._file);
+      if (m._payload.message_type === 'image' && m._file) await sendImage(m._file, { viewOnce: !!m.view_once });
       else await sendOptimistic(m._payload);
     }
   };
 
-  const sendImage = async (file) => {
+  const sendImage = async (file, opts = {}) => {
     if (!allowSend()) return;
     const preview = URL.createObjectURL(file);
     const tempId = 'temp-' + Date.now();
     setMessages((prev) => [...prev, {
-      id: tempId, chat_id: id, sender_id: user.id, created_at: new Date().toISOString(), body: '', message_type: 'image',
-      media_url: preview, _local: true, _pending: true, _tempKey: tempId, deleted_for: [], starred_by: [], reactions: {},
+      id: tempId, chat_id: id, sender_id: user.id, created_at: new Date().toISOString(), body: opts.viewOnce ? 'View-once photo' : '', message_type: 'image',
+      view_once: !!opts.viewOnce, media_url: preview, _local: true, _pending: true, _tempKey: tempId, deleted_for: [], starred_by: [], reactions: {},
     }]);
     nearBottom.current = true;
     requestAnimationFrame(() => scrollBottom(true));
@@ -505,15 +497,22 @@ export default function ChatRoom() {
     try {
       const small = await compressImage(file, { maxSize: 1280, quality: 0.82 });
       const url = await uploadImage(small, 'chat_media');
-      const row = await insertMessage({ body: '', media_url: url, message_type: 'image' });
+      let row;
+      if (opts.viewOnce) {
+        const { data, error } = await supabase.rpc('send_view_once_photo', { p_chat_id: id, p_url: url, p_parent: null });
+        if (error) throw error;
+        row = Array.isArray(data) ? data[0] : data;
+      } else {
+        row = await insertMessage({ body: '', media_url: url, message_type: 'image' });
+      }
       setMessages((prev) => {
         if (prev.some((m) => m.id === row.id)) return prev.filter((m) => m.id !== tempId);
         return prev.map((m) => (m.id === tempId ? { ...row, reactions: {} } : m));
       });
-      notifyOther('sent you a photo');
+      notifyOther(opts.viewOnce ? 'sent you a view-once photo' : 'sent you a photo');
     } catch (err) {
       setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, _pending: false, _failed: true, _file: file, _payload: { message_type: 'image' } } : m)));
-      showToast(err.message || 'Photo could not be sent', 'error');
+      showToast(/send_view_once_photo|schema cache/i.test(err.message || '') ? 'View-once needs the latest chat update. Run chat-upgrade.sql.' : (err.message || 'Photo could not be sent'), 'error');
     }
     setUploading(false);
   };
@@ -527,6 +526,31 @@ export default function ChatRoom() {
     if (f.size > MAX_IMG_MB * 1024 * 1024) { showToast(`Image must be under ${MAX_IMG_MB}MB`, 'error'); return; }
     sendImage(f);
   };
+
+  const onPickOnce = (e) => {
+    const f = e.target.files?.[0];
+    e.target.value = '';
+    setAttachOpen(false);
+    if (!f) return;
+    if (!f.type.startsWith('image/')) { showToast('Please choose an image', 'error'); return; }
+    if (f.size > MAX_IMG_MB * 1024 * 1024) { showToast(`Image must be under ${MAX_IMG_MB}MB`, 'error'); return; }
+    sendImage(f, { viewOnce: true });
+  };
+
+  // Opens a view-once photo: the server hands the picture over exactly once.
+  const openViewOnce = useCallback(async (m) => {
+    setOnceView({ loading: true });
+    const { data, error } = await supabase.rpc('open_view_once', { p_message_id: m.id });
+    if (error || !data) {
+      setOnceView(null);
+      showToast(/already|no longer/i.test(error?.message || '') ? 'This photo was already opened' : "Couldn't open the photo", 'error');
+      setMessages((prev) => prev.map((x) => (x.id === m.id ? { ...x, viewed_at: x.viewed_at || new Date().toISOString() } : x)));
+      return;
+    }
+    setMessages((prev) => prev.map((x) => (x.id === m.id ? { ...x, viewed_at: new Date().toISOString() } : x)));
+    setOnceView({ url: data });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const shareLocation = () => {
     setAttachOpen(false);
@@ -565,9 +589,10 @@ export default function ChatRoom() {
     const v = e.target.value.slice(0, MAX_LEN + 50);
     setMsg(v);
     const now = Date.now();
+    if (!v.trim()) { sendTyping(otherRef.current?.id, id, 'stop'); lastTypingSent.current = 0; return; }
     if (now - lastTypingSent.current > 2000) {
       lastTypingSent.current = now;
-      typingCh.current?.send({ type: 'broadcast', event: 'typing', payload: { uid: user.id } });
+      sendTyping(otherRef.current?.id, id, 'start');
     }
   };
 
@@ -800,6 +825,7 @@ export default function ChatRoom() {
           (toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-[#111827] text-white')}>{toast.text}</div>
       )}
       {viewerImage && <ImageViewer images={[viewerImage]} index={0} onClose={() => setViewerImage(null)} />}
+      {onceView && <ViewOnceViewer state={onceView} onClose={() => setOnceView(null)} />}
 
       {/* ── top bar ── */}
       <div className="flex-shrink-0 px-2 py-2 flex items-center gap-1 shadow-[0_2px_10px_rgba(11,58,122,0.25)]"
@@ -905,6 +931,7 @@ export default function ChatRoom() {
                 onReply={onReply}
                 onJump={jumpTo}
                 onImage={onImage}
+                onViewOnce={openViewOnce}
                 onRetry={retryFailed}
               />
             ))}
@@ -1032,6 +1059,7 @@ export default function ChatRoom() {
 
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickImage} />
       <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onPickImage} />
+      <input ref={onceRef} type="file" accept="image/*" className="hidden" onChange={onPickOnce} />
 
       {/* ── attach sheet ── */}
       {attachOpen && (
@@ -1040,6 +1068,7 @@ export default function ChatRoom() {
             {[
               { icon: ImageIcon, label: 'Photo', color: '#0284C7', fn: () => fileRef.current?.click() },
               { icon: Camera, label: 'Camera', color: '#0284C7', fn: () => cameraRef.current?.click() },
+              { icon: Timer, label: 'View once', color: '#4F46E5', fn: () => onceRef.current?.click() },
               { icon: MapPin, label: 'Location', color: '#10B981', fn: shareLocation },
               { icon: Zap, label: 'Quick reply', color: '#FFB020', fn: () => { setAttachOpen(false); setQuickOpen(true); } },
               ...(schedSupported ? [{ icon: CalendarClock, label: 'Schedule', color: '#A78BFA', fn: () => { setAttachOpen(false); if (!msg.trim()) { showToast('Type your message first, then tap Schedule', 'error'); setTimeout(() => inputRef.current?.focus(), 50); } else setSchedOpen(true); } }] : []),
@@ -1199,10 +1228,10 @@ export default function ChatRoom() {
             ) : (
               <>
                 {!deleted && <SheetRow icon={Reply} label="Reply" onClick={() => { setActionMsg(null); onReply(m); }} />}
-                {!deleted && m.body && <SheetRow icon={Copy} label="Copy" onClick={() => copyText(m)} />}
-                {!deleted && !m._pending && <SheetRow icon={Forward} label="Forward" onClick={() => { setActionMsg(null); setForwardMsg(m); }} />}
-                {!deleted && !m._pending && <SheetRow icon={Star} label={starred ? 'Remove star' : 'Star'} onClick={() => toggleStar(m)} />}
-                {!deleted && !m._pending && <SheetRow icon={Pin} label={m.is_pinned ? 'Unpin' : 'Pin to top'} onClick={() => togglePin(m)} />}
+                {!deleted && m.body && !m.view_once && <SheetRow icon={Copy} label="Copy" onClick={() => copyText(m)} />}
+                {!deleted && !m._pending && !m.view_once && <SheetRow icon={Forward} label="Forward" onClick={() => { setActionMsg(null); setForwardMsg(m); }} />}
+                {!deleted && !m._pending && !m.view_once && <SheetRow icon={Star} label={starred ? 'Remove star' : 'Star'} onClick={() => toggleStar(m)} />}
+                {!deleted && !m._pending && !m.view_once && <SheetRow icon={Pin} label={m.is_pinned ? 'Unpin' : 'Pin to top'} onClick={() => togglePin(m)} />}
                 {editable && <SheetRow icon={Edit3} label="Edit" onClick={() => { setActionMsg(null); setEditing(m); setReplyTo(null); setMsg(m.body); setTimeout(() => inputRef.current?.focus(), 60); }} />}
                 {!deleted && m.media_url && <SheetRow icon={Download} label="Save photo" onClick={() => { setActionMsg(null); window.open(m.media_url, '_blank', 'noopener'); }} />}
                 {mine && !m._pending && <SheetRow icon={Info} label="Message info" onClick={() => { setActionMsg(null); setInfoMsg(m); }} />}
@@ -1233,6 +1262,33 @@ export default function ChatRoom() {
 }
 
 /* ── forward to other chats ─────────────────────────────── */
+function ViewOnceViewer({ state, onClose }) {
+  useEffect(() => {
+    const h = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', h);
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', h); document.body.style.overflow = ''; };
+  }, [onClose]);
+  const block = (e) => e.preventDefault();
+  return (
+    <div className="fixed inset-0 z-[9999] bg-black flex flex-col" onContextMenu={block}
+      style={{ WebkitTouchCallout: 'none', userSelect: 'none', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div className="flex items-center justify-between px-4 py-3">
+        <span className="flex items-center gap-2 text-white/90 text-[13px] font-semibold">
+          <span className="w-6 h-6 rounded-full border-2 border-dashed border-white/80 flex items-center justify-center text-[11px] font-extrabold">1</span>
+          View once · this photo disappears when you close it
+        </span>
+        <button onClick={onClose} aria-label="Close" className="text-white p-2"><X size={22} /></button>
+      </div>
+      <div className="flex-1 flex items-center justify-center px-2 min-h-0" onClick={onClose}>
+        {state.loading
+          ? <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          : <img src={state.url} alt="" draggable={false} onDragStart={block} className="max-w-full max-h-full object-contain pointer-events-none" />}
+      </div>
+    </div>
+  );
+}
+
 function ForwardSheet({ message, onClose, currentChatId, userId, onDone, onError }) {
   const [chats, setChats] = useState(null);
   const [picked, setPicked] = useState([]);
@@ -1248,7 +1304,7 @@ function ForwardSheet({ message, onClose, currentChatId, userId, onDone, onError
   const send = async () => {
     if (picked.length === 0 || busy) return;
     setBusy(true);
-    const base = { sender_id: userId, body: message.body || '', media_url: message.media_url || null, message_type: message.message_type || 'text', delivered_at: new Date().toISOString(), deleted_for: [], starred_by: [] };
+    const base = { sender_id: userId, body: message.body || '', media_url: message.media_url || null, message_type: message.message_type || 'text', deleted_for: [], starred_by: [] };
     let ok = 0;
     for (const cid of picked) {
       let { error } = await supabase.from('messages').insert({ ...base, chat_id: cid, forwarded: true });

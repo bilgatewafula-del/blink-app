@@ -1,7 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { useUnreadChats } from '../lib/chatLive';
 import {
   Home, Compass, Zap, MessageCircle, User
 } from 'lucide-react';
@@ -14,30 +12,7 @@ const INACTIVE = '#94A3B8';
 export default function BottomNav() {
   const navigate     = useNavigate();
   const location     = useLocation();
-  const { user }     = useAuth();
-  const [unreadMsg, setUnreadMsg] = useState(0);
-
-  useEffect(() => {
-    if (!user?.id) return;
-    fetchCounts();
-
-    const ch = supabase.channel('nav:message-counts:' + user.id)
-      .on('postgres_changes', {
-        event: '*', schema: 'public', table: 'notifications',
-        filter: 'user_id=eq.' + user.id,
-      }, fetchCounts)
-      .subscribe();
-
-    return () => supabase.removeChannel(ch);
-  }, [user?.id]);
-
-  const fetchCounts = async () => {
-    const { count: m } = await supabase.from('notifications')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id).eq('is_read', false)
-      .eq('type', 'message');
-    setUnreadMsg(m || 0);
-  };
+  const unreadMsg = useUnreadChats();
 
   const tabs = [
     { path: '/',         icon: Home,          label: 'Home',     color: '#7C3AED' },
@@ -81,8 +56,8 @@ export default function BottomNav() {
               {/* Badge */}
               {tab.badge > 0 && (
                 <span
-                  className="absolute top-0 right-2 min-w-[17px] h-[17px] bg-[#E11D48] rounded-full text-[10px] text-white flex items-center justify-center font-bold px-1 border-2 border-[#11152E]"
-                  style={{ lineHeight: 1 }}
+                  className="absolute top-0 right-2 min-w-[17px] h-[17px] rounded-full text-[10px] text-white flex items-center justify-center font-bold px-1 border-2 border-[#11152E]"
+                  style={{ lineHeight: 1, background: 'linear-gradient(135deg,#0EA5E9,#2563EB)' }}
                 >
                   {tab.badge > 9 ? '9+' : tab.badge}
                 </span>

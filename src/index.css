@@ -176,6 +176,10 @@ input, textarea {
 }
 
 /* chat: double-tap heart + message flash */
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
 @keyframes heartPop {
   0%   { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
   30%  { transform: translate(-50%, -50%) scale(1.25); opacity: 1; }
@@ -200,9 +204,12 @@ html.theme-amoled { color-scheme: dark; }
 .bubble-mine, .bubble-mine p, .bubble-mine span, .bubble-mine svg, .bubble-mine a, .bubble-mine div { color: #FFFFFF !important; }
 .bubble-mine .text-\[\#64748B\] { color: rgba(255,255,255,0.85) !important; }
 .bubble-mine a { text-decoration: underline; }
-/* read receipts on blue bubbles: seen = bright aqua, sent/delivered = softer white */
-.bubble-mine svg.tick-seen { color: #7DF9FF !important; }
-.bubble-mine svg.tick-dim  { opacity: 0.7; }
+/* read receipts sit in a small white pill so they stay readable on the blue bubble:
+   sent / delivered = grey, read = deep green, failed = red */
+.bubble-mine .tick-pill { background: rgba(255,255,255,0.93); }
+.bubble-mine .tick-pill svg { color: #94A3B8 !important; }
+.bubble-mine .tick-pill svg.tick-seen { color: #047857 !important; }
+.bubble-mine .tick-pill svg.tick-fail { color: #DC2626 !important; }
 
 
 /* ── Keyboard focus: clear violet ring for every interactive control ── */

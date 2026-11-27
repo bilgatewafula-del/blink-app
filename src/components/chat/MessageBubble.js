@@ -38,16 +38,42 @@ function renderBody(text, term, mine) {
 const timeOf = (iso) => new Date(iso).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit', hour12: false });
 
 function Ticks({ m }) {
-  if (m._failed) return <AlertCircle size={13} className="text-[#243B53]" />;
-  if (m._pending) return <Clock size={11} className="text-[#64748B]" />;
-  if (m.seen_at) return <CheckCheck size={14} className="tick-seen text-[#243B53]" strokeWidth={2.6} />;
-  if (m.delivered_at) return <CheckCheck size={14} className="tick-dim text-[#64748B]" />;
-  return <Check size={13} className="tick-dim text-[#64748B]" />;
+  let icon; let label;
+  if (m._failed) { icon = <AlertCircle size={12} className="tick-fail" />; label = 'Not sent'; }
+  else if (m._pending) { icon = <Clock size={11} className="tick-dim" />; label = 'Sending'; }
+  else if (m.seen_at) { icon = <CheckCheck size={14} strokeWidth={2.8} className="tick-seen" />; label = 'Read'; }
+  else if (m.delivered_at) { icon = <CheckCheck size={14} strokeWidth={2.2} className="tick-dim" />; label = 'Delivered'; }
+  else { icon = <Check size={13} strokeWidth={2.4} className="tick-dim" />; label = 'Sent'; }
+  return (
+    <span role="img" aria-label={label} className="tick-pill inline-flex items-center justify-center rounded-full px-1 h-[16px]">
+      {icon}
+    </span>
+  );
+}
+
+// "View once" photo: the picture itself is never in the message; it is fetched once, when opened.
+function ViewOnceChip({ m, isMine, onOpen }) {
+  const opened = !!m.viewed_at;
+  const canOpen = !isMine && !opened && !m._pending;
+  const label = m._pending ? 'Sending…'
+    : isMine ? (opened ? 'Opened' : 'Photo · not opened yet')
+    : opened ? 'Opened' : 'Photo · tap to view';
+  const Tag = canOpen ? 'button' : 'div';
+  return (
+    <Tag onClick={canOpen ? (e) => { e.stopPropagation(); onOpen && onOpen(m); } : undefined}
+      className={'flex items-center gap-2.5 py-1 pr-3 min-w-[170px] text-left ' + (canOpen ? 'active:opacity-70' : 'opacity-85')}>
+      <span className={'w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-extrabold flex-shrink-0 border-2 ' +
+        (opened ? 'border-solid ' : 'border-dashed ') + (isMine ? 'border-white/80' : 'border-[#0284C7] text-[#0369A1]')}>
+        {opened ? <Check size={16} strokeWidth={3} /> : '1'}
+      </span>
+      <span className={'text-[14px] font-semibold ' + (isMine ? '' : 'text-[#243B53]')}>{label}</span>
+    </Tag>
+  );
 }
 
 function MessageBubble({
   m, isMine, isFirst, isLast, parent, parentName, otherUser, isStarred, reactions, term,
-  pop, flash, onLongPress, onDoubleTap, onReply, onJump, onImage, onRetry,
+  pop, flash, onLongPress, onDoubleTap, onReply, onJump, onImage, onRetry, onViewOnce,
 }) {
   const wrap = useRef(null);
   const g = useRef({ x: 0, y: 0, timer: null, moved: false, swiped: false, long: false, lastTap: 0, lastLong: 0 });
@@ -167,6 +193,8 @@ function MessageBubble({
 
           {deleted ? (
             <p className="text-[13px] italic text-[#64748B] flex items-center gap-1.5"><Ban size={13} /> This message was deleted</p>
+          ) : m.view_once ? (
+            <ViewOnceChip m={m} isMine={isMine} onOpen={onViewOnce} />
           ) : m.message_type === 'image' && m.media_url ? (
             <div className="relative -mx-1 -mt-0.5">
               <img
