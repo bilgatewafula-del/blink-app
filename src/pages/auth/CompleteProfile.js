@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import { User, Globe, ChevronDown, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { validateUsername, validateDisplayName } from '../../utils/usernameValidation';
+import { checkIdentity, completeIdentity, explain } from '../../lib/identityClient';
 import { Spinner } from '../../components/ui';
 
 const COUNTRIES = [
@@ -23,6 +24,7 @@ export default function CompleteProfile() {
   const [username, setUsername] = useState((meta.username || '').toLowerCase());
   const [country, setCountry] = useState(meta.country || 'KE');
   const [status, setStatus] = useState(null);
+  const [uMsg, setUMsg] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -38,7 +40,10 @@ export default function CompleteProfile() {
     let cancelled = false;
     setStatus('checking');
     const t = setTimeout(async () => {
-      const { data } = await supabase.rpc('username_available', { p_username: clean });
+      const r = await checkIdentity({ username: clean });
+      if (cancelled) return;
+      if (r) { setStatus(r.ok ? 'available' : (r.code === 'taken' ? 'taken' : 'rejected')); setUMsg(r.ok ? '' : explain(r)); return; }
+      const { data } = await supabase.rpc('username_available', { p_username: clean });   // identity service unreachable
       if (!cancelled) setStatus(data === false ? 'taken' : 'available');
     }, 400);
     return () => { cancelled = true; clearTimeout(t); };
@@ -50,15 +55,12 @@ export default function CompleteProfile() {
     const nameErr = validateDisplayName(displayName); if (nameErr) { setError(nameErr); return; }
     const userErr = validateUsername(username); if (userErr) { setError(userErr); return; }
     if (status === 'taken') { setError('Username taken. Choose another.'); return; }
+    if (status === 'rejected' && uMsg) { setError(uMsg); return; }
     setBusy(true); setError('');
-    const { error: err } = await supabase.rpc('complete_profile', {
-      p_username: username.trim().toLowerCase(), p_display_name: displayName.trim(), p_country: country,
-    });
-    if (err) {
-      const m = (err.message || '').toLowerCase();
-      setError(m.includes('taken') || m.includes('duplicate') ? 'Username taken. Choose another.'
-        : m.includes('does not exist') ? 'Profile setup is not available yet. Please try again shortly.'
-        : err.message || 'Could not save your profile.');
+    const res = await completeIdentity({ username: username.trim().toLowerCase(), displayName: displayName.trim(), country });
+    if (!res.ok) {
+      const m = (res.message || '').toLowerCase();
+      setError(m.includes('does not exist') ? 'Profile setup is not available yet. Please try again shortly.' : explain(res) || 'Could not save your profile.');
       setBusy(false);
       return;
     }
@@ -82,12 +84,13 @@ export default function CompleteProfile() {
         </div>
         <div className="relative">
           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] font-bold pointer-events-none">@</span>
-          <input value={username} onChange={(e) => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')); setError(''); }} placeholder="username" maxLength={20} autoCapitalize="none"
+          <input value={username} onChange={(e) => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, '')); setError(''); }} placeholder="username" maxLength={20} autoCapitalize="none"
             className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-9 pr-10 py-4 text-[#111827] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#7C3AED]/60" />
           {status === 'checking' && <Spinner size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748B]" />}
           {status === 'available' && <CheckCircle2 size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#10B981]" />}
-          {status === 'taken' && <XCircle size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-red-600" />}
+          {(status === 'taken' || status === 'rejected') && <XCircle size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-red-600" />}
         </div>
+        {status === 'rejected' && uMsg && <p className="text-red-600 text-[11px] -mt-1 pl-1">{uMsg}</p>}
         <div className="relative">
           <Globe size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none z-10" />
           <select value={country} onChange={(e) => setCountry(e.target.value)}

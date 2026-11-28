@@ -60,7 +60,7 @@ function RichCaption({ text, onHashtag, onMention }) {
   if (!text) return null;
   return (
     <p className="text-[#111827] text-[16px] leading-relaxed break-words whitespace-pre-wrap">
-      {text.split(/(#\w+|@\w+)/g).map((p, i) => {
+      {text.split(/(#\w+|@\w+(?:\.\w+)*)/g).map((p, i) => {
         if (p.startsWith('#'))
           return <button key={i} onClick={e => { e.stopPropagation(); onHashtag(p.slice(1)); }} className="text-[#6D28D9] hover:underline font-medium">{p}</button>;
         if (p.startsWith('@'))

@@ -1,6 +1,6 @@
 // src/components/RichText.js
 // Shows @mentions and #hashtags in colour and makes them tappable.
-const TOKEN = /(@[A-Za-z0-9_]{3,20}|#[\p{L}\p{N}_]{1,40})/gu;
+const TOKEN = /(@[A-Za-z0-9_][A-Za-z0-9_.]{1,18}[A-Za-z0-9_]|#[\p{L}\p{N}_]{1,40})/gu;
 
 // colours for white backgrounds (default) and for dark surfaces such as the B-Flash video
 export const MENTION_COLOR = '#6D28D9';

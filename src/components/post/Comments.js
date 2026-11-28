@@ -25,7 +25,7 @@ const PAGE = 20;
 const REPORT_REASONS = ['Spam or scam', 'Harassment or bullying', 'Hate speech', 'Inappropriate content', 'Something else'];
 
 function RichText({ text, onTag, onMention }) {
-  return text.split(/(#\w+|@\w+)/g).map((p, i) => {
+  return text.split(/(#\w+|@\w+(?:\.\w+)*)/g).map((p, i) => {
     if (p.startsWith('#') && p.length > 1) return <button key={i} onClick={() => onTag(p.slice(1))} className="text-[#6D28D9] font-medium">{p}</button>;
     if (p.startsWith('@') && p.length > 1) return <button key={i} onClick={() => onMention(p.slice(1))} className="text-[#6D28D9] font-medium">{p}</button>;
     return <span key={i}>{p}</span>;

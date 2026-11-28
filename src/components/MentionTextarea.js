@@ -8,7 +8,7 @@ import Avatar from './Avatar';
 import VerifiedBadge from './VerifiedBadge';
 import { tokenize, TONES } from './RichText';
 
-const MENTION_AT_CARET = /(^|\s)@([A-Za-z0-9_]{1,20})$/;
+const MENTION_AT_CARET = /(^|\s)@([A-Za-z0-9_.]{1,20})$/;
 const TAG_AT_CARET = /(^|\s)#([\p{L}\p{N}_]{0,40})$/u;
 
 export default function MentionTextarea({

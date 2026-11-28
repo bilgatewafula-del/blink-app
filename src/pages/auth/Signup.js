@@ -6,6 +6,7 @@ import {
   Eye, EyeOff, Mail, Lock, User, Globe, ArrowLeft, ChevronDown, CheckCircle2, XCircle, Smartphone, AlertCircle,
 } from 'lucide-react';
 import { validateUsername, validateDisplayName } from '../../utils/usernameValidation';
+import { checkIdentity, explain } from '../../lib/identityClient';
 import {
   PHONE_COUNTRIES, checkEmail, normalisePhone, checkPassword, friendlyAuthError, submitGuard, maskIdentifier,
 } from '../../lib/authSecurity';
@@ -66,6 +67,7 @@ export default function SignUp() {
   const tokenRef = useRef('');
   tokenRef.current = captchaToken;
 
+  const [uMsg, setUMsg] = useState('');
   const debouncedUsername = useDebounced(username, 450);
   const pwCheck = checkPassword(password);
 
@@ -76,7 +78,13 @@ export default function SignUp() {
     if (clean.length < 3 || validateUsername(clean)) { setUStatus(null); return undefined; }
     let cancelled = false;
     setUStatus('checking');
-    usernameIsFree(clean).then((free) => { if (!cancelled) setUStatus(free ? 'available' : 'taken'); }).catch(() => { if (!cancelled) setUStatus(null); });
+    setUMsg('');
+    checkIdentity({ username: clean }).then(async (r) => {
+      if (cancelled) return;
+      if (r) { setUStatus(r.ok ? 'available' : (r.code === 'taken' ? 'taken' : 'rejected')); setUMsg(r.ok ? '' : explain(r)); return; }
+      const free = await usernameIsFree(clean);          // identity service unreachable: old availability check
+      if (!cancelled) setUStatus(free ? 'available' : 'taken');
+    }).catch(() => { if (!cancelled) setUStatus(null); });
     return () => { cancelled = true; };
   }, [debouncedUsername]);
 
@@ -109,6 +117,7 @@ export default function SignUp() {
     const userErr = validateUsername(username);
     if (userErr) { setError(userErr); return; }
     if (uStatus === 'taken') { setError('Username taken. Choose another.'); return; }
+    if (uStatus === 'rejected' && uMsg) { setError(uMsg); return; }
     const id = identity();
     if (!id.ok) { setError(id.error); setStep(1); return; }
     if (captchaEnabled && !tokenRef.current) { setError('Please complete the security check.'); return; }
@@ -119,8 +128,12 @@ export default function SignUp() {
 
     // Last authoritative check (the live indicator is only a hint)
     try {
-      if (!(await usernameIsFree(cleanUsername))) { setError('Username taken. Choose another.'); setBusy(false); return; }
-    } catch { /* the database enforces uniqueness anyway */ }
+      const verdict = await checkIdentity({ username: cleanUsername, displayName: displayName.trim() });
+      if (verdict && verdict.ok === false) {
+        setError(explain(verdict)); setUStatus(verdict.code === 'taken' ? 'taken' : 'rejected'); setUMsg(explain(verdict)); setBusy(false); return;
+      }
+      if (!verdict && !(await usernameIsFree(cleanUsername))) { setError('Username taken. Choose another.'); setBusy(false); return; }
+    } catch { /* the database enforces every rule again when the account is created */ }
 
     const meta = { display_name: displayName.trim(), username: cleanUsername, country };
     const options = { data: meta, ...(captchaEnabled ? { captchaToken: tokenRef.current } : {}) };
@@ -316,15 +329,16 @@ export default function SignUp() {
 
           <div className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] font-bold text-[15px] pointer-events-none">@</span>
-            <input type="text" value={username} onChange={(e) => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')); setError(''); }}
+            <input type="text" value={username} onChange={(e) => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, '')); setError(''); }}
               placeholder="username" maxLength={20} autoComplete="off" autoCapitalize="none"
               className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-2xl pl-9 pr-10 py-4 text-[#111827] text-[15px] placeholder-[#94A3B8] focus:outline-none focus:border-[#7C3AED]/60 transition-all" />
             {uStatus === 'checking' && <Spinner size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748B]" />}
+            {uStatus === 'rejected' && <XCircle size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-red-600" />}
             {uStatus === 'available' && <CheckCircle2 size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#10B981]" />}
             {uStatus === 'taken' && <XCircle size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-red-600" />}
           </div>
-          <p className={`text-[11px] -mt-1 pl-1 ${uStatus === 'taken' ? 'text-red-600' : uStatus === 'available' ? 'text-[#10B981]' : 'text-[#64748B]'}`}>
-            {uStatus === 'taken' ? 'That username is already taken' : uStatus === 'available' ? 'Username is available' : 'Letters, numbers and _ only. 3 to 20 characters.'}
+          <p className={`text-[11px] -mt-1 pl-1 ${uStatus === 'taken' || uStatus === 'rejected' ? 'text-red-600' : uStatus === 'available' ? 'text-[#10B981]' : 'text-[#64748B]'}`}>
+            {uStatus === 'taken' ? 'That username is already taken. Please choose another.' : uStatus === 'rejected' ? (uMsg || 'That username is not allowed. Please choose another.') : uStatus === 'available' ? 'Username is available' : 'Lowercase letters, numbers, _ and . — 3 to 20 characters.'}
           </p>
 
           <div className="relative">

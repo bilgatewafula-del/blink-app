@@ -1,0 +1,1901 @@
+[
+    {
+        "id": "0c4e1d57-ddbc-4a01-8899-dd4fb94fd345",
+        "kind": "allow_term",
+        "value": "analyst",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "d21086d5-e3c5-47a3-817f-182374ce4221",
+        "kind": "allow_term",
+        "value": "assassin",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "4e68d8fb-9dbe-4505-a140-f53f754da9cf",
+        "kind": "allow_term",
+        "value": "bassist",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "36788428-650c-4174-bd2c-b68e59fc4dfe",
+        "kind": "allow_term",
+        "value": "classic",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "d4d6dd71-9196-472c-b12d-805ec1d8f476",
+        "kind": "allow_term",
+        "value": "cockburn",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "5d7637e2-fa6e-467c-8e34-ec715b3ee247",
+        "kind": "allow_term",
+        "value": "cocktail",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "49b5201b-2ae4-477f-a914-4aa6394962d3",
+        "kind": "allow_term",
+        "value": "dickens",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "6b118c85-648b-46af-9a05-bcb448870874",
+        "kind": "allow_term",
+        "value": "dickson",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "d628c0a2-ab8e-4ba7-935c-dc9a0b07fb17",
+        "kind": "allow_term",
+        "value": "drape",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "eeefc4d8-a620-45c6-b348-664b94052af4",
+        "kind": "allow_term",
+        "value": "essex",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "e8290e2e-e408-4d56-841e-9e0d5d43b981",
+        "kind": "allow_term",
+        "value": "grape",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "32780cbd-71a3-40cc-8828-c848ddbc57e8",
+        "kind": "allow_term",
+        "value": "hancock",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "50a6d73a-244e-47f6-81af-4ae23c84632e",
+        "kind": "allow_term",
+        "value": "middlesex",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "2295f92c-876b-45be-a0be-a2ff91bfc61f",
+        "kind": "allow_term",
+        "value": "passage",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "f222ac10-e3d9-4bff-88f8-a7c292c89d0e",
+        "kind": "allow_term",
+        "value": "peacock",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "b6ce6ef2-102f-4e50-8ee2-fa85279b8883",
+        "kind": "allow_term",
+        "value": "penistone",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "c1b003eb-3b72-487d-873c-ec11330cb018",
+        "kind": "allow_term",
+        "value": "scrape",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "0bb2edf1-e282-407b-95e2-8eb8bba39bd6",
+        "kind": "allow_term",
+        "value": "scunthorpe",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "5da9e0db-30a0-4fe6-bca3-e7a71e4eaef9",
+        "kind": "allow_term",
+        "value": "shiitake",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "ec081844-f461-4214-9e7c-31d503d2db5f",
+        "kind": "allow_term",
+        "value": "shitake",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "d558b7b5-05f1-409b-aa6a-b94f42f4cc0c",
+        "kind": "allow_term",
+        "value": "sussex",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "7656551d-7d89-4ac3-8d28-8e22f27c8698",
+        "kind": "allow_term",
+        "value": "therapist",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "b423e699-cb95-423c-8b89-e9f0a6f4a701",
+        "kind": "allow_term",
+        "value": "trapeze",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "c89c70cb-f7bc-4309-8d50-d50482a6b508",
+        "kind": "allow_term",
+        "value": "wessex",
+        "category": "allow",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "substring"
+    },
+    {
+        "id": "625783a0-4b0f-47a9-8840-68d6a5243307",
+        "kind": "blocked_term",
+        "value": "(die|death)(to)?(all|you|u|them)",
+        "category": "threat",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "regex"
+    },
+    {
+        "id": "861e16b9-c7bc-4547-a5a9-9e6f0435a628",
+        "kind": "blocked_term",
+        "value": "(double|triple|x2|2x)(your)?(money|cash|investment)",
+        "category": "scam",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "regex"
+    },
+    {
+        "id": "1ea5bfd8-6cce-4604-b29b-b25623ded3e3",
+        "kind": "blocked_term",
+        "value": "(forex|crypto|bitcoin|loan|investment)(expert|agent|trader|signals|recovery)",
+        "category": "scam",
+        "severity": "review",
+        "applies_to": "both",
+        "match_type": "regex"
+    },
+    {
+        "id": "4fbe2eec-70f5-47ff-86ae-e455ce0f178f",
+        "kind": "blocked_term",
+        "value": "(free|win|claim)(money|cash|airtime|bundles|bitcoin|crypto)",
+        "category": "scam",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "regex"
+    },
+    {
+        "id": "aa5f53e6-190b-479d-99c6-3b6b8987a850",
+        "kind": "blocked_term",
+        "value": "(hacked|recovery)(account|expert|agent)",
+        "category": "scam",
+        "severity": "review",
+        "applies_to": "both",
+        "match_type": "regex"
+    },
+    {
+        "id": "4d7aa8a1-19a3-469b-a74b-beab41161877",
+        "kind": "blocked_term",
+        "value": "(iwill|ill|gonna|going)?(kill|murder|rape|stab|shoot|hang|bomb)(you|u|him|her|them|all|everyone)",
+        "category": "threat",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "regex"
+    },
+    {
+        "id": "e344963b-dbed-4e24-a5fc-01d4669711a2",
+        "kind": "blocked_term",
+        "value": "(send|give)(me|us)(mpesa|money)",
+        "category": "scam",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "regex"
+    },
+    {
+        "id": "43540b13-72e1-429e-b739-f60dd742476c",
+        "kind": "blocked_term",
+        "value": "asshole",
+        "category": "abuse",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "41f8fb6e-0f92-40c3-a51d-e616a4c700a6",
+        "kind": "blocked_term",
+        "value": "bitch",
+        "category": "abuse",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "79732984-afeb-4c02-a4e3-887de90aec52",
+        "kind": "blocked_term",
+        "value": "chink",
+        "category": "hate",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "17693b44-0e3d-4a82-b586-2a489c8b9c7a",
+        "kind": "blocked_term",
+        "value": "cunt",
+        "category": "abuse",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "fd33932d-55dd-4855-b54e-a2411d4d8249",
+        "kind": "blocked_term",
+        "value": "faggot",
+        "category": "hate",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "d163c645-7408-4ad1-803c-2029a3ac03df",
+        "kind": "blocked_term",
+        "value": "fuck",
+        "category": "abuse",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "9a42bbb8-c1cb-4378-84d6-d3fc232e07dc",
+        "kind": "blocked_term",
+        "value": "fucker",
+        "category": "abuse",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "e9f4b256-4cff-4293-b00e-afc22c8c8106",
+        "kind": "blocked_term",
+        "value": "giveaway",
+        "category": "scam",
+        "severity": "review",
+        "applies_to": "both",
+        "match_type": "regex"
+    },
+    {
+        "id": "ad274c93-0b34-4dff-9ab0-3130df817048",
+        "kind": "blocked_term",
+        "value": "heilhitler",
+        "category": "hate",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "45efd0d2-06ee-41fc-b40c-256368b5a4d3",
+        "kind": "blocked_term",
+        "value": "kaffir",
+        "category": "hate",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "bc965e1e-6abd-4b3a-a612-1dcb57191bd7",
+        "kind": "blocked_term",
+        "value": "kuma",
+        "category": "abuse",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "a5bd4189-2a63-49b7-8a5d-64e8777af92c",
+        "kind": "blocked_term",
+        "value": "malaya",
+        "category": "abuse",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "70f0a181-0eb3-4247-9839-ec256d4d9a49",
+        "kind": "blocked_term",
+        "value": "mavi",
+        "category": "abuse",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "e238f720-2d13-4330-a0d4-532b6f6d2699",
+        "kind": "blocked_term",
+        "value": "motherfucker",
+        "category": "abuse",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "8dec32b8-87d4-4714-808f-49d6c1d8c8ea",
+        "kind": "blocked_term",
+        "value": "nazi",
+        "category": "hate",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "5a2d16ed-6cc5-4e32-bb2b-8dd68ac5f604",
+        "kind": "blocked_term",
+        "value": "nigga",
+        "category": "hate",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "bfa8aed3-89a2-4475-9197-b26c7d6597d4",
+        "kind": "blocked_term",
+        "value": "nigger",
+        "category": "hate",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "a80f21af-f238-4824-9e3b-e78bfa44511e",
+        "kind": "blocked_term",
+        "value": "porn",
+        "category": "abuse",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "d6fcfaad-b23e-4d16-bc42-3ff3c2df7a61",
+        "kind": "blocked_term",
+        "value": "pussy",
+        "category": "abuse",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "e4eefbe7-ba71-4723-8380-983a99a32ba1",
+        "kind": "blocked_term",
+        "value": "rapist",
+        "category": "abuse",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "43046b63-7967-43f6-b4bd-8c18d6dfa1fe",
+        "kind": "blocked_term",
+        "value": "retard",
+        "category": "hate",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "924101b9-5f76-4f7d-9ece-68b594a16d75",
+        "kind": "blocked_term",
+        "value": "shit",
+        "category": "abuse",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "cf363d54-0420-4a8c-bada-2ebe6cc0e995",
+        "kind": "blocked_term",
+        "value": "slut",
+        "category": "abuse",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "a99c990f-5973-45cb-96ca-1897218cac4b",
+        "kind": "blocked_term",
+        "value": "spic",
+        "category": "hate",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "1381e0b6-48de-4177-8af9-9cd7a9645cd0",
+        "kind": "blocked_term",
+        "value": "tranny",
+        "category": "hate",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "624fbbcf-6d75-4cf1-ba2e-cc74c3b33f08",
+        "kind": "blocked_term",
+        "value": "whitepower",
+        "category": "hate",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "20b9f192-2b21-4725-9176-09df92804e96",
+        "kind": "blocked_term",
+        "value": "whore",
+        "category": "abuse",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "161f603a-203a-48bf-978a-480b58ba9697",
+        "kind": "decoration",
+        "value": "254",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "6d9923b6-bc10-4d83-ba40-8eba179dc76b",
+        "kind": "decoration",
+        "value": "africa",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "c0c5d454-3223-429f-9397-0d531ba54018",
+        "kind": "decoration",
+        "value": "agent",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "b3a1ee9e-5ca0-4498-b9be-b0752fa5d94e",
+        "kind": "decoration",
+        "value": "app",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "f81b4360-a265-4908-ba76-0ce7358dce53",
+        "kind": "decoration",
+        "value": "bank",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "cd098a17-30e0-47c0-9bdb-3c281d8525e8",
+        "kind": "decoration",
+        "value": "care",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "65569a94-d28f-4c41-ba0a-99b10c185a53",
+        "kind": "decoration",
+        "value": "ceo",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "2e7f69a3-9493-450f-9f10-9cb18c5db65e",
+        "kind": "decoration",
+        "value": "customer",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "78383ca8-8227-4d8d-b9e8-06fe4e2c40b4",
+        "kind": "decoration",
+        "value": "dev",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "ad68ae28-fb41-4ede-9aac-c6e7dc77c5a3",
+        "kind": "decoration",
+        "value": "fm",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "27f4a912-e22f-43c0-9bf4-514fb5a33603",
+        "kind": "decoration",
+        "value": "group",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "3c1a101f-a206-436c-adbf-c93d10473a8a",
+        "kind": "decoration",
+        "value": "help",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "e507347c-8a78-45e9-b3d6-193f31d4902e",
+        "kind": "decoration",
+        "value": "hq",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "059ab863-b044-48b5-961c-96579c4a3d7e",
+        "kind": "decoration",
+        "value": "ke",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "9582b811-48cb-4623-91de-80d7b1207dfd",
+        "kind": "decoration",
+        "value": "kenya",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "eaaef340-1e2e-42fe-8b7d-52a094357c29",
+        "kind": "decoration",
+        "value": "limited",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "bc937e61-dbc8-40e7-aed9-d0d1e76fbd63",
+        "kind": "decoration",
+        "value": "ltd",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "e4137b5a-d9a8-480d-95d5-88bf93821daa",
+        "kind": "decoration",
+        "value": "media",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "96df82f5-365f-4918-9a2c-4682b74ae215",
+        "kind": "decoration",
+        "value": "mobile",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "efb6ef83-d875-4f97-9a9f-1c4c09f99cb0",
+        "kind": "decoration",
+        "value": "mod",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "b0d7bff9-05da-430f-b657-79c73dd91c5a",
+        "kind": "decoration",
+        "value": "money",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "ddb2b802-7c7d-45f6-b89a-5cfc80e79942",
+        "kind": "decoration",
+        "value": "news",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "38ea8025-5d65-4236-a8e5-fbf5c27c895e",
+        "kind": "decoration",
+        "value": "online",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "840d27ef-dc66-415d-9d79-96d8df173f26",
+        "kind": "decoration",
+        "value": "original",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "f21d00a1-9389-48d1-a103-a6613d8b0ea0",
+        "kind": "decoration",
+        "value": "plc",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "ea5533fe-d1c7-4547-b78c-9cac7269c892",
+        "kind": "decoration",
+        "value": "real",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "50d5f3d6-9982-4702-82cb-79cb20b785ec",
+        "kind": "decoration",
+        "value": "service",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "b23faf6a-3b93-4e5f-b7a9-ce8fe20916cf",
+        "kind": "decoration",
+        "value": "services",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "e91846b5-fd6b-434d-945e-37897f51adc7",
+        "kind": "decoration",
+        "value": "team",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "21938410-2903-4930-a05b-bb28003acf53",
+        "kind": "decoration",
+        "value": "the",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "26464c91-3369-4c54-a6c7-1b9c43933b88",
+        "kind": "decoration",
+        "value": "tv",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "445f1200-cc6a-49c2-94e7-3abfee8df655",
+        "kind": "protected_name",
+        "value": "absa",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "d1edac16-4fc8-4856-91a3-7e798d32d7a5",
+        "kind": "protected_name",
+        "value": "airtel",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "df4e58a1-c567-40f2-a180-e0fc1596eede",
+        "kind": "protected_name",
+        "value": "amazon",
+        "category": "platform",
+        "severity": "review",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "968a032d-b081-432c-9de7-137db617870b",
+        "kind": "protected_name",
+        "value": "apple",
+        "category": "platform",
+        "severity": "review",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "b31e8a9d-b6fd-4ee8-9e17-68d7923bde14",
+        "kind": "protected_name",
+        "value": "binance",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "1f7f1aa5-a1e9-4212-8cc7-eb63725010c1",
+        "kind": "protected_name",
+        "value": "cbk",
+        "category": "government",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "45ad816f-8dc6-47ba-bb71-851e89267210",
+        "kind": "protected_name",
+        "value": "coinbase",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "9fe96176-9183-49c3-a532-6d42b0b9c54e",
+        "kind": "protected_name",
+        "value": "coopbank",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "b885ea05-4187-44a4-b53b-2a1ba818fa17",
+        "kind": "protected_name",
+        "value": "cooperativebank",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "7d6a0839-9ab2-4e0a-8143-300582f37cb0",
+        "kind": "protected_name",
+        "value": "dci",
+        "category": "government",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "e8afccdb-2518-44d8-a866-4233dc4df151",
+        "kind": "protected_name",
+        "value": "dtb",
+        "category": "government",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "4c0e1b3d-282e-4be5-a7f9-8fe9e380240d",
+        "kind": "protected_name",
+        "value": "ecitizen",
+        "category": "government",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "d15d27b0-710a-4e9a-a917-8144811ade7d",
+        "kind": "protected_name",
+        "value": "equity",
+        "category": "finance",
+        "severity": "review",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "6a25727b-0241-42a2-8e26-e23991a8b84f",
+        "kind": "protected_name",
+        "value": "equitybank",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "0c9012f1-6b50-49f3-8dfd-e90c0d3d8155",
+        "kind": "protected_name",
+        "value": "facebook",
+        "category": "platform",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "6002ed8b-f795-45cc-8d2c-7994674a23eb",
+        "kind": "protected_name",
+        "value": "familybank",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "ad3b56a5-f2ed-4bf7-b2a3-7b8420c95aa2",
+        "kind": "protected_name",
+        "value": "google",
+        "category": "platform",
+        "severity": "review",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "66b7402f-ec1e-42d4-a3a6-2e31fdef4051",
+        "kind": "protected_name",
+        "value": "huduma",
+        "category": "government",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "12124c38-ec7a-4f21-a744-05ce20accc04",
+        "kind": "protected_name",
+        "value": "hustlerfund",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "61f50a17-b3f0-4a99-a20b-6da7c239ea82",
+        "kind": "protected_name",
+        "value": "iebc",
+        "category": "government",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "f95fbc82-e7da-4bbd-a90b-b768768336c9",
+        "kind": "protected_name",
+        "value": "instagram",
+        "category": "platform",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "bc79e5a4-d669-4eb3-adac-1ff271170dc2",
+        "kind": "protected_name",
+        "value": "kcb",
+        "category": "government",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "38a017b8-7f6f-490f-87f9-26527485eb1e",
+        "kind": "protected_name",
+        "value": "kcbbank",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "1884a478-23eb-47e5-94db-c2fa1bce447c",
+        "kind": "protected_name",
+        "value": "kdf",
+        "category": "government",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "d919b258-75dd-488a-8f95-40c8b7b6f081",
+        "kind": "protected_name",
+        "value": "kenyapolice",
+        "category": "government",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "fbc429ff-f85f-405b-b994-9ce4169d3e2d",
+        "kind": "protected_name",
+        "value": "kra",
+        "category": "government",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "1bfe84a0-6c6a-42eb-b67d-0f73e5edd407",
+        "kind": "protected_name",
+        "value": "m-pesa",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "001e67b0-544a-4d14-a61e-4aa6e645fc42",
+        "kind": "protected_name",
+        "value": "mastercard",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "b09f42b7-4902-44fc-91fc-9bb6db6be9e2",
+        "kind": "protected_name",
+        "value": "microsoft",
+        "category": "platform",
+        "severity": "review",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "1155c050-691e-43df-87e2-85747156549e",
+        "kind": "protected_name",
+        "value": "moneygram",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "7db25cd1-1ad3-4515-88e8-817e4e0eed11",
+        "kind": "protected_name",
+        "value": "mpesa",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "72600ae1-f384-4ce5-ad0d-b717a09e6e9f",
+        "kind": "protected_name",
+        "value": "ncba",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "f3ab3402-18d2-4ea9-8782-d34b134d7620",
+        "kind": "protected_name",
+        "value": "nhif",
+        "category": "government",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "ba41edc5-823a-4623-862c-ddfee6aa2550",
+        "kind": "protected_name",
+        "value": "nhif",
+        "category": "government",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "91cf678b-c5d6-4122-9ee3-0e1b09a8ab79",
+        "kind": "protected_name",
+        "value": "nis",
+        "category": "government",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "6c83ec02-0067-442b-b15e-a070c23ce8ba",
+        "kind": "protected_name",
+        "value": "nse",
+        "category": "government",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "e92601ed-31e3-45f8-9449-955f9f0b30bb",
+        "kind": "protected_name",
+        "value": "nssf",
+        "category": "government",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "0581c0db-72d9-46d8-a51a-87bff9c87000",
+        "kind": "protected_name",
+        "value": "ntsa",
+        "category": "government",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "602d1c17-de2c-4e6f-9f63-6614df8fa960",
+        "kind": "protected_name",
+        "value": "paypal",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "ab0cb057-5ab5-416b-89c4-073b3bea23b7",
+        "kind": "protected_name",
+        "value": "safaricom",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "7a699c60-f69b-4a50-9405-688f41c66c5d",
+        "kind": "protected_name",
+        "value": "sha",
+        "category": "government",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "d8e5cee8-5bc5-43af-b202-7a5eed45a52a",
+        "kind": "protected_name",
+        "value": "stanbic",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "62574b27-d0be-4abf-8e03-424c1ef13700",
+        "kind": "protected_name",
+        "value": "standardchartered",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "96b4341d-1474-4360-a742-aadcd21cc7c8",
+        "kind": "protected_name",
+        "value": "statehouse",
+        "category": "government",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "7ca38d97-9fa8-4b59-9c85-007fd2d1052f",
+        "kind": "protected_name",
+        "value": "telegram",
+        "category": "platform",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "c3727cf7-49aa-4267-8cc8-bdd308677aca",
+        "kind": "protected_name",
+        "value": "telkom",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "1c7763c1-3cc2-4437-b4ca-f9f1559f2b6c",
+        "kind": "protected_name",
+        "value": "tiktok",
+        "category": "platform",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "2c41f1fb-f9b9-4504-b604-78ea490bfed2",
+        "kind": "protected_name",
+        "value": "visa",
+        "category": "finance",
+        "severity": "review",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "d390603b-83f0-4f9a-a690-d8dd35f4cb6d",
+        "kind": "protected_name",
+        "value": "westernunion",
+        "category": "finance",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "84c04085-976c-4701-a8c2-e4c5fd8c2387",
+        "kind": "protected_name",
+        "value": "whatsapp",
+        "category": "platform",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "7183c15d-c456-4c22-bb67-0267f17ab958",
+        "kind": "protected_name",
+        "value": "youtube",
+        "category": "platform",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "efcbd610-53dc-4451-9bfb-8c06a237598c",
+        "kind": "reserved",
+        "value": "abuse",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "bbf37f1b-e980-48dd-97fc-d83932631f41",
+        "kind": "reserved",
+        "value": "admin",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "35f04a58-e422-47ce-a1d1-c56ce5556600",
+        "kind": "reserved",
+        "value": "administrator",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "c343cd6f-deef-40e0-8028-6fe5c3b30543",
+        "kind": "reserved",
+        "value": "anonymous",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "4868e355-af3a-4a1d-8dc2-d2dca060401e",
+        "kind": "reserved",
+        "value": "api",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "f012db11-74c6-4616-9146-6e733c5fe913",
+        "kind": "reserved",
+        "value": "b-link",
+        "category": "brand",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "dba57cb8-0f1d-4115-a459-8501a422ac94",
+        "kind": "reserved",
+        "value": "billing",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "5f2a039c-7e1a-4eb1-83e8-3d92b508684b",
+        "kind": "reserved",
+        "value": "blink",
+        "category": "brand",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "e29e73d5-0728-4c46-9ddd-ff04cd4e83c4",
+        "kind": "reserved",
+        "value": "blinkadmin",
+        "category": "brand",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "ef7f22ad-6aae-45fe-88f0-4c05146a2dbf",
+        "kind": "reserved",
+        "value": "blinkapp",
+        "category": "brand",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "335d2ef9-1f1b-48df-9f1b-5851df0eef6b",
+        "kind": "reserved",
+        "value": "blinkhq",
+        "category": "brand",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "ebeed101-4239-4182-bcc4-f274dd57df83",
+        "kind": "reserved",
+        "value": "blinkkenya",
+        "category": "brand",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "1dafca13-761c-41da-9ad8-c1ee91ce9446",
+        "kind": "reserved",
+        "value": "blinkofficial",
+        "category": "brand",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "4398cfd3-f799-4821-8be6-2b25c6c58ac5",
+        "kind": "reserved",
+        "value": "blinksupport",
+        "category": "brand",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "d406abe6-7a34-49af-b072-7c766d5b11f3",
+        "kind": "reserved",
+        "value": "blinkteam",
+        "category": "brand",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "58e61fc5-bc0e-4fec-849a-3b960ece0343",
+        "kind": "reserved",
+        "value": "boss",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "64824e42-f0e4-47a7-a77a-fc3d068e3c34",
+        "kind": "reserved",
+        "value": "bot",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "81adbcef-4501-4b67-87ac-bbd64af4964f",
+        "kind": "reserved",
+        "value": "ceo",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "cf9ec025-e5e5-4662-8b53-2270672fb4c9",
+        "kind": "reserved",
+        "value": "chairman",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "b98a5155-182f-4115-ad23-afe3ea586e91",
+        "kind": "reserved",
+        "value": "chief",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "d68c0ef4-58f1-4680-9b6f-cb6e0a756135",
+        "kind": "reserved",
+        "value": "cofounder",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "8159cd0f-9657-461e-a037-8e04be4d8f17",
+        "kind": "reserved",
+        "value": "contact",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "042ad379-660e-4a4d-b020-31518675b5ac",
+        "kind": "reserved",
+        "value": "cto",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "eb460d53-c19a-4a8a-8317-a142cd2354c5",
+        "kind": "reserved",
+        "value": "customerservice",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "322fbb8c-e29d-4637-b2e7-3a73e39e20b7",
+        "kind": "reserved",
+        "value": "customersupport",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "0441ac89-7afc-4c14-9dfe-229bc1a0ca30",
+        "kind": "reserved",
+        "value": "dev",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "6d6f1baf-677b-4d8d-b053-fbe40f839c5e",
+        "kind": "reserved",
+        "value": "developer",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "21a31036-7b43-4494-9c9b-843253cedc3b",
+        "kind": "reserved",
+        "value": "director",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "37f4ef87-5285-407a-acfb-fe8811770286",
+        "kind": "reserved",
+        "value": "executive",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "c4c162db-fd43-4940-93be-509cf968fc1f",
+        "kind": "reserved",
+        "value": "finance",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "344a704e-9307-4e86-b982-761eba7f8e95",
+        "kind": "reserved",
+        "value": "founder",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "603e3c6a-048d-413c-bcd9-f00bbaee55ed",
+        "kind": "reserved",
+        "value": "getblink",
+        "category": "brand",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "1f2a101d-04b8-48ee-aca4-d1061709a50f",
+        "kind": "reserved",
+        "value": "help",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "e6a21143-303d-46c3-a9db-6cdf0d6da6e5",
+        "kind": "reserved",
+        "value": "helpcenter",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "075cb6c0-7af5-4083-9e8f-16dd9e7580f5",
+        "kind": "reserved",
+        "value": "helpdesk",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "d1c1e84d-5e5b-43aa-ba71-1bae1555a544",
+        "kind": "reserved",
+        "value": "info",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "80492f53-cb5e-4274-93c8-e4348dde87a1",
+        "kind": "reserved",
+        "value": "legal",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "60553e6a-491d-4d0f-801f-62b78ceadd1f",
+        "kind": "reserved",
+        "value": "mail",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "1a11673d-6a44-42b2-9157-a7477215572c",
+        "kind": "reserved",
+        "value": "manager",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "e2c00125-9582-4ede-bbfd-2ce5e8d6b6fa",
+        "kind": "reserved",
+        "value": "md",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "c5900e2f-13b3-465a-b59b-2081befb8f44",
+        "kind": "reserved",
+        "value": "media",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "0a322712-9e89-4b88-aaa6-f9787f94ecbe",
+        "kind": "reserved",
+        "value": "mod",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "ba96f675-4536-4573-a2da-f33166cef2f6",
+        "kind": "reserved",
+        "value": "moderator",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "e50ada9a-182d-4ce8-85ec-2edba7c093b7",
+        "kind": "reserved",
+        "value": "news",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "79aec43c-fbca-46e2-9df9-f3363533d074",
+        "kind": "reserved",
+        "value": "no-reply",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "3c38f641-2c63-4daf-9130-b5110dfca9d7",
+        "kind": "reserved",
+        "value": "noreply",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "4280d9ad-f456-4655-9b50-e6575d7ce173",
+        "kind": "reserved",
+        "value": "null",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "afa6fcc6-4e51-40b5-85aa-a95ac1a81c1f",
+        "kind": "reserved",
+        "value": "official",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "7b3b436f-0677-4c12-a290-4427a5af1de8",
+        "kind": "reserved",
+        "value": "owner",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "ed92df1d-3fc8-4125-a6ca-ebba97890212",
+        "kind": "reserved",
+        "value": "payments",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "da3ab917-c8a4-4e19-b797-bd868a88a174",
+        "kind": "reserved",
+        "value": "postmaster",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "ac21ac69-9e2b-4e66-896d-8e64d41dd25b",
+        "kind": "reserved",
+        "value": "president",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "4681bd5e-bf68-4e80-a970-81da33a4d30d",
+        "kind": "reserved",
+        "value": "press",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "f85bd87b-14bc-4486-9f5f-c6b66ac44045",
+        "kind": "reserved",
+        "value": "root",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "8ee843d3-fc8c-44c5-9e10-1fd030dff3af",
+        "kind": "reserved",
+        "value": "sales",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "50d7833d-0d03-4f54-9c5a-5478fd3135f3",
+        "kind": "reserved",
+        "value": "security",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "2608ced8-26ad-40ea-a029-546bef857159",
+        "kind": "reserved",
+        "value": "staff",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "f50d80eb-5e9e-43e3-825e-494f35f48a9d",
+        "kind": "reserved",
+        "value": "superadmin",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "dd1b0ca8-e537-44d1-8426-96199cdd0c73",
+        "kind": "reserved",
+        "value": "superuser",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "d1db1eb4-db07-432a-845b-38e8724899b0",
+        "kind": "reserved",
+        "value": "support",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "5e7304c7-0219-4723-9531-2253601c5597",
+        "kind": "reserved",
+        "value": "sysadmin",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "51c4f95e-033a-46a8-9530-ca3559c96633",
+        "kind": "reserved",
+        "value": "system",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "ef44e778-c857-414e-ad62-f7b47cc4c20a",
+        "kind": "reserved",
+        "value": "team",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "6109573b-adaa-4ebb-99c2-79633ece689e",
+        "kind": "reserved",
+        "value": "undefined",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "919f7d55-2281-4ced-a5c5-4aaa93a1ef1c",
+        "kind": "reserved",
+        "value": "useblink",
+        "category": "brand",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "8d094eca-cb1f-4785-b536-f776db9e4fd6",
+        "kind": "reserved",
+        "value": "verification",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "b4a3ca59-a8d5-4a9f-ac74-2024c8d35d1b",
+        "kind": "reserved",
+        "value": "verified",
+        "category": "staff",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "term"
+    },
+    {
+        "id": "52e8573e-71b9-4407-9968-a45f35383f07",
+        "kind": "reserved",
+        "value": "verify",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "3a1bb453-5fc8-4494-8c77-88d8a47cb4f8",
+        "kind": "reserved",
+        "value": "wallet",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "fe75439c-6078-4929-961b-e0ac1e26fd26",
+        "kind": "reserved",
+        "value": "webmaster",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    },
+    {
+        "id": "6d3eb0f0-0305-47e0-b783-9ef6a4f00e8d",
+        "kind": "reserved",
+        "value": "www",
+        "category": "general",
+        "severity": "block",
+        "applies_to": "both",
+        "match_type": "exact"
+    }
+]

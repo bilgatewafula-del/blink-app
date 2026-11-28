@@ -9,6 +9,7 @@ import { compressImage, uploadImage, feedImageUrl } from '../../lib/imageUtils';
 import Avatar from '../../components/Avatar';
 import { Spinner } from '../../components/ui';
 import { goBack } from '../../lib/nav';
+import { checkIdentity, saveIdentity, explain, submitIdentityAppeal } from '../../lib/identityClient';
 
 const COUNTRIES = [
   { code: 'KE', name: 'Kenya' }, { code: 'NG', name: 'Nigeria' }, { code: 'GH', name: 'Ghana' },
@@ -52,7 +53,10 @@ export default function EditProfile() {
   const [coverFile, setCoverFile] = useState(null);
   const [coverPreview, setCoverPreview] = useState('');
 
-  const [usernameState, setUsernameState] = useState('idle'); // idle | checking | free | taken
+  const [usernameState, setUsernameState] = useState('idle'); // idle | checking | free | taken | rejected
+  const [usernameMsg, setUsernameMsg] = useState('');
+  const [appealTarget, setAppealTarget] = useState(null);       // { kind, value } after a rejection the user may appeal
+  const [appealSent, setAppealSent] = useState(false);
   const [saving, setSaving] = useState(false);
   const [stage, setStage] = useState('');
   const [error, setError] = useState('');
@@ -95,7 +99,15 @@ export default function EditProfile() {
     if (!usernameChanged || validateUsername(username)) { setUsernameState('idle'); return; }
     setUsernameState('checking');
     const t = setTimeout(async () => {
-      const { data } = await supabase.from('users').select('id').eq('username', username.trim().toLowerCase()).maybeSingle();
+      const clean = username.trim().toLowerCase();
+      const r = await checkIdentity({ username: clean });
+      if (r) {
+        setUsernameState(r.ok ? 'free' : (r.code === 'taken' ? 'taken' : 'rejected'));
+        setUsernameMsg(r.ok ? '' : explain(r));
+        setAppealTarget(!r.ok && ['reserved', 'impersonation', 'blocked', 'scam'].includes(r.code) ? { kind: 'username', value: clean } : null);
+        return;
+      }
+      const { data } = await supabase.from('users').select('id').eq('username', clean).maybeSingle();   // identity service unreachable
       setUsernameState(data ? 'taken' : 'free');
     }, 450);
     return () => clearTimeout(t);
@@ -144,14 +156,29 @@ export default function EditProfile() {
     if (usernameChanged && usernameCooldownDays > 0) { setError(`You can change your username again in ${usernameCooldownDays} day${usernameCooldownDays !== 1 ? 's' : ''}.`); return; }
     if (displayNameChanged && displayNameCooldownDays > 0) { setError(`You can change your display name again in ${displayNameCooldownDays} day${displayNameCooldownDays !== 1 ? 's' : ''}.`); return; }
     if (usernameChanged && usernameState === 'taken') { setError('Username already taken.'); return; }
+    if (usernameChanged && usernameState === 'rejected' && usernameMsg) { setError(usernameMsg); return; }
     const site = normaliseWebsite(website);
     if (!validWebsite(site)) { setError('Enter a valid website, e.g. yourname.com'); return; }
 
     setSaving(true); setError('');
     try {
       const updates = {};
-      if (displayNameChanged) updates.display_name = displayName.trim();
-      if (usernameChanged) updates.username = username.trim().toLowerCase();
+      // Username / display name are validated and written by the server (Namespace Guard + database rules).
+      let identityChanged = false;
+      if (usernameChanged || displayNameChanged) {
+        setStage('Checking name…');
+        const res = await saveIdentity({
+          username: usernameChanged ? username.trim().toLowerCase() : undefined,
+          displayName: displayNameChanged ? displayName.trim() : undefined,
+        });
+        if (!res.ok) {
+          if (['reserved', 'impersonation', 'blocked', 'scam'].includes(res.code)) {
+            setAppealTarget({ kind: res.field === 'display_name' ? 'display_name' : 'username', value: res.field === 'display_name' ? displayName.trim() : username.trim().toLowerCase() });
+          }
+          throw new Error(explain(res));
+        }
+        identityChanged = true;
+      }
       if (bio.trim() !== (profile?.bio || '')) updates.bio = bio.trim() || null;
       if (country !== (profile?.country || 'KE')) updates.country = country;
       if (websiteReady && (site || '') !== original.website) updates.website = site;
@@ -167,7 +194,10 @@ export default function EditProfile() {
         updates.cover_url = await uploadImage(coverFile, 'covers');
       }
 
-      if (Object.keys(updates).length === 0) { navigate('/profile'); return; }
+      if (Object.keys(updates).length === 0) {
+        if (identityChanged) { await refreshProfile(); setSuccess(true); setTimeout(() => navigate('/profile'), 700); setStage(''); setSaving(false); return; }
+        navigate('/profile'); return;
+      }
 
       setStage('Saving…');
       const { error: dbErr } = await supabase.from('users').update(sanitiseUserUpdate(updates)).eq('id', user.id);
@@ -255,7 +285,7 @@ export default function EditProfile() {
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] font-bold text-[15px] pointer-events-none">@</span>
               <input type="text" value={username}
-                onChange={(e) => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')); setError(''); }}
+                onChange={(e) => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, '')); setError(''); }}
                 placeholder="username" maxLength={20} disabled={usernameCooldownDays > 0} className={inputCls + ' pl-9 pr-11'} />
               <span className="absolute right-4 top-1/2 -translate-y-1/2">
                 {usernameState === 'checking' && <Spinner size={15} className="text-[#64748B]" />}
@@ -265,13 +295,22 @@ export default function EditProfile() {
             </div>
             {usernameCooldownDays > 0 ? (
               <p className="text-orange-700 text-[11px] mt-1.5 flex items-center gap-1"><Clock size={11} /> Locked for {usernameCooldownDays} more day{usernameCooldownDays !== 1 ? 's' : ''} (changes allowed every {NAME_CHANGE_COOLDOWN_DAYS} days)</p>
+            ) : usernameState === 'rejected' ? (
+              <p className="text-red-600 text-[11px] mt-1.5">{usernameMsg || 'That username is not allowed. Please choose another.'}</p>
             ) : usernameState === 'taken' ? (
-              <p className="text-red-600 text-[11px] mt-1.5">That username is taken.</p>
+              <p className="text-red-600 text-[11px] mt-1.5">{usernameMsg || 'That username is taken.'}</p>
             ) : usernameState === 'free' ? (
               <p className="text-[#10B981] text-[11px] mt-1.5">Username is available.</p>
             ) : (
-              <p className="text-[#64748B] text-[11px] mt-1.5">Use a real, recognisable name. Reserved or fake-looking names are blocked.</p>
+              <p className="text-[#64748B] text-[11px] mt-1.5">Lowercase letters, numbers, _ and . Reserved or fake-looking names are blocked.</p>
             )}
+            {appealTarget && !appealSent && (
+              <button type="button" className="text-[#7C3AED] text-[11px] font-bold mt-1 underline"
+                onClick={async () => { const r = await submitIdentityAppeal(appealTarget.kind, appealTarget.value, 'Requested from Edit Profile'); if (r.ok) setAppealSent(true); else setError(r.message || 'Could not send the request.'); }}>
+                I believe this is a mistake — ask a moderator to review
+              </button>
+            )}
+            {appealSent && <p className="text-[#10B981] text-[11px] mt-1">Request sent. A moderator will review it — you can still pick a different name now.</p>}
           </div>
 
           <div>

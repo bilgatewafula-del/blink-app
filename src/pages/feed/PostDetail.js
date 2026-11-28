@@ -64,7 +64,7 @@ function RichText({ text, onHashtag, onMention }) {
   if (!text) return null;
   return (
     <>
-      {text.split(/(#\w+|@\w+)/g).map((p, i) => {
+      {text.split(/(#\w+|@\w+(?:\.\w+)*)/g).map((p, i) => {
         if (p.startsWith('#')) return <button key={i} onClick={() => onHashtag(p.slice(1))} className="text-[#6D28D9] hover:underline font-medium">{p}</button>;
         if (p.startsWith('@')) return <button key={i} onClick={() => onMention(p.slice(1))} className="text-[#6D28D9] hover:underline font-medium">{p}</button>;
         return <span key={i}>{p}</span>;
@@ -508,7 +508,7 @@ export default function PostDetail() {
             ref_id: id, preview_text: body.slice(0,60), is_read: false,
           });
         }
-        const mentions = body.match(/@(\w+)/g) || [];
+        const mentions = body.match(/@(\w+(?:\.\w+)*)/g) || [];
         for (const m of mentions) {
           const { data: mu } = await supabase.from('users').select('id').eq('username', m.slice(1)).maybeSingle();
           if (mu && mu.id !== user?.id) {

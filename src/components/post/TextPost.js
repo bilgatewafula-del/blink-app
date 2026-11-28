@@ -6,7 +6,7 @@ export const isColoredTextPost = (post) =>
   !!post.caption && post.caption.length <= 280;
 
 export default function TextPost({ text, bg, onHashtag, onMention }) {
-  const parts = text.split(/(#\w+|@\w+)/g);
+  const parts = text.split(/(#\w+|@\w+(?:\.\w+)*)/g);
   return (
     <div className="rounded-2xl px-6 py-8 flex items-center justify-center text-center" style={{ background: bgCss(bg), minHeight: 220 }}>
       <p className="text-white font-extrabold whitespace-pre-wrap break-words"

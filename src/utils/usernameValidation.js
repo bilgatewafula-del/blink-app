@@ -40,15 +40,12 @@ const GIBBERISH_PATTERNS = [
 const AWKWARD_DISPLAY_PATTERNS = [
   /^(.)\1{3,}$/i,                          // huhuyy, aaaa style
   /^(ha){3,}$/i, /^(lol){2,}$/i, /^(haha){2,}$/i,
-  /^[^a-zA-Z0-9\s]{3,}$/,                  // mostly symbols, no letters
+  /^[^\p{L}\p{N}\s]{3,}$/u,                  // mostly symbols, no letters
   /^\d+$/,                                 // pure numbers as a display name
 ];
 
 /* ── Profanity / slur baseline list kept intentionally short and
    server-agnostic; extend via admin tools as needed ── */
-const BLOCKED_SUBSTRINGS = [
-  'fuck','shit','bitch','nigger','nigga','cunt','rape','porn','sex',
-];
 
 /**
  * Validates a username at signup or edit time.
@@ -58,21 +55,18 @@ export function validateUsername(raw) {
   const username = (raw || '').trim().toLowerCase();
 
   if (!username) return 'Username is required.';
-  if (!/^[a-z0-9_]{3,20}$/.test(username)) {
-    return 'Username must be 3–20 characters: letters, numbers, underscores only.';
+  if (!/^[a-z0-9_.]{3,20}$/.test(username)) {
+    return 'Username must be 3–20 characters: lowercase letters, numbers, underscores and periods.';
   }
+  if (/^\.|\.$/.test(username)) return 'A username cannot start or end with a period.';
+  if (/\.\./.test(username)) return 'A username cannot contain two periods in a row.';
+  if (/^[0-9_.]+$/.test(username)) return 'A username needs at least one letter.';
 
+  // Reserved / impersonation / abusive names are decided by the server (Namespace Guard +
+  // the editable rules in Admin → Identity). The old blunt "contains a reserved word" rule
+  // blocked ordinary names such as "teamwork", so it was removed.
   if (RESERVED_USERNAMES.includes(username)) {
     return 'That username is reserved and cannot be used.';
-  }
-
-  // Reject if it merely CONTAINS a reserved brand/staff term
-  // e.g. "blink_official2025" or "realceo_john"
-  const containsReserved = RESERVED_USERNAMES.some(r =>
-    r.length >= 4 && username.includes(r)
-  );
-  if (containsReserved) {
-    return 'Username contains a restricted word. Choose something else.';
   }
 
   for (const pattern of GIBBERISH_PATTERNS) {
@@ -81,11 +75,7 @@ export function validateUsername(raw) {
     }
   }
 
-  for (const word of BLOCKED_SUBSTRINGS) {
-    if (username.includes(word)) {
-      return 'That username isn\'t allowed. Please choose another.';
-    }
-  }
+  // abusive words: checked on the server (Scunthorpe-safe) — see identityClient.js
 
   return null; // valid
 }
@@ -97,18 +87,11 @@ export function validateDisplayName(raw) {
   const name = (raw || '').trim();
 
   if (!name) return 'Display name is required.';
-  if (name.length < 2) return 'Display name is too short.';
-  if (name.length > 40) return 'Display name must be under 40 characters.';
+  const chars = [...name].length;   // count characters, not UTF-16 units (emoji, Arabic, Chinese)
+  if (chars < 2) return 'Display name is too short.';
+  if (chars > 40) return 'Display name must be under 40 characters.';
 
-  const lower = name.toLowerCase().replace(/[\s\-_.]/g, '');
-
-  // Block reserved brand/staff terms in display name too
-  const containsReserved = RESERVED_USERNAMES.some(r =>
-    r.length >= 4 && lower.includes(r.replace(/[\s\-_.]/g, ''))
-  );
-  if (containsReserved) {
-    return 'Display name contains a restricted word. Choose something else.';
-  }
+  // Impersonation and reserved words in display names are checked by the server (see identityClient.js).
 
   for (const pattern of AWKWARD_DISPLAY_PATTERNS) {
     if (pattern.test(name.replace(/\s/g, ''))) {
@@ -116,15 +99,8 @@ export function validateDisplayName(raw) {
     }
   }
 
-  for (const word of BLOCKED_SUBSTRINGS) {
-    if (lower.includes(word)) {
-      return 'That name isn\'t allowed. Please choose another.';
-    }
-  }
-
-  // Require at least one vowel-containing alphabetic run — filters
-  // pure gibberish like "xkjqz" while allowing real names worldwide
-  if (!/[a-zA-Z]{2,}/.test(name)) {
+  // Needs at least one letter in ANY script (Arabic, Chinese, Cyrillic, accents… are all fine)
+  if (!/\p{L}/u.test(name)) {
     return 'Please enter a real name using letters.';
   }
 

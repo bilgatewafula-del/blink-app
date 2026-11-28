@@ -14,6 +14,7 @@ import {
   CheckCircle, ChevronDown, Lock, ShieldAlert,
 } from 'lucide-react';
 import { goBack } from '../../lib/nav';
+import IdentityAdmin from './IdentityAdmin';
 
 /* ══════════════════════════════════════════════
    SECURITY NOTE
@@ -788,6 +789,7 @@ export default function AdminPanel() {
     { key:'reports',   label:'Reports',   icon: Flag,   badge: stats.pendingReports },
     { key:'logs',      label:'Logs',      icon: Clock },
     { key:'warnings',  label:'Warnings',  icon: AlertOctagon },
+    ...(isAdmin ? [{ key:'identity', label:'Identity', icon: Lock }] : []),
   ];
 
   if (!canAccess) return null;
@@ -1086,6 +1088,8 @@ export default function AdminPanel() {
             ))}
           </div>
         )}
+
+        {section === 'identity' && isAdmin && <IdentityAdmin isBlink={isBlink} />}
 
         {section === 'logs' && (
           <div className="space-y-2">

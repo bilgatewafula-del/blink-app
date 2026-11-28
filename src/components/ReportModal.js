@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { X, Flag } from 'lucide-react';
 
 const REASONS = [
-  'Spam', 'Harassment', 'Fake Account',
+  'Spam', 'Harassment', 'Fake Account', 'Impersonation',
   'Violence', 'Misinformation', 'Sexual Content',
   'Hate Speech', 'Other',
 ];
